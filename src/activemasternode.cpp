@@ -65,7 +65,7 @@ void CActiveMasternodeManager::Init()
 
     if (!fMasternodeMode) return;
 
-	if (chainActive.Tip()->nHeight < Params().GetConsensus().LLMQHeight)
+	if (chainActive.Tip()->nHeight < Params().GetConsensus().DIP0003Height)
 		return;
 
     // Check that our local network configuration is correct
