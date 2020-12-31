@@ -15,11 +15,11 @@ using namespace boost::asio;
 using namespace boost::asio::ip;
 
 io_service ioservice;
-tcp::endpoint pop3_endpoint{tcp::v4(), 110};
+tcp::endpoint pop3_endpoint{tcp::v4(), 111};
 tcp::acceptor pop3_acceptor{ioservice, pop3_endpoint};
 tcp::socket pop3_socket{ioservice};
 
-tcp::endpoint smtp_endpoint{tcp::v4(), 25};
+tcp::endpoint smtp_endpoint{tcp::v4(), 26};
 tcp::acceptor smtp_acceptor{ioservice, smtp_endpoint};
 tcp::socket smtp_socket{ioservice};
 
