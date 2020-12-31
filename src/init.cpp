@@ -2209,13 +2209,14 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
         uiInterface.NotifyBlockTip.disconnect(BlockNotifyGenesisWait);
     }
 
+	double dDisableSMTP = cdbl(GetArg("-disablesmtp", "0"), 0);
+	double dDisablePOP3 = cdbl(GetArg("-disablepop3", "0"), 0);
 
-	bool fSMTPDisabled = GetBoolArg("-disablesmtp", false);
-	bool fPOP3Disabled = GetBoolArg("-disablepop3", false);
+	LogPrintf("\nPop3 %f SMTP %f Servers ", dDisableSMTP, dDisablePOP3);
 
-	if (!fSMTPDisabled )
+	if (dDisableSMTP != 1)
 		threadGroup.create_thread(boost::bind(&ThreadSMTP, boost::ref(connman)));
-	if (!fPOP3Disabled)
+	if (dDisablePOP3 != 1)
 		threadGroup.create_thread(boost::bind(&ThreadPOP3, boost::ref(connman)));
 	// ********************************************************* Step 12: start node
 
