@@ -114,20 +114,27 @@ CTxMemPool mempool;
 
 std::map<uint256, int64_t> mapRejectedBlocks GUARDED_BY(cs_main);
 
-// DAC
+// BIBLEPAY
 std::map<std::pair<std::string, std::string>, std::pair<std::string, int64_t>> mvApplicationCache;
 std::map<std::string, IPFSTransaction> mapSidechainTransactions;
+std::map<std::string, int> mapPOOSStatus;
 std::map<std::string, DashUTXO> mapDashUTXO;
-std::map<std::string, POSEScore> mvPOSEScore;
 std::map<std::string, Researcher> mvResearchers;
-
+bool fWarmBootFinished;
 std::string msGithubVersion;
 std::string msLanguage;
 
 std::string msMasterNodeLegacyPrivKey;
 std::string msSessionID;
 std::string sOS;
+std::string msMyInternalEmailAddress;
+
+
 bool fEnforceSanctuaryPort = false;
+std::string msPagedFrom;
+int mlPaged = 0;
+int mlPagedEncrypted = 0;
+
 int PRAYER_MODULUS = 0;
 int nSideChainHeight = 0;
 
@@ -143,7 +150,8 @@ double dHashesPerSec = 0;
 uint256 uTxIdFee = uint256S("0x0");
 
 std::vector<QueuedProposal> mvQueuedProposals;
-	
+std::map<uint256, CEmail> mapEmails;
+
 std::string sGlobalPoolURL;
 std::string msGlobalStatus;
 std::string msGlobalStatus2;
@@ -929,6 +937,11 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
 				LogPrintf("AcceptToMemoryPool::Dynamic Whale Burn rejected %s [%s]\n", tx.GetHash().GetHex(), sError2);
 				return false;
 			}
+			if (!VerifyDACDonation(tx1, sError2))
+			{
+				LogPrintf("AcceptToMemoryPool::DAC Donation or match rejects %s [%s]\n", tx.GetHash().GetHex(), sError2);
+				return false;
+			}
 			// Verify Sanctuary Revival Txes
 			if (!ApproveSanctuaryRevivalTransaction(tx))
 			{
@@ -1329,6 +1342,11 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 			// To pay for the DWS increase, we have increased our deflation rate to .025 (30% annually).  https://forum.biblepay.org/index.php?topic=532.msg7389#msg7389
 			iDeflationRate = .025; 
 		}
+		else if (i > consensusParams.TRIBULATION_HEIGHT)
+		{
+			// Keep Deflation at 36% until our http://wiki.biblepay.org/Emission_Schedule_2020 equalizes (we don't want to veer from our emission schedule so let us error on the safe side)
+			iDeflationRate = .03;
+		}
     }
 
     // Monthly Budget: 
@@ -1365,7 +1383,8 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 	// APM (Automatic Price Mooning)
 	double nAPM = ExtractAPM(nPrevHeight);
 	// 0 = OFF, -1 = PRICE MISSING, 1 = UNCHANGED, 2 = INCREASED, 3 = DECREASED
-	if (nAPM == 3 || nAPM == 1)
+	// Per Songs Pool:  If we turn APM back on in the future, make it so we only restrict payments if our price goes down (but let emissions flow if price is Unchanged, or Increased).
+	if (nAPM == 3)
 	{
 		// With Automatic Price Mooning, we decrease the block subsidy down to 7 if our Price has decreased over the last 24 hours.  (Otherwise, normal emissions occur).
 		nNetSubsidy = APM_REWARD * COIN;
@@ -2473,7 +2492,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 	// Since we still live in the hybrid scenario (.13 + .14):
 	if (GetSporkDouble("SPORK_8_MASTERNODE_PAYMENT_ENFORCEMENT", 0) == 1) 
 	{
-		if (!IsBlockPayeeValid(*block.vtx[0], pindex->nHeight, blockReward)) {
+		if (!IsBlockPayeeValid(*block.vtx[0], pindex->nHeight, blockReward, pindex->GetBlockTime())) {
 			mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
 			return state.DoS(0, error("ConnectBlock::ERROR::Couldn't find masternode or superblock payments"),
 									REJECT_INVALID, "bad-cb-payee");
@@ -3764,6 +3783,13 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, const Co
 		// RandomX Pools:
 		// If diff > MIN_RX_DIFF, Prod, and Block is not late, enforce Pool Spork List
 		int64_t nBlockAge = GetAdjustedTime() - block.GetBlockTime();
+		double nVersion = GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage);
+		if (nHeight > consensusParams.TRIBULATION_HEIGHT && nVersion > 1000 && nVersion < 1531)
+		{
+			LogPrintf("\r\nContextualCheckBlock::ERROR - Block Rejected - Node spamming new blocks after mandatory upgrade %f", nVersion);
+			return false;
+		}
+
 		if (nBlockAge < 86400)
 		{
 			double nDiff = GetDifficulty(pindexPrev);
@@ -3785,6 +3811,7 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, const Co
 					}
 				}
 			}
+
 		}
 
 		bool bGSCSuperblock = CSuperblock::IsSmartContract(nHeight);
@@ -3797,11 +3824,14 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, const Co
 			return false; 
 		}
 
+		// Moved to GetDacDonationTotals - If the amount is too high the entire block is rejected 
+
+		/*
 		// Extra Safety Layer for Dynamic Whale Staking (This routine is designed to remove the danger of any hacker slipping a whale payment in via createBlock, then brute force mining it with > 51% hashpower, and it being non-approved by a Sanctuary in our GSC (meaning that blocks > the base governance limit should be as safe as any other block, as we are specifically checking the DWS burn(ed) amounts and recipients here):
 		if (bGSCSuperblock)
 		{
-			CAmount nPaymentsLimitBase = CSuperblock::GetPaymentsLimit(nHeight, false);
-			CAmount nPaymentsLimitDWS = CSuperblock::GetPaymentsLimit(nHeight, true);
+			CAmount nPaymentsLimitBase = CSuperblock::GetPaymentsLimit(nHeight, block.GetBlockTime(), false);
+			CAmount nPaymentsLimitDWS = CSuperblock::GetPaymentsLimit(nHeight, block.GetBlockTime(), true);
 			// If the block is within one day old, or newer:
 			if (nBlockAge < 86400 && nPayments > nPaymentsLimitBase)
 			{
@@ -3841,7 +3871,7 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, const Co
 					return false;
 				}
 			}
-		}
+			*/
 	}
 
 	//                                                                                                                                           //

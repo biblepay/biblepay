@@ -1742,11 +1742,88 @@ UniValue dashstakequote(const JSONRPCRequest& request)
 	return results;
 }
 
+bool IsStakeInBlock(int nHeight, WhaleStake ws, double& nShortPct)
+{
+	CBlockIndex* pindex = FindBlockByHeight(nHeight);
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	if (!pindex) 
+		return false;
+	CBlock block;
+	std::string sMsg;
+	nShortPct = 0;
+	double nHighAmount = 0;
+	if (ReadBlockFromDisk(block, pindex, consensusParams)) 
+	{
+		double dFoundationDonation = 0;
+		for (unsigned int i = 0; i < block.vtx[0]->vout.size(); i++)
+		{
+			sMsg += block.vtx[0]->vout[i].sTxOutMessage;
+			double dAmount = (double)block.vtx[0]->vout[i].nValue / COIN;
+			bool fWhaleReward = Contains(RoundToString(dAmount, 4), ".1527");
+			std::string sPK = PubKeyToAddress(block.vtx[0]->vout[i].scriptPubKey);
+			if (fWhaleReward && (sPK == ws.ReturnAddress || sPK == ws.CPK) && RoundToString(dAmount, 0) == RoundToString(ws.TotalOwed, 0))
+				return true;
+			if (fWhaleReward && (sPK == ws.ReturnAddress || sPK == ws.CPK))
+			{
+				if (dAmount > nHighAmount)
+					nHighAmount = dAmount;
+			}
+		}
+		if (nHighAmount > 0)
+		{
+			nShortPct = 1 - (nHighAmount / ws.TotalOwed+.0001);
+			if (nShortPct > .99 && nShortPct < 1.01)
+					nShortPct = 1.0;
+			return true;
+		}
+	}
+	if (block.vtx[0]->vout.size() < 5)
+	{
+		nShortPct = 1.01;
+		return false;
+	}
+	nShortPct = 1.0;
+	return false;
+}
+
+UniValue claimreward(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 2))
+		throw std::runtime_error("You must specify claimreward non_biblepay_public_address non_biblepay_signature.");
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	UniValue results(UniValue::VOBJ);
+
+	std::string sPub = request.params[0].get_str();
+	std::string sSig = request.params[1].get_str();
+	// ToDo:  Print the campaign name here along with the coin-type.  For now, we start with DASH (76).
+	int nKeyType = 76;
+	bool fVerified = VerifyNonstandardSignature(sPub, "bbp", sSig, nKeyType);
+	if (!fVerified)
+	{
+		results.push_back(Pair("Results", "Sorry, the signature is invalid.  Please try copying the signature from the source wallet with https://wiki.biblepay.org/Scratchpad.  Maybe it has invalid characters. "));
+	}
+	else
+	{
+		// Check to see if there is a reward to be claimed
+		std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
+		std::string sXML = "<non_bbp_pubkey>" + sPub + "</non_bbp_pubkey><non_bbp_signature>" + sSig + "</non_bbp_signature><non_bbp_keytype>" + RoundToString(nKeyType, 0) 
+			+ "</non_bbp_keytype><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
+		DACResult b = DSQL_ReadOnlyQuery("BMS/CheckReward", sXML);
+		std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
+		std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
+		double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
+		results.push_back(Pair("Outcome", sOutcome));
+		results.push_back(Pair("Narrative", sNarr));
+		results.push_back(Pair("Amount Rewarded", nAmount));
+	}
+	return results;
+}
+
 UniValue dwsquote(const JSONRPCRequest& request)
 {
 	// Dynamic Whale Staking
-	if (request.fHelp || (request.params.size() != 0 && request.params.size() != 1 && request.params.size() != 2))
-		throw std::runtime_error("You must specify dwsquote [optional 1=my whale stakes only, 2=all whale stakes] [optional 1=Include Paid/Unpaid, 2=Include Unpaid only (default)].");
+	if (request.fHelp || (request.params.size() != 0 && request.params.size() != 1 && request.params.size() != 2 && request.params.size() != 3))
+		throw std::runtime_error("You must specify dwsquote [optional 1=my whale stakes only, 2=all whale stakes] [optional 1=Include Paid/Unpaid, 2=Include Unpaid only (default), 3=Paid Only, 4=Paid with Anomolies only] [Optional 1=Advanced Totals,0=Default Totals].");
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	UniValue results(UniValue::VOBJ);
 	double dDetails = 0;
@@ -1760,6 +1837,8 @@ UniValue dwsquote(const JSONRPCRequest& request)
 	if (request.params.size() > 2)
 		dAdvanced = cdbl(request.params[2].get_str(), 0);
 
+	double dTotal = 0;
+	double dTotalImpact = 0;
 	if (dDetails == 1 || dDetails == 2)
 	{
 		std::vector<WhaleStake> w = GetDWS(true);
@@ -1768,22 +1847,53 @@ UniValue dwsquote(const JSONRPCRequest& request)
 		{
 			WhaleStake ws = w[i];
 			bool fIncForPayment = (!ws.paid && dPaid == 2) || (dPaid == 1);
-				if (ws.found && fIncForPayment && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK)))
-				{
-				// results.push_back(Pair("Return Address", ws.ReturnAddress));
-				int nRewardHeight = GetWhaleStakeSuperblockHeight(ws.MaturityHeight);
+			int nRewardHeight = GetWhaleStakeSuperblockHeight(ws.MaturityHeight);
+
+			if (dPaid == 3 || dPaid == 4)
+				fIncForPayment = nRewardHeight < chainActive.Tip()->nHeight;
+			double nShtPct = 0;
+			bool fInBlock = IsStakeInBlock(nRewardHeight, ws, nShtPct);
+			if (nRewardHeight > 1 && nRewardHeight < 233640)
+			{
+				nShtPct = 0;
+				fInBlock = true;
+			}
+
+			if (dPaid == 4 && !(nShtPct > 0))
+				fIncForPayment = false;
+
+			if (ws.found && fIncForPayment && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK)))
+			{
+				std::string sInBlock = ToYesNo(fInBlock);
+				if (nShtPct > 0)
+					sInBlock += " (-" + RoundToString(nShtPct * 100, 2) + "%)";
+				if (nRewardHeight > chainActive.Tip()->nHeight)
+					sInBlock = "FUTURE";
 				std::string sRow = "Burned: " + RoundToString(ws.Amount, 2) + ", Reward: " + RoundToString(ws.TotalOwed, 2) + ", DWU: " 
 					+ RoundToString(ws.ActualDWU*100, 4) + ", Duration: " + RoundToString(ws.Duration, 0) + ", BurnHeight: " + RoundToString(ws.BurnHeight, 0) 
-					+ ", RewardHeight: " + RoundToString(nRewardHeight, 0) + " [" + RoundToString(ws.MaturityHeight, 0) + "], MaturityDate: " + TimestampToHRDate(ws.MaturityTime) + ", ReturnAddress: " + ws.ReturnAddress;
+					+ ", RewardHeight: " + RoundToString(nRewardHeight, 0) + " [" + RoundToString(ws.MaturityHeight, 0) + "], MaturityDate: " + TimestampToHRDate(ws.MaturityTime) 
+					+ ", ReturnAddress: " + ws.ReturnAddress + ", InBlock: " + sInBlock;
 					std::string sKey = ws.CPK + " " + RoundToString(i+1, 0);
+				if (dPaid == 4)
+				{
+					sRow += ", Impact: " + RoundToString(ws.TotalOwed * nShtPct, 2);
+					dTotalImpact += ws.TotalOwed * nShtPct;
+				}
+				dTotal += ws.Amount;
+
 				// ToDo: Add parameter to show the return_to_address if user desires it
 				results.push_back(Pair(sKey, sRow));
 			}
 		}
 	}
-	results.push_back(Pair("Metrics", "v1.2"));
+	// NOTE:  Rob paid for all anomalies up to block 233640, so we need to cross those off this report for prod.
+	results.push_back(Pair("Metrics", "v1.3"));
 	// Call out for Whale Metrics
 	WhaleMetric wm = GetWhaleMetrics(chainActive.Tip()->nHeight, true);
+	if (dPaid==4)
+	{
+		results.push_back(Pair("Total Impact", dTotalImpact));
+	}
 	if (dAdvanced == 1)
 	{
 		results.push_back(Pair("Total Gross Commitments Due Today", wm.nTotalGrossCommitmentsDueToday));
@@ -1799,7 +1909,8 @@ UniValue dwsquote(const JSONRPCRequest& request)
 	results.push_back(Pair("Total Gross Burns Today", wm.nTotalGrossBurnsToday));
 	
 	results.push_back(Pair("Total Burns Today", wm.nTotalBurnsToday));
-	
+	results.push_back(Pair("Total Burns in Report", dTotal));
+
 	results.push_back(Pair("30 day DWU", RoundToString(GetDWUBasedOnMaturity(30, wm.DWU) * 100, 4)));
 	results.push_back(Pair("90 day DWU", RoundToString(GetDWUBasedOnMaturity(90, wm.DWU) * 100, 4)));
 	results.push_back(Pair("180 day DWU", RoundToString(GetDWUBasedOnMaturity(180, wm.DWU) * 100, 4)));
@@ -1830,8 +1941,6 @@ UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 	bool f8000;
 	bool f9000;
 	bool fTitheBlocksActive;
-	//GetMiningParams(pindexPrev->nHeight, f7000, f8000, f9000, fTitheBlocksActive);
-	//const Consensus::Params& consensusParams = Params().GetConsensus();
 	results.push_back(Pair("blockhash", block.GetHash().GetHex()));
 	results.push_back(Pair("nonce", (uint64_t)block.nNonce));
 	results.push_back(Pair("version", block.nVersion));
@@ -1998,6 +2107,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "bookname",                     &bookname,                      false, {}  },
 	{ "evo",                "books",                        &books,                         false, {}  },
 	{ "evo",                "datalist",                     &datalist,                      false, {}  },
+	{ "evo",                "claimreward",                  &claimreward,                   false, {}  },
 	{ "evo",                "dashpay",                      &dashpay,                       false, {}  },
 	{ "evo",                "dashstakequote",               &dashstakequote,                false, {}  },
 	{ "evo",                "dashstake",                    &dashstake,                     false, {}  },

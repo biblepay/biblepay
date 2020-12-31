@@ -34,6 +34,10 @@ Please read the [depends](../depends/README.md) documentation for more details o
 options. If no host is specified (as in the above example) when calling `make`, the depends system will default to your
 local host system. 
 
+Building RandomX library
+---------------------
+Before you can build Biblepay core, be sure to complile the RandomX library found at src/crypto/RandomX. Instructions can be found [here](https://github.com/biblepay/biblepay/tree/master/src/crypto/RandomX)
+
 Building BiblePay Core
 ---------------------
 

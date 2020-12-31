@@ -76,6 +76,7 @@ public Q_SLOTS:
 
 	/** Switch to Proposal Add Page */
 	void gotoProposalAddPage();
+	void gotoUserEditPage();
 	void gotoProposalListPage();
 
     /** Switch to send coins page */

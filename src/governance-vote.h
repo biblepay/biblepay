@@ -133,7 +133,10 @@ public:
         if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(vchSig);
         }
-		READWRITE(sMultipleChoiceData);
+		if (nTime > 1598918400)
+		{
+			READWRITE(sMultipleChoiceData);
+		}
 
         if (ser_action.ForRead())
             UpdateHash();

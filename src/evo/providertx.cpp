@@ -189,7 +189,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
             return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-key");
         }
 
-        if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight) && pindexPrev->nHeight > consensusParams.DIP0003EnforcementHeight) {
+	    if (pindexPrev->nHeight > Params().GetConsensus().DIP0003EnforcementHeight) {
            if (ptx.keyIDOwner != ptx.keyIDVoting) {
                 return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }
@@ -351,8 +351,7 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
                 return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-key");
             }
         }
-
-        if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
+        if (pindexPrev->nHeight > Params().GetConsensus().DIP0003EnforcementHeight) {
             if (dmn->pdmnState->keyIDOwner != ptx.keyIDVoting) {
                 return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }

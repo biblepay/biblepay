@@ -172,6 +172,7 @@ BITCOIN_CORE_H = \
   rpcpodc.h \
   bbpsocket.h \
   pose.h \
+  smtp.h \
   smartcontract-client.h \
   smartcontract-server.h \
   init.h \
@@ -278,6 +279,8 @@ libbiblepay_server_a_SOURCES = \
   addrman.cpp \
   addrdb.cpp \
   alert.cpp \
+  chat.cpp \
+  email.cpp \
   batchedlogger.cpp \
   bloom.cpp \
   blockencodings.cpp \
@@ -301,6 +304,7 @@ libbiblepay_server_a_SOURCES = \
   rpcpodc.cpp \
   bbpsocket.cpp \
   pose.cpp \
+  smtp.cpp \
   smartcontract-client.cpp \
   smartcontract-server.cpp \
   init.cpp \
@@ -448,6 +452,8 @@ libbiblepay_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 libbiblepay_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbiblepay_consensus_a_SOURCES = \
   amount.h \
+  chat.h \
+  email.h \
   arith_uint256.cpp \
   arith_uint256.h \
   bls/bls.cpp \

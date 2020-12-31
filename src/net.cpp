@@ -2043,6 +2043,11 @@ void CConnman::ThreadOpenAddedConnections()
 		AddNode("dns3." + DOMAIN_NAME);  // Rob
 		AddNode("dns4." + DOMAIN_NAME);  // Rob
 		AddNode("dns5." + DOMAIN_NAME);  // Rob
+
+		AddNode("149.28.254.165:10001");  // Sanc 1
+		AddNode("149.28.254.165:10002");  // Sanc 2
+		AddNode("144.202.66.211:10001");  // Sanc 3
+
 		if (!fProd) 
 		{
 			AddNode("testnet." + DOMAIN_NAME);

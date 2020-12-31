@@ -414,7 +414,7 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
     case TransactionRecord::SendToSelf:
         return tr("Payment to yourself");
 	case TransactionRecord::CPKAssociation:
-		return tr("Christian Public Keypair Association");
+		return tr("Keypair Association");
 	case TransactionRecord::SuperBlockPayment:
 		return tr("Superblock Payment");
 	case TransactionRecord::GSCPayment:

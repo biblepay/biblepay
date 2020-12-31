@@ -186,10 +186,6 @@ void MasternodeList::updateDIP3List()
         }
     }
 
-	double nOrphanBanning = GetSporkDouble("EnableOrphanSanctuaryBanning", 0);
-	bool fConnectivity = POOSOrphanTest("status", 60);
-	bool fPOOSEnabled = nOrphanBanning == 1 && fConnectivity;
-
     mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) {
         if (walletModel && ui->checkBoxMyMasternodesOnly->isChecked()) {
             bool fMyMasternode = setOutpts.count(dmn->collateralOutpoint) ||
@@ -205,16 +201,13 @@ void MasternodeList::updateDIP3List()
         QTableWidgetItem* statusItem = new QTableWidgetItem(mnList.IsMNValid(dmn) ? tr("ENABLED") : (mnList.IsMNPoSeBanned(dmn) ? tr("POSE_BANNED") : tr("UNKNOWN")));
 		int64_t nAdditionalPenalty = 0;
 
-		if (fPOOSEnabled)
+		bool fOK = mapPOOSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()] != 255;
+		if (!fOK)
 		{
-			bool fOK = POOSOrphanTest(dmn->pdmnState->pubKeyOperator.Get().ToString(), 120);
-			if (!fOK)
-			{
-				statusItem = new QTableWidgetItem(tr("POOS_BANNED"));
-				nAdditionalPenalty = 700;
-			}
+			statusItem = new QTableWidgetItem(tr("POOS_BANNED"));
+			nAdditionalPenalty = 700;
 		}
-
+		
         QTableWidgetItem* PoSeScoreItem = new QTableWidgetItem(QString::number(dmn->pdmnState->nPoSePenalty + nAdditionalPenalty));
         QTableWidgetItem* registeredItem = new QTableWidgetItem(QString::number(dmn->pdmnState->nRegisteredHeight));
         QTableWidgetItem* lastPaidItem = new QTableWidgetItem(QString::number(dmn->pdmnState->nLastPaidHeight));

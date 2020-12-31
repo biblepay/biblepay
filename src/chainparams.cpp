@@ -248,10 +248,13 @@ public:
 		consensus.DIP0003Height = 133891;
 		// September 2020 Go-Live (POOS)
 		consensus.POOS_HEIGHT = 217000; // Sept 2020 Mandatory Upgrade height
-		consensus.LLMQHeight = 217200; // The first attempt at llmq quorums that conform to voting out bad quorum members
-		consensus.DIP0003EnforcementHeight = 220000;
-		consensus.DIP0003HeightPhase2 = 220000;
-		consensus.DIP0008Height = 222000;
+		consensus.LLMQHeight = 320000; // The first attempt at llmq quorums that conform to voting out bad quorum members
+		consensus.LLMQHeight2 = 320000;
+		consensus.TRIBULATION_HEIGHT = 260000;
+
+		consensus.DIP0003EnforcementHeight = 320000;
+		consensus.DIP0003HeightPhase2 = 320000;
+		consensus.DIP0008Height = 322000;
 		// End of September 2020 Go-Live (POOS)
 
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 
@@ -261,6 +264,8 @@ public:
 		consensus.FoundationPODSAddress = "BScSypUZVEEY4TMz1ehyyPcS5wrnMM7WPB";
 		consensus.FoundationQTAddress = "BDcNYc8tGXmwD7QmLXbR1rk1qteTDVEjUD";
 		consensus.BurnAddress = "B4T5ciTCkWauSqVAcVKy88ofjcSasUkSYU";
+		consensus.BurnAddressOrphanDonations = "B4YNHuaXAgpbyP5QgM3H6S41AuKcsRCEaB";
+		consensus.BurnAddressWhaleMatches = "B4dey6hqas4JVvfekCkb4jJLcCCevtXcfC";
 
 		consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day
 		consensus.nPowTargetSpacing = 7 * 60; // DAC: 7 minutes
@@ -360,8 +365,8 @@ public:
         fRequireStandard = true;
         fRequireRoutableExternalIP = true;
         fMineBlocksOnDemand = false;
-        fAllowMultipleAddressesFromGroup = false;
-        fAllowMultiplePorts = false;
+        fAllowMultipleAddressesFromGroup = true;
+        fAllowMultiplePorts = true;
 
         nFulfilledRequestExpireTime = 60 * 60; // fulfilled requests expire in 1 hour
         vSporkAddresses = {"BB2BwSbDCqCqNsfc7FgWFJn4sRgnUt4tsM"};
@@ -432,6 +437,8 @@ public:
 		consensus.nInstantSendKeepLock = 6;
 		consensus.nBudgetPaymentsStartBlock = 2002;
 		consensus.QTHeight = 5000;
+		consensus.TRIBULATION_HEIGHT = 250000;
+
 		consensus.nBudgetPaymentsCycleBlocks = 50;
 		consensus.nBudgetPaymentsWindowBlocks = 10;
 		consensus.nSuperblockStartBlock = 4007; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPaymentsStartBlock
@@ -444,6 +451,8 @@ public:
 		consensus.FoundationPODSAddress = "yPrVdc1kFTC19Hx4NMnwEeLFifToUcQGMs";
 		consensus.FoundationQTAddress = "ygGKQR4bYwjGaEnX8KCyzEJhht4paYCiuo";
 		consensus.BurnAddress = "yLKSrCjLQFsfVgX8RjdctZ797d54atPjnV";
+		consensus.BurnAddressOrphanDonations = "yLQjXPrepS7N2E7NVbLvrrMUYux6d8kkD8";
+		consensus.BurnAddressWhaleMatches = "yLW2CayyEcM4YmhcZT4Eq9bozCq8griKNa";
 
 		consensus.nDCCSuperblockStartBlock = 4504; 
         consensus.nDCCSuperblockCycle = BLOCKS_PER_DAY; // Daily
@@ -566,7 +575,7 @@ public:
         fRequireStandard = false;
         fRequireRoutableExternalIP = true;
         fMineBlocksOnDemand = false;
-        fAllowMultipleAddressesFromGroup = false;
+        fAllowMultipleAddressesFromGroup = true;
         fAllowMultiplePorts = true;
 
         nPoolMinParticipants = 3;

@@ -61,13 +61,12 @@ std::string CActiveMasternodeManager::GetStatus() const
 
 void CActiveMasternodeManager::Init()
 {
-    LOCK(cs_main);
-
+    
     if (!fMasternodeMode) return;
+	LOCK(cs_main);
 
-	// R Andrews:  We need to discuss this Devs; This logic seems faulty.  If Dip3 is not enforced, we lose the ability to bring the sanc online with an ipv4 address here.
-	if (false) 
-		if (!deterministicMNManager->IsDIP3Enforced()) return;
+	if (chainActive.Tip()->nHeight < Params().GetConsensus().DIP0003Height)
+		return;
 
     // Check that our local network configuration is correct
     if (!fListen) {
@@ -135,7 +134,8 @@ void CActiveMasternodeManager::UpdatedBlockTip(const CBlockIndex* pindexNew, con
 
     if (!fMasternodeMode) return;
 
-    if (!deterministicMNManager->IsDIP3Enforced(pindexNew->nHeight)) return;
+	if (pindexNew->nHeight < Params().GetConsensus().LLMQHeight)
+		return;
 
     if (state == MASTERNODE_READY) {
         auto oldMNList = deterministicMNManager->GetListForBlock(pindexNew->pprev);

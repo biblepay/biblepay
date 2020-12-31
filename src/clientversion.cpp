@@ -17,7 +17,7 @@ const std::string CLIENT_NAME("BiblePay Core");
 
 const int BIBLEPAY_VERSION_MAJOR = 1;
 const int BIBLEPAY_VERSION_MINOR = 5;
-const int BIBLEPAY_VERSION_REVISION = 2;
+const int BIBLEPAY_VERSION_REVISION = 3;
 const int BIBLEPAY_VERSION_BUILD = 1;
 
 

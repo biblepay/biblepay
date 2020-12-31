@@ -15,6 +15,8 @@
 #include "net.h"
 #include "net_processing.h"
 #include "primitives/block.h"
+#include "spork.h"
+
 #include "validation.h"
 
 namespace llmq
@@ -48,7 +50,7 @@ void CQuorumBlockProcessor::ProcessMessage(CNode* pfrom, const std::string& strC
 
         if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)qc.llmqType)) {
             LOCK(cs_main);
-            LogPrintf("llmq""CQuorumBlockProcessor::%s -- invalid commitment type %d from peer=%d\n", __func__,
+            LogPrintf("llmq::CQuorumBlockProcessor::%s -- invalid commitment type %d from peer=%d\n", __func__,
                     qc.llmqType, pfrom->id);
             Misbehaving(pfrom->id, 100);
             return;
@@ -180,8 +182,9 @@ static std::tuple<std::string, uint8_t, uint32_t> BuildInversedHeightKey(Consens
 bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockHash, const CFinalCommitment& qc, CValidationState& state)
 {
     auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.llmqType);
-	bool fLLMQActive = nHeight >= Params().GetConsensus().LLMQHeight;
-	if (!fLLMQActive) 
+	bool fLLMQActive = nHeight >= Params().GetConsensus().LLMQHeight - 1;
+	bool fLLMQDisabled = sporkManager.GetSporkValue(SPORK_31_GSC_BUFFER) > 255 && sporkManager.GetSporkValue(SPORK_31_GSC_BUFFER) < 512;
+	if (fLLMQDisabled || !fLLMQActive) 
 		return true;
 
     uint256 quorumHash = GetQuorumBlockHash((Consensus::LLMQType)qc.llmqType, nHeight);
@@ -211,9 +214,16 @@ bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockH
 
     auto quorumIndex = mapBlockIndex.at(qc.quorumHash);
     auto members = CLLMQUtils::GetAllQuorumMembers(params.type, quorumIndex);
+	bool fLLMQActive2 = nHeight >= Params().GetConsensus().LLMQHeight + 100000;
+	// R Andrews:  Hypothesis:  I believe what is happening here, is in POOS we are flagging one of the 700 (POOS-ban-level) sanctuaries, at the llmq-session level, with a bad signature (our method of POOS banning), and this is resulting in a bool false for the Quorum verify.
+	// For now, lets not ddos the node for this, but instead ensure the LLMQ quorums are valid themselves.
+	// We will investigate this situation in testnet for our next mandatory.  For now it appears we can work around this by ensuring the actual quorum integrity (and bump version).
 
     if (!qc.Verify(members, true)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
+		if (fLLMQActive2)
+		{
+			return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
+		}
     }
 
     // Store commitment in DB

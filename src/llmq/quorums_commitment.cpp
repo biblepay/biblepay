@@ -6,6 +6,7 @@
 #include "quorums_utils.h"
 
 #include "chainparams.h"
+#include "spork.h"
 #include "validation.h"
 
 #include "evo/specialtx.h"
@@ -157,11 +158,11 @@ void CFinalCommitmentTxPayload::ToJson(UniValue& obj) const
 
 bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
-
-	bool fLLMQActive = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
-	if (!fLLMQActive) 
+	bool fLLMQActive = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight - 1;
+	bool fLLMQDisabled = sporkManager.GetSporkValue(SPORK_31_GSC_BUFFER) > 255 && sporkManager.GetSporkValue(SPORK_31_GSC_BUFFER) < 512;
+	if (fLLMQDisabled || !fLLMQActive)
 		return true;
-	
+
     CFinalCommitmentTxPayload qcTx;
     if (!GetTxPayload(tx, qcTx)) {
         return state.DoS(100, false, REJECT_INVALID, "bad-qc-payload");
@@ -187,9 +188,10 @@ bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, 
     }
 
     if (!Params().GetConsensus().llmqs.count((Consensus::LLMQType)qcTx.commitment.llmqType)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-qc-type");
+			return state.DoS(100, false, REJECT_INVALID, "bad-qc-type");
     }
     const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)qcTx.commitment.llmqType);
+	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight + 100000;
 
     if (qcTx.commitment.IsNull()) {
         if (!qcTx.commitment.VerifyNull()) {
@@ -200,7 +202,10 @@ bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, 
 
     auto members = CLLMQUtils::GetAllQuorumMembers(params.type, pindexQuorum);
     if (!qcTx.commitment.Verify(members, false)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
+		if (fLLMQActive2)
+		{
+			return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
+		}
     }
 
     return true;

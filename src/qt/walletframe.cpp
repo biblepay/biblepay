@@ -151,6 +151,14 @@ void WalletFrame::gotoProposalAddPage()
         i.value()->gotoProposalAddPage();
 }
 
+void WalletFrame::gotoUserEditPage()
+{
+    QMap<QString, WalletView*>::const_iterator i;
+    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
+        i.value()->gotoUserEditPage();
+}
+
+
 void WalletFrame::gotoReceiveCoinsPage()
 {
     QMap<QString, WalletView*>::const_iterator i;

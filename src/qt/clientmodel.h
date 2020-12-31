@@ -114,6 +114,8 @@ private:
 
 Q_SIGNALS:
     void numConnectionsChanged(int count);
+	void chatEvent(QString sMessage);
+
     void masternodeListChanged() const;
     void numBlocksChanged(int count, const QDateTime& blockDate, double nVerificationProgress, bool header);
     void additionalDataSyncProgressChanged(double nSyncProgress);
@@ -132,6 +134,7 @@ Q_SIGNALS:
 public Q_SLOTS:
     void updateTimer();
     void updateNumConnections(int numConnections);
+	void updateChatEvent(QString sMessage);
     void updateNetworkActive(bool networkActive);
     void updateAlert(const QString &hash, int status);
     void updateBanlist();

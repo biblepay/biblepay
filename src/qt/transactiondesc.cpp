@@ -140,7 +140,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
 	}
 	else if (wtx.tx->IsCPKAssociation())
 	{
-	     strHTML += "<b>" + tr("Source") + ":</b> " + tr("Christian-Keypair-Association") + "<br>";
+	     strHTML += "<b>" + tr("Source") + ":</b> " + tr("Keypair-Association") + "<br>";
 	}
 	else if (wtx.tx->IsABN())
 	{

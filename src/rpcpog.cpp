@@ -9,6 +9,7 @@
 #include "rpcpodc.h"
 #include "init.h"
 #include "bbpsocket.h"
+#include "chat.h"
 #include "activemasternode.h"
 #include "governance-classes.h"
 #include "governance.h"
@@ -689,8 +690,24 @@ bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nV
     std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
 	bool fForce = false;
-    CRecipient recipient = {scriptPubKey, nValue, fForce, fSubtractFeeFromAmount};
-	vecSend.push_back(recipient);
+	// BiblePay - Handle extremely large data transactions:
+	if (sOptionalData.length() > 3000 && nValue > 0)
+	{
+		double nReq = ceil(sOptionalData.length() / 3000);
+		double n1 = (double)nValue / COIN;
+		double n2 = n1 / nReq;
+		for (int n3 = 0; n3 < nReq; n3++)
+		{
+			CAmount indAmt = n2 * COIN;
+			CRecipient recipient = {scriptPubKey, indAmt, fForce, fSubtractFeeFromAmount};
+			vecSend.push_back(recipient);
+		}
+	}
+	else
+	{
+		CRecipient recipient = {scriptPubKey, nValue, fForce, fSubtractFeeFromAmount};
+		vecSend.push_back(recipient);
+	}
 	
     int nMinConfirms = 0;
     if (!pwalletMain->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError, NULL, true, ONLY_NONDENOMINATED, fUseInstantSend, 0, sOptionalData)) 
@@ -1114,6 +1131,16 @@ std::string GetIPFromAddress(std::string sAddress)
 	return vAddr[0];
 }
 
+void SendChat(CChat chat)
+{
+   int nSent = 0;
+   g_connman->ForEachNode([&chat, &nSent](CNode* pnode) {
+		chat.RelayTo(pnode, *g_connman);
+   });
+
+   chat.ProcessChat();
+}
+
 bool SubmitProposalToNetwork(uint256 txidFee, int64_t nStartTime, std::string sHex, std::string& sError, std::string& out_sGovObj)
 {
 	if(!masternodeSync.IsBlockchainSynced()) 
@@ -1308,7 +1335,7 @@ UniValue ContributionReport()
 						}
 					 }
 				 }
-		  		 double nBudget = CSuperblock::GetPaymentsLimit(ii, false) / COIN;
+		  		 double nBudget = CSuperblock::GetPaymentsLimit(ii, block.GetBlockTime(), false) / COIN;
 				 if (iProcessedBlocks >= (BLOCKS_PER_DAY*7) || (ii == nMaxDepth-1) || (nBudget > 5000000))
 				 {
 					 iProcessedBlocks = 0;
@@ -1343,7 +1370,10 @@ void SerializePrayersToFile(int nHeight)
 		if (!bSkip)
 		{
 			std::string sRow = RoundToString(nTimestamp, 0) + "<colprayer>" + RoundToString(nHeight, 0) + "<colprayer>" + ii.first.first + ";" 
-				+ ii.first.second + "<colprayer>" + sValue + "<rowprayer>\r\n";
+				+ ii.first.second + "<colprayer>" + sValue + "<rowprayer>";
+			sRow = strReplace(sRow, "\r", "[~r]");
+			sRow = strReplace(sRow, "\n", "[~n]");
+			sRow += "\r\n";
 			fputs(sRow.c_str(), outFile);
 		}
 	}
@@ -1366,6 +1396,9 @@ int DeserializePrayersFromFile()
 	int iRows = 0;
     while(std::getline(streamIn, line))
     {
+		line = strReplace(line, "[~r]", "\r");
+		line = strReplace(line, "[~n]", "\n");
+		
 		std::vector<std::string> vRows = Split(line.c_str(),"<rowprayer>");
 		for (int i = 0; i < (int)vRows.size(); i++)
 		{
@@ -1570,21 +1603,27 @@ TxMessage GetTxMessage(std::string sMessage, int64_t nTime, int iPosition, std::
 		{
 			std::string sKey = ExtractXML(vInput[i], "<SPORKKEY>", "</SPORKKEY>");
 			std::string sValue = ExtractXML(vInput[i], "<SPORKVAL>", "</SPORKVAL>");
-			if (!sKey.empty() && !sValue.empty())
+			std::string sSporkType = ExtractXML(vInput[i], "<SPORKTYPE>", "</SPORKTYPE>");
+
+			if (!sKey.empty() && !sValue.empty() && !sSporkType.empty())
 			{
-				WriteCache("spork", sKey, sValue, t.nTime);
-				// If this is the Delete action, physically delete the PDF from the SAN:
-				if (sKey == "REMOVAL" && Contains(sValue, "pdf"))
+				if (sSporkType == "XSPORK-ORPHAN" || sSporkType == "XSPORK-CHARITY")
 				{
-					WriteCache("REMOVAL", sValue, "1", t.nTime);
-					std::string sPath = GetSANDirectory2() + sValue;
-					if (boost::filesystem::exists(sPath))
-						 boost::filesystem::remove(sPath);
-	   
+					WriteCache(sSporkType, sKey, sValue, t.nTime);
+				}
+				else if (sSporkType == "SPORK")
+				{
+					WriteCache("spork", sKey, sValue, t.nTime);
 				}
 			}
 		}
 		t.sMessageValue = "";
+	}
+	else if ((t.sMessageType == "XSPORK-ORPHAN" || t.sMessageType == "XSPORK-CHARITY") && !fGSC)
+	{
+		t.fSporkSigValid = CheckSporkSig(t);                                                                                                                                                                                                                 
+		if (!t.fSporkSigValid) t.sMessageValue  = "";
+		t.fPassedSecurityCheck = t.fSporkSigValid;
 	}
 	else if (t.sMessageType == "SPORK")
 	{
@@ -1639,6 +1678,9 @@ TxMessage GetTxMessage(std::string sMessage, int64_t nTime, int iPosition, std::
 	}
 	else if (t.sMessageType == "DCC" || Contains(t.sMessageType, "CPK"))
 	{
+		if (false)
+			LogPrintf("\ncpktype %s, %s, %s ", t.sMessageType, sMessage, t.sMessageValue);
+
 		// These now have a security hash on each record and are checked individually using CheckStakeSignature
 		t.fPassedSecurityCheck = true;
 	}
@@ -1789,6 +1831,17 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 						{
 							WriteCache("dash-burn", block.vtx[n]->GetHash().GetHex(), sDashStake, GetAdjustedTime());
 						}
+					}
+					else if (sPK == consensusParams.BurnAddressOrphanDonations)
+					{
+						std::string sRow = "<height>" + RoundToString(pindex->nHeight, 0) + "</height><amount>" + RoundToString(dAmount, 2) + "</amount>";
+						WriteCache("dac-donation", block.vtx[n]->GetHash().GetHex(), sRow, GetAdjustedTime());
+
+					}
+					else if (sPK == consensusParams.BurnAddressWhaleMatches)
+					{
+						std::string sRow = "<height>" + RoundToString(pindex->nHeight, 0) + "</height><amount>" + RoundToString(dAmount, 2) + "</amount>";
+						WriteCache("dac-whalematch", block.vtx[n]->GetHash().GetHex(), sRow, GetAdjustedTime());
 					}
 					// For Coin-Age voting:  This vote cannot be falsified because we require the user to vote with coin-age (they send the stake back to their own address):
 					std::string sGobjectID = ExtractXML(sPrayer, "<gobject>", "</gobject>");
@@ -2076,6 +2129,8 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 		{
 			if (!TargetFileName.empty())
 				OutFile.close();
+			BIO_free_all(bio);
+
 			return "<ERROR>CTX_IS_NULL</ERROR>";
 		}
 		bio = BIO_new_ssl_connect(ctx);
@@ -2094,7 +2149,10 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 			LogPrintf("Connecting to %s", sDomainWithPort.c_str());
 		int nRet = 0;
 		if (sDomain.empty()) 
+		{
+			BIO_free_all(bio);
 			return "<ERROR>DOMAIN_MISSING</ERROR>";
+		}
 		
 		nRet = BIO_do_connect(bio);
 		if (nRet <= 0)
@@ -2103,6 +2161,7 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 				LogPrintf("Failed connection to %s ", sDomainWithPort);
 			if (!TargetFileName.empty())
 				OutFile.close();
+			BIO_free_all(bio);
 
 			return "<ERROR>Failed connection to " + sDomainWithPort + "</ERROR>";
 		}
@@ -2117,6 +2176,7 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 		{
 			if (!TargetFileName.empty())
 				OutFile.close();
+			BIO_free_all(bio);
 
 			return "<ERROR>FAILED_HTTPS_POST</ERROR>";
 		}
@@ -2305,7 +2365,8 @@ bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickNa
  	if (sProjectId == "cpk-bmsuser")
 	{
 		sCPK = DefaultRecAddress("PUBLIC-FUNDING-ADDRESS");
-		bool fExists = NickNameExists(sProjectId, sNickName);
+		bool fMine = false;
+		bool fExists = NickNameExists(sProjectId, sNickName, fMine);
 		if (fExists && false) 
 		{
 			sError = "Sorry, BMS Nick Name is already taken.";
@@ -2316,8 +2377,9 @@ bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickNa
 	{
 		if (!sNickName.empty())
 		{
-			bool fExists = NickNameExists("cpk", sNickName);
-			if (fExists) 
+			bool fIsMine;
+			bool fExists = NickNameExists("cpk", sNickName, fIsMine);
+			if (fExists && !fIsMine) 
 			{
 				sError = "Sorry, NickName is already taken.";
 				return false;
@@ -2389,7 +2451,7 @@ bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickNa
 
 	std::string sExtraGscPayload = "<gscsig>" + sSignature + "</gscsig><abncpk>" + sCPK + "</abncpk><abnmsg>" + sMsg + "</abnmsg>";
 	sError = std::string();
-	std::string sResult = SendBlockchainMessage(sProjectId, sCPK, sData, nFee/COIN, false, sExtraGscPayload, sError);
+	std::string sResult = SendBlockchainMessage(sProjectId, sCPK, sData, nFee/COIN, 0, sExtraGscPayload, sError);
 	if (!sError.empty())
 	{
 		return false;
@@ -2642,7 +2704,7 @@ std::string GetPOGBusinessObjectList(std::string sType, std::string sFields)
 	int iNextSuperblock = 0;
 	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
     std::string sData;  
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, false);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, 0, false);
 	nPaymentsLimit -= MAX_BLOCK_SUBSIDY * COIN;
 		
 	std::string sContract = GetGSCContract(iNextSuperblock, false);
@@ -3253,6 +3315,42 @@ std::string GetResDataBySearch(std::string sSearch)
 	return "";
 }
 
+UserRecord GetUserRecord(std::string sSourceCPK)
+{
+	UserRecord u;
+	u.NickName = "N/A";
+	u.Found = false;
+	for (auto ii : mvApplicationCache) 
+	{
+		if (ii.first.first == "CPK")
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[std::make_pair(ii.first.first, ii.first.second)];
+			std::string sValue = v.first;
+			std::string sCPK = GetResElement(sValue, 0);
+			std::string sNickName = GetResElement(sValue, 1);
+			if (boost::iequals(sCPK, sSourceCPK) || boost::iequals(sSourceCPK, sNickName))
+			{
+				// DeSerialize
+				UserRecord u;
+				u.CPK = GetResElement(sValue, 0);
+				u.NickName = GetResElement(sValue, 1);
+				u.ExternalEmail = GetResElement(sValue, 5);
+				// 6=VendorType(User)
+				u.URL = GetResElement(sValue, 7);
+				u.InternalEmail = u.NickName + "@biblepay.core";
+				u.Longitude = GetResElement(sValue, 9);
+				u.Latitude = GetResElement(sValue, 10);
+				u.RSAPublicKey = GetResElement(sValue, 11);
+				u.AuthorizePayments = (int)cdbl(GetResElement(sValue, 12), 0);
+				u.Found = true;
+				//LogPrintf("\r\n user record for %s, %s, %s, %s", u.NickName, u.ExternalEmail, u.RSAPublicKey, u.Longitude);
+				return u;
+			}
+		}
+	}
+	return u;
+}
+
 int GetWCGIdByCPID(std::string sSearch)
 {
 	std::string sResData = GetResDataBySearch(sSearch);
@@ -3606,7 +3704,8 @@ std::vector<WhaleStake> GetDWS(bool fIncludeMemoryPool)
 			if (fGot)
 			{
 				WhaleStake w = GetWhaleStake(tx1);
-				if (w.found && w.RewardAmount > 0 && w.Amount > 0 && w.ActualDWU > 0)
+				bool fIgnore = w.paid && w.Amount < 1000;
+				if (!fIgnore && w.found && w.RewardAmount > 0 && w.Amount > 0 && w.ActualDWU > 0)
 				{
 					wStakes.push_back(w);
 					if (fDebugSpam)
@@ -3656,9 +3755,14 @@ CAmount GetAnnualDWSReward(int nHeight, int nType)
 	else if (nHeight > consensusParams.POOM_PHASEOUT_HEIGHT)
 	{
 		nDWS = nTotal * .64;
+		// ToDo: Change Scale to 2 - when we add a new coin
 		double nDWSFactor = GetSporkDouble("DWSFactor"+ RoundToString(nType, 0), 0);
 		if (nDWSFactor > 0 && nDWSFactor < .99)
 			nDWS = nDWSFactor;
+	}
+	else if (nHeight > consensusParams.TRIBULATION_HEIGHT)
+	{
+		nDWS = nTotal * .77;
 	}
 
 	return nDWS;
@@ -3828,6 +3932,17 @@ WhaleMetric GetWhaleMetrics(int nHeight, bool fIncludeMemoryPool)
 	if (m.nSaturationPercentAnnual > .99)
 		m.DWU = 0;
 
+	if (nHeight > consensusParams.TRIBULATION_HEIGHT)
+	{
+		// Give the users a minimum constant return, instead of turning them away:
+		if (m.DWU < .05)
+			m.DWU = .05;
+		double nDWSFactor = GetSporkDouble("DWSDisable", 0);
+		// If we ever need to turn off DWS, set the spork to 86.
+		if (nDWSFactor == 86)
+			m.DWU = 0;
+	}
+
 	return m;
 }
 
@@ -3857,6 +3972,8 @@ std::vector<WhaleStake> GetPayableWhaleStakes(int nHeight, double& nOwed)
 			}
 		}
 	}
+	// Moved to GetDacDonationTotals - Now we check the actual totals with AssessBlocks, and if the amount is too high the entire block is rejected.
+	/*
 	// This should not technically ever happen, but, nevertheless lets do this just so we can add anti-hard-fork rules for DWS (and for extra safety)
 	if (nOwed > MAX_DAILY_WHALE_COMMITMENTS)
 	{
@@ -3868,6 +3985,8 @@ std::vector<WhaleStake> GetPayableWhaleStakes(int nHeight, double& nOwed)
 			wReturnStakes[i].TotalOwed = cdbl(RoundToString(wReturnStakes[i].TotalOwed, 0) + ".1527", 4);
 		}
 	}
+	*/
+
 	return wReturnStakes;
 }
 
@@ -3906,6 +4025,36 @@ std::vector<DashStake> GetPayableDashStakes(int nHeight, double& nOwed)
 	return wReturnStakes;
 }
 
+bool VerifyDACDonation(CTransactionRef tx, std::string& sError)
+{
+	LogPrintf("\n%f", 8071);
+
+	double nToday = GetDACDonationsByRange(chainActive.Tip()->nHeight - BLOCKS_PER_DAY, BLOCKS_PER_DAY);
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+
+	CAmount nTotal = 0;
+	for (unsigned int i = 0; i < tx->vout.size(); i++)
+	{
+		std::string sPK = PubKeyToAddress(tx->vout[i].scriptPubKey);
+		if (sPK == consensusParams.BurnAddressOrphanDonations || sPK == consensusParams.BurnAddressWhaleMatches)
+		{
+			nTotal += tx->vout[i].nValue;
+		}
+	}
+		LogPrintf("\n%f", 8072);
+
+	// They want to donate nTotal... Verify it is not higher than
+	if (( (nTotal/COIN) + nToday) > MAX_DAILY_DAC_DONATIONS)
+	{
+		sError = "Total DAC Donations exceeded " + RoundToString(nToday, 2) + ".  ";
+		return false;
+	}
+		LogPrintf("\n%f", 8073);
+
+	return true;
+}
+
+
 bool VerifyDynamicWhaleStake(CTransactionRef tx, std::string& sError)
 {
     std::string sXML = tx->GetTxMessage();
@@ -3917,17 +4066,16 @@ bool VerifyDynamicWhaleStake(CTransactionRef tx, std::string& sError)
 	if (!w.found)
 		return true;
 
-	// Verify the bounds (TODO: Before prod, change this to 7)
 	if (w.Duration < 7 || w.Duration > 365)
 	{
 		LogPrintf("\nVerifyDynamicWhaleStake::REJECTED, Duration out of bounds. %f", w.Duration);
 		sError = "Duration out of bounds.";
 		return false;
 	}
-	if (w.Amount < 100 || w.Amount > 1000000)
+	if (w.Amount < 100000 || w.Amount > 2000001)
 	{
 		LogPrintf("\nVerifyDynamicWhaleStake::REJECTED, Amount out of bounds. %f", w.Amount);
-		sError = "Amount out of bounds.";
+		sError = "Amount must be between 100K and 2MM.";
 		return false;
 	}
 
@@ -4027,7 +4175,7 @@ bool VerifyDashStake(CTransactionRef tx, std::string& sError)
 		return true;
 
 	// Verify the bounds 
-	if (w.Duration < 90 || w.Duration > 270)
+	if (w.Duration < 150 || w.Duration > 200)
 	{
 		LogPrintf("\nVerifyDashStake::REJECTED, Duration out of bounds. %f", w.Duration);
 		sError = "Duration out of bounds.";
@@ -4039,6 +4187,13 @@ bool VerifyDashStake(CTransactionRef tx, std::string& sError)
 	{
 		sError = "Sorry, this feature is not enabled yet.";
 		LogPrintf("VerifyDashStake::%s", sError);
+		return false;
+	}
+
+	if (w.nBBPAmount < 1000*COIN || w.nBBPAmount > 10000000*COIN)
+	{
+		LogPrintf("\nVerifyDashStake::REJECTED, Amount out of bounds.  Amount=%f\r\n", (double)w.nBBPAmount/COIN);
+		sError = "Amount out of bounds.";
 		return false;
 	}
 
@@ -4146,7 +4301,7 @@ bool VerifyDashStake(CTransactionRef tx, std::string& sError)
 		return false;
 	}
 
-	double nMinimumAcceptableStake = GetSporkDouble("MinimumAcceptableStakeAmount", .10);
+	double nMinimumAcceptableStake = GetSporkDouble("MinimumAcceptableStakeAmount", .25);
 	if (nBBPValueUSD < nMinimumAcceptableStake)
 	{
 		sError = "Sorry, the dash stake must be worth more than $1 USD.";
@@ -4486,19 +4641,9 @@ std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string s
 
 bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout)
 {
-	std::string sCacheOK = ReadCacheWithMaxAge("poosorphantest", sSanctuaryPubKey, nTimeout);
-	if (!sCacheOK.empty())
-	{
-		bool fCacheOK = Contains(sCacheOK, "OK");
-		return fCacheOK;
-	}
 	std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sSanctuaryPubKey);
 	std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 25, 1);
 	std::string sOK = ExtractXML(sResponse, "Status:", "\r\n");
-	if (!sOK.empty())
-	{
-		WriteCache("poosorphantest", sSanctuaryPubKey, sOK, GetAdjustedTime());
-	}
 	bool fOK = Contains(sOK, "OK");
 	return fOK;
 }
@@ -4527,7 +4672,7 @@ bool ApproveSanctuaryRevivalTransaction(CTransaction tx)
 		{
 			return true;
 		}
-		bool fPoosValid = POOSOrphanTest(dmn->pdmnState->pubKeyOperator.Get().ToString(), 30);
+		bool fPoosValid = mapPOOSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()] == 1;
 		LogPrintf("\nApproveSanctuaryRevivalTx TXID=%s, Op=%s, Approved=%f ", tx.GetHash().GetHex(), dmn->pdmnState->pubKeyOperator.Get().ToString(), (double)fPoosValid);
 		return fPoosValid;
 	}
@@ -5023,7 +5168,7 @@ std::string GetHowey(bool fRPC, bool fBurn)
 	else
 	{
 		sAction = "STAKE";
-		sAction = "STAKING";
+		sAction2 = "STAKING";
 	}
 
 	std::string sHowey = "By " + sPrefix + " you agree to the following conditions:"
@@ -5108,6 +5253,38 @@ bool VerifyDashStakeSignature(std::string sAddress, std::string sUTXO, std::stri
 
 }
 
+bool VerifyNonstandardSignature(std::string sAddress, std::string sTargMsg, std::string sSig, int nKeyType)
+{
+	if (sAddress.empty() || sSig.empty() || sTargMsg.empty())
+		return false;
+
+	CBitcoinAddress addr(sAddress);
+	CKeyID keyID;
+    // BBP-PROD=25, Dash-Prod=76
+
+	// Address does not refer to a key
+	if (!addr.GetNonStandardKeyID(keyID, nKeyType))
+		return false;
+
+	bool fInvalid = false;
+	std::vector<unsigned char> vchSig2 = DecodeBase64(sSig.c_str(), &fInvalid);
+
+	// Bad signature format
+	if (fInvalid)
+		return false;
+
+	CHashWriter ss2(SER_GETHASH, 0);
+	ss2 << strMessageMagic;
+	ss2 << sTargMsg;
+
+	CPubKey pubkey;
+	
+	if (!pubkey.RecoverCompact(ss2.GetHash(), vchSig2))
+		return false;
+
+	bool fGood = (pubkey.GetID() == keyID);
+	return fGood;
+}
 
 bool SendDashStake(std::string sReturnAddress, std::string& sTXID, std::string& sError, std::string sBBPUTXO, std::string sDashUTXO, std::string sBBPSig, std::string sDashSig, 
 	double nDuration, std::string sCPK, bool fDryRun, DashStake& out_dashstake)
@@ -5233,7 +5410,6 @@ bool SendDWS(std::string& sTXID, std::string& sError, std::string sReturnAddress
 		return false;
 	}
 
-
 	CBitcoinAddress returnAddress(sReturnAddress);
 	if (!returnAddress.IsValid())
 	{
@@ -5272,9 +5448,10 @@ bool SendDWS(std::string& sTXID, std::string& sError, std::string sReturnAddress
 	CAmount nSend = nAmt * COIN;
 	CRecipient recipientDryRun = {scriptDryRun, nSend, false, fSubtractFee};
 	vecDryRun.push_back(recipientDryRun);
-	double dMinCoinAge = 1;
+	double dMinCoinAge = 0;
 	CAmount nFeeRequired = 0;
 	CReserveKey reserveKey(pwalletMain);
+	//ONLY_NONDENOMINATED
 	bool fSent = pwalletMain->CreateTransaction(vecDryRun, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, NULL, true, 
 				ALL_COINS, fInstantSend, 0, sPayload, dMinCoinAge, 0, 0, "");
 	if (!fSent)
@@ -5446,6 +5623,71 @@ void LockDashStakes()
 	}
 }
 
+RSAKey GetMyRSAKey()
+{
+	std::string sPubPath =  GetSANDirectory2() + "pubkey.pub";
+	std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
+	int64_t nPub = GETFILESIZE(sPubPath);
+	int64_t nPriv = GETFILESIZE(sPrivPath);
+	RSAKey RSA;
+	RSA.Valid = false;
+
+	if (nPub <= 0 || nPriv <= 0)
+	{
+		int i = RSA_GENERATE_KEYPAIR(sPubPath, sPrivPath);
+		if (i != 1)
+		{
+			RSA.Error = "Unable to generate new keypair";
+			return RSA;
+		}
+	}
+
+	std::vector<char> bPub = ReadAllBytesFromFile(sPubPath.c_str());
+	std::vector<char> bPriv = ReadAllBytesFromFile(sPrivPath.c_str());
+	if (bPub.size() < 400 || bPriv.size() < 1700)
+	{
+		RSA.Error = "Public key or private key corrupted.";
+		return RSA;
+	}
+	RSA.PublicKey = std::string(bPub.begin(), bPub.end());
+	RSA.PrivateKey = std::string (bPriv.begin(), bPriv.end());
+	RSA.Valid = true;
+	return RSA;
+}
+
+RSAKey GetTestRSAKey()
+{
+	// Note:  We can remove this function once we go to prod.  This just lets the devs test a prod RSA key against a second prod RSA key (simulating user->user encrypted traffic).
+	std::string sPubPath =  GetSANDirectory2() + "pubkeytest.pub";
+	std::string sPrivPath = GetSANDirectory2() + "privkeytest.priv";
+	int64_t nPub = GETFILESIZE(sPubPath);
+	int64_t nPriv = GETFILESIZE(sPrivPath);
+	RSAKey RSA;
+	RSA.Valid = false;
+
+	if (nPub <= 0 || nPriv <= 0)
+	{
+		int i = RSA_GENERATE_KEYPAIR(sPubPath, sPrivPath);
+		if (i != 1)
+		{
+			RSA.Error = "Unable to generate new keypair";
+			return RSA;
+		}
+	}
+
+	std::vector<char> bPub = ReadAllBytesFromFile(sPubPath.c_str());
+	std::vector<char> bPriv = ReadAllBytesFromFile(sPrivPath.c_str());
+	if (bPub.size() < 400 || bPriv.size() < 1700)
+	{
+		RSA.Error = "Public key or private key corrupted.";
+		return RSA;
+	}
+	RSA.PublicKey = std::string(bPub.begin(), bPub.end());
+	RSA.PrivateKey = std::string (bPriv.begin(), bPriv.end());
+	RSA.Valid = true;
+	return RSA;
+}
+
 DashStake GetDashStakeByUTXO(std::string sDashStake)
 {
 	std::vector<DashStake> wStakes = GetDashStakes(true);
@@ -5458,3 +5700,129 @@ DashStake GetDashStakeByUTXO(std::string sDashStake)
 	}
 	return e;
 }
+
+std::string Mid(std::string data, int nStart, int nLength)
+{
+	// Ported from VB6
+	if (nStart > data.length())
+	{
+		return std::string();
+	}
+	int nNewLength = nLength;
+	int nEndPos = nLength + nStart;
+	if (nEndPos > data.length())
+	{
+		nNewLength = data.length() - nStart;
+	}
+	std::string sOut = data.substr(nStart, nNewLength);
+	return sOut;
+}
+
+void SendEmail(CEmail email)
+{
+   int nSent = 0;
+   g_connman->ForEachNode([&email, &nSent](CNode* pnode) {
+		email.RelayTo(pnode, *g_connman);
+   });
+
+   email.ProcessEmail();
+}
+
+bool PayEmailFees(CEmail email)
+{
+	// This gets called when the user authorizes biblepay to pay the network fees to forward (and store) a new e-mail for 30 days.
+	std::string sError;
+	std::string sExtraData;
+	std::string sData = "<email>" + email.GetHash().GetHex() + "</email><size>" 
+		+ RoundToString(email.Body.length(), 0) + "</size><from>" + email.FromEmail
+		+ "</from><to>" + email.ToEmail + "</to>";
+	double nAmount = email.Body.length() * .025;
+	if (nAmount < 100)
+		nAmount = 100;
+	std::string sResult = SendBlockchainMessage("EMAIL", email.GetHash().GetHex(), sData, nAmount, 2, sExtraData, sError);
+	LogPrintf("\nSMTP::PayEmailFees Sending Email with transport fee %f %s %s", nAmount, sResult, sError);
+
+	bool fValid = sError.empty() && !sResult.empty();
+	return fValid;
+}
+
+
+std::string GetSANDirectory4()
+{
+	 boost::filesystem::path pathConfigFile(GetArg("-conf", GetConfFileName()));
+     if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
+	 boost::filesystem::path dir = pathConfigFile.parent_path();
+	 std::string sDir = dir.string() + "/SAN/";
+	 boost::filesystem::path pathSAN(sDir);
+	 if (!boost::filesystem::exists(pathSAN))
+	 {
+		 boost::filesystem::create_directory(pathSAN);
+	 }
+	 return sDir;
+}
+
+std::vector<unsigned char> ReadUnsignedBytesFromFile(char const* filename)
+{
+    FILE * file = fopen(filename, "r+");
+	if (file == NULL) 
+	{
+		std::vector<unsigned char> r;
+		return r;
+	}
+	fseek(file, 0, SEEK_END);
+	long int size = ftell(file);
+	fclose(file);
+	file = fopen(filename, "r+");
+	unsigned char * in = (unsigned char *) malloc(size);
+	int bytes_read = fread(in, sizeof(unsigned char), size, file);
+	fclose(file);
+	std::vector<unsigned char> result(in, in + size);
+	return result;
+}
+
+void WriteUnsignedBytesToFile(char const* filename, std::vector<unsigned char> outchar)
+{
+	FILE * file = fopen(filename, "w+");
+	int bytes_written = fwrite(&outchar, sizeof(unsigned char), outchar.size(), file);
+	fclose(file);
+}
+
+double GetDACDonationsByRange(int nStartHeight, int nRange)
+{
+	double nTotal = 0;
+	int nEndHeight = nStartHeight + nRange;
+	for (auto ii : mvApplicationCache) 
+	{
+		if (ii.first.first == "DAC-DONATION" || ii.first.first=="DAC-WHALEMATCH")
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[std::make_pair(ii.first.first, ii.first.second)];
+			int64_t nTimestamp = v.second;
+			double nAmt = cdbl(ExtractXML(v.first, "<amount>", "</amount>"), 2);
+			double nHeight = cdbl(ExtractXML(v.first, "<height>", "</height>"), 0);
+			if (nHeight >= nStartHeight && nHeight <= nEndHeight)
+				nTotal += nAmt;
+		}
+	}
+}
+
+static UserRecord myUserRecord;
+UserRecord GetMyUserRecord()
+{
+	if (myUserRecord.Found)
+	{
+		return myUserRecord;
+	}
+	// Note this function can SEGFAULT if this is loaded before the wallet boots.  So, we now call this at a later stage in init.cpp
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	myUserRecord = GetUserRecord(sCPK);
+	return myUserRecord;
+}
+
+bool WriteDataToFile(std::string sPath, std::string data)
+{
+	std::ofstream fd(sPath.c_str());
+	fd.write((const char*)data.c_str(), data.length());
+	fd.close();
+	return true;
+}
+

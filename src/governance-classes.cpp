@@ -417,8 +417,9 @@ std::string GetQTPhaseXML(uint256 gObj)
 			std::string sBTC = obj["btcprice"].getValStr();
 			std::string sBBP = obj["bbpprice"].getValStr();
 			std::string sSporkData = obj["spork_data"].getValStr();
+			std::string sDACData = obj["dac_data"].getValStr();
 			std::string sXML = "<price>" + sPrice + "</price><bbpprice>" + sBBP + "</bbpprice><qtphase>" + sQTPhase + "</qtphase><btcprice>" + sBTC + "</btcprice>";
-			sXML += sSporkData;
+			sXML += sSporkData + sDACData;
 			return sXML;
 		}
 	}
@@ -500,14 +501,14 @@ bool CSuperblockManager::GetSuperblockPayments(int nBlockHeight, std::vector<CTx
     return true;
 }
 
-bool CSuperblockManager::IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward)
+bool CSuperblockManager::IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward, int nTime)
 {
     // GET BEST SUPERBLOCK, SHOULD MATCH
     LOCK(governance.cs);
 
     CSuperblock_sptr pSuperblock;
     if (CSuperblockManager::GetBestSuperblock(pSuperblock, nBlockHeight)) {
-        return pSuperblock->IsValid(txNew, nBlockHeight, blockReward);
+        return pSuperblock->IsValid(txNew, nBlockHeight, blockReward, nTime);
     }
 
     return false;
@@ -657,7 +658,7 @@ int Get24HourAvgBits(const CBlockIndex* pindexSource, int nPrevBits)
 	return (int)nAvg;
 }
 
-CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight, bool fIncludeWhaleStakes)
+CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight, int64_t nTime, bool fIncludeWhaleStakes)
 {
 	if (nBlockHeight < 1) return 0;
 
@@ -743,15 +744,8 @@ CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight, bool fIncludeWhaleStakes
 	// Dynamic Whale Staking - R Andrews - 11/11/2019
 	if (nType == 2 && fIncludeWhaleStakes)
 	{
-		/*
-		double dTotalWhalePayments = 0;
-		std::vector<WhaleStake> dws = GetPayableWhaleStakes(nBlockHeight, dTotalWhalePayments);
-		CAmount nTotalWhalePayments = dTotalWhalePayments * COIN;
-		LogPrintf("\nGetPaymentsLimit::Whale Payments=%f over %f recs.", dTotalWhalePayments, dws.size());
-		nPaymentsLimit += nTotalWhalePayments;
-		*/
-		nPaymentsLimit += (MAX_DAILY_WHALE_COMMITMENTS * COIN);
-		nPaymentsLimit += (MAX_DAILY_DASH_STAKE_COMMITMENTS * COIN);
+		double nDonations = GetDACDonationTotals(nBlockHeight - BLOCKS_PER_DAY, nTime);
+		nPaymentsLimit += (nDonations * COIN);
 	}
 	// End of Dynamic Whale Staking
 	
@@ -867,7 +861,7 @@ CAmount CSuperblock::GetPaymentsTotalAmount()
 *   - Does this transaction match the superblock?
 */
 
-bool CSuperblock::IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward)
+bool CSuperblock::IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward, int nTime)
 {
     // TODO : LOCK(cs);
     // No reason for a lock here now since this method only accesses data
@@ -903,7 +897,7 @@ bool CSuperblock::IsValid(const CTransaction& txNew, int nBlockHeight, CAmount b
 
     // payments should not exceed limit
     CAmount nPaymentsTotalAmount = GetPaymentsTotalAmount();
-    CAmount nPaymentsLimit = GetPaymentsLimit(nBlockHeight, true);
+    CAmount nPaymentsLimit = GetPaymentsLimit(nBlockHeight, nTime, true);
     if (nPaymentsTotalAmount > nPaymentsLimit) {
         LogPrintf("CSuperblock::IsValid -- ERROR: Block invalid, payments limit exceeded: payments %lld, limit %lld\n", nPaymentsTotalAmount, nPaymentsLimit);
         return false;

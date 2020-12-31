@@ -1309,7 +1309,8 @@ void CGovernanceManager::UpdatedBlockTip(const CBlockIndex* pindex, CConnman& co
     if (fDebugSpam)
 		LogPrint("gobject", "CGovernanceManager::UpdatedBlockTip -- nCachedBlockHeight: %d\n", nCachedBlockHeight);
 
-    if (deterministicMNManager->IsDIP3Enforced(pindex->nHeight)) {
+	if (pindex->nHeight >= Params().GetConsensus().LLMQHeight)
+	{
         RemoveInvalidVotes();
     }
 

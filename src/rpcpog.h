@@ -6,6 +6,8 @@
 #define RPCPOG_H
 
 #include "wallet/wallet.h"
+#include "chat.h"
+#include "email.h"
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
@@ -44,6 +46,30 @@ struct CPK
   bool fValid = false;
 };
 
+struct UserRecord
+{
+	std::string CPK;
+	std::string NickName;
+	std::string ExternalEmail;
+	std::string InternalEmail;
+	std::string Longitude;
+	std::string Latitude;
+	std::string URL;
+	std::string RSAPublicKey;
+	// Only available to the biblepaycore user:
+	std::string RSAPrivateKey;
+	bool AuthorizePayments = false;
+	bool Found = false;
+};
+
+struct RSAKey
+{
+	std::string PrivateKey;
+	std::string PublicKey;
+	std::string Error;
+	bool Valid;
+};
+
 struct IPFSTransaction
 {
 	std::string File;
@@ -60,7 +86,7 @@ struct IPFSTransaction
 	std::string Network;
 	std::string CPK;
 	int nHeight = 0;
-	std::map<std::string, std::string> mapRegions = std::map<std::string, std::string>();
+	std::map<std::string, std::string> mapRegions;
 };
 
 struct DashUTXO
@@ -81,8 +107,8 @@ struct DACResult
 	int nSize = 0;
 	std::string TXID;
 	std::string ErrorCode;
-	std::map<std::string, IPFSTransaction> mapResponses = std::map<std::string, IPFSTransaction>();
-	std::map<std::string, std::string> mapRegions = std::map<std::string, std::string>();
+	std::map<std::string, IPFSTransaction> mapResponses;
+	std::map<std::string, std::string> mapRegions;
 };
 
 struct QueuedProposal
@@ -116,8 +142,6 @@ struct Researcher
 
 struct CoinAgeVotingDataStruct
 {
-	//std::map<std::string, int> mapVoteCount;
-	//std::map<std::string, double> mapVoteAge;
 	std::map<int, std::map<std::string, int>> mapsVoteCount;
 	std::map<int, std::map<std::string, double>> mapsVoteAge;
 	std::map<int, int> mapTotalVotes;
@@ -192,10 +216,11 @@ struct DashStake
 	uint256 TXID = uint256S("0x0");
 };
 
-static double MAX_DAILY_WHALE_COMMITMENTS = 5000000;
+static double MAX_DAILY_WHALE_COMMITMENTS = 10000000;
 static double MAX_WHALE_DWU = 2.0;
 static double MAX_DASH_DWU = 1.0;
-static double MAX_DAILY_DASH_STAKE_COMMITMENTS = 50000000;
+static double MAX_DAILY_DASH_STAKE_COMMITMENTS = 5000000;
+static double MAX_DAILY_DAC_DONATIONS = 40000000;
 
 struct WhaleMetric
 {
@@ -428,5 +453,21 @@ bool IsDuplicateUTXO(std::string UTXO);
 std::vector<DashStake> GetPayableDashStakes(int nHeight, double& nOwed);
 void LockDashStakes();
 DashStake GetDashStakeByUTXO(std::string sDashStake);
+void SendChat(CChat chat);
+UserRecord GetUserRecord(std::string sSourceCPK);
+RSAKey GetMyRSAKey();
+RSAKey GetTestRSAKey();
+std::string Mid(std::string data, int nStart, int nLength);
+std::string GetSANDirectory4();
+void WriteUnsignedBytesToFile(char const* filename, std::vector<unsigned char> outchar);
+std::vector<unsigned char> ReadUnsignedBytesFromFile(char const* filename);
+bool PayEmailFees(CEmail email);
+void SendEmail(CEmail email);
+bool VerifyNonstandardSignature(std::string sAddress, std::string sTargMsg, std::string sSig, int nKeyType);
+double GetDACDonationsByRange(int nStartHeight, int nRange);
+UserRecord GetMyUserRecord();
+bool VerifyDACDonation(CTransactionRef tx, std::string& sError);
+bool WriteDataToFile(std::string sPath, std::string data);
+std::vector<char> ReadAllBytesFromFile(char const* filename);
 
 #endif

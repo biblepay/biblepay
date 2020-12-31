@@ -64,7 +64,7 @@ public:
     static void ExecuteBestSuperblock(int nBlockHeight);
 
     static std::string GetRequiredPaymentsString(int nBlockHeight);
-    static bool IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
+    static bool IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward, int nTime);
 };
 
 /**
@@ -148,7 +148,7 @@ public:
 	static bool IsSmartContract(int nHeight);
 
     static void GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuperblockRet, int& nNextSuperblockRet);
-    static CAmount GetPaymentsLimit(int nBlockHeight, bool fIncludeWhaleStakes);
+    static CAmount GetPaymentsLimit(int nBlockHeight, int64_t nTime, bool fIncludeWhaleStakes);
 
     int GetStatus() { return nStatus; }
     void SetStatus(int nStatusIn) { nStatus = nStatusIn; }
@@ -174,7 +174,7 @@ public:
     bool GetPayment(int nPaymentIndex, CGovernancePayment& paymentRet);
     CAmount GetPaymentsTotalAmount();
 
-    bool IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
+    bool IsValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward, int nTime);
     bool IsExpired();
 };
 

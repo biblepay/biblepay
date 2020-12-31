@@ -8,130 +8,79 @@
 #include "masternode-sync.h"
 
 
-std::string GetSancStatus(const CDeterministicMNList& dmnList, const CDeterministicMNCPtr& dmn)
+static int64_t nPoosProcessTime = 0;
+void ThreadPOOS(CConnman& connman)
 {
-	if (dmnList.IsMNValid(dmn)) 
-		return "ENABLED";
-    if (dmnList.IsMNPoSeBanned(dmn)) 
-		return "POSE_BANNED";
-    return "UNKNOWN";
-};
 
-double CalculateScore(POSEScore p)
-{
-	if (p.nTries <= 0) 
-		return 1;
-	double nResult = p.nSuccess / p.nTries;
-	return nResult;
-}
-
-POSEScore GetPOSEScore(std::string sNode)
-{
-	POSEScore p = mvPOSEScore[sNode];
-	p.nScore = CalculateScore(p);
-	mvPOSEScore[sNode] = p;
-	return p;
-}
-
-void AdjustScore(std::string sNode, int iScore)
-{
-	POSEScore p = mvPOSEScore[sNode];
-	p.nSuccess += iScore;
-	p.nTries++;
-	p.nScore = CalculateScore(p);
-	p.nLastTried = GetAdjustedTime();
-	mvPOSEScore[sNode] = p;
-}
-
-bool VerifyNode(std::string sNode)
-{
-	std::vector<CNodeStats> vstats;
-	g_connman->GetNodeStats(vstats);
-	BOOST_FOREACH(const CNodeStats& stats, vstats) 
-	{
-		if (stats.addr.ToString() == sNode)
-		{
-			if (stats.nVersion >= MIN_PEER_PROTO_VERSION)
-			{
-				AdjustScore(sNode, 1);
-				return true;
-			}
- 		}
-	}
-	AdjustScore(sNode, 0);
-	return false;
-}
-
-void ThreadPOSE(CConnman& connman)
-{
-	static int POSE_BATCH_SIZE = 10;
-	MilliSleep(60 * 1000);
-	int64_t nLastReset = 0;
+	SyncSideChain(0);
+	int nIterations = 0;
 
 	while (1 == 1)
 	{
 	    if (ShutdownRequested())
 			return;
 
-		bool bImpossible = (!masternodeSync.IsSynced() || fLiteMode || (!fMasternodeMode));
-		if (bImpossible)
+		try
 		{
-			MilliSleep(60000);
-		}
-		else
-		{
-			try
+			double nOrphanBanning = GetSporkDouble("EnableOrphanSanctuaryBanning", 0);
+			bool fConnectivity = POOSOrphanTest("status", 60 * 60);
+			bool fPOOSEnabled = nOrphanBanning == 1 && fConnectivity;
+			int64_t nElapsed = GetAdjustedTime() - nPoosProcessTime;
+			if (nElapsed > (60 * 60 * 8))
 			{
-				int64_t nElapsed = GetAdjustedTime() - nLastReset;
-				if (nElapsed > (60 * 60 * 24))
-				{
-					// Reset once per day to give everyone a fair chance to make up for failures.
-					mvPOSEScore.clear();
-					nLastReset = GetAdjustedTime();
-				}
+				// Once every 8 hours we clear the POOS statuses and start over (in case sanctuaries dropped out or added, or if the entire POOS system was disabled etc).
+				mapPOOSStatus.clear();
+				nPoosProcessTime = GetAdjustedTime();
+			}
+			if (nOrphanBanning != 1)
+			{
+				mapPOOSStatus.clear();
+			}
+
+			if (fPOOSEnabled)
+			{
 				auto mnList = deterministicMNManager->GetListAtChainTip();
-				int iLocator = 0;
-				int iSancCount = mnList.GetAllMNsCount();
-				int iStartingPoint = GetRandInt(iSancCount);
-				int iProcessed = 0;
-				// Connect, check version, stay connected and test version
+				std::vector<uint256> toBan;
+
 				mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) 
 				{
-					if (iLocator >= iStartingPoint && iProcessed < POSE_BATCH_SIZE)
+					if (!ShutdownRequested())
 					{
-						CAddress addr(CService(), NODE_NONE);
-						g_connman->OpenNetworkConnection(addr, false, NULL, dmn->pdmnState->addr.ToString().c_str());
-						iProcessed++;
+						std::string sPubKey = dmn->pdmnState->pubKeyOperator.Get().ToString();
+						bool fOK = POOSOrphanTest(sPubKey, 60 * 60);
+						int nStatus = fOK ? 1 : 255;
+						mapPOOSStatus[sPubKey] = nStatus;
+						if (!fOK)
+						{
+					        toBan.emplace_back(dmn->proTxHash);
+						}
 						MilliSleep(1000);
 					}
-					iLocator++;
 				});
-				iLocator = 0;
-				iProcessed = 0;
-				MilliSleep(10000);
-				// Now verify the protocol version
-				mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) 
-				{
-					if (iLocator >= iStartingPoint && iProcessed < POSE_BATCH_SIZE)
-					{
-						std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
-						std::string sStatus = GetSancStatus(mnList, dmn);
-						bool bVerifyNode = VerifyNode(dmn->pdmnState->addr.ToString().c_str());
-						LogPrintf("\nPOSE::VerifyNode::Masternode outpoint %s, status %s, Address %s, Verified %f ", 
-							strOutpoint, sStatus, dmn->pdmnState->addr.ToString(), (double)bVerifyNode);
-						iProcessed++;
-					}
-					iLocator++;
-				});
+				// Ban 
+				for (const auto& proTxHash : toBan) {
+					mnList.PoSePunish(proTxHash, mnList.CalcPenalty(100), false);
+				}
 			}
-			catch(...)
+			nIterations++;
+			int64_t nTipAge = GetAdjustedTime() - chainActive.Tip()->GetBlockTime();
+			if (nTipAge < (60 * 60 * 4) && chainActive.Tip()->nHeight % 10 == 0)
 			{
-				LogPrintf("Error encountered in POSE main loop. %f \n", 0);
+				SyncSideChain(chainActive.Tip()->nHeight);
 			}
-			int iSleeper = fProd ? 10 : 3;
-			MilliSleep(iSleeper * 60000);
+		}
+		catch(...)
+		{
+			LogPrintf("Error encountered in POOS main loop. %f \n", 0);
+		}
+		int nSleepLength = nIterations < 5 ? 60*5 : 60*30;
+
+		for (int i = 0; i < nSleepLength; i++)
+		{
+			if (ShutdownRequested())
+				break;
+			MilliSleep(1000);
 		}
 	}
 }
-
 

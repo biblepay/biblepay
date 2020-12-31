@@ -11,7 +11,7 @@
  * network protocol versioning
  */
 
-static const int PROTOCOL_VERSION = 70759;
+static const int PROTOCOL_VERSION = 70762;
 
 //! initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 209;
@@ -20,8 +20,8 @@ static const int INIT_PROTO_VERSION = 209;
 static const int GETHEADERS_VERSION = 70077;
 
 //! disconnect from peers older than this proto version
-static const int MIN_PEER_PROTO_VERSION = 70756;
-static const int MIN_PEER_TESTNET_PROTO_VERSION = 70759;
+static const int MIN_PEER_PROTO_VERSION = 70761;
+static const int MIN_PEER_TESTNET_PROTO_VERSION = 70762;
 
 //! disconnect from peers older than this proto version when DIP3 is activated via the BIP9 deployment
 static const int MIN_PEER_PROTO_VERSION_DIP3 = 70756;

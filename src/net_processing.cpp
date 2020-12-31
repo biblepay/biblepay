@@ -2984,8 +2984,68 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             pfrom->nPingNonceSent = 0;
         }
     }
-
-
+	else if (strCommand == NetMsgType::CHAT)
+    {
+        CChat chat;
+        vRecv >> chat;
+        uint256 chatHash = chat.GetHash();
+        if (pfrom->setKnown.count(chatHash) == 0)
+        {
+            if (chat.ProcessChat())
+            {
+                // Relay
+                pfrom->setKnown.insert(chatHash);
+                {
+				       connman.ForEachNode([&chat, &connman](CNode* pnode) 
+					   {
+							chat.RelayTo(pnode, connman);
+					   });
+                }
+            }
+        }
+    }
+	else if (strCommand == NetMsgType::EMAIL)
+    {
+        CEmail email;
+        vRecv >> email;
+        uint256 emailHash = email.GetHash();
+        if (pfrom->setKnown.count(emailHash) == 0)
+        {
+            if (email.ProcessEmail())
+            {
+                // Relay
+                pfrom->setKnown.insert(emailHash);
+                {
+					connman.ForEachNode([&email, &connman](CNode* pnode) 
+					{
+					     email.RelayTo(pnode, connman);
+					});
+                }
+            }
+        }
+    }
+	else if (strCommand == NetMsgType::EMAILREQUEST)
+	{
+		CEmailRequest erequest;
+		vRecv >> erequest;
+		uint256 eReqID = erequest.GetHash();
+		if (pfrom->setKnown.count(eReqID) == 0)
+		{
+			CEmail email = CEmail::getEmailByHash(erequest.RequestID);
+			pfrom->setKnown.insert(eReqID);
+			{
+				connman.ForEachNode([&erequest, &connman, &email](CNode* pnode) 
+				{
+					erequest.RelayTo(pnode, connman);
+					if (!email.IsNull())
+					{
+						email.RelayTo(pnode, connman);
+					}
+				});
+			}
+		}
+        
+	}
     else if (fAlerts && strCommand == NetMsgType::ALERT)
     {
         CAlert alert;

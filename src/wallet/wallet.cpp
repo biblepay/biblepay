@@ -3896,7 +3896,21 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
 
 						if (!sOptPrayerData.empty() && txNew.vout.size() > 0)
 						{
-							txNew.vout[0].sTxOutMessage = sOptPrayerData;
+							// R Andrews - Distribute extremely long messages over multiple transactions
+							if (sOptPrayerData.length() > 3000)
+							{
+								double nReq = ceil(sOptPrayerData.length() / 3000);
+								for (int iReq = 0; iReq < nReq && iReq < txNew.vout.size(); iReq++)
+								{
+									int nPointer = ((iReq) * 3000) + 1;
+									std::string sChunk = Mid(sOptPrayerData, nPointer, 3000);
+									txNew.vout[iReq].sTxOutMessage = sChunk;
+								}
+							}
+							else
+							{
+								txNew.vout[0].sTxOutMessage = sOptPrayerData;
+							}
 						}
                         // Never create dust outputs; if we would, just
                         // add the dust to the fee.

@@ -162,20 +162,29 @@ static const int BIBLE_VERSE_COUNT = 99;
 static const int GSC_MIN_CONFIRMS = 5;
 static const double GSC_DUST = .01;
 
+extern std::string msPagedFrom;
+extern int mlPaged;
+extern int mlPagedEncrypted;
+
 extern int PRAYER_MODULUS;
 extern int miGlobalPrayerIndex;
 extern int miGlobalDiaryIndex;
 extern SecureString msEncryptedString;
 extern std::string sOS;
 extern bool fEnforceSanctuaryPort;
+extern bool fWarmBootFinished;
+
 extern std::string msGithubVersion;
 extern std::string msLanguage;
 extern std::string msSessionID;
+extern std::string msMyInternalEmailAddress;
 extern std::string msMasterNodeLegacyPrivKey;
 extern std::string msGlobalStatus;
 extern std::string msGlobalStatus2;
 extern std::string msGlobalStatus3;
 extern std::string sGlobalPoolURL;
+class CEmail;
+extern std::map<uint256, CEmail> mapEmails;
 
 struct QueuedProposal;
 extern std::vector<QueuedProposal> mvQueuedProposals;
@@ -263,7 +272,7 @@ struct DashUTXO;
 
 extern std::map<std::string, IPFSTransaction> mapSidechainTransactions;
 extern std::map<std::string, DashUTXO> mapDashUTXO;
-extern std::map<std::string, POSEScore> mvPOSEScore;
+extern std::map<std::string, int> mapPOOSStatus;
 extern std::atomic<bool> fDIP0001ActiveAtTip;
 extern std::map<std::string, Researcher> mvResearchers;
 

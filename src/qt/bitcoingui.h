@@ -119,7 +119,12 @@ private:
 	QAction *ReadBibleAction;
 	QAction *TheTenCommandmentsAction;
 	QAction *JesusConciseCommandmentsAction;
+	QAction *openChatGeneralAction;
+	QAction *openChatPMAction;
+	QAction *openChatPMEncryptedAction;
+
 	QAction *proposalAddMenuAction;
+	QAction *userEditMenuAction;
 	QAction *proposalListAction;
 	QAction *businessObjectListMenuAction;
 	// Note: Any orphaned Action results in a crash (pun intended)
@@ -259,6 +264,7 @@ private Q_SLOTS:
 
 	/** Switch to Proposal Add page */
 	void gotoProposalAddPage();
+	void gotoUserEditPage();
 	void gotoProposalListPage();
 	void OneClickMiningClicked();
 	void gotoBusinessObjectListPage();
@@ -288,6 +294,11 @@ private Q_SLOTS:
     /** Show debug window */
     void showDebugWindow();
 
+	/** Show Chat window **/
+	void openChatGeneralClicked();
+	void openChatPMClicked();
+	void openChatPMEncryptedClicked();
+	
     /** Show debug window and set focus to the appropriate tab */
     void showInfo();
     void showConsole();

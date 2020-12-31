@@ -24,7 +24,7 @@ uint256 GetPAMHash(std::string sAddresses, std::string sAmounts, std::string sQT
 bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sError);
 std::string ExecuteGenericSmartContractQuorumProcess();
 UniValue GetProminenceLevels(int nHeight, std::string sFilterName);
-bool NickNameExists(std::string sProjectName, std::string sNickName);
+bool NickNameExists(std::string sProjectName, std::string sNickName, bool& fIsMine);
 int GetRequiredQuorumLevel(int nHeight);
 void GetTransactionPoints(CBlockIndex* pindex, CTransactionRef tx, double& nCoinAge, CAmount& nDonation);
 bool ChainSynced(CBlockIndex* pindex);
@@ -40,11 +40,14 @@ std::string GetCPIDElementByData(std::string sData, int iElement);
 double GetRequiredCoinAgeForPODC(double nRAC, double nTeamID);
 double GetCoinPrice();
 bool VerifyChild(std::string childID, std::string sCharity);
-bool IsOverBudget(int nHeight, std::string sAmounts);
+bool IsOverBudget(int nHeight, int64_t nTime, std::string sAmounts);
 double CalculateAPM(int nHeight);
 double ExtractAPM(int nHeight);
 std::string CheckGSCHealth();
 std::string ExtractBlockMessage(int nHeight);
 bool DoesContractExist(int nHeight, uint256 uGovID);
+double GetDACDonationTotals(int nHeight, int nTime);
+std::string SerializeSanctuaryQuorumTrigger(int iContractAssessmentHeight, int nEventBlockHeight, int64_t nTime, std::string sContract);
+std::map<std::string, double> DACEngine();
 
 #endif

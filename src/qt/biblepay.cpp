@@ -92,6 +92,11 @@ static void InitMessage(const std::string &message)
     LogPrintf("init message: %s\n", message);
 }
 
+static void NotifyChatEvent(std::string sMsg)
+{
+}
+
+
 /*
    Translate string to current locale using Qt.
  */
@@ -722,6 +727,7 @@ int main(int argc, char *argv[])
 
     // Subscribe to global signals from core
     uiInterface.InitMessage.connect(InitMessage);
+	uiInterface.NotifyChatEvent.connect(NotifyChatEvent);
 
     if (GetBoolArg("-splash", DEFAULT_SPLASHSCREEN) && !GetBoolArg("-min", false))
         app.createSplashScreen(networkStyle.data());

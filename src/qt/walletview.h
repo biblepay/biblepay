@@ -22,6 +22,7 @@ class WalletModel;
 class AddressBookPage;
 class BusinessObjectList;
 class ProposalAddDialog;
+class UserDialog;
 class Proposals;
 
 QT_BEGIN_NAMESPACE
@@ -73,6 +74,7 @@ private:
     TransactionView *transactionView;
 
 	ProposalAddDialog *proposalAddPage;
+	UserDialog *userEditPage;
 	Proposals *proposalListPage;
 	BusinessObjectList *businessObjectListPage;
 
@@ -94,6 +96,7 @@ public Q_SLOTS:
 
 	/** Switch to Proposal Add Page */
 	void gotoProposalAddPage();
+	void gotoUserEditPage();
 	void gotoProposalListPage();
 	/** Switch to Business Object List Page */
 	void gotoBusinessObjectListPage();

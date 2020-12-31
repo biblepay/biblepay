@@ -13,16 +13,5 @@
 #include "activemasternode.h"
 #include "evo/deterministicmns.h"
 
-struct POSEScore
-{
-	int nTries = 0;
-	int nSuccess = 0;
-	int nFail = 0;
-	int64_t nLastTried = 0;
-	double nScore = 0;
-};
-
-double GetSancScore(std::string sNode);
-POSEScore GetPOSEScore(std::string sNode);
 
 #endif

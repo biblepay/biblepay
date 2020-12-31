@@ -39,6 +39,10 @@ case $key in
     NOAPTGET="Y"
     shift # past argument
     ;;
+    -e|--erasechain)
+    ERASECHAIN="Y"
+    shift # past argument
+    ;;
     -s|--swapsize)
     SWAPSIZE="$2"
     shift # past argument
@@ -248,8 +252,14 @@ configureWallet() {
 startWallet() {
     let "CURRSTEP++"
     echo
-    echo -e "[${CURRSTEP}/${MAX}] Starting wallet daemon..."
-    $COINDAEMON -daemon > /dev/null 2>&1
+	if [[ "$ERASECHAIN" == "Y" ]]; then
+		echo -e "[${CURRSTEP}/${MAX}] Starting wallet daemon with erasechain..."
+		$COINDAEMON -daemon -erasechain=1 > /dev/null 2>&1
+    else
+		echo -e "[${CURRSTEP}/${MAX}] Starting wallet daemon..."
+		$COINDAEMON -daemon > /dev/null 2>&1	
+	fi
+
     sleep 2
     echo -e "${GREEN}* Done${NONE}";
 }

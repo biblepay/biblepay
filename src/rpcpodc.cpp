@@ -93,7 +93,7 @@ bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string&
 }
 
 
-std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, bool Sign, std::string sExtraPayload, std::string& sError)
+std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, int nSign, std::string sExtraPayload, std::string& sError)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
     std::string sAddress = consensusParams.FoundationAddress;
@@ -114,9 +114,11 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 	std::string sMessageValue     = "<MV>" + sValue + "</MV>";
 	std::string sNonce            = "<NONCE>" + sNonceValue + "</NONCE>";
 	std::string sMessageSig = "";
-	if (Sign)
+	std::string sSignature = "";
+
+	if (nSign==1)
 	{
-		std::string sSignature = "";
+		// Sign as if this is a spork
 		bool bSigned = SignStake(consensusParams.FoundationAddress, sValue + sNonceValue, sError, sSignature);
 		if (bSigned) 
 		{
@@ -124,8 +126,26 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 			sMessageSig += "<BOSIG>" + sSignature + "</BOSIG>";
 			sMessageSig += "<BOSIGNER>" + consensusParams.FoundationAddress + "</BOSIGNER>";
 		}
-		if (!bSigned) LogPrintf("Unable to sign spork %s ", sError);
+		if (!bSigned)
+			LogPrintf("Unable to sign spork %s ", sError);
 		LogPrintf(" Signing Nonce%f , With spork Sig %s on message %s  \n", (double)GetAdjustedTime(), 
+			 sMessageSig.c_str(), sValue.c_str());
+	}
+	else if (nSign == 2)
+	{
+		// Sign as if this is a business object
+		std::string sSignCPK = DefaultRecAddress("Christian-Public-Key");
+
+		bool bSigned = SignStake(sSignCPK, sValue + sNonceValue, sError, sSignature);
+		if (bSigned) 
+		{
+			sMessageSig = "<SPORKSIG>" + sSignature + "</SPORKSIG>";
+			sMessageSig += "<BOSIG>" + sSignature + "</BOSIG>";
+			sMessageSig += "<BOSIGNER>" + sSignCPK + "</BOSIGNER>";
+		}
+		if (!bSigned)
+			LogPrintf("Unable to sign business object %s ", sError);
+		LogPrintf(" Signing Nonce%f , With business-object Sig %s on message %s  \n", (double)GetAdjustedTime(), 
 			 sMessageSig.c_str(), sValue.c_str());
 	}
 	std::string s1 = sMessageType + sMessageKey + sMessageValue + sNonce + sMessageSig + sExtraPayload;

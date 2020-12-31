@@ -340,9 +340,9 @@ void CoinControlDialog::copyTransactionHash()
 // context menu action: copy transaction id
 void CoinControlDialog::copyUTXO()
 {
-	// 8-17-2020 :: R Andrews :: BIBLEPAY
+	// R Andrews :: BIBLEPAY
 	std::string sUTXO = contextMenuItem->text(COLUMN_TXHASH).toStdString() + "-" + RoundToString(contextMenuItem->text(COLUMN_VOUT_INDEX).toUInt(), 0);
-    GUIUtil::setClipboard(QString::fromStdString(sUTXO));
+	GUIUtil::setClipboard(QString::fromStdString(sUTXO));
 }
 
 // context menu action: lock coin

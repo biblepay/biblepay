@@ -319,9 +319,17 @@ int CDeterministicMNList::CalcPenalty(int percent) const
 
 void CDeterministicMNList::PoSePunish(const uint256& proTxHash, int penalty, bool debugLogs)
 {
-    assert(penalty > 0);
+    if (penalty == 0)
+		return;
+	
+	assert(penalty > 0);
 
     auto dmn = GetMN(proTxHash);
+	if (!dmn)
+	{
+		LogPrintf("PoSePunish trying to punish null masternode %f", 1);
+		return;
+	}
     assert(dmn);
 
     int maxPenalty = CalcMaxPoSePenalty();

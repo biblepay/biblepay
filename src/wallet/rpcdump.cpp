@@ -131,19 +131,27 @@ UniValue importprivkey(const JSONRPCRequest& request)
 
     CPubKey pubkey = key.GetPubKey();
     assert(key.VerifyPubKey(pubkey));
+
+	UniValue results(UniValue::VOBJ);
+    
     CKeyID vchAddress = pubkey.GetID();
     {
         pwallet->MarkDirty();
         pwallet->SetAddressBook(vchAddress, strLabel, "receive");
+		// Show the user the public key first
+		results.push_back(Pair("public_key", CBitcoinAddress(vchAddress).ToString()));
 
         // Don't throw error in case a key is already there
-        if (pwallet->HaveKey(vchAddress)) {
-            return NullUniValue;
+        if (pwallet->HaveKey(vchAddress)) 
+		{
+			results.push_back(Pair("results", "key_already_in_wallet"));
+			return results;
         }
 
         pwallet->mapKeyMetadata[vchAddress].nCreateTime = 1;
 
-        if (!pwallet->AddKeyPubKey(key, pubkey)) {
+        if (!pwallet->AddKeyPubKey(key, pubkey)) 
+		{
             throw JSONRPCError(RPC_WALLET_ERROR, "Error adding key to wallet");
         }
 
@@ -155,7 +163,8 @@ UniValue importprivkey(const JSONRPCRequest& request)
         }
     }
 
-    return NullUniValue;
+	results.push_back(Pair("results", "success"));
+	return results;
 }
 
 void ImportAddress(CWallet*, const CBitcoinAddress& address, const std::string& strLabel);

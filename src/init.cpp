@@ -72,6 +72,7 @@
 #include "llmq/quorums_init.h"
 #include "llmq/quorums_init.h"
 #include "pose.h"
+#include "smtp.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -99,7 +100,9 @@
 #endif
 
 extern void ThreadSendAlert(CConnman& connman);
-extern void ThreadPOSE(CConnman& connman);
+extern void ThreadPOOS(CConnman& connman);
+extern void ThreadSMTP(CConnman& connman);
+extern void ThreadPOP3(CConnman& connman);
 
 bool fFeeEstimatesInitialized = false;
 static const bool DEFAULT_PROXYRANDOMIZE = true;
@@ -214,7 +217,7 @@ void Interrupt(boost::thread_group& threadGroup)
     InterruptRPC();
     InterruptREST();
     InterruptTorControl();
-    llmq::InterruptLLMQSystem();
+	llmq::InterruptLLMQSystem();
     if (g_connman)
         g_connman->Interrupt();
     threadGroup.interrupt_all();
@@ -2206,7 +2209,15 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
         uiInterface.NotifyBlockTip.disconnect(BlockNotifyGenesisWait);
     }
 
-    // ********************************************************* Step 12: start node
+
+	bool fSMTPDisabled = GetBoolArg("-disablesmtp", false);
+	bool fPOP3Disabled = GetBoolArg("-disablepop3", false);
+
+	if (!fSMTPDisabled )
+		threadGroup.create_thread(boost::bind(&ThreadSMTP, boost::ref(connman)));
+	if (!fPOP3Disabled)
+		threadGroup.create_thread(boost::bind(&ThreadPOP3, boost::ref(connman)));
+	// ********************************************************* Step 12: start node
 
     //// debug print
     LogPrintf("mapBlockIndex.size() = %u\n",   mapBlockIndex.size());
@@ -2224,14 +2235,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 	LockDashStakes();
 
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-
-	// Sync older sidechain blocks
-	for (int nHeight = consensusParams.POOS_HEIGHT / 4; nHeight < chainActive.Tip()->nHeight + 10000; nHeight += 10000)
-	{
-		SyncSideChain(nHeight);
-		std::string sNarr = "Syncing Sidechain " + RoundToString(nHeight, 0) + "...";
-		uiInterface.InitMessage(_("Syncing sidechain..."));
-	}
 
     uiInterface.InitMessage(_("Discovering Peers..."));
     Discover(threadGroup);
@@ -2266,17 +2269,14 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
-
+	fWarmBootFinished = true;
+    
 #ifdef ENABLE_WALLET
     if (pwalletMain)
         pwalletMain->postInitProcess(scheduler);
 #endif
 
     threadGroup.create_thread(boost::bind(&ThreadSendAlert, boost::ref(connman)));
-
-	// Disable this feature in favor of LLMQs
-	if (false)
-		threadGroup.create_thread(boost::bind(&ThreadPOSE, boost::ref(connman)));
-
+	threadGroup.create_thread(boost::bind(&ThreadPOOS, boost::ref(connman)));
     return !fRequestShutdown;
 }

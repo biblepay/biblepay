@@ -752,15 +752,16 @@ UniValue getaddressmempool(const JSONRPCRequest& request)
         }
 
         UniValue delta(UniValue::VOBJ);
-        delta.push_back(Pair("address", address));
-        delta.push_back(Pair("txid", it->first.txhash.GetHex()));
-        delta.push_back(Pair("index", (int)it->first.index));
-        delta.push_back(Pair("satoshis", it->second.amount));
-        delta.push_back(Pair("timestamp", it->second.time));
-        if (it->second.amount < 0) {
-            delta.push_back(Pair("prevtxid", it->second.prevhash.GetHex()));
-            delta.push_back(Pair("prevout", (int)it->second.prevout));
-        }
+		delta.push_back(Pair("address", address));
+		delta.push_back(Pair("txid", it->first.txhash.GetHex()));
+		delta.push_back(Pair("index", (int)it->first.index));
+		delta.push_back(Pair("satoshis", it->second.amount));
+		delta.push_back(Pair("timestamp", it->second.time));
+		if (it->second.amount < 0) 
+		{
+			delta.push_back(Pair("prevtxid", it->second.prevhash.GetHex()));
+			delta.push_back(Pair("prevout", (int)it->second.prevout));
+		}
         result.push_back(delta);
     }
 
@@ -827,6 +828,8 @@ UniValue getaddressutxos(const JSONRPCRequest& request)
         output.push_back(Pair("outputIndex", (int)it->first.index));
         output.push_back(Pair("script", HexStr(it->second.script.begin(), it->second.script.end())));
         output.push_back(Pair("satoshis", it->second.satoshis));
+		double nValue = (double)it->second.satoshis / COIN;
+		output.push_back(Pair("value", nValue));
         output.push_back(Pair("height", it->second.blockHeight));
         result.push_back(output);
     }
