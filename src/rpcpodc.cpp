@@ -103,8 +103,8 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 		sError = "Invalid Destination Address";
 		return sError;
 	}
-    CAmount nAmount = CAmountFromValue(dStorageFee);
-	CAmount nMinimumBalance = CAmountFromValue(dStorageFee);
+    CAmount nAmount = dStorageFee * COIN;
+	CAmount nMinimumBalance = dStorageFee * COIN;
     CWalletTx wtx;
 	boost::to_upper(sPrimaryKey); // DC Message can't be found if not uppercase
 	boost::to_upper(sType);

@@ -147,15 +147,15 @@ bool CEmail::RelayTo(CNode* pnode, CConnman& connman)
 CEmail CEmail::getEmailByHash(const uint256 &hash)
 {
     CEmail retval;
-    {
-        LOCK(cs_mapEmails);
-        map<uint256, CEmail>::iterator mi = mapEmails.find(hash);
-        if(mi != mapEmails.end())
-            retval = mi->second;
-    }
+    //map<uint256, CEmail>::iterator mi = mapEmails.find(hash);
+    //if(mi != mapEmails.end())
+     //       retval = mi->second;
 	// Ensure the body is deserialized
 	int iDes = retval.EDeserialize(hash);
-
+	if (retval.IsNull())
+	{
+		mapEmails[retval.GetHash()] = retval;
+	}
 	LogPrintf("\r\nDeserialized %f %f %s %s", retval.Body.length(),  iDes, retval.FromEmail, retval.ToEmail);
 
     return retval;
