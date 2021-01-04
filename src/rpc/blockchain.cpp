@@ -1971,7 +1971,7 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "lockstakes")
 	{
-		LockDashStakes();
+		LockUTXOStakes();
 		results.push_back(Pair("lock", 1));
 	}
 	else if (sItem == "dashtest00")
@@ -2003,6 +2003,25 @@ UniValue exec(const JSONRPCRequest& request)
 		bool fIsMine = false;
 		bool fExist = NickNameExists("cpk", sNN, fIsMine);
 		results.push_back(Pair("ismine", fIsMine));
+	}
+	else if (sItem == "testutxo")
+	{
+		std::string sError;
+
+		//std::string sAddress = "1P5ZEDWTKTFGxQjZphgWPQUpe554WKDfHQ";
+		//std::string sUTXO = "f70c56b6796b9a8c0379d8689683195481c8f18c549c4e345670e99b0420ec79";
+
+		std::string sTicker = request.params[1].get_str();
+		std::string sAddress = request.params[2].get_str();
+		std::string sUTXO = request.params[3].get_str();
+		int nOut = (int)cdbl(request.params[4].get_str(), 0);
+
+		double nValue = QueryUTXO(sTicker, sAddress, sUTXO, nOut, sError);
+
+		results.push_back(Pair("value", nValue));
+		results.push_back(Pair("Err", sError));
+
+
 	}
 	else if (sItem == "testrsa")
 	{

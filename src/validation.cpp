@@ -115,9 +115,11 @@ CTxMemPool mempool;
 std::map<uint256, int64_t> mapRejectedBlocks GUARDED_BY(cs_main);
 
 // BIBLEPAY
-std::map<std::pair<std::string, std::string>, std::pair<std::string, int64_t>> mvApplicationCache;
+std::map<std::string, std::pair<std::string, int64_t>> mvApplicationCache;
 std::map<std::string, IPFSTransaction> mapSidechainTransactions;
 std::map<std::string, int> mapPOOSStatus;
+std::map<uint256, int> mapUTXOStatus;
+bool fUTXOSTested;
 std::map<std::string, DashUTXO> mapDashUTXO;
 std::map<std::string, Researcher> mvResearchers;
 bool fWarmBootFinished;
@@ -1387,7 +1389,7 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 	if (nAPM == 3)
 	{
 		// With Automatic Price Mooning, we decrease the block subsidy down to 7 if our Price has decreased over the last 24 hours.  (Otherwise, normal emissions occur).
-		nNetSubsidy = APM_REWARD * COIN;
+		nNetSubsidy = APM2_REWARD * COIN;
 	}
 
 	return fSuperblockPartOnly ? nSuperblockPart : nNetSubsidy;

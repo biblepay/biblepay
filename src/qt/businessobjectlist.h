@@ -55,6 +55,8 @@ private Q_SLOTS:
 	void showSummary();
 	void showDetails();
 	void HandleIndicatorChanged(int logicalIndex);
+	void cellDoubleClicked(int X, int Y);
+
 };
 
 #endif // BUSINESSOBJECTLIST_H

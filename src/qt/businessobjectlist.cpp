@@ -196,10 +196,21 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 	    connect(ui->btnSummary, SIGNAL(clicked()), this, SLOT(showSummary()));
 		connect(ui->btnDetails, SIGNAL(clicked()), this, SLOT(showDetails()));
 		connect(ui->tableWidget->horizontalHeader(), SIGNAL(sectionPressed(int)),this, SLOT(HandleIndicatorChanged(int)));
+		connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, &BusinessObjectList::cellDoubleClicked);
 		bSlotsCreated = true;
 	}
+}
+
+void BusinessObjectList::cellDoubleClicked(int Y, int X)
+{
+    std::string sCPK = GUIUtil::FROMQS(ui->tableWidget->item(Y, 2)->text()); // CPK
+	std::string sSumm = GetUTXOSummary(sCPK);
+	std::string sTitle = "My Portfolio - " + sCPK;
+
+	QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Ok, QMessageBox::Ok);
 
 }
+
 
 void BusinessObjectList::HandleIndicatorChanged(int logicalIndex)
 {

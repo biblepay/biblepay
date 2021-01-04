@@ -3009,27 +3009,30 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         CEmail email;
         vRecv >> email;
         uint256 emailHash = email.GetHash();
-        if (pfrom->setKnown.count(emailHash) == 0)
-        {
-            if (email.ProcessEmail())
-            {
-                // Relay
-                pfrom->setKnown.insert(emailHash);
-                {
-					connman.ForEachNode([&email, &connman](CNode* pnode) 
+		if (!email.IsNull())
+		{
+			if (pfrom->setKnown.count(emailHash) == 0)
+			{
+				if (email.ProcessEmail())
+				{
+					// Relay
+					pfrom->setKnown.insert(emailHash);
 					{
-					     email.RelayTo(pnode, connman);
-					});
-                }
-            }
-        }
+						connman.ForEachNode([&email, &connman](CNode* pnode) 
+						{
+							 email.RelayTo(pnode, connman);
+						});
+					}
+				}
+			}
+		}
     }
 	else if (strCommand == NetMsgType::EMAILREQUEST)
 	{
 		CEmailRequest erequest;
 		vRecv >> erequest;
 		uint256 eReqID = erequest.GetHash();
-		if (pfrom->setKnown.count(eReqID) == 0)
+		if (pfrom->setKnown.count(eReqID) < 10)
 		{
 			CEmail email = CEmail::getEmailByHash(erequest.RequestID);
 			LogPrintf("\r\nNetProcessing::GetEmailByHash Looking for %s-- email time %f ", erequest.RequestID.GetHex(), email.nTime);
@@ -3041,6 +3044,11 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 					if (!email.IsNull())
 					{
 						email.RelayTo(pnode, connman);
+						LogPrintf("\r\nNetProcessing::ForwardedEmail %s", email.GetHash().GetHex());
+					}
+					else
+					{
+						LogPrintf("\r\nNetProcessing::Cant Find Email %s", email.GetHash().GetHex());
 					}
 				});
 			}

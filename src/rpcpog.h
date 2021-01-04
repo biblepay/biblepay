@@ -180,6 +180,37 @@ struct WhaleStake
 	bool paid = false;
 };
 
+struct UTXOStake
+{
+	std::string XML = std::string();
+	CAmount nBBPAmount = 0;
+	CAmount nForeignAmount = 0;
+	int64_t Time = 0;
+	int Height = 0;
+	int nType = 0;
+	std::string CPK = std::string();
+	bool found = false;
+	std::string ForeignTicker = std::string();
+	std::string BBPUTXO = std::string();
+	std::string ForeignUTXO = std::string();
+	std::string BBPAddress = std::string();
+	std::string ForeignAddress = std::string();
+	std::string BBPSignature = std::string();
+	std::string ForeignSignature = std::string();
+	double nBBPPrice = 0;
+	double nForeignPrice = 0;
+	double nBTCPrice = 0;
+	double nBBPValueUSD = 0;
+	double nForeignValueUSD = 0;
+	double nBBPQty = 0;
+	double nForeignQty = 0;
+	double nValue = 0;
+	bool BBPSignatureValid = false;
+	bool ForeignSignatureValid = false;
+	bool SignatureValid = false;
+	uint256 TXID = uint256S("0x0");
+};
+
 struct DashStake
 {
 	std::string XML = std::string();
@@ -356,7 +387,8 @@ std::vector<std::string> Split(std::string s, std::string delim);
 void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool fColdBoot, bool fDuringSanctuaryQuorum);
 double GetBlockVersion(std::string sXML);
 bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, std::string strMessage, std::string& strError);
-std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, int iTimeoutSecs, int iBOE = 0, std::map<std::string, std::string> mapRequestHeaders = std::map<std::string, std::string>(), std::string sTargetFileName = "");
+std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, int iTimeoutSecs, int iBOE, 
+	std::map<std::string, std::string> mapRequestHeaders = std::map<std::string, std::string>(), std::string TargetFileName = "", bool fJson = false);
 std::string FormatHTML(std::string sInput, int iInsertCount, std::string sStringToInsert);
 std::string GJE(std::string sKey, std::string sValue, bool bIncludeDelimiter, bool bQuoteValue);
 bool InstantiateOneClickMiningEntries();
@@ -451,7 +483,7 @@ std::string SignBBPUTXO(std::string sUTXO, std::string& sError);
 void ProcessDashUTXOData();
 bool IsDuplicateUTXO(std::string UTXO);
 std::vector<DashStake> GetPayableDashStakes(int nHeight, double& nOwed);
-void LockDashStakes();
+void LockUTXOStakes();
 DashStake GetDashStakeByUTXO(std::string sDashStake);
 void SendChat(CChat chat);
 UserRecord GetUserRecord(std::string sSourceCPK);
@@ -469,5 +501,13 @@ UserRecord GetMyUserRecord();
 bool VerifyDACDonation(CTransactionRef tx, std::string& sError);
 bool WriteDataToFile(std::string sPath, std::string data);
 std::vector<char> ReadAllBytesFromFile(char const* filename);
+double QueryUTXO(std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError);
+bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
+	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake);
+std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
+int AssimilateUTXO(UTXOStake d);
+UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
+int GetUTXOStatus(uint256 txid);
+std::string GetUTXOSummary(std::string sCPK);
 
 #endif

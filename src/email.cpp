@@ -210,10 +210,18 @@ bool CEmail::IsMine()
 
 bool CEmail::ProcessEmail()
 {
-	map<uint256, CEmail>::iterator mi = mapEmails.find(GetHash());
-    if(mi != mapEmails.end())
+	if (IsNull())
 		return false;
-	// Never seen this email:
+	if (Body.empty())
+		return false;
+
+	uint256 MyHash = GetHash();
+	
+	map<uint256, CEmail>::iterator mi = mapEmails.find(MyHash);
+    if(mi != mapEmails.end())
+	{
+		mapEmails.erase(MyHash);
+	}
 	// Store to disk
 	// Verify the disk is not more than 90% full too
 	std::string sTarget = GetFileName();
@@ -231,7 +239,6 @@ bool CEmail::ProcessEmail()
 	}
 	// Relinquish Memory
 	LogPrintf("\npop3 collection size %f", mapEmails.size());
-	uint256 MyHash = GetHash();
 	Body = std::string();
 	mapEmails.insert(make_pair(MyHash, *this));
 

@@ -2233,7 +2233,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 	// Load Researchers into RAM
 	uiInterface.InitMessage(_("Loading PODC Researchers..."));
 	LoadResearchers();
-	LockDashStakes();
+	LockUTXOStakes();
 
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 

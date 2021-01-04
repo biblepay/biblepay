@@ -437,7 +437,6 @@ void smtp_SENDMAIL(std::string sData)
 	uint256 eHash = e.GetHash();
 	LogPrintf("\nEMAIL HASH %s", eHash.GetHex());
 
-	// Email is now on disk
 	// Charge user, then relay it
 
 	UserRecord r = GetMyUserRecord();
@@ -447,14 +446,26 @@ void smtp_SENDMAIL(std::string sData)
 		fPaid = PayEmailFees(e);
 	}
 	
-	if (fPaid)
+	if (fPaid && e.Body.length() < 3000000)
 	{
 		e.ProcessEmail();
 		SendEmail(e);
+		// Email is now on disk
+		std::string sReply = "250 OK id=" + eHash.GetHex() + "\r\n";
+		smtp_send(sReply);
+	}
+	else
+	{
+		std::string sNarr;
+		if (!fPaid)
+			sNarr += "UNPAID BIBLEPAY FEES. ";
+		if (e.Body.length() > 3000000)
+			sNarr += "MESSAGE TOO BIG (LIMIT TO 3,000,000 BYTES PLEASE). ";
+		// The server has rejected the message due to its size, or because the user will not pay the fee.  "The recipients mailbox has exceeded its storage limit" is returned to the mail client here:
+		std::string sReply = "422 REJECTED - " + sNarr + "\r\n";
+		smtp_send(sReply);
 	}
 
-	std::string sReply = "250 OK id=" + eHash.GetHex() + "\r\n";
-	smtp_send(sReply);
 	smtp_close();
 }
 
@@ -534,12 +545,15 @@ void pop3_read_handler(const boost::system::error_code &ec, std::size_t bytes_tr
   }
   else
   {
-	  	if ((boost::asio::error::eof == ec) ||       (boost::asio::error::connection_reset == ec))
+	  	if ((boost::asio::error::eof == ec) || (boost::asio::error::connection_reset == ec))
 	    {
             // handle the disconnect.
 			pop3_close();
 		}
-		std::cout << ec.message() << std::endl;
+		else
+		{
+			std::cout << "ASIO::" + ec.message() << std::endl;
+		}
   }
 }
 
@@ -574,8 +588,11 @@ void smtp_read_handler(const boost::system::error_code &ec, std::size_t bytes_tr
 			std::cout << "smtp--shutting down the socket through hangup " << std::endl;
 		    smtp_close();
 		}
-		// Display the system error:
-		std::cout << ec.message() << std::endl;
+		else
+		{
+			// Display the system error:
+			std::cout << "2ASO::" + ec.message() << std::endl;
+		}
   }
 }
 
@@ -592,16 +609,13 @@ void pop3_accept_handler(const boost::system::error_code &ec)
   if (!ec)
   {
 	  UserRecord rec = GetMyUserRecord();
-
 	  msMyInternalEmailAddress = rec.InternalEmail;
-	
 	  pop3_send("+OK POP3 server ready <" + msMyInternalEmailAddress + ">\n");
 	  pop3_socket.async_read_some(buffer(pop3_bytes), pop3_read_handler);
   }
   else
   {
-	  std::cout << ec.message() << std::endl;
-	  LogPrintf("sorry no ec %f ", 7057);
+	  std::cout << "7009+" + ec.message() << std::endl;
   }
 }
 
@@ -669,11 +683,11 @@ void RequestMissingEmails()
 {
 	for (auto ii : mvApplicationCache) 
 	{
-		if (ii.first.first == "EMAIL")
+		if (Contains(ii.first, "EMAIL"))
 		{
-			std::pair<std::string, int64_t> v = mvApplicationCache[std::make_pair(ii.first.first, ii.first.second)];
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
 			int64_t nTimestamp = v.second;
-			std::string sTXID = ii.first.second;
+			std::string sTXID = GetElement(ii.first, "[-]", 1);
 			uint256 hashInput = uint256S(sTXID);
 			std::string sFileName = "email_" + hashInput.GetHex() + ".eml";
 			std::string sTarget = GetSANDirectory4() + sFileName;

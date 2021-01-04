@@ -31,6 +31,8 @@ void ThreadPOOS(CConnman& connman)
 				// Once every 8 hours we clear the POOS statuses and start over (in case sanctuaries dropped out or added, or if the entire POOS system was disabled etc).
 				mapPOOSStatus.clear();
 				nPoosProcessTime = GetAdjustedTime();
+				mapUTXOStatus.clear();
+				fUTXOSTested = false;
 			}
 			if (nOrphanBanning != 1)
 			{
@@ -68,6 +70,27 @@ void ThreadPOOS(CConnman& connman)
 			{
 				SyncSideChain(chainActive.Tip()->nHeight);
 			}
+			// Sanctuary side UTXO Oracle Process
+			std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+
+			for (int i = 0; i < uStakes.size(); i++)
+			{
+				UTXOStake d = uStakes[i];
+				if (d.found)
+				{
+					int nStatus = GetUTXOStatus(d.TXID);
+					if (nStatus == 0)
+					{
+						AssimilateUTXO(d);
+					}
+
+				}
+
+			}
+			fUTXOSTested = true;
+
+			// End of Sanctuary side UTXO Oracle Process
+
 		}
 		catch(...)
 		{

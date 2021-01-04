@@ -483,7 +483,7 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 						break;
 					}
 					// Automatic Price Mooning
-					if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (blockReward == APM_REWARD * COIN))
+					if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (blockReward == APM_REWARD * COIN || blockReward == APM2_REWARD * COIN))
 					{
 						found = true;
 						break;

@@ -156,6 +156,11 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 
 	if (!sError.empty())
 		return std::string();
+	if (sMessageType == "cpk")
+	{
+		// For the user record
+		WriteCache(sMessageType, sMessageKey, sMessageValue, GetAdjustedTime(), true);
+	}
     return wtx.GetHash().GetHex().c_str();
 }
 
@@ -292,7 +297,7 @@ std::map<std::string, Researcher> GetPayableResearchers()
 	std::map<std::string, std::string> cpid_reverse_lookup;
 	for (auto ii : mvApplicationCache)
 	{
-		if (Contains(ii.first.first, "CPK-WCG"))
+		if (Contains(ii.first, "CPK-WCG"))
 		{
 			std::string sData = ii.second.first;
 			int64_t nLockTime = ii.second.second;
