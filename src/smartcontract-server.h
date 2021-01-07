@@ -48,6 +48,6 @@ std::string ExtractBlockMessage(int nHeight);
 bool DoesContractExist(int nHeight, uint256 uGovID);
 double GetDACDonationTotals(int nHeight, int nTime);
 std::string SerializeSanctuaryQuorumTrigger(int iContractAssessmentHeight, int nEventBlockHeight, int64_t nTime, std::string sContract);
-std::map<std::string, double> DACEngine();
+std::map<std::string, double> DACEngine(std::map<std::string, Orphan>& mapOrphans, std::map<std::string, Expense>& mapExpenses);
 
 #endif

@@ -260,7 +260,7 @@ std::vector<DACProposal> GetWinningSanctuarySporkProposals()
 		DACProposal dacProposal = GetProposalByHash(pGovObj->GetHash(), nLastSuperblock);
 		// We need proposals that are sporks, that are older than 48 hours that are not expired
 		int64_t nAge = GetAdjustedTime() - dacProposal.nStartEpoch;
-		if (dacProposal.sExpenseType == "XSPORK-ORPHAN" || dacProposal.sExpenseType == "XSPORK-CHARITY" || dacProposal.sExpenseType == "SPORK")
+		if (dacProposal.sExpenseType == "XSPORK-ORPHAN" || dacProposal.sExpenseType == "XSPORK-CHARITY" || dacProposal.sExpenseType == "XSPORK-EXPENSE" || dacProposal.sExpenseType == "SPORK")
 		{
 			if (nAge > (60*60*24*1) && dacProposal.fPassing)
 			{
@@ -428,14 +428,14 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 // Since all of this data is stored on the blockchain, the history will be permanent, therefore we have a very high propensity to make positive vetted charity relationships to maintain 100% integrity.
 
 // To our knowledge, every single expense from September 2017 (inception) until today (Dec 2020) has reached real orphan-charity children (at over 75% efficiency) meaning we have met our goals, but our size is still small.  May God increase our market share globally so we can help more children.
-std::map<std::string, double> DACEngine()
+std::map<std::string, double> DACEngine(std::map<std::string, Orphan>& mapOrphans, std::map<std::string, Expense>& mapExpenses)
 {
 	std::map<std::string, double> mapDAC;
 	std::map<std::string, double> mapCharityCommitments;
 	std::map<std::string, std::string> mapCharities;
 	int iOrphanCount = 0;
 	double nTotalMonthlyCommitments = 0;
-
+	mapOrphans.clear();
 	for (auto ii : mvApplicationCache) 
 	{
 		if (Contains(ii.first, "XSPORK-ORPHAN"))
@@ -447,31 +447,49 @@ std::map<std::string, double> DACEngine()
 				XSPORK-ORPHAN (TYPE) | (VALUE1) orphan-id | (RECORD) (charity, name, URL, monthly Amount)
 			*/
 
-			std::string sData = GetElement(v.first, "[-]", 1);
-			std::string sChildID = GetElement(sData, "|", 0);
-			std::string sValue = GetElement(sData, "|", 1);
-			std::string sCharity = GetElement(sValue, "[-]", 0);
-			std::string sChildName = GetElement(sValue, "[-]", 1);
-			std::string sURL = GetElement(sValue, "[-]", 2);
-			double nMonthlyAmount = cdbl(GetElement(sValue, "[-]", 3), 2);
-			if (nMonthlyAmount > 0 && !sCharity.empty())
+			Orphan o;
+			o.OrphanID = GetElement(ii.first, "[-]", 1);
+			o.Charity = GetElement(v.first, "[-]", 0);
+			boost::to_lower(o.Charity);
+			o.Name = GetElement(v.first, "[-]", 1);
+			o.URL = GetElement(v.first, "[-]", 2);
+			o.MonthlyAmount = cdbl(GetElement(v.first, "[-]", 3), 2);
+			if (false)
+				LogPrintf("\nORPHAN childid %s, Charity %s, Name %s, URL %s ", 
+				o.OrphanID, o.Charity, o.Name, o.URL);
+
+			if (o.MonthlyAmount > 0 && !o.Charity.empty())
 			{
-				mapCharityCommitments[sCharity] += nMonthlyAmount;
-				nTotalMonthlyCommitments += nMonthlyAmount;
+				mapCharityCommitments[o.Charity] += o.MonthlyAmount;
+				nTotalMonthlyCommitments += o.MonthlyAmount;
 				iOrphanCount++;
+				mapOrphans[o.OrphanID] = o;
 			}
 		}
 		else if (Contains(ii.first, "XSPORK-CHARITY"))
 		{
 			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
-			std::string sData = GetElement(v.first, "[-]", 1);
-			// Charity record format:
 			// XSPORK-CHARITY (TYPE) | (VALUE) Charity-Name | (RECORD) (BBPAddress, URL)
-			std::string sCharity = GetElement(sData, "|", 0);
-			std::string sValue = GetElement(sData, "|", 1);
-			std::string sAddress = GetElement(sValue, "[-]", 0);
-			std::string sCharityURL = GetElement(sValue, "[-]", 1);
+			std::string sCharity = GetElement(ii.first, "[-]", 1);
+			boost::to_lower(sCharity);
+			std::string sAddress = GetElement(v.first, "[-]", 0);
+			std::string sCharityURL = GetElement(v.first, "[-]", 1);
+			LogPrintf("\nCHARITY charity %s, address %s, URL %s ", sCharity, sAddress, sCharityURL);
 			mapCharities[sCharity] = sAddress;
+		}
+		else if (Contains(ii.first, "XSPORK-EXPENSE"))
+		{
+			// XSPORK-EXPENSE (TYPE) | (VALUE1) expense-id | (RECORD) (added, charity, bbpamount, usdamount)
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			Expense e;
+			e.ExpenseID = GetElement(ii.first, "[-]", 1);
+			e.Added = GetElement(v.first, "[-]", 0);
+			e.Charity = GetElement(v.first, "[-]", 1);
+			boost::to_lower(e.Charity);
+			e.nBBPAmount = cdbl(GetElement(v.first, "[-]", 2), 2);
+			e.nUSDAmount = cdbl(GetElement(v.first, "[-]", 3), 2);
+			mapExpenses[e.ExpenseID] = e;
+			
 		}
 	}
 	for (auto d : mapCharityCommitments)
@@ -937,11 +955,15 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 			if (d.found && d.nValue > 0)
 			{
 				int nStatus = GetUTXOStatus(d.TXID);
+				LogPrintf("\nLeaderboard::UTXO1 nStatus %f", nStatus);
+
 				if (nStatus > 0)
 				{
 					// Entry into the UTXO campaign
 					UserRecord u = GetUserRecord(d.CPK);
 					{
+						LogPrintf("\nLeaderboard::UTXO1 cpk %s", d.CPK);
+
 						// Legacy code that adds a CPK reward, then a CPK-Campgin reward
 						CPK c = mPoints[d.CPK];
 						c.sCampaign = sThisCampaign;
@@ -1199,7 +1221,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		/*
 		// R Andrews - 11-7-2020 - DAC (Decentralized Automonous Charity - Pay our Charities in a decentralized way):
 		std::vector<std::string> vPayments = Split(Data.c_str(), "<BURN>");
-		std::map<std::string, double> mapDAC = DACEngine();
+		std::map<std::string, double> mapDAC = ();
 		if (mapDAC.size() > 0)
 		{
 

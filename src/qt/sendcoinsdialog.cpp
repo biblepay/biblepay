@@ -33,7 +33,7 @@
 #include <QTextDocument>
 #include <QTimer>
 
-#define SEND_CONFIRM_DELAY   3
+#define SEND_CONFIRM_DELAY   2
 
 SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
     QDialog(parent),
@@ -309,7 +309,7 @@ void SendCoinsDialog::on_sendButton_clicked()
     send(recipients, strFee, strFunds);
 }
 
-bool SendCoinsDialog::ConfirmDWS(QList<SendCoinsRecipient> recipients, CAmount& nDWSAmount)
+bool SendCoinsDialog::ConfirmUTXO(QList<SendCoinsRecipient> recipients, CAmount& nUTXOAmount)
 {
 	WalletModelTransaction currentTransaction(recipients);
     
@@ -318,23 +318,21 @@ bool SendCoinsDialog::ConfirmDWS(QList<SendCoinsRecipient> recipients, CAmount& 
     Q_FOREACH(const SendCoinsRecipient &rcp, currentTransaction.getRecipients())
     {
 		if (rcp.fDWS)
-			nDWSAmount += rcp.amount;
+			nUTXOAmount += rcp.amount;
     }
 
-	if (nDWSAmount < 1*COIN)
+	if (nUTXOAmount < 1*COIN)
 		return false;
 
-    QString questionString = tr("Are you sure you want to send a Dynamic Whale Stake?");
+    QString questionString = tr("Are you sure you want to send a UTXO Stake?");
     questionString.append("<br /><br />%1");
 	questionString.append("<hr /><span style='color:#aa0000;'>");
-	questionString.append(BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nDWSAmount));
+	questionString.append(BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nUTXOAmount));
 	questionString.append("</span> ");
-	questionString.append(tr(" added as a Dynamic Whale Stake"));
-	// Add in the DWS Quote (for 90 days)
-	WhaleMetric wm = GetWhaleMetrics(chainActive.Tip()->nHeight, true);
-	std::string sQuote = "<br>90 day DWU " + RoundToString(GetDWUBasedOnMaturity(90, wm.DWU) * 100, 4) + "%<br>";
+	questionString.append(tr(" added as a UTXO Stake"));
+	double nDWU = CalculateUTXOReward();
+	std::string sQuote = "<br>UTXO approximate DWU " + RoundToString(nDWU * 100, 4) + "%<br>";
 	questionString.append(QString::fromStdString(sQuote));
-    // add total amount in all subdivision units
     questionString.append("<hr />");
     CAmount totalAmount = currentTransaction.getTotalTransactionAmount();
     QStringList alternativeUnits;
@@ -353,7 +351,7 @@ bool SendCoinsDialog::ConfirmDWS(QList<SendCoinsRecipient> recipients, CAmount& 
 	std::string sHowey = GetHowey(false, true);
 	questionString.append(QString::fromStdString(sHowey));
     // Display message box
-    SendConfirmationDialog confirmationDialog(tr("Confirm sending dynamic whale stake"),
+    SendConfirmationDialog confirmationDialog(tr("Confirm sending this utxo stake"),
         questionString.arg(formatted.join("<br />")), SEND_CONFIRM_DELAY, this);
     confirmationDialog.exec();
     QMessageBox::StandardButton retval = (QMessageBox::StandardButton)confirmationDialog.result();
@@ -364,7 +362,6 @@ bool SendCoinsDialog::ConfirmDWS(QList<SendCoinsRecipient> recipients, CAmount& 
     }
 
 	return true;
-
 }
 
 void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients, QString strFee, QString strFunds)
@@ -392,30 +389,52 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients, QString strFee,
 	}
 	else if (prepareStatus.status == WalletModel::TransactionCommitFailed && prepareStatus.reasonCommitFailed == "DWS_FAIL")
 	{
-		CAmount nDWSAmount = 0;
+		// UTXO Mining - R Andrews - BiblePay 1-5-2021
 
-		bool fSend = ConfirmDWS(recipients, nDWSAmount);
+		CAmount nUTXOAmount = 0;
+		LockUTXOStakes();
+
+		bool fSend = ConfirmUTXO(recipients, nUTXOAmount);
 		if (fSend)
 		{
-			std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+
+			std::string sNarr;
+			std::string sBBPAddress;
 			std::string sTXID;
 			std::string sError;
-			double nDuration = 90;
-			bool fSent = SendDWS(sTXID, sError, sCPK, sCPK, (double)nDWSAmount/COIN, nDuration, false);
-			std::string sNarr;
-			if (!fSent)
+	
+
+			std::string sUTXO = pwalletMain->GetBestUTXO(nUTXOAmount, 1, sBBPAddress);
+			if (sUTXO.empty() || sBBPAddress.empty())
 			{
-				sNarr = "Unable to create dynamic whale stake: " + sError;
+				sNarr += "Unable to create UTXO stake.  Unable to find any BBP between 10K & 10MM older than 24 hours. ";
 			}
-			else
+			std::string sBBPSig = SignBBPUTXO(sUTXO, sError);
+			if (!sError.empty())
 			{
-				sNarr = "DWS Sent Successfully: TXID=" + sTXID;
+				sNarr += "Unable to sign biblepay utxo. ";
+			}
+		
+			bool fSent = false;
+			if (sNarr.empty())
+			{
+				std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+				UTXOStake ux;
+				fSent = SendUTXOStake("", sTXID, sError, sBBPAddress, sUTXO, "", "", sBBPSig, "", sCPK, false, ux);
+				if (!fSent || !sError.empty())
+				{
+					sNarr = "Unable to send UTXO stake: " + sError;
+				}
+				else
+				{
+					sNarr = "UTXO Stake Sent Successfully: TXID=" + sTXID + ".  Please wait a few blocks to see yourself in the leaderboard. ";
+				}
 			}
 
-			QMessageBox::warning(this, "Send Dynamic Whale Stake", QString::fromStdString(sNarr));
+			QMessageBox::warning(this, "Send UTXO Stake", QString::fromStdString(sNarr));
          
 			int iMsg = fSent ? CClientUIInterface::MSG_INFORMATION : CClientUIInterface::MSG_ERROR;
-			Q_EMIT message(tr("Create Dynamic Whale Stake"), QString::fromStdString(sNarr), iMsg);
+			Q_EMIT message(tr("Send UTXO Stake"), QString::fromStdString(sNarr), iMsg);
 			clear();
 			return;
 		}

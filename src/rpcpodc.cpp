@@ -175,6 +175,9 @@ std::string GetGithubVersion()
 
 double GetCryptoPrice(std::string sSymbol)
 {
+	if (sSymbol.empty())
+		return 0;
+
 	boost::to_lower(sSymbol);
 
 	double nLast = cdbl(ReadCacheWithMaxAge("price", sSymbol, (60 * 30)), 12);

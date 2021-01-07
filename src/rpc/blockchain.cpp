@@ -1990,6 +1990,28 @@ UniValue exec(const JSONRPCRequest& request)
 		double nUse = e.getMemoryUsage();
 		results.push_back(Pair("usage", nUse));
 	}
+	else if (sItem == "calculatedwu")
+	{
+		double nReward = CalculateUTXOReward();
+		results.push_back(Pair("DWU", nReward));
+	}
+	else if (sItem == "listutxostakes")
+	{
+		std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+		for (int i = 0; i < uStakes.size(); i++)
+		{
+			UTXOStake d = uStakes[i];
+			if (d.found && d.nValue > 0)
+			{
+				int nStatus = GetUTXOStatus(d.TXID);
+				
+				std::string sSigs = "Sigs: " + d.SignatureNarr;
+				
+				std::string sRow = "#" + RoundToString(i+1, 0) + ":  Amount: " + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker + ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs;
+				results.push_back(Pair(d.TXID.GetHex(), sRow));
+			}
+		}
+	}
 	else if (sItem == "testrsacreate")
 	{
 		RSAKey r = GetMyRSAKey();
@@ -2238,6 +2260,123 @@ UniValue exec(const JSONRPCRequest& request)
 		int iSpecificEntry = 0;
 		UniValue aDataList = GetDataList("SIN", 7, iSpecificEntry, "", sEntry);
 		return aDataList;
+	}
+	else if (sItem == "dacengine")
+	{
+		std::map<std::string, Orphan> mapOrphans;
+		std::map<std::string, Expense> mapExpenses;
+
+		std::map<std::string, double> mapDAC = DACEngine(mapOrphans, mapExpenses);
+		for (auto dacAllocation : mapDAC)
+		{
+			std::string sAllocatedCharity = dacAllocation.first;
+			double nPct = dacAllocation.second;
+			results.push_back(Pair("Allocated Charity", sAllocatedCharity));
+			results.push_back(Pair("Percentage", nPct));
+		}
+		for (auto orphan : mapOrphans)
+		{
+			std::string sRow = "Name: " + orphan.second.Name + ", Amount: " 
+				+ RoundToString(orphan.second.MonthlyAmount, 2) + ", URL: " + orphan.second.URL + ", Charity: " + orphan.second.Charity;
+			results.push_back(Pair(orphan.first, sRow));
+		}
+
+		double nTotalExpenses = 0;
+		double nTotalRevenue = 0;
+		double nTotalRevenueBBP = 0;
+		double nTotalExpensesBBP = 0;
+		for (auto expense : mapExpenses)
+		{
+			if (expense.second.nUSDAmount > 0)
+			{
+				nTotalExpenses += expense.second.nUSDAmount;
+				nTotalExpensesBBP += expense.second.nBBPAmount;
+			}
+			else
+			{
+				nTotalRevenue += expense.second.nUSDAmount * -1;
+				nTotalRevenueBBP += expense.second.nBBPAmount * -1;
+			}
+		}
+		results.push_back(Pair("Expense Total (USD)", nTotalExpenses));
+		results.push_back(Pair("Revenue Total (USD)", nTotalRevenue));
+		// Show the Monthly Totals here
+	}
+	else if (sItem == "give")
+	{
+		double dGive = cdbl(request.params[1].get_str(), 2);
+	    if (request.params.size() != 2)
+			throw std::runtime_error("You must specify give amount. ");
+
+		int nChangePosRet = -1;
+		bool fSubtractFeeFromAmount = true;
+		std::vector<CRecipient> vecSend;
+		std::map<std::string, Orphan> mapOrphan;
+		std::map<std::string, Expense> mapExpenses;
+		std::map<std::string, double> mapDAC = DACEngine(mapOrphan, mapExpenses);
+		for (auto dacAllocation : mapDAC)
+		{
+			std::string sAllocatedCharity = dacAllocation.first;
+			double nPct = dacAllocation.second;
+			if (nPct > 0 && nPct <= 1)
+			{
+				// ToDo:  Report to the user the % and Charity Name as we iterate through the gift, and show which orphans were affected by this persons generosity
+				results.push_back(Pair("Allocated Charity", sAllocatedCharity));
+				CBitcoinAddress baCharity(sAllocatedCharity);
+				CScript spkCharity = GetScriptForDestination(baCharity.Get());
+				CAmount nAmount = dGive * nPct * COIN;
+				results.push_back(Pair("Amount", nAmount/COIN));
+				CRecipient recipient = {spkCharity, nAmount, false, fSubtractFeeFromAmount};
+				vecSend.push_back(recipient);
+			}
+		}
+		CAmount nFeeRequired = 0;
+		bool fUseInstantSend = false;
+		std::string sError;
+		CValidationState state;
+		CReserveKey reserveKey(pwalletMain);
+		CWalletTx wtx;
+		std::string sGiftXML = "<gift><amount>" + RoundToString(dGive, 2) + "</amount></gift>";
+		bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, NULL, true, ALL_COINS, fUseInstantSend, 0, sGiftXML);
+
+		if (!fCreated)    
+		{
+			results.push_back(Pair("Error", sError));
+		}
+		else
+		{
+			if (!pwalletMain->CommitTransaction(wtx, reserveKey, g_connman.get(), state, NetMsgType::TX))
+			{
+				throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
+			}
+		}
+		results.push_back(Pair("txid", wtx.GetHash().GetHex()));
+		if (fCreated)
+		{
+			results.push_back(Pair("Thank You", "May your family be blessed with the richest blessings of Abraham, Isaac and Jacob. "));
+		}
+	}
+	else if (sItem == "getbestutxo")
+	{
+		double nMin = cdbl(request.params[1].getValStr(), 2);
+		std::string sAddress;
+		std::string sUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sAddress);
+		results.push_back(Pair("UTXO", sUTXO));
+		results.push_back(Pair("Address", sAddress));
+	}
+	else if (sItem == "listorphans")
+	{
+		std::string sEntry;
+		int iSE = 0;
+		UniValue uDL = GetDataList("XSPORK-ORPHAN", 999, iSE, "XSPORK-ORPHAN", sEntry);
+		return uDL;
+	}
+	else if (sItem == "listcharities")
+	{
+		std::string sEntry;
+		int iSE = 0;
+		UniValue uDL = GetDataList("XSPORK-CHARITY", 999, iSE, "XSPORK-CHARITY", sEntry);
+		return uDL;
 	}
 	else if (sItem == "reassesschains")
 	{
@@ -2916,11 +3055,35 @@ UniValue exec(const JSONRPCRequest& request)
 			results.push_back(Pair("Errors", sError));
 		results.push_back(Pair("blsmessage", sXML));
 	}
+	else if (sItem == "addexpense")
+	{
+		std::string sType = "XSPORK-EXPENSE";
+		// XSPORK-EXPENSE (TYPE) | (VALUE1) expense-id | (RECORD) (added, charity, bbpamount, usdamount)
+		
+		std::string sDelim = "[-]";
+		std::string sExpenseID = request.params[1].get_str();
+		std::string sAdded = request.params[2].get_str();
+		std::string sCharity = request.params[3].get_str();
+		double nBBPAmount = cdbl(request.params[4].get_str(), 2);
+		double nUSDAmount = cdbl(request.params[5].get_str(), 2);
+		std::string sError;
+		if (sExpenseID.empty() || sAdded.empty() || sCharity.empty() || nUSDAmount == 0)
+		{
+			sError = "Critical information missing!";
+			throw std::runtime_error(sError);
+		}
+		std::string sValue = sAdded + sDelim + sCharity + sDelim + RoundToString(nBBPAmount, 2) + sDelim + RoundToString(nUSDAmount, 2);
+
+		double dFee = 1000;
+		std::string sResult = SendBlockchainMessage(sType, sExpenseID, sValue, dFee, 1, "", sError);
+		if (!sError.empty())
+			results.push_back(Pair("Error", sError));
+		results.push_back(Pair("Result", sResult));
+
+	}
 	else if (sItem == "addorphan")
 	{
 		std::string sType = "XSPORK-ORPHAN";
-		// exec addorphan orphanid, charity, orphanname, URL, monthlyamount
-		// Orphan record format:
 		// XSPORK-ORPHAN (TYPE) | (VALUE1) orphan-id | (RECORD) (charity, name, URL, monthly Amount)
 		std::string sDelim = "[-]";
 		std::string sOrphanID = request.params[1].get_str();

@@ -180,6 +180,25 @@ struct WhaleStake
 	bool paid = false;
 };
 
+struct Orphan
+{
+	std::string OrphanID;
+	std::string Charity;
+	std::string Name;
+	std::string URL;
+	double MonthlyAmount;
+};
+
+struct Expense
+{
+	int64_t nTime = 0;
+	std::string ExpenseID = std::string();
+	std::string Added = std::string();
+	std::string Charity = std::string();
+	double nBBPAmount = 0;
+	double nUSDAmount = 0;
+};
+
 struct UTXOStake
 {
 	std::string XML = std::string();
@@ -189,8 +208,10 @@ struct UTXOStake
 	int Height = 0;
 	int nType = 0;
 	std::string CPK = std::string();
+	std::string SignatureNarr = std::string();
 	bool found = false;
 	std::string ForeignTicker = std::string();
+	std::string ReportTicker = std::string();
 	std::string BBPUTXO = std::string();
 	std::string ForeignUTXO = std::string();
 	std::string BBPAddress = std::string();
@@ -202,8 +223,6 @@ struct UTXOStake
 	double nBTCPrice = 0;
 	double nBBPValueUSD = 0;
 	double nForeignValueUSD = 0;
-	double nBBPQty = 0;
-	double nForeignQty = 0;
 	double nValue = 0;
 	bool BBPSignatureValid = false;
 	bool ForeignSignatureValid = false;
@@ -509,5 +528,8 @@ int AssimilateUTXO(UTXOStake d);
 UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
 int GetUTXOStatus(uint256 txid);
 std::string GetUTXOSummary(std::string sCPK);
+std::string ScanBlockForNewUTXO(const CBlock& block);
+double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bool fDebug);
+double CalculateUTXOReward();
 
 #endif

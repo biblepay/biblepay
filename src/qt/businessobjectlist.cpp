@@ -203,11 +203,20 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 
 void BusinessObjectList::cellDoubleClicked(int Y, int X)
 {
-    std::string sCPK = GUIUtil::FROMQS(ui->tableWidget->item(Y, 2)->text()); // CPK
-	std::string sSumm = GetUTXOSummary(sCPK);
-	std::string sTitle = "My Portfolio - " + sCPK;
-
-	QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Ok, QMessageBox::Ok);
+	
+	QTableWidgetItem *item1(ui->tableWidget->item(Y, 2));
+	if (item1)
+	{
+		std::string sCPK = GUIUtil::FROMQS(item1->text()); // CPK
+		
+		std::string sSumm = GetUTXOSummary(sCPK);
+		
+		if (!sSumm.empty())
+		{
+			std::string sTitle = "My Portfolio - " + sCPK;
+			QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Ok, QMessageBox::Ok);
+		}
+	}
 
 }
 

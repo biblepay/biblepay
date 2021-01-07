@@ -119,6 +119,7 @@ std::map<std::string, std::pair<std::string, int64_t>> mvApplicationCache;
 std::map<std::string, IPFSTransaction> mapSidechainTransactions;
 std::map<std::string, int> mapPOOSStatus;
 std::map<uint256, int> mapUTXOStatus;
+
 bool fUTXOSTested;
 std::map<std::string, DashUTXO> mapDashUTXO;
 std::map<std::string, Researcher> mvResearchers;
@@ -3796,7 +3797,10 @@ bool ContextualCheckBlock(const CBlock& block, CValidationState& state, const Co
 		{
 			double nDiff = GetDifficulty(pindexPrev);
 			double nMinRXDiff = GetSporkDouble("MIN_RX_DIFF", 50);
-			if (nHeight > consensusParams.RANDOMX_HEIGHT && nDiff > nMinRXDiff && nMinRXDiff > 0 && !LateBlock(block, pindexPrev, 30))
+			// UTXO Mining - 1/4/2021 - BiblePay - RAndrews
+			std::string sUTXOMiner = ScanBlockForNewUTXO(block);
+
+			if (sUTXOMiner.empty() && nHeight > consensusParams.RANDOMX_HEIGHT && nDiff > nMinRXDiff && nMinRXDiff > 0 && !LateBlock(block, pindexPrev, 30))
 			{
 				// Must be solved by a pool (this prevents miners from circumventing the 10% tithe to orphan-charity)
 				std::string sPoolList = GetSporkValue("RX_POOLS_LIST");

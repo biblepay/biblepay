@@ -181,10 +181,10 @@
       <item>
        <widget class="QCheckBox" name="chkDWS">
         <property name="toolTip">
-         <string>Burn this amount of BiblePay as a Dynamic Whale Stake for 90 days.  You will receive the stake back at the end plus a stake reward (quoted when you click send).</string>
+         <string>Send UTXO Stake.  If you win the block you receive the block reward.  You also receive perpetual returns in the UTXO leaderboard.</string>
         </property>
         <property name="text">
-         <string>Dynamic Whale Stake?</string>
+         <string>Send UTXO Stake?</string>
         </property>
        </widget>
       </item>

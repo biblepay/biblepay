@@ -76,7 +76,7 @@ private:
 private Q_SLOTS:
     void on_sendButton_clicked();
 	
-	bool ConfirmDWS(QList<SendCoinsRecipient> recipients, CAmount& nDWSAmount);
+	bool ConfirmUTXO(QList<SendCoinsRecipient> recipients, CAmount& nUTXOAmount);
 
     void on_buttonChooseFee_clicked();
     void on_buttonMinimizeFee_clicked();

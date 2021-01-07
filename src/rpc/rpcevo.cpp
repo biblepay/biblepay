@@ -1545,24 +1545,31 @@ UniValue utxostake(const JSONRPCRequest& request)
 	// This allows you to lock up Y amount of a foreign currency + Z amount of BBP in a contract, and receive daily rewards on this contract.
 
 	// Example:
-	// dashstake BBP_UTXO-ORDINAL DASH_UTXO-ORDINAL DASH_SIGNATURE 0=test/1=authorize
+	// utxostake BBP_UTXO-ORDINAL DASH_UTXO+ORDINAL DASH_SIGNATURE 0=test/1=authorize
 	// To create a signature, from DASH type:  signmessage dash_public_key DASH-UTXO-ORDINAL <enter>.  Copy the Dash signature into the BiblePay 'dashstake' command.
 
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 		
-	std::string sHelp = "You must specify utxostake FOREIGN_TICKER BBP_ADDRESS BBP_UTXO-ORDINAL FOREIGN_ADDRESS FOREIGN_CURRENCY_UTXO-ORDINAL FOREIGN_CURRENCY_SIGNATURE I_AGREE=Authorize.\n" + GetHowey(true, false);
+	std::string sHelp = "You must specify utxostake BBP_ADDRESS BBP_UTXO-ORDINAL I_AGREE=Authorize [Optional: FOREIGN_TICKER FOREIGN_ADDRESS FOREIGN_UTXO-ORDINAL FOREIGN_CURRENCY_SIGNATURE]\n" + GetHowey(true, false);
 	
-	if (request.fHelp || (request.params.size() != 7))
+	if (request.fHelp || (request.params.size() != 7 && request.params.size() != 3))
 		throw std::runtime_error(sHelp.c_str());
 		
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	std::string sForeignTicker = request.params[0].get_str();
-	std::string sBBPAddress = request.params[1].get_str();
-	std::string sBBPUTXO = request.params[2].get_str();
-	std::string sForeignAddress = request.params[3].get_str();
-	std::string sForeignUTXO = request.params[4].get_str();
-	std::string sForeignSig = request.params[5].get_str();
-	std::string sAuth = request.params[6].get_str();
+
+	std::string sBBPAddress = request.params[0].get_str();
+	std::string sBBPUTXO = request.params[1].get_str();
+	std::string sAuth = request.params[2].get_str();
+
+	std::string sForeignTicker, sForeignAddress, sForeignUTXO, sForeignSig;
+
+	if (request.params.size() > 3)
+	{
+		sForeignTicker = request.params[3].get_str();
+		sForeignAddress = request.params[4].get_str();
+		sForeignUTXO = request.params[5].get_str();
+		sForeignSig = request.params[6].get_str();
+	}
 
 	std::string sError;
 
@@ -1579,7 +1586,8 @@ UniValue utxostake(const JSONRPCRequest& request)
 	UTXOStake ds;
 	if (sAuth == "I_AGREE")
 	{
-	
+		LockUTXOStakes();
+
 		bool fSent = SendUTXOStake(sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, sForeignSig, sCPK, false, ds);
 		if (!fSent || !sError.empty())
 		{
@@ -1590,10 +1598,15 @@ UniValue utxostake(const JSONRPCRequest& request)
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
 			LockUTXOStakes();
 			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
-			results.push_back(Pair("Foreign Value USD", ds.nForeignValueUSD));
-			results.push_back(Pair("BBP Qty", ds.nBBPQty));
 			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
-			results.push_back(Pair("Foreign Amount", (double)ds.nForeignAmount/COIN));
+
+			if (!sForeignTicker.empty())
+			{
+				results.push_back(Pair("Foreign Ticker", sForeignTicker));
+				results.push_back(Pair("Foreign Value USD", ds.nForeignValueUSD)); //
+				results.push_back(Pair("Foreign Amount", (double)ds.nForeignAmount/COIN));
+			}
+			results.push_back(Pair("UTXO Value", ds.nValue));
 			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
 			results.push_back(Pair("TXID", sTXID));
 		}
@@ -2180,6 +2193,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "dashstake",                    &dashstake,                     false, {}  },
 	{ "evo",                "dws",                          &dws,                           false, {}  },
 	{ "evo",                "dwsquote",                     &dwsquote,                      false, {}  },
+	{ "evo",                "utxostake",                    &utxostake,                     false, {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,            false, {}  },
 	{ "evo",                "getpobhhash",                  &getpobhhash,                   false, {}  },
     { "evo",                "bls",                          &_bls,                          false, {}  },

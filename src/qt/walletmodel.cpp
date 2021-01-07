@@ -351,10 +351,12 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         }
     }
 
-	// DAC - 1-2-2021
+	// DAC Donate Process
 	if (fDonate)
 	{
-		std::map<std::string, double> mapDAC = DACEngine();
+		std::map<std::string, Orphan> mapOrphans;
+		std::map<std::string, Expense> mapExpenses;
+		std::map<std::string, double> mapDAC = DACEngine(mapOrphans, mapExpenses);
 		int iPos = 0;
 		if (mapDAC.size() > 0 && total > 0)
 		{
@@ -376,17 +378,18 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 					std::string sAddrF = PubKeyToAddress(spkDAC);
 					setAddress.insert(GUIUtil::TOQS(sAddrF));
 					recDAC.txtMessage = vecSend[0].txtMessage;
-					
 					if (iPos == 1)
 					{
+						std::string sGiftXML = "<gift><amount>" + RoundToString(nMyTotalGift, 2) + "</amount><gift>";
+						recDAC.txtMessage = sGiftXML;
 						vecSend[0] = recDAC;
-					
 					}
 					else
 					{
-						++nAddresses;
 						vecSend.push_back(recDAC);
 					}
+					++nAddresses;
+
 				}
 			}
 		}
@@ -424,6 +427,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 
     if(setAddress.size() != nAddresses)
     {
+		//1-4-2021
         return DuplicateAddress;
     }
 

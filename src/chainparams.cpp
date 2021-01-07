@@ -437,7 +437,7 @@ public:
 		consensus.nInstantSendKeepLock = 6;
 		consensus.nBudgetPaymentsStartBlock = 2002;
 		consensus.QTHeight = 5000;
-		consensus.TRIBULATION_HEIGHT = 250000;
+		consensus.TRIBULATION_HEIGHT = 58000;
 
 		consensus.nBudgetPaymentsCycleBlocks = 50;
 		consensus.nBudgetPaymentsWindowBlocks = 10;
