@@ -1413,7 +1413,7 @@ int DeserializePrayersFromFile()
 {
 	LogPrintf("\nDeserializing prayers from file %f", GetAdjustedTime());
 	std::string sSuffix = fProd ? "_prod" : "_testnet";
-	std::string sSource = GetSANDirectory2() + "prayers2" + sSuffix;
+	std::string sSource = GetSANDirectory2() + "prayers3" + sSuffix;
 
 	boost::filesystem::path pathIn(sSource);
     std::ifstream streamIn;
