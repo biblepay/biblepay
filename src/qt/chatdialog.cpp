@@ -109,8 +109,8 @@ std::string ChatDialog::Decrypt(std::string sEnc)
 		std::string sError;
 //		std::string sDec = RSA_Decrypt_String_With_Key(this->PrivateKey, sEnc, sError);
 
-		std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
-		std::string sEnc = RSA_Decrypt_String(sPrivPath, sEnc, sError);
+		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
 		
 
 		// 1-10-2021
