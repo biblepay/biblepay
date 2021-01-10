@@ -158,8 +158,8 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 		return std::string();
 	if (sMessageType == "cpk")
 	{
-		// For the user record
-		WriteCache(sMessageType, sMessageKey, sMessageValue, GetAdjustedTime(), true);
+		// For the user record - The below did not work - Research
+		// WriteCache(sMessageType, sMessageKey, sMessageValue, GetAdjustedTime(), true);
 	}
     return wtx.GetHash().GetHex().c_str();
 }

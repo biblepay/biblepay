@@ -15,11 +15,11 @@ using namespace boost::asio;
 using namespace boost::asio::ip;
 
 io_service ioservice;
-tcp::endpoint pop3_endpoint{tcp::v4(), 111};
+tcp::endpoint pop3_endpoint{tcp::v4(), 30110};
 tcp::acceptor pop3_acceptor{ioservice, pop3_endpoint};
 tcp::socket pop3_socket{ioservice};
 
-tcp::endpoint smtp_endpoint{tcp::v4(), 26};
+tcp::endpoint smtp_endpoint{tcp::v4(), 30025};
 tcp::acceptor smtp_acceptor{ioservice, smtp_endpoint};
 tcp::socket smtp_socket{ioservice};
 
@@ -142,8 +142,7 @@ int GetMessageSize()
 	for (auto it : mapEmails) 
 	{
 		CEmail myEmail = CEmail::getEmailByHash(it.first);
-		
-		LogPrintf("Email hash %s ", myEmail.GetHash().GetHex());
+		//	LogPrintf("Email hash %s ", myEmail.GetHash().GetHex());
 
 		if (myEmail.IsMine())
 		{
@@ -694,7 +693,7 @@ void RequestMissingEmails()
 			int64_t nSz = GETFILESIZE(sTarget);
 			if (nSz <= 0)
 			{
-				LogPrintf("\nSMTP::Requesting Missing Email %s ", sFileName);
+				//LogPrintf("\nSMTP::Requesting Missing Email %s ", sFileName);
 				CEmailRequest erequest;
 				erequest.RequestID = hashInput;
 				bool nSent = false;
@@ -702,12 +701,12 @@ void RequestMissingEmails()
 				{
 					erequest.RelayTo(pnode, *g_connman);
 			    });
-				LogPrintf("\nSMTP::RequestMissingEmails - Requesting %s %f ", sFileName, nSz);
+				//				LogPrintf("\nSMTP::RequestMissingEmails - Requesting %s %f ", sFileName, nSz);
 
 			}
 			else
 			{
-				LogPrintf("\nSMTP::RequestMissingEmails - Found %s %f ", sFileName, nSz);
+				//LogPrintf("\nSMTP::RequestMissingEmails - Found %s %f ", sFileName, nSz);
 				std::map<uint256, CEmail>::iterator mi = mapEmails.find(hashInput);
 				if (mi == mapEmails.end())
 				{
@@ -731,7 +730,7 @@ void ThreadSMTP(CConnman& connman)
 	// Then we send the message over the biblepay network (encrypted).
 	// Later, our decentralized POP3 protocol will handle the decryption and delivery.
 	// You may also forward other non-biblepay e-mails into our SMTP server for non-encrypted delivery (as long as the fees are paid). 
-	int64_t nTimer;
+	int64_t nTimer = 0;
 	while (1==1)
 	{
 		smtp_socket.close();
@@ -746,7 +745,7 @@ void ThreadSMTP(CConnman& connman)
 		
 			  MilliSleep(100);
 			  nTimer++;
-			  if (nTimer % 1000 == 0)
+			  if (nTimer % 10000 == 0)
 			  {
 				  // 2 minutes - TODO; change this to 5 minutes
 				  RequestMissingEmails();

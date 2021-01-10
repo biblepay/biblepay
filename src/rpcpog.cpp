@@ -692,9 +692,9 @@ bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nV
     int nChangePosRet = -1;
 	bool fForce = false;
 	// BiblePay - Handle extremely large data transactions:
-	if (sOptionalData.length() > 3000 && nValue > 0)
+	if (sOptionalData.length() > 10000 && nValue > 0)
 	{
-		double nReq = ceil(sOptionalData.length() / 3000);
+		double nReq = ceil(sOptionalData.length() / 10000);
 		double n1 = (double)nValue / COIN;
 		double n2 = n1 / nReq;
 		for (int n3 = 0; n3 < nReq; n3++)
@@ -1383,7 +1383,7 @@ void SerializePrayersToFile(int nHeight)
 {
 	if (nHeight < 100) return;
 	std::string sSuffix = fProd ? "_prod" : "_testnet";
-	std::string sTarget = GetSANDirectory2() + "prayers2" + sSuffix;
+	std::string sTarget = GetSANDirectory2() + "prayers3" + sSuffix;
 	FILE *outFile = fopen(sTarget.c_str(), "w");
 	LogPrintf("Serializing Prayers... %f ", GetAdjustedTime());
 	for (auto ii : mvApplicationCache) 
@@ -1708,15 +1708,7 @@ TxMessage GetTxMessage(std::string sMessage, int64_t nTime, int iPosition, std::
 		// these are sent by our users to each other
 		t.fPassedSecurityCheck = true;
 	}
-	else if (t.sMessageType == "DCC" || Contains(t.sMessageType, "CPK"))
-	{
-		if (false)
-			LogPrintf("\ncpktype %s, %s, %s ", t.sMessageType, sMessage, t.sMessageValue);
-
-		// These now have a security hash on each record and are checked individually using CheckStakeSignature
-		t.fPassedSecurityCheck = true;
-	}
-	else if (Contains(t.sMessageType, "CPK-WCG"))
+	else if (t.sMessageType == "CPK-WCG")
 	{
 		// Security is checked in the memory pool
 		// New CPID associations replace old associations (LIFO)
@@ -1734,6 +1726,15 @@ TxMessage GetTxMessage(std::string sMessage, int64_t nTime, int iPosition, std::
 			WriteCache("cpid-reverse-lookup", sCPID, sReverseLookup, nTime);
 			LogPrintf("\nReverse CPID lookup for %s is %s", sCPID, sReverseLookup);
 		}
+	}
+	else if (t.sMessageType == "DCC" || t.sMessageType == "CPK" || boost::starts_with(t.sMessageType, "CPK-"))
+	{
+		t.fBOSigValid = CheckBusinessObjectSig(t);
+		if (true)
+			LogPrintf("\nAcceptPrayer::CPKType %s, %s, %s, bosigvalid %f ", t.sMessageType, sMessage, t.sMessageValue, t.fBOSigValid);
+		
+		// These now have a security hash on each record and are checked individually using CheckStakeSignature
+		t.fPassedSecurityCheck = true;
 	}
 	else if (t.sMessageType == "EXPENSE" || t.sMessageType == "REVENUE" || t.sMessageType == "ORPHAN")
 	{

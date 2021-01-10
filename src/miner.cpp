@@ -282,10 +282,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     CValidationState state;
     if (!TestBlockValidityLite(state, chainparams, *pblock, pindexPrev, false, false, true, true)) 
 	{
-		if (fDebugSpam)
-			LogPrint("miner", "BibleMiner failed to create new block\n");
-        return NULL;
+		if (true)
+			LogPrint("miner", "BiblePayMiner failed to create a valid new block\n");
+		MilliSleep(10000);
     }
+
     int64_t nTime2 = GetTimeMicros();
 
 	if (fDebugSpam)

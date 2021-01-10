@@ -3035,7 +3035,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 		if (pfrom->setKnown.count(eReqID) < 10)
 		{
 			CEmail email = CEmail::getEmailByHash(erequest.RequestID);
-			LogPrintf("\r\nNetProcessing::GetEmailByHash Looking for %s-- email time %f ", erequest.RequestID.GetHex(), email.nTime);
+			//			LogPrintf("\r\nNetProcessing::GetEmailByHash Looking for %s-- email time %f ", erequest.RequestID.GetHex(), email.nTime);
 			pfrom->setKnown.insert(eReqID);
 			{
 				connman.ForEachNode([&erequest, &connman, &email](CNode* pnode) 
@@ -3048,7 +3048,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 					}
 					else
 					{
-						LogPrintf("\r\nNetProcessing::Cant Find Email %s", email.GetHash().GetHex());
+						// LogPrintf("\r\nNetProcessing::Cant Find Email %s", email.GetHash().GetHex());
 					}
 				});
 			}
