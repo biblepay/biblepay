@@ -2072,6 +2072,12 @@ UniValue exec(const JSONRPCRequest& request)
 
 		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
 		results.push_back(Pair("dec", sDec));
+		// dec with key
+		// 1-10-2021
+		std::string sDec2 = RSA_Decrypt_String_With_Key(rsa2.PrivateKey, sEnc, sError);
+		results.push_back(Pair("dec2", sDec));
+
+
 	}
 	else if (sItem == "multisig1")
 	{

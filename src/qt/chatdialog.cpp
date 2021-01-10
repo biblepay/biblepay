@@ -91,12 +91,36 @@ std::string ChatDialog::Decrypt(std::string sEnc)
 		return sEnc;
 	if (fEncryptedChat)
 	{
+		/*
+		if (this->PrivateKey.empty())
+		{
+			RSAKey r = GetMyRSAKey();
+			if (r.PrivateKey.length() < 1000)
+			{
+				sMessage += "Sorry, we can't find your RSA public key.  To make one, please go to your User Record and save your nickname and ensure the RSA public key is generated. ";
+			}
+			else
+			{
+				this->PrivateKey = r.PrivateKey;
+			}
+		}
+		*/
+	
 		std::string sError;
-		std::string sDec = RSA_Decrypt_String_With_Key(this->PrivateKey, sEnc, sError);
+//		std::string sDec = RSA_Decrypt_String_With_Key(this->PrivateKey, sEnc, sError);
+
+		std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
+		std::string sEnc = RSA_Decrypt_String(sPrivPath, sEnc, sError);
+		
+
+		// 1-10-2021
 		sMessage = "(Encrypted) " + sDec;
 		if (!sError.empty())
+		{
 			sMessage = "(Encryption error: " + sError + ")";
-	 }
+			LogPrintf("\nEncChat::Failure decrypting %s %s ", sEnc, sError);
+		}
+	}
 	return sMessage;
 }
 
