@@ -940,11 +940,14 @@ bool AcceptToMemoryPoolWorker(CTxMemPool& pool, CValidationState& state, const C
 				LogPrintf("AcceptToMemoryPool::Dynamic Whale Burn rejected %s [%s]\n", tx.GetHash().GetHex(), sError2);
 				return false;
 			}
+			/*
 			if (!VerifyDACDonation(tx1, sError2))
 			{
 				LogPrintf("AcceptToMemoryPool::DAC Donation or match rejects %s [%s]\n", tx.GetHash().GetHex(), sError2);
 				return false;
 			}
+			*/
+
 			// Verify Sanctuary Revival Txes
 			if (!ApproveSanctuaryRevivalTransaction(tx))
 			{

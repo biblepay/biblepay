@@ -4311,7 +4311,7 @@ std::vector<DashStake> GetPayableDashStakes(int nHeight, double& nOwed)
 
 bool VerifyDACDonation(CTransactionRef tx, std::string& sError)
 {
-	LogPrintf("\n%f", 8071);
+	// Retire
 
 	double nToday = GetDACDonationsByRange(chainActive.Tip()->nHeight - BLOCKS_PER_DAY, BLOCKS_PER_DAY);
 	const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -6243,6 +6243,7 @@ double GetDACDonationsByRange(int nStartHeight, int nRange)
 				nTotal += nAmt;
 		}
 	}
+	return nTotal;
 }
 
 static UserRecord myUserRecord;
