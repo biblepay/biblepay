@@ -229,8 +229,18 @@ void ChatDialog::appendMessage(std::string sFrom, std::string sMessage, int nPri
 		 c.sPayload = GUIUtil::FROMQS(text);
 		 if (fEncryptedChat)
 		 {
-			 std::string sError;
+			std::string sError;
 
+		 	if (this->PublicKey.empty())
+			{
+				UserRecord u = GetUserRecord(sRecipientName);
+				this->PublicKey = u.RSAPublicKey;
+				if (this->PublicKey.length() < 256)
+				{
+					LogPrintf("\nEncryptedChat::Unable to find recipient %s public key. ", sRecipientName);
+				}
+			}
+	
 			 c.sPayload = RSA_Encrypt_String_With_Key(this->PublicKey, c.sPayload, sError);
 
 			 if (!sError.empty())
