@@ -11,8 +11,8 @@
 static int64_t nPoosProcessTime = 0;
 void ThreadPOOS(CConnman& connman)
 {
-
-	SyncSideChain(0);
+	if (false)
+		SyncSideChain(0);
 	int nIterations = 0;
 
 	while (1 == 1)
@@ -68,7 +68,8 @@ void ThreadPOOS(CConnman& connman)
 			int64_t nTipAge = GetAdjustedTime() - chainActive.Tip()->GetBlockTime();
 			if (nTipAge < (60 * 60 * 4) && chainActive.Tip()->nHeight % 10 == 0)
 			{
-				SyncSideChain(chainActive.Tip()->nHeight);
+				if (false)
+					SyncSideChain(chainActive.Tip()->nHeight);
 			}
 			// Sanctuary side UTXO Oracle Process
 			std::vector<UTXOStake> uStakes = GetUTXOStakes(false);

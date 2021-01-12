@@ -9,6 +9,7 @@
 #include "util.h"
 #include "clientversion.h"
 #include "rpcpog.h"
+#include "rpcpodc.h"
 #include "netmessagemaker.h"
 
 

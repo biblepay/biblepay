@@ -2511,7 +2511,8 @@ UniValue exec(const JSONRPCRequest& request)
 			{
 				throw std::runtime_error("IPFS::" + sError);
 			}
-			SyncSideChain(chainActive.Tip()->nHeight);
+			if (false)
+				SyncSideChain(chainActive.Tip()->nHeight);
 			results.push_back(Pair("TXID", sTXID));
 		}
 		else

@@ -24,6 +24,8 @@
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
 using namespace std;
 
 CCriticalSection cs_mapEmails;
@@ -196,8 +198,24 @@ int CEmail::EDeserialize(uint256 Hash)
 
 	std::vector<char> bEmail = ReadAllBytesFromFile(sSource.c_str());
 	std::string data = std::string(bEmail.begin(), bEmail.end());
+	bool fDebuggingEmail = cdbl(GetArg("-debuggingemail", "0"), 0) == 1;
 
 	Deserialize1(data);
+	int64_t nElapsed = GetAdjustedTime() - nTime;
+	if (nElapsed > (60 * 60 * 24 * 1))
+	{
+		boost::filesystem::path pathEmail = sSource.c_str();
+		if (boost::filesystem::exists(pathEmail)) 
+		{
+			boost::filesystem::remove(pathEmail);
+			if (fDebuggingEmail)
+				LogPrintf("\nSMTP::DeletingEmail %s", sSource.c_str());
+			Body = std::string();
+			nTime = 0;
+			return -2;
+		}
+
+	}
 	return 1;
 }
 
@@ -226,6 +244,11 @@ bool CEmail::ProcessEmail()
 	// Verify the disk is not more than 90% full too
 	std::string sTarget = GetFileName();
 	int64_t nSz = GETFILESIZE(sTarget);
+	int64_t nAge = GetAdjustedTime() - nTime;
+	if (nAge > (60 * 60 * 24 * 1))
+	{
+		return false;
+	}
 	if (nSz <= 0)
 	{
 		/*
@@ -238,10 +261,8 @@ bool CEmail::ProcessEmail()
 		WriteDataToFile(sTarget, sData);
 	}
 	// Relinquish Memory
-	LogPrintf("\npop3 collection size %f", mapEmails.size());
 	Body = std::string();
 	mapEmails.insert(make_pair(MyHash, *this));
-
     return true;
 }
 

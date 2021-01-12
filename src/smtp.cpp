@@ -81,7 +81,7 @@ void smtp_send(std::string data)
 {
 	async_write(smtp_socket, buffer(data), smtp_write_handler);
 	if (fDebuggingEmail)
-		LogPrintf("\nsmtp_SEND %s", data);
+		LogPrintf("\nSMTP::smtp_SEND %s", data);
 }
 
 void pop3_close()
@@ -114,9 +114,23 @@ std::string sPopUser;
 void pop3_USER(std::string sWho)
 {
 	sPopUser = GetElement(sWho, " ", 1);
-	LogPrintf("\npop3_PopUser %s", sPopUser);
+	LogPrintf("\nPOP3::pop3_PopUser [%s]", sPopUser);
 	std::string sReply = "+OK\r\n";
 	pop3_send(sReply);
+}
+
+void pop3_AUTH(std::string sData)
+{
+	std::string sType = GetElement(sData, " ", 1);
+	if (sType == "PLAIN" || sType == "LOGIN")
+	{
+		pop3_send("+OK plaintext authentication successful\r\n");
+	}
+	else
+	{
+		std::string sReply = "-364 Unrecognized authentication type\r\n";
+		pop3_send(sReply);
+	}
 }
 
 std::string sPopPass;
@@ -321,6 +335,10 @@ void pop3_process(std::string sInbound)
 		  {
 			  pop3_STAT();
 		  }
+		  else if (pop3_buffer.find("AUTH") != std::string::npos)
+		  {
+			  pop3_AUTH(pop3_buffer);
+		  }
 		  else if (pop3_buffer.find("LIST") != std::string::npos)
 		  {
 			  pop3_LIST(pop3_buffer);
@@ -343,7 +361,7 @@ void pop3_process(std::string sInbound)
 
 void smtp_EHLO()
 {
-	std::string sReply = "250-biblepay Hello\r\n250-SIZE 0\r\n250-8BITTIME\r\n250 HELP\r\n250 AUTH LOGIN PLAIN\r\n";
+	std::string sReply = "250-biblepay Hello\r\n250-SIZE 0\r\n250-8BITTIME\r\n250 HELP\r\n250-AUTH PLAIN LOGIN\r\n";
 	smtp_send(sReply);
 }
 
@@ -381,20 +399,75 @@ void smtp_AUTH_COMPLETE(std::string sPassword)
 	smtp_send(sReply);
 }
 
+std::string CleanType1(std::string sMyClean)
+{
+	sMyClean = strReplace(sMyClean, "FROM:", "");
+	sMyClean = strReplace(sMyClean, "TO:", "");
+	sMyClean = strReplace(sMyClean, "\r", "");
+	sMyClean = strReplace(sMyClean, "\n", "");
+	sMyClean = strReplace(sMyClean, "<", "");
+	sMyClean = strReplace(sMyClean, ">", "");
+	return sMyClean;
+}
+
+std::string CleanType2(std::string sMyClean)
+{
+	sMyClean = strReplace(sMyClean, "@biblepay.core", "");
+	sMyClean = strReplace(sMyClean, "\r", "");
+	sMyClean = strReplace(sMyClean, "\n", "");
+	sMyClean = strReplace(sMyClean, "<", "");
+	sMyClean = strReplace(sMyClean, ">", "");
+	return sMyClean;	
+}
+
 std::string msEmailFrom;
 void smtp_MAIL_FROM(std::string sBuffer)
 {
 	msEmailFrom = GetElement(sBuffer, " ", 2);
-	smtp_send("250 OK\r\n");
+	if (msEmailFrom.empty() || Contains(msEmailFrom, "SIZE"))
+	{
+		// Outlook uses position 2, Thunderbird 1
+		msEmailFrom = GetElement(sBuffer, " ", 1);
+	}
+	msEmailFrom = CleanType1(msEmailFrom);
+	
+	if (fDebuggingEmail)
+		LogPrintf("\nSMTP::SMTP_MAILFROM:: [%s]", msEmailFrom);
+	UserRecord u = GetUserRecord(CleanType2(msEmailFrom));
+	if (u.Found)
+	{
+		smtp_send("250 Accepted sender " + msEmailFrom + " OK\r\n");
+	}
+	else
+	{
+		smtp_send("422 REJECTED - No such sender " + msEmailFrom + " exists in the biblepay network.\r\n");
+	}
 }
 
 std::string msEmailTo;
 void smtp_RCPT_TO(std::string sBuffer)
 {
 	msEmailTo = GetElement(sBuffer, " ", 2);
+	if (msEmailTo.empty())
+	{
+		// Thunderbird 1
+		msEmailTo = GetElement(sBuffer, " ", 1);
+	}
+	msEmailTo = CleanType1(msEmailTo);
 	if (fDebuggingEmail)
-		LogPrintf("\nSMTP_TO %s", msEmailTo);
-	smtp_send("250 OK\r\n");
+		LogPrintf("\nSMTP::SMTP_TO [%s]", msEmailTo);
+	// We need to send a 211 if the recipient is not in the addressbook
+	UserRecord u = GetUserRecord(CleanType2(msEmailTo));
+	if (u.Found)
+	{
+		LogPrintf("\nSMTP::%f Accepted", 250);
+		smtp_send("250 2.1.5 " + msEmailTo + "\r\n");
+	}
+	else
+	{
+		LogPrintf("\nSMTP::%f No such recipient", 211);
+		smtp_send("422 REJECTED - No such recipient " + msEmailTo + " in the biblepay network.\r\n");
+	}
 }
 
 void smtp_DATA()
@@ -472,6 +545,9 @@ void smtp_process(std::string sInbound)
 {
 	std::string sMyInbound(sInbound.c_str());
 	smtp_buffer += sMyInbound;
+	if (fDebuggingEmail)
+		LogPrintf("\nSMTP_INBOUND [%s]", sInbound);
+
 	if (smtp_DATA_MODE)
 	{
 		if (smtp_buffer.find("\r\n.\r\n") != std::string::npos || smtp_buffer.find("\n.\n") != std::string::npos)
@@ -731,6 +807,9 @@ void ThreadSMTP(CConnman& connman)
 	// Later, our decentralized POP3 protocol will handle the decryption and delivery.
 	// You may also forward other non-biblepay e-mails into our SMTP server for non-encrypted delivery (as long as the fees are paid). 
 	int64_t nTimer = 0;
+	fDebuggingEmail = cdbl(GetArg("-debuggingemail", "0"), 0) == 1;
+	LogPrintf("\nSMTPServer::DebuggingMode %f ", fDebuggingEmail);
+
 	while (1==1)
 	{
 		smtp_socket.close();
