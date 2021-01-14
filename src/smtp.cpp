@@ -27,6 +27,7 @@ std::array<char, 1000000> pop3_bytes;
 std::array<char, 1000000> smtp_bytes;
 std::string smtp_buffer;
 std::string pop3_buffer;
+std::vector<std::string> msEmailTo;
 
 bool pop3_connected = false;
 bool smtp_connected = false;
@@ -72,8 +73,26 @@ void Analyze()
 void pop3_send(std::string data)
 {
 	if (fDebuggingEmail)
-		LogPrintf("pop3_SENTBACK %s", data);
+		LogPrintf("pop3_SENTBACK %s", Mid(data, 0, 512));
+	/*
+	int iChunkSize = 4096;
+
+	if (data.length() > iChunkSize)
+	{
+		for (int i = 0; i < data.length(); i+= iChunkSize)
+		{
+			std::string sChunk = Mid(data, i, iChunkSize);
+			async_write(pop3_socket, buffer(sChunk), pop3_write_handler);
+			MilliSleep(10);
+			if (i % iChunkSize*10 == 0)
+							LogPrintf("\n%f", i);
+		}
+	}
+	else
+	{
+	*/
 	async_write(pop3_socket, buffer(data), pop3_write_handler);
+	
 }
 
 
@@ -81,7 +100,7 @@ void smtp_send(std::string data)
 {
 	async_write(smtp_socket, buffer(data), smtp_write_handler);
 	if (fDebuggingEmail)
-		LogPrintf("\nSMTP::smtp_SEND %s", data);
+		LogPrintf("\nSMTP::smtp_SEND %s", Mid(data, 0, 512));
 }
 
 void pop3_close()
@@ -171,9 +190,9 @@ int GetMessageCount()
 	int nTotal = 0;
 	for (auto it : mapEmails)
 	{
-		CEmail myEmail = mapEmails[it.first];
+		CEmail myEmail = CEmail::getEmailByHash(it.first);
 		if (fDebuggingEmail)
-			LogPrintf("\nGetMessageCount %s %s", myEmail.ToEmail, msMyInternalEmailAddress);
+			LogPrintf("\nGetMessageCount %f %s %s", nTotal, myEmail.ToEmail, msMyInternalEmailAddress);
 		if (myEmail.IsMine())
 		{
 			nTotal++;
@@ -294,8 +313,9 @@ void pop3_RETR(std::string sNo)
 	CEmail e = GetEmailByID(nMsgNo);
 	if (!e.IsNull())
 	{
-		LogPrintf("\r\nFound Email %s", Mid(e.Body, 1, 100));
-		std::string sReply = "+OK " + RoundToString(e.Body.length(), 0) + " octets\r\n" + e.Body + "\r\n" + "Message-Id: <" + e.GetHash().GetHex() + ">\r\n.\r\n";
+		std::string sID = "Message-Id: <" + e.GetHash().GetHex() + ">";
+		LogPrintf("\r\nFound Email %s", Mid(e.Body, 0, 100));
+		std::string sReply = "+OK " + RoundToString(e.Body.length() + 2, 0) + " octets\r\n" + e.Body + "\r\n.\r\n";
 		pop3_send(sReply);
 	}
 	else
@@ -314,7 +334,9 @@ void pop3_process(std::string sInbound)
 	  if (Contains(sInbound,"\n"))
 	  {
 		  // Process the pop3 command here
-		  LogPrintf("\npop3_receive %s ", pop3_buffer);
+		  if (fDebuggingEmail)
+			LogPrintf("\npop3_receive %s", Mid(pop3_buffer, 0, 256));
+
 		  if (pop3_buffer.find("QUIT") != std::string::npos)
 		  {
 			  pop3_QUIT();
@@ -361,6 +383,8 @@ void pop3_process(std::string sInbound)
 
 void smtp_EHLO()
 {
+	msEmailTo.clear();
+
 	std::string sReply = "250-biblepay Hello\r\n250-SIZE 0\r\n250-8BITTIME\r\n250 HELP\r\n250-AUTH PLAIN LOGIN\r\n";
 	smtp_send(sReply);
 }
@@ -370,6 +394,8 @@ bool smtp_Auth_Pass = false;
 
 void smtp_AUTH()
 {
+	msEmailTo.clear();
+
 	// Base 64 Version of Auth
 	std::string sAuth = "334 VXNlcm5hbWU6\r\n";
 	smtp_Auth_User = true;
@@ -423,6 +449,8 @@ std::string CleanType2(std::string sMyClean)
 std::string msEmailFrom;
 void smtp_MAIL_FROM(std::string sBuffer)
 {
+	msEmailTo.clear();
+
 	msEmailFrom = GetElement(sBuffer, " ", 2);
 	if (msEmailFrom.empty() || Contains(msEmailFrom, "SIZE"))
 	{
@@ -444,29 +472,29 @@ void smtp_MAIL_FROM(std::string sBuffer)
 	}
 }
 
-std::string msEmailTo;
 void smtp_RCPT_TO(std::string sBuffer)
 {
-	msEmailTo = GetElement(sBuffer, " ", 2);
-	if (msEmailTo.empty())
+	std::string myTo = GetElement(sBuffer, " ", 2);
+	if (myTo.empty())
 	{
 		// Thunderbird 1
-		msEmailTo = GetElement(sBuffer, " ", 1);
+		myTo = GetElement(sBuffer, " ", 1);
 	}
-	msEmailTo = CleanType1(msEmailTo);
+	myTo = CleanType1(myTo);
 	if (fDebuggingEmail)
-		LogPrintf("\nSMTP::SMTP_TO [%s]", msEmailTo);
+		LogPrintf("\nSMTP::SMTP_RCPT_TO [%s]", myTo);
 	// We need to send a 211 if the recipient is not in the addressbook
-	UserRecord u = GetUserRecord(CleanType2(msEmailTo));
+	UserRecord u = GetUserRecord(CleanType2(myTo));
 	if (u.Found)
 	{
 		LogPrintf("\nSMTP::%f Accepted", 250);
-		smtp_send("250 2.1.5 " + msEmailTo + "\r\n");
+		msEmailTo.push_back(myTo);
+		smtp_send("250 2.1.5 " + myTo + "\r\n");
 	}
 	else
 	{
 		LogPrintf("\nSMTP::%f No such recipient", 211);
-		smtp_send("422 REJECTED - No such recipient " + msEmailTo + " in the biblepay network.\r\n");
+		smtp_send("422 REJECTED - No such recipient " + myTo + " in the biblepay network.\r\n");
 	}
 }
 
@@ -476,15 +504,27 @@ void smtp_DATA()
 	smtp_DATA_MODE = true;
 }
 
+std::string EmailVectorToString(std::vector<std::string> sVector)
+{
+	std::string sMyList;
+	for (int i = 0; i < sVector.size(); i++)
+	{
+		sMyList += sVector[i] + ", ";
+	}
+	sMyList = Mid(sMyList, 0, sMyList.length() - 2);
+	return sMyList;
+}
+
+
 void smtp_SENDMAIL(std::string sData)
 {
-	if (fDebuggingEmail && false)
-		LogPrintf("\nSendMail %s", sData);
+	if (fDebuggingEmail)
+		LogPrintf("\nSMTP::SendMail %s", Mid(sData, 0, 256));
 	// At this point we have enough to relay the object
 
 	CEmail e;
 	e.FromEmail = msEmailFrom;
-	e.ToEmail = msEmailTo;
+	e.ToEmail = EmailVectorToString(msEmailTo);
 
 	// If the email is encrypted, this is where we apply the RSA key:
 
@@ -495,10 +535,11 @@ void smtp_SENDMAIL(std::string sData)
 	/*
 	std::string sEnc = RSA_Encrypt_String(sPubPath, sData ,sError);
 	std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
-	e.Body = sDec;
+	e = sDec;
 
 	*/
 
+	sData = strReplace(sData, "\r\n.\r\n", "");
 	e.Body = sData;
 	
 	e.nType = 1;
@@ -507,8 +548,7 @@ void smtp_SENDMAIL(std::string sData)
 	e.Encrypted = false;
 
 	uint256 eHash = e.GetHash();
-	LogPrintf("\nEMAIL HASH %s", eHash.GetHex());
-
+	
 	// Charge user, then relay it
 
 	UserRecord r = GetMyUserRecord();
@@ -518,6 +558,9 @@ void smtp_SENDMAIL(std::string sData)
 		fPaid = PayEmailFees(e);
 	}
 	
+	LogPrintf("\nSMTP::Send::EMAIL HASH %s Length %f Paid %f ", eHash.GetHex(), e.Body.length(), fPaid);
+
+
 	if (fPaid && e.Body.length() < 3000000)
 	{
 		e.ProcessEmail();
@@ -546,7 +589,7 @@ void smtp_process(std::string sInbound)
 	std::string sMyInbound(sInbound.c_str());
 	smtp_buffer += sMyInbound;
 	if (fDebuggingEmail)
-		LogPrintf("\nSMTP_INBOUND [%s]", sInbound);
+		LogPrintf("\nSMTP_INBOUND [%s]", Mid(sInbound, 0, 512));
 
 	if (smtp_DATA_MODE)
 	{
@@ -564,7 +607,9 @@ void smtp_process(std::string sInbound)
 	else if (Contains(sInbound, "\n"))
 	{
 		// Process the SMTP command here
-		LogPrintf("\nsmtp_receive %s ", smtp_buffer);
+		if (fDebuggingEmail)
+			LogPrintf("\nSMTP::smtp_receive %s ", Mid(smtp_buffer, 0, 256));
+
 		if (smtp_buffer.find("QUIT") != std::string::npos)
 		{
 			smtp_close();
@@ -777,7 +822,7 @@ void RequestMissingEmails()
 				{
 					erequest.RelayTo(pnode, *g_connman);
 			    });
-				//				LogPrintf("\nSMTP::RequestMissingEmails - Requesting %s %f ", sFileName, nSz);
+				//	LogPrintf("\nSMTP::RequestMissingEmails - Requesting %s %f ", sFileName, nSz);
 
 			}
 			else
@@ -819,14 +864,17 @@ void ThreadSMTP(CConnman& connman)
 		smtp_acceptor.listen();
 		smtp_acceptor.async_accept(smtp_socket, smtp_accept_handler);
 		smtp_connected=true;
+		//RequestMissingEmails();
+		
 		for (int i = 0; i < 10*60*1; i++)
 		{
 		
 			  MilliSleep(100);
 			  nTimer++;
-			  if (nTimer % 10000 == 0)
+			  if (nTimer % 50000 == 0)
 			  {
 				  // 2 minutes - TODO; change this to 5 minutes
+				  LogPrintf("\nSMTP::RequestMissingEmails %f ", GetAdjustedTime());
 				  RequestMissingEmails();
 			  }
     	 	  if (!smtp_connected || ShutdownRequested())

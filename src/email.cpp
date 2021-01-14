@@ -94,19 +94,25 @@ std::string CEmail::ToString() const
 		AccessHash.GetHex());
 }
 
-std::string CEmail::Serialize1() const
+std::string CEmail::Serialize1()
 {
-	std::string sData = "<headers1>" + Headers + "</headers1><fromemail1>" + FromEmail + "</fromemail1><toemail1>" + ToEmail + "</toemail1><time1>" + RoundToString(nTime, 0) + "</time1><body1>" + Body + "</body1>";
+	//std::string sIllegal = ExtractXML(obj.Body, "<emailpacket1>", "</emailpacket1>");
+	//std::string sMyCopy = obj.Body;
+	//std::string sMessaged = strReplace(sMyCopy, sIllegal, "");
+	std::string sData = "<emailpacket1><headers1>" + Headers + "</headers1><fromemail1>" + FromEmail + "</fromemail1><toemail1>" + ToEmail + "</toemail1><time1>" 
+		+ RoundToString(nTime, 0) + "</time1><body1>" + Body + "</body1></emailpacket1>";
 	return sData;
 }
 
 void CEmail::Deserialize1(std::string sData)
 {
-	FromEmail = ExtractXML(sData, "<fromemail1>", "</fromemail1>");
-	ToEmail = ExtractXML(sData, "<toemail1>", "</toemail1>");
-	nTime = cdbl(ExtractXML(sData, "<time1>", "</time1>"), 0);
-	Body = ExtractXML(sData, "<body1>", "</body1>");
-	Headers = ExtractXML(sData, "<headers1>", "</headers1>");
+	std::string sPacket = ExtractXML(sData, "<emailpacket1>", "</emailpacket1>");
+
+	FromEmail = ExtractXML(sPacket, "<fromemail1>", "</fromemail1>");
+	ToEmail = ExtractXML(sPacket, "<toemail1>", "</toemail1>");
+	nTime = cdbl(ExtractXML(sPacket, "<time1>", "</time1>"), 0);
+	Body = ExtractXML(sPacket, "<body1>", "</body1>");
+	Headers = ExtractXML(sPacket, "<headers1>", "</headers1>");
 }
 
 
@@ -154,11 +160,12 @@ CEmail CEmail::getEmailByHash(const uint256 &hash)
      //       retval = mi->second;
 	// Ensure the body is deserialized
 	int iDes = retval.EDeserialize(hash);
-	if (retval.IsNull())
+	if (!retval.IsNull())
 	{
 		mapEmails[retval.GetHash()] = retval;
 	}
-	LogPrintf("\r\nDeserialized %f %f %s %s", retval.Body.length(),  iDes, retval.FromEmail, retval.ToEmail);
+	bool fIsMine = retval.IsMine();
+	LogPrintf("\r\nCEMail::Deserialized %f %f %f %s %s IsMine %f ", retval.nTime, retval.Body.length(),  iDes, retval.FromEmail, retval.ToEmail, fIsMine);
 
     return retval;
 }
@@ -173,7 +180,7 @@ double CEmail::getMemoryUsage()
 		iSize += item.second.Body.length();
 		CEmail e = item.second;
 		e.EDeserialize(item.first);
-		LogPrintf("\nGetMemoryUsage %s ", Mid(e.Body, 1, 100));
+		LogPrintf("\nGetMemoryUsage %s ", Mid(e.Body, 0, 100));
 		
 	}
 	return iSize;
@@ -202,7 +209,7 @@ int CEmail::EDeserialize(uint256 Hash)
 
 	Deserialize1(data);
 	int64_t nElapsed = GetAdjustedTime() - nTime;
-	if (nElapsed > (60 * 60 * 24 * 1))
+	if (nElapsed > MAX_EMAIL_AGE)
 	{
 		boost::filesystem::path pathEmail = sSource.c_str();
 		if (boost::filesystem::exists(pathEmail)) 
@@ -229,9 +236,15 @@ bool CEmail::IsMine()
 bool CEmail::ProcessEmail()
 {
 	if (IsNull())
+	{
+		LogPrintf("\nSMTP::ProcessEmail -- Null %f", 8030);
 		return false;
+	}
 	if (Body.empty())
+	{
+		LogPrintf("\nSMTP::ProcessEmail -- Body Null %f", 8029);
 		return false;
+	}
 
 	uint256 MyHash = GetHash();
 	
@@ -245,8 +258,9 @@ bool CEmail::ProcessEmail()
 	std::string sTarget = GetFileName();
 	int64_t nSz = GETFILESIZE(sTarget);
 	int64_t nAge = GetAdjustedTime() - nTime;
-	if (nAge > (60 * 60 * 24 * 1))
+	if (nAge > MAX_EMAIL_AGE)
 	{
+		LogPrintf("\nSMTP::ProcessEmail -- Email too old %f ", nAge);
 		return false;
 	}
 	if (nSz <= 0)
@@ -257,8 +271,15 @@ bool CEmail::ProcessEmail()
 		std::vector<unsigned char> uData(ss.begin(), ss.end());
 		WriteUnsignedBytesToFile(sTarget.c_str(), uData);
 		*/
+		LogPrintf("\nSMTP::%f", 8040);
+
 		std::string sData = Serialize1();
+		LogPrintf("\nSMTP::%f", 8041);
+
 		WriteDataToFile(sTarget, sData);
+		LogPrintf("\nSMTP::%f", 8042);
+
+		LogPrintf("\nSMTP::WriteDataToFile %s [%s]", MyHash.GetHex(), ToEmail);
 	}
 	// Relinquish Memory
 	Body = std::string();

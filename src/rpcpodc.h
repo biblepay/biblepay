@@ -11,7 +11,6 @@
 
 #include <univalue.h>
 
-std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr);
 double GetCryptoPrice(std::string sURL);
 bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string& sError, std::string& sSignature);
 std::string GetGithubVersion();

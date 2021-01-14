@@ -396,13 +396,13 @@
       <item>
        <widget class="QCheckBox" name="chkDonate">
         <property name="toolTip">
-         <string>Send Coins to Orphan Foundation to Support Orphans?</string>
+         <string>Send Coins to DAC to Support Orphans?</string>
         </property>
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Donate to Foundation?</string>
+         <string>Donate to DAC?</string>
         </property>
        </widget>
       </item>
@@ -415,7 +415,7 @@
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Add Tithe for Foundation?</string>
+         <string>Add Tithe for DAC?</string>
         </property>
        </widget>
       </item>

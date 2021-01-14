@@ -6139,7 +6139,7 @@ UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake)
 
 std::string Mid(std::string data, int nStart, int nLength)
 {
-	// Ported from VB6
+	// Ported from VB6, except this version is 0 based (NOT 1 BASED)
 	if (nStart > data.length())
 	{
 		return std::string();
@@ -6153,8 +6153,12 @@ std::string Mid(std::string data, int nStart, int nLength)
 	}
 	if (nNewLength < 1)
 		return "";
-
+	
 	std::string sOut = data.substr(nStart, nNewLength);
+	if (sOut.length() > nLength)
+	{
+		sOut = sOut.substr(0, nLength);
+	}
 	return sOut;
 }
 
@@ -6426,3 +6430,12 @@ double CalculateUTXOReward()
 	return nDWU;
 }
 	
+std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr)
+{
+  size_t pos = 0;
+  while((pos = str.find(oldStr, pos)) != std::string::npos){
+     str.replace(pos, oldStr.length(), newStr);
+     pos += newStr.length();
+  }
+  return str;
+}

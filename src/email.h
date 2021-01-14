@@ -82,7 +82,7 @@ public:
 
     void SetNull();
     bool IsNull() const;
-	std::string Serialize1() const;
+	std::string Serialize1();
 	void Deserialize1(std::string sData);
 
 	int EDeserialize(uint256 Hash);

@@ -531,5 +531,6 @@ std::string GetUTXOSummary(std::string sCPK);
 std::string ScanBlockForNewUTXO(const CBlock& block);
 double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bool fDebug);
 double CalculateUTXOReward();
+std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr);
 
 #endif

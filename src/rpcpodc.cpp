@@ -49,15 +49,6 @@ std::string ToYesNo(bool bValue)
 	return sYesNo;
 }
 
-std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr)
-{
-  size_t pos = 0;
-  while((pos = str.find(oldStr, pos)) != std::string::npos){
-     str.replace(pos, oldStr.length(), newStr);
-     pos += newStr.length();
-  }
-  return str;
-}
 
 bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string& sError, std::string& sSignature)
 {

@@ -162,6 +162,7 @@ static const int BIBLE_BOOKS_COUNT = 65;
 static const int BIBLE_VERSE_COUNT = 99;
 static const int GSC_MIN_CONFIRMS = 5;
 static const double GSC_DUST = .01;
+static const int MAX_EMAIL_AGE = 60 * 60 * 24 * 30;
 
 extern std::string msPagedFrom;
 extern int mlPaged;

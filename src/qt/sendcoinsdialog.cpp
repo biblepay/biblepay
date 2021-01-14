@@ -517,7 +517,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients, QString strFee,
 		questionString.append("<hr /><span style='color:#aa0000;'>");
 		questionString.append(BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nTitheAmount));
 		questionString.append("</span> ");
-		questionString.append(tr(" added as a Foundation Tithe"));
+		questionString.append(tr(" added as a DAC Tithe"));
 		questionString.append(" ");
 	}
 
