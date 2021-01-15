@@ -70,10 +70,13 @@ void Analyze()
 	}
 }
 
-void pop3_send(std::string data)
+std::string msPop3BufferData;
+
+void pop3_send(std::string sData)
 {
+	msPop3BufferData = sData;
 	if (fDebuggingEmail)
-		LogPrintf("pop3_SENTBACK %s", Mid(data, 0, 512));
+		LogPrintf("pop3_SENTBACK %s", Mid(msPop3BufferData, 0, 512));
 	/*
 	int iChunkSize = 4096;
 
@@ -91,7 +94,7 @@ void pop3_send(std::string data)
 	else
 	{
 	*/
-	async_write(pop3_socket, buffer(data), pop3_write_handler);
+	async_write(pop3_socket, buffer(msPop3BufferData), pop3_write_handler);
 	
 }
 
@@ -315,7 +318,7 @@ void pop3_RETR(std::string sNo)
 	{
 		std::string sID = "Message-Id: <" + e.GetHash().GetHex() + ">";
 		LogPrintf("\r\nFound Email %s", Mid(e.Body, 0, 100));
-		std::string sReply = "+OK " + RoundToString(e.Body.length() + 2, 0) + " octets\r\n" + e.Body + "\r\n.\r\n";
+		std::string sReply = "+OK " + RoundToString(e.Body.length(), 0) + " octets\r\n" + e.Body + "\r\n\r\n\r\n.\r\n";
 		pop3_send(sReply);
 	}
 	else
