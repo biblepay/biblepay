@@ -265,21 +265,16 @@ bool CEmail::ProcessEmail()
 	}
 	if (nSz <= 0)
 	{
-		/*
-		CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-		ss << *(CEmail*)this;
-		std::vector<unsigned char> uData(ss.begin(), ss.end());
-		WriteUnsignedBytesToFile(sTarget.c_str(), uData);
-		*/
-		LogPrintf("\nSMTP::%f", 8040);
-
+		
 		std::string sData = Serialize1();
-		LogPrintf("\nSMTP::%f", 8041);
+		//		LogPrintf("\nSMTP::WriteDataToFile1 %f %s [%s]", sData.length(), MyHash.GetHex(), ToEmail);
+		//		sData = strReplace(sData, "\r\r\n", "\r\n");
+		//		sData = strReplace(sData, "\n\n\r", "\r\n");
+
 
 		WriteDataToFile(sTarget, sData);
-		LogPrintf("\nSMTP::%f", 8042);
-
-		LogPrintf("\nSMTP::WriteDataToFile %s [%s]", MyHash.GetHex(), ToEmail);
+		
+		LogPrintf("\nSMTP::WriteDataToFile2 %f %s [%s]", sData.length(), MyHash.GetHex(), ToEmail);
 	}
 	// Relinquish Memory
 	Body = std::string();

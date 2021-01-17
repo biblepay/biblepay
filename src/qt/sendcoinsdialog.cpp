@@ -348,7 +348,7 @@ bool SendCoinsDialog::ConfirmUTXO(QList<SendCoinsRecipient> recipients, CAmount&
         .arg(alternativeUnits.join("<br />= ")));
 
     questionString.append("<hr />");
-	std::string sHowey = GetHowey(false, true);
+	std::string sHowey = GetHowey(false, false);
 	questionString.append(QString::fromStdString(sHowey));
     // Display message box
     SendConfirmationDialog confirmationDialog(tr("Confirm sending this utxo stake"),

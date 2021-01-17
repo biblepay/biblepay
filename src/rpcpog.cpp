@@ -6265,7 +6265,7 @@ UserRecord GetMyUserRecord()
 
 bool WriteDataToFile(std::string sPath, std::string data)
 {
-	std::ofstream fd(sPath.c_str());
+	std::ofstream fd(sPath.c_str(), std::ios::binary);
 	fd.write((const char*)data.c_str(), data.length());
 	fd.close();
 	return true;

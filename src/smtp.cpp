@@ -77,23 +77,6 @@ void pop3_send(std::string sData)
 	msPop3BufferData = sData;
 	if (fDebuggingEmail)
 		LogPrintf("pop3_SENTBACK %s", Mid(msPop3BufferData, 0, 512));
-	/*
-	int iChunkSize = 4096;
-
-	if (data.length() > iChunkSize)
-	{
-		for (int i = 0; i < data.length(); i+= iChunkSize)
-		{
-			std::string sChunk = Mid(data, i, iChunkSize);
-			async_write(pop3_socket, buffer(sChunk), pop3_write_handler);
-			MilliSleep(10);
-			if (i % iChunkSize*10 == 0)
-							LogPrintf("\n%f", i);
-		}
-	}
-	else
-	{
-	*/
 	async_write(pop3_socket, buffer(msPop3BufferData), pop3_write_handler);
 	
 }
@@ -543,6 +526,8 @@ void smtp_SENDMAIL(std::string sData)
 	*/
 
 	sData = strReplace(sData, "\r\n.\r\n", "");
+	LogPrintf("SMTP::SENDMAIL1 %f ", sData.length());
+
 	e.Body = sData;
 	
 	e.nType = 1;
