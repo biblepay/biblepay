@@ -70,14 +70,13 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action) 
 	{
         READWRITE(this->nVersion);
-        nVersion = this->nVersion;
         READWRITE(nTime);
         READWRITE(Encrypted);
 		READWRITE(AccessHash);
         READWRITE(LIMITED_STRING(Headers, 32767));
         READWRITE(LIMITED_STRING(Body, 3100000));
-		READWRITE(LIMITED_STRING(FromEmail, 256));
-		READWRITE(LIMITED_STRING(ToEmail, 256));
+		READWRITE(LIMITED_STRING(FromEmail, 1000));
+		READWRITE(LIMITED_STRING(ToEmail, 32767));
     }
 
     void SetNull();
