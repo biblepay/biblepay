@@ -84,9 +84,7 @@ void ThreadPOOS(CConnman& connman)
 					{
 						AssimilateUTXO(d);
 					}
-
 				}
-
 			}
 			fUTXOSTested = true;
 

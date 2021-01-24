@@ -158,6 +158,12 @@ void WalletFrame::gotoUserEditPage()
         i.value()->gotoUserEditPage();
 }
 
+void WalletFrame::gotoMemorizeScripturePage()
+{
+    QMap<QString, WalletView*>::const_iterator i;
+    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
+        i.value()->gotoMemorizeScripturePage();
+}
 
 void WalletFrame::gotoReceiveCoinsPage()
 {

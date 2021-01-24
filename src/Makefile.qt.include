@@ -53,6 +53,7 @@ QT_FORMS_UI = \
   qt/forms/secdialog.ui \
   qt/forms/proposaladddialog.ui \
   qt/forms/userdialog.ui \
+  qt/forms/memorizescripturedialog.ui \
   qt/forms/chatdialog.ui \
   qt/forms/signverifymessagedialog.ui \
   qt/forms/transactiondescdialog.ui
@@ -107,6 +108,7 @@ QT_MOC_CPP = \
   qt/moc_walletmodel.cpp \
   qt/moc_proposaladddialog.cpp \
   qt/moc_userdialog.cpp \
+  qt/moc_memorizescripturedialog.cpp \
   qt/moc_chatdialog.cpp \
   qt/moc_secdialog.cpp \
   qt/moc_proposals.cpp \
@@ -192,6 +194,7 @@ BITCOIN_QT_H = \
   qt/walletview.h \
   qt/proposaladddialog.h \
   qt/userdialog.h \
+  qt/memorizescripturedialog.h \
   qt/chatdialog.h \
   qt/proposals.h \
   qt/secdialog.h \
@@ -531,6 +534,7 @@ BITCOIN_QT_WALLET_CPP = \
   qt/walletmodel.cpp \
   qt/proposaladddialog.cpp \
   qt/userdialog.cpp \
+  qt/memorizescripturedialog.cpp \
   qt/chatdialog.cpp \
   qt/proposals.cpp \
   qt/secdialog.cpp \

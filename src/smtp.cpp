@@ -547,7 +547,7 @@ void smtp_SENDMAIL(std::string sData)
 	}
 	
 	LogPrintf("\nSMTP::Send::EMAIL HASH %s Length %f Paid %f ", eHash.GetHex(), e.Body.length(), fPaid);
-
+	
 
 	if (fPaid && e.Body.length() < 3000000)
 	{
@@ -660,7 +660,10 @@ void pop3_read_handler(const boost::system::error_code &ec, std::size_t bytes_tr
 		}
 		else
 		{
-			std::cout << "ASIO::" + ec.message() << std::endl;
+			if (!Contains(ec.message(), "file descriptor"))
+			{
+				std::cout << "ASIO::" + ec.message() << std::endl;
+			}
 		}
   }
 }
@@ -699,7 +702,10 @@ void smtp_read_handler(const boost::system::error_code &ec, std::size_t bytes_tr
 		else
 		{
 			// Display the system error:
-			std::cout << "2ASO::" + ec.message() << std::endl;
+			if (!Contains(ec.message(), "file descriptor"))
+			{
+				std::cout << "2ASO::" + ec.message() << std::endl;
+			}
 		}
   }
 }

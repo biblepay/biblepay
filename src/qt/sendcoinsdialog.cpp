@@ -330,7 +330,7 @@ bool SendCoinsDialog::ConfirmUTXO(QList<SendCoinsRecipient> recipients, CAmount&
 	questionString.append(BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nUTXOAmount));
 	questionString.append("</span> ");
 	questionString.append(tr(" added as a UTXO Stake"));
-	double nDWU = CalculateUTXOReward();
+	double nDWU = CalculateUTXOReward(1);
 	std::string sQuote = "<br>UTXO approximate DWU " + RoundToString(nDWU * 100, 4) + "%<br>";
 	questionString.append(QString::fromStdString(sQuote));
     questionString.append("<hr />");
@@ -402,9 +402,9 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients, QString strFee,
 			std::string sBBPAddress;
 			std::string sTXID;
 			std::string sError;
-	
+			CAmount nReturnAmount = 0;
 
-			std::string sUTXO = pwalletMain->GetBestUTXO(nUTXOAmount, 1, sBBPAddress);
+			std::string sUTXO = pwalletMain->GetBestUTXO(nUTXOAmount, 1, sBBPAddress, nReturnAmount);
 			if (sUTXO.empty() || sBBPAddress.empty())
 			{
 				sNarr += "Unable to create UTXO stake.  Unable to find any BBP between 10K & 10MM older than 24 hours. ";
@@ -420,7 +420,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients, QString strFee,
 			{
 				std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 				UTXOStake ux;
-				fSent = SendUTXOStake("", sTXID, sError, sBBPAddress, sUTXO, "", "", sBBPSig, "", sCPK, false, ux);
+				fSent = SendUTXOStake(0, "", sTXID, sError, sBBPAddress, sUTXO, "", "", sBBPSig, "", sCPK, false, ux);
 				if (!fSent || !sError.empty())
 				{
 					sNarr = "Unable to send UTXO stake: " + sError;

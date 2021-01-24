@@ -3603,7 +3603,7 @@ std::vector<COutput> CWallet::GetExternalPurseBalance(std::string sPurseAddress,
 	return vOut;
 }
 
-std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress)
+std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress, CAmount& nReturnAmount)
 {
 	CAmount MIN_UTXO_AMOUNT = 10000 * COIN;
 	CAmount MAX_UTXO_AMOUNT = 10000000 * COIN;
@@ -3633,6 +3633,7 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 		{
 			sUTXO = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
 			sAddress = sRecip;
+			nReturnAmount = nAmount;
 			return sUTXO;
 		}
 	}

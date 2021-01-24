@@ -107,6 +107,8 @@ struct DACResult
 	int nSize = 0;
 	std::string TXID;
 	std::string ErrorCode;
+	std::string PrimaryKey;
+	int64_t nTime = 0;
 	std::map<std::string, IPFSTransaction> mapResponses;
 	std::map<std::string, std::string> mapRegions;
 };
@@ -197,6 +199,14 @@ struct Expense
 	std::string Charity = std::string();
 	double nBBPAmount = 0;
 	double nUSDAmount = 0;
+};
+
+struct SimpleUTXO
+{
+	std::string TXID;
+	int nOrdinal = 0;
+	CAmount nAmount = 0;
+	double ValueUSD = 0;
 };
 
 struct UTXOStake
@@ -520,8 +530,8 @@ UserRecord GetMyUserRecord();
 bool VerifyDACDonation(CTransactionRef tx, std::string& sError);
 bool WriteDataToFile(std::string sPath, std::string data);
 std::vector<char> ReadAllBytesFromFile(char const* filename);
-double QueryUTXO(std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError);
-bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
+SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst = false);
+bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
 	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake);
 std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
 int AssimilateUTXO(UTXOStake d);
@@ -530,7 +540,11 @@ int GetUTXOStatus(uint256 txid);
 std::string GetUTXOSummary(std::string sCPK);
 std::string ScanBlockForNewUTXO(const CBlock& block);
 double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bool fDebug);
-double CalculateUTXOReward();
+double CalculateUTXOReward(int nStakeCount);
 std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr);
+double AddressToPin(std::string sAddress);
+bool CompareMask2(CAmount nAmount, double nMask);
+std::vector<DACResult> GetDataListVector(std::string sType);
+int64_t HRDateToTimestamp(std::string sDate);
 
 #endif

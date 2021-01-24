@@ -431,6 +431,10 @@
       </item>
       <item>
        <widget class="QCheckBox" name="chkDiary">
+       <property name="toolTip">
+                <string>Add a Diary Entry (Healing Campaign)</string>
+       </property>
+        
         <property name="text">
          <string>Add Diary Entry?</string>
         </property>

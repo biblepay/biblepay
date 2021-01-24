@@ -125,6 +125,7 @@ private:
 
 	QAction *proposalAddMenuAction;
 	QAction *userEditMenuAction;
+	QAction *memorizeScriptureMenuAction;
 	QAction *proposalListAction;
 	QAction *businessObjectListMenuAction;
 	// Note: Any orphaned Action results in a crash (pun intended)
@@ -265,6 +266,7 @@ private Q_SLOTS:
 	/** Switch to Proposal Add page */
 	void gotoProposalAddPage();
 	void gotoUserEditPage();
+	void gotoMemorizeScripturePage();
 	void gotoProposalListPage();
 	void OneClickMiningClicked();
 	void gotoBusinessObjectListPage();

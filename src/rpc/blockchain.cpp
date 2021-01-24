@@ -1992,7 +1992,7 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "calculatedwu")
 	{
-		double nReward = CalculateUTXOReward();
+		double nReward = CalculateUTXOReward(1);
 		results.push_back(Pair("DWU", nReward));
 	}
 	else if (sItem == "listutxostakes")
@@ -2012,6 +2012,32 @@ UniValue exec(const JSONRPCRequest& request)
 			}
 		}
 	}
+	else if (sItem == "testmask")
+	{
+		double nAmt = cdbl(request.params[1].get_str(), 8);
+		double nMask = cdbl(request.params[2].get_str(), 8);
+		results.push_back(Pair("n1", nAmt));
+		results.push_back(Pair("nMask", nMask));
+		bool fCompare = CompareMask2(nAmt, nMask);
+		results.push_back(Pair("cmask", fCompare));
+
+	}
+	else if (sItem == "testmem")
+	{
+		std::vector<DACResult> d = GetDataListVector("memorizer");
+		for (int i = 0; i < d.size(); i++)
+		{
+			results.push_back(Pair("pk", d[i].PrimaryKey));
+			std::string sBook = GetElement(d[i].PrimaryKey, "|", 0);
+			int iChapter = cdbl(GetElement(d[i].PrimaryKey, "|", 1), 0);
+			int iVerse = cdbl(GetElement(d[i].PrimaryKey, "|", 2), 0);
+			int iStart = 0;
+			int iEnd = 0;
+			GetBookStartEnd(sBook, iStart, iEnd);
+			std::string sVerse = GetVerseML("EN", sBook, iChapter, iVerse, iStart - 1, iEnd);
+			results.push_back(Pair("v", sVerse));
+		}
+	}
 	else if (sItem == "testrsacreate")
 	{
 		RSAKey r = GetMyRSAKey();
@@ -2029,21 +2055,15 @@ UniValue exec(const JSONRPCRequest& request)
 	else if (sItem == "testutxo")
 	{
 		std::string sError;
-
-		//std::string sAddress = "1P5ZEDWTKTFGxQjZphgWPQUpe554WKDfHQ";
-		//std::string sUTXO = "f70c56b6796b9a8c0379d8689683195481c8f18c549c4e345670e99b0420ec79";
-
 		std::string sTicker = request.params[1].get_str();
 		std::string sAddress = request.params[2].get_str();
-		std::string sUTXO = request.params[3].get_str();
+		double nTargetAmount = cdbl(request.params[3].get_str(), 8);
 		int nOut = (int)cdbl(request.params[4].get_str(), 0);
-
-		double nValue = QueryUTXO(sTicker, sAddress, sUTXO, nOut, sError);
-
-		results.push_back(Pair("value", nValue));
+		SimpleUTXO s = QueryUTXO(GetAdjustedTime(), nTargetAmount, sTicker, sAddress, "", nOut, sError);
+		results.push_back(Pair("value", s.nAmount * COIN));
+		results.push_back(Pair("txid", s.TXID));
+		results.push_back(Pair("ordinal", s.nOrdinal));
 		results.push_back(Pair("Err", sError));
-
-
 	}
 	else if (sItem == "testrsa")
 	{
@@ -2308,67 +2328,26 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("Revenue Total (USD)", nTotalRevenue));
 		// Show the Monthly Totals here
 	}
-	else if (sItem == "give")
+	else if (sItem == "testpin")
 	{
-		double dGive = cdbl(request.params[1].get_str(), 2);
-	    if (request.params.size() != 2)
-			throw std::runtime_error("You must specify give amount. ");
-
-		int nChangePosRet = -1;
-		bool fSubtractFeeFromAmount = true;
-		std::vector<CRecipient> vecSend;
-		std::map<std::string, Orphan> mapOrphan;
-		std::map<std::string, Expense> mapExpenses;
-		std::map<std::string, double> mapDAC = DACEngine(mapOrphan, mapExpenses);
-		for (auto dacAllocation : mapDAC)
-		{
-			std::string sAllocatedCharity = dacAllocation.first;
-			double nPct = dacAllocation.second;
-			if (nPct > 0 && nPct <= 1)
-			{
-				// ToDo:  Report to the user the % and Charity Name as we iterate through the gift, and show which orphans were affected by this persons generosity
-				results.push_back(Pair("Allocated Charity", sAllocatedCharity));
-				CBitcoinAddress baCharity(sAllocatedCharity);
-				CScript spkCharity = GetScriptForDestination(baCharity.Get());
-				CAmount nAmount = dGive * nPct * COIN;
-				results.push_back(Pair("Amount", nAmount/COIN));
-				CRecipient recipient = {spkCharity, nAmount, false, fSubtractFeeFromAmount};
-				vecSend.push_back(recipient);
-			}
-		}
-		CAmount nFeeRequired = 0;
-		bool fUseInstantSend = false;
-		std::string sError;
-		CValidationState state;
-		CReserveKey reserveKey(pwalletMain);
-		CWalletTx wtx;
-		std::string sGiftXML = "<gift><amount>" + RoundToString(dGive, 2) + "</amount></gift>";
-		bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, NULL, true, ALL_COINS, fUseInstantSend, 0, sGiftXML);
-
-		if (!fCreated)    
-		{
-			results.push_back(Pair("Error", sError));
-		}
-		else
-		{
-			if (!pwalletMain->CommitTransaction(wtx, reserveKey, g_connman.get(), state, NetMsgType::TX))
-			{
-				throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
-			}
-		}
-		results.push_back(Pair("txid", wtx.GetHash().GetHex()));
-		if (fCreated)
-		{
-			results.push_back(Pair("Thank You", "May your family be blessed with the richest blessings of Abraham, Isaac and Jacob. "));
-		}
+		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		std::string s2 = request.params[1].get_str();
+		if (s2.empty())
+			s2 = sCPK;
+		double nPin = AddressToPin(s2);
+		results.push_back(Pair("pin", nPin));
 	}
 	else if (sItem == "getbestutxo")
 	{
+		// Minimum Stake Amount
 		double nMin = cdbl(request.params[1].getValStr(), 2);
 		std::string sAddress;
-		std::string sUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sAddress);
+		CAmount nReturnAmount;
+		std::string sUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sAddress, nReturnAmount);
 		results.push_back(Pair("UTXO", sUTXO));
 		results.push_back(Pair("Address", sAddress));
+		results.push_back(Pair("Amount", (double)nReturnAmount/COIN));
+
 	}
 	else if (sItem == "listorphans")
 	{
@@ -3424,9 +3403,15 @@ UniValue exec(const JSONRPCRequest& request)
 		double dBTC = GetCryptoPrice("btc");
 		double dDASH = GetCryptoPrice("dash");
 		double dXMR = GetCryptoPrice("xmr");
+		double dDOGE = GetCryptoPrice("doge");
+		double dLTC = GetCryptoPrice("ltc");
+
 		results.push_back(Pair(CURRENCY_TICKER + "/BTC", RoundToString(dDacPrice, 12)));
 		results.push_back(Pair("DASH/BTC", RoundToString(dDASH, 12)));
+		results.push_back(Pair("LTC/BTC", dLTC));
+		results.push_back(Pair("DOGE/BTC", dDOGE));
 		results.push_back(Pair("XMR/BTC", dXMR));
+		
 		results.push_back(Pair("BTC/USD", dBTC));
 		
 		double nPrice = GetCoinPrice();

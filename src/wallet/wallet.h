@@ -981,7 +981,7 @@ public:
     CAmount GetNormalizedAnonymizedBalance() const;
     CAmount GetDenominatedBalance(bool unconfirmed=false) const;
 	double GetAntiBotNetWalletWeight(double nMinCoinAge, CAmount& nTotalRequired);
-	std::string GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress);
+	std::string GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress, CAmount& nReturnAmount);
 
 	std::vector<COutput> GetExternalPurseBalance(std::string sPurseAddress, CAmount nMinRequiredExpenditure, CAmount& nMatched, CAmount& nTotal);
 

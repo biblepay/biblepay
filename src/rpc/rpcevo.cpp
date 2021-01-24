@@ -1539,6 +1539,216 @@ UniValue getpobhhash(const JSONRPCRequest& request)
 	return results;
 }
 
+std::string GetSymbolFromAddress(std::string sAddress)
+{
+	// Return the cryptocurrency symbol from a base58 address:
+	std::string sSymbol;
+	if (sAddress.empty() || sAddress.length() < 34)
+	{
+		return "N/A";
+	}
+	std::string sPrefix = sAddress.substr(0, 1);
+	if (sPrefix == "B")
+	{
+		sSymbol = "BBP";
+	}
+	else if (sPrefix == "X")
+	{
+		sSymbol = "DASH";
+	}
+	else if (sPrefix == "M" || sPrefix == "L")
+	{
+		sSymbol = "LTC";
+	}
+	else if (sPrefix ==  "D")
+	{
+		sSymbol = "DOGE";
+	}
+	else if (sPrefix == "1")
+	{
+		sSymbol = "BTC";
+	}
+	else
+	{
+		sSymbol = "N/A";
+	}
+	return sSymbol;
+}
+
+UniValue easystake(const JSONRPCRequest& request)
+{
+	// Jan 20, 2021 - Easy Stake - R ANDREWS - BIBLEPAY
+		
+	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real";
+	std::string sError;
+	if (request.fHelp || (request.params.size() != 4))
+		throw std::runtime_error(sHelp.c_str());
+		
+	double nMin = cdbl(request.params[0].getValStr(), 2);
+	std::string sBBPAddress;
+	CAmount nReturnAmount = 0;
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nReturnAmount);
+	if (sBBPUTXO.empty())
+	{
+		sError = "Unable to find a BBP UTXO greater than " + RoundToString(nMin, 2) + ".";
+		throw std::runtime_error(sError);
+	}
+	UniValue results(UniValue::VOBJ);
+
+	results.push_back(Pair("BBP UTXO", sBBPUTXO));
+	results.push_back(Pair("BBP Address", sBBPAddress));
+	results.push_back(Pair("BBP Amount", (double)nReturnAmount/COIN));
+	std::string sForeignAddress = request.params[1].getValStr();
+	std::string sForeignTicker = GetSymbolFromAddress(sForeignAddress);
+	
+	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
+	bool fDryRun = cdbl(request.params[3].getValStr(), 0) == 0;
+	bool fReturnFirst = (nForeignAmount == -1);
+	// Find the UTXO by amount
+	SimpleUTXO s = QueryUTXO(GetAdjustedTime(), nForeignAmount, sForeignTicker, sForeignAddress, "", 0, sError, fReturnFirst);
+	results.push_back(Pair("Foreign Symbol", sForeignTicker));
+
+	results.push_back(Pair("Foreign Amount", (double)s.nAmount/COIN));
+	results.push_back(Pair("Foreign UTXO", s.TXID));
+	results.push_back(Pair("Foreign Ordinal", s.nOrdinal));
+	
+	int nStakeCount = sForeignTicker.empty() ? 1 : 2;
+	double nDWU = CalculateUTXOReward(nStakeCount);
+	// ToDo - make a pricing class out of this from here:
+	double nForeignPrice = GetCryptoPrice(sForeignTicker);
+	double nBTCPrice = GetCryptoPrice("btc");
+	double nBBPPrice = GetCryptoPrice("bbp");
+	double nUSDBBP = nBTCPrice * nBBPPrice;
+	double nUSDForeign = nBTCPrice * nForeignPrice;
+	double nBBPValueUSD = nUSDBBP * ((double)nReturnAmount / COIN);
+	double nForeignValueUSD = nUSDForeign * ((double)s.nAmount / COIN);
+	// To Here - and remember to update the duplicate code in 'sendutxostake' 
+	results.push_back(Pair("Foreign Value USD", nForeignValueUSD));
+	results.push_back(Pair("BBP Value USD", nBBPValueUSD));
+	results.push_back(Pair("DWU", nDWU));
+
+	double nPin = AddressToPin(sForeignAddress);
+	results.push_back(Pair("Pin", nPin));
+	bool fValid = CompareMask2(s.nAmount, nPin);
+	if (!fValid)
+		sError = "The pin is not valid for this receive address.";
+	results.push_back(Pair("pin_valid", fValid));
+	results.push_back(Pair("Error", sError));
+	std::string sTXID;
+	UTXOStake ds;
+
+	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	if (!sError.empty())
+	{
+		results.push_back(Pair("BBP Signing Error", sError));
+		return results;
+	}
+
+	// At this point if it is not a dry run; send it
+	if (!fDryRun && sError.empty())
+	{
+		LockUTXOStakes();
+		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		std::string sForeignUTXO = s.TXID + "-" + RoundToString(s.nOrdinal, 0);
+		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, "", sCPK, false, ds);
+		if (!fSent || !sError.empty())
+		{
+			results.push_back(Pair("Error (Not Sent)", sError));
+		}
+		else
+		{
+			ds = GetUTXOStakeByUTXO(sBBPUTXO);
+			LockUTXOStakes();
+			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
+			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
+
+			if (!sForeignTicker.empty())
+			{
+				results.push_back(Pair("Foreign Ticker", sForeignTicker));
+				results.push_back(Pair("Foreign Value USD", ds.nForeignValueUSD)); //
+				results.push_back(Pair("Foreign Amount", (double)ds.nForeignAmount/COIN));
+			}
+			results.push_back(Pair("UTXO Value", ds.nValue));
+			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
+			results.push_back(Pair("TXID", sTXID));
+		}
+	}
+	else
+	{
+		results.push_back(Pair("Dry Run Mode", fDryRun));
+	}
+	return results;
+}
+
+UniValue easybbpstake(const JSONRPCRequest& request)
+{
+	std::string sHelp = "You must specify easybbpstake minimum_bbp_amount 0=dry_run/1=real";
+	std::string sError;
+	if (request.fHelp || (request.params.size() != 2))
+		throw std::runtime_error(sHelp.c_str());
+	double nMin = cdbl(request.params[0].getValStr(), 2);
+	std::string sBBPAddress;
+	CAmount nReturnAmount = 0;
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nReturnAmount);
+	if (sBBPUTXO.empty())
+	{
+		sError = "Unable to find a BBP UTXO greater than " + RoundToString(nMin, 2) + ".";
+		throw std::runtime_error(sError);
+	}
+	UniValue results(UniValue::VOBJ);
+	results.push_back(Pair("BBP UTXO", sBBPUTXO));
+	results.push_back(Pair("BBP Address", sBBPAddress));
+	results.push_back(Pair("BBP Amount", (double)nReturnAmount/COIN));
+	double nDWU = CalculateUTXOReward(1);
+	results.push_back(Pair("DWU", nDWU));
+	
+	bool fDryRun = cdbl(request.params[1].getValStr(), 0) == 0;
+
+	double nBTCPrice = GetCryptoPrice("btc");
+	double nBBPPrice = GetCryptoPrice("bbp");
+	double nUSDBBP = nBTCPrice * nBBPPrice;
+	double nBBPValueUSD = nUSDBBP * ((double)nReturnAmount / COIN);
+	results.push_back(Pair("BBP Value USD", nBBPValueUSD));
+
+	std::string sTXID;
+	UTXOStake ds;
+	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	if (!sError.empty())
+	{
+		results.push_back(Pair("BBP Signing Error", sError));
+		return results;
+	}
+
+	// At this point if it is not a dry run; send it
+	if (!fDryRun && sError.empty())
+	{
+		LockUTXOStakes();
+		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		std::string sForeignUTXO = "";
+		bool fSent = SendUTXOStake(0, "", sTXID, sError, sBBPAddress, sBBPUTXO, "", sForeignUTXO, sBBPSig, "", sCPK, false, ds);
+		if (!fSent || !sError.empty())
+		{
+			results.push_back(Pair("Error (Not Sent)", sError));
+		}
+		else
+		{
+			ds = GetUTXOStakeByUTXO(sBBPUTXO);
+			LockUTXOStakes();
+			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
+			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
+			results.push_back(Pair("UTXO Value", ds.nValue));
+			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
+			results.push_back(Pair("TXID", sTXID));
+		}
+	}
+	else
+	{
+		results.push_back(Pair("Dry Run Mode", fDryRun));
+	}
+
+	return results;
+}
+
 UniValue utxostake(const JSONRPCRequest& request)
 {
 	// UTXO Staking and UTXO mining
@@ -1588,7 +1798,7 @@ UniValue utxostake(const JSONRPCRequest& request)
 	{
 		LockUTXOStakes();
 
-		bool fSent = SendUTXOStake(sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, sForeignSig, sCPK, false, ds);
+		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, sForeignSig, sCPK, false, ds);
 		if (!fSent || !sError.empty())
 		{
 			results.push_back(Pair("Error (Not Sent)", sError));
@@ -1746,6 +1956,78 @@ UniValue dws(const JSONRPCRequest& request)
 	{
 		// Dry Run
 		results.push_back(Pair("Test Mode", GetHowey(true, true)));
+	}
+	return results;
+}
+
+UniValue getpin(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, etc. \r\n");
+	UniValue results(UniValue::VOBJ);
+	std::string s2 = request.params[0].get_str();
+	if (s2.length() != 34)
+	{
+		throw std::runtime_error("Address must be 34 characters long. ");
+	}
+	double nPin = AddressToPin(s2);
+	results.push_back(Pair("pin", nPin));
+	return results;
+}
+
+UniValue give(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify give amount.  \r\nThis amount will be donated to our decentralized autonomous charity automatically, and auto distributed across our orphans.  To see the current percentages and orphans type exec dacengine.\r\n");
+	UniValue results(UniValue::VOBJ);
+
+	double dGive = cdbl(request.params[0].get_str(), 2);
+    
+	int nChangePosRet = -1;
+	bool fSubtractFeeFromAmount = true;
+	std::vector<CRecipient> vecSend;
+	std::map<std::string, Orphan> mapOrphan;
+	std::map<std::string, Expense> mapExpenses;
+	std::map<std::string, double> mapDAC = DACEngine(mapOrphan, mapExpenses);
+	for (auto dacAllocation : mapDAC)
+	{
+		std::string sAllocatedCharity = dacAllocation.first;
+		double nPct = dacAllocation.second;
+		if (nPct > 0 && nPct <= 1)
+		{
+			// ToDo:  Report to the user the % and Charity Name as we iterate through the gift, and show which orphans were affected by this persons generosity
+			results.push_back(Pair("Allocated Charity", sAllocatedCharity));
+			CBitcoinAddress baCharity(sAllocatedCharity);
+			CScript spkCharity = GetScriptForDestination(baCharity.Get());
+			CAmount nAmount = dGive * nPct * COIN;
+			results.push_back(Pair("Amount", (double)nAmount/COIN));
+			CRecipient recipient = {spkCharity, nAmount, false, fSubtractFeeFromAmount};
+			vecSend.push_back(recipient);
+		}
+	}
+	CAmount nFeeRequired = 0;
+	bool fUseInstantSend = false;
+	std::string sError;
+	CValidationState state;
+	CReserveKey reserveKey(pwalletMain);
+	CWalletTx wtx;
+	std::string sGiftXML = "<gift><amount>" + RoundToString(dGive, 2) + "</amount></gift>";
+	bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, NULL, true, ALL_COINS, fUseInstantSend, 0, sGiftXML);
+	if (!fCreated)    
+	{
+		results.push_back(Pair("Error", sError));
+	}
+	else
+	{
+		if (!pwalletMain->CommitTransaction(wtx, reserveKey, g_connman.get(), state, NetMsgType::TX))
+		{
+			throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
+		}
+	}
+	results.push_back(Pair("txid", wtx.GetHash().GetHex()));
+	if (fCreated)
+	{
+		results.push_back(Pair("Thank You", "May your family be blessed with the richest blessings of Abraham, Isaac and Jacob. "));
 	}
 	return results;
 }
@@ -2191,8 +2473,12 @@ static const CRPCCommand commands[] =
 	{ "evo",                "dashpay",                      &dashpay,                       false, {}  },
 	{ "evo",                "dashstakequote",               &dashstakequote,                false, {}  },
 	{ "evo",                "dashstake",                    &dashstake,                     false, {}  },
+	{ "evo",                "give",                         &give,                          false, {}  },
+	{ "evo",                "getpin",                       &getpin,                        false, {}  },
 	{ "evo",                "dws",                          &dws,                           false, {}  },
 	{ "evo",                "dwsquote",                     &dwsquote,                      false, {}  },
+	{ "evo",                "easystake",                    &easystake,                     false, {}  },
+	{ "evo",                "easybbpstake",                 &easybbpstake,               false, {}  },
 	{ "evo",                "utxostake",                    &utxostake,                     false, {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,            false, {}  },
 	{ "evo",                "getpobhhash",                  &getpobhhash,                   false, {}  },

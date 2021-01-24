@@ -390,6 +390,25 @@ std::string TimestampToHRDate(double dtm)
 	return sDt;
 }
 
+int64_t HRDateToTimestamp(std::string sDate)
+{
+    time_t tStart;
+    int yy, month, dd, hh, mm, ss;
+    struct tm whenStart;
+    const char *zStart = sDate.c_str();
+	sscanf(zStart, "%d-%d-%dT%d:%d:%dZ", &yy, &month, &dd, &hh, &mm, &ss);
+    whenStart.tm_year = yy - 1900;
+    whenStart.tm_mon = month - 1;
+    whenStart.tm_mday = dd;
+    whenStart.tm_hour = hh;
+    whenStart.tm_min = mm;
+    whenStart.tm_sec = ss;
+    whenStart.tm_isdst = -1;
+
+    tStart = mktime(&whenStart);
+	return tStart;
+}
+
 std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end)
 {
 	std::string extraction = "";
@@ -977,8 +996,11 @@ int GetNextSuperblock()
 	return nNextSuperblock;
 }
 
-double QueryUTXO(std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError)
+SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst)
 {
+	// If the caller sends the UTXO, we search by that, but otoh, if they send the target_amount we search by that instead.  Note:  When sancs check by target_amount, they also verify the Pin.  
+	SimpleUTXO s;
+
 	std::string sURL1;
 	std::string sURL2;
 	boost::to_upper(sTicker);
@@ -993,20 +1015,30 @@ double QueryUTXO(std::string sTicker, std::string sAddress, std::string sUTXO, i
 		sURL1 = "https://api.blockcypher.com";
 		sURL2 = "v1/dash/main/addrs/" + sAddress;
 	}
+	else if (sTicker == "LTC")
+	{
+		sURL1 = "https://api.blockcypher.com";
+		sURL2 = "v1/ltc/main/addrs/" + sAddress;
+	}
+	else if (sTicker == "DOGE")
+	{
+		sURL1 = "https://api.blockcypher.com";
+		sURL2 = "v1/doge/main/addrs/" + sAddress;
+	}
 	else if (sTicker == "BBP")
 	{
 		CAmount nValue = 0;
 		std::string sBBPAddress = GetUTXO(sUTXO, -1, nValue);
 		if (sBBPAddress == sAddress && nValue > 0)
 		{
-			double dValue = nValue/COIN;
-			return dValue;
+			s.nAmount = nValue;
+			return s;
 		}
 		else
 		{
 			LogPrintf("\nQueryUTXO bbpaddress %s %f ", sBBPAddress, nValue/COIN);
 			sError = "CANT LOCATE";
-			return -1;
+			return s;
 		}
 	}
 
@@ -1018,7 +1050,7 @@ double QueryUTXO(std::string sTicker, std::string sAddress, std::string sUTXO, i
 	if (i1 < 1)
 	{
 		sError = "Corrupted UTXO reply.";
-		return -1;
+		return s;
 	}
 
 	std::string sData = "{" + Mid(b.Response, i1 - 2, 100000);
@@ -1026,26 +1058,56 @@ double QueryUTXO(std::string sTicker, std::string sAddress, std::string sUTXO, i
     UniValue o(UniValue::VOBJ);
 	o.read(sData);
 	std::string a1 = o["balance"].getValStr();
-
+	int64_t nLockTimePad = 60 * 60 * 24 * 30;
 	for (int i = 0; i < o["txrefs"].size(); i++)
 	{
 		 if (o["txrefs"][i].size() > 0)
-			 {
-
+		 {
 			double nHeight = cdbl(o["txrefs"][i]["block_height"].getValStr(), 2);
 			int nOut = cdbl(o["txrefs"][i]["tx_output_n"].getValStr(), 0);
 			std::string sTxId = o["txrefs"][i]["tx_hash"].getValStr();
-			double nValue = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 4) / COIN;
-			if (sTxId == sUTXO && xnOut == nOut)
+			int64_t nLockTime = HRDateToTimestamp(o["txrefs"][i]["confirmed"].getValStr());
+			bool fSpent = o["txrefs"][i]["spent"].getValStr() == "true";
+			double nValue = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12) / COIN;
+			CAmount caAmount = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12);
+
+			
+			bool fLockTimeCheck = nLockTime > nTargetLockTime - nLockTimePad && nLockTime < nTargetLockTime + nLockTimePad; 
+			if (nValue > 0 && nOut >=0 && !fSpent && fLockTimeCheck)
 			{
-				return nValue;
+				double nPin = AddressToPin(sAddress);
+				bool fMask = CompareMask2(caAmount, nPin);
+
+				if (fReturnFirst && fMask)
+				{
+					// Returns first non-spent, non-zero, passing the locktime check and matching the target pin
+					s.TXID = sTxId;
+					s.nOrdinal = nOut;
+					s.nAmount = caAmount;
+					return s;
+				}
+				else if (sUTXO.empty() && (nTargetAmount == nValue))
+				{
+					s.TXID = sTxId;
+					s.nOrdinal = nOut;
+					s.nAmount = caAmount;
+					return s;
+				}
+				else if (sTxId == sUTXO && xnOut == nOut)
+				{
+					s.TXID = sTxId;
+					s.nOrdinal = nOut;
+					s.nAmount = caAmount;
+					return s;
+				}
 			}
-			LogPrintf("\nTxRef %f %s", nOut, sTxId);
+
+			LogPrintf("\nQueryUTXO::TxRef %f %s, actual value %f, TargetAmount %f  ", nOut, sTxId, nValue, nTargetAmount);
 		 }
 	}
 
 	sError = "CANT LOCATE [-9]";
-	return -9;
+	return s;
 }
 
 
@@ -1489,6 +1551,16 @@ bool CompareMask(CAmount nValue, CAmount nMask)
 	std::string s1 = sAmt.substr(sAmt.length() - sMask.length() + 1, sMask.length() - 1);
 	std::string s2 = sMask.substr(1, sMask.length() - 1);
 	return (s1 == s2);
+}
+
+bool CompareMask2(CAmount nAmount, double nMask)
+{
+	if (nMask == 0)
+		return false;
+	std::string sFull = RoundToString((double)nAmount/COIN, 12);
+	std::string sSec = RoundToString(nMask, 0);
+	bool fExists = Contains(sFull, sSec);
+	return fExists;
 }
 
 bool CopyFile(std::string sSrc, std::string sDest)
@@ -3761,7 +3833,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 			w.nForeignValueUSD = cdbl(ExtractXML(w.XML, "<foreignvalue>", "</foreignvalue>"), 2);
 
 			w.nBBPAmount = cdbl(ExtractXML(w.XML, "<bbpamount>", "</bbpamount>"), 2) * COIN;
-			w.nForeignAmount = cdbl(ExtractXML(w.XML, "<foreignamount>", "</foreignamount>"), 2) * COIN;
+			w.nForeignAmount = StringToAmount(ExtractXML(w.XML, "<foreignamount>", "</foreignamount>"));
 
 			bool fUseLive = true;
 			if (fUseLive)
@@ -3778,12 +3850,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 
 			w.BBPAddress = ExtractXML(w.XML, "<bbpaddress>", "</bbpaddress>");
 			w.ForeignAddress = ExtractXML(w.XML, "<foreignaddress>", "</foreignaddress>");
-
 			w.ReportTicker = w.ForeignTicker.empty() ? "BBP" : w.ForeignTicker;
-
-			LogPrintf("GetUTXOStake::Using bbpaddr %s and dash addr %s dash amount %f ", 
-				w.BBPAddress, w.ForeignAddress, (double)w.nForeignAmount/COIN);
-		
 			w.TXID = tx1->GetHash();
 			if (w.Height > 0 && !w.BBPUTXO.empty())
 			{
@@ -3806,7 +3873,13 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 
 			if (!w.ForeignTicker.empty())
 			{
-				w.ForeignSignatureValid = VerifyNonstandardSignature(w.ForeignAddress, w.ForeignUTXO, w.ForeignSignature, CalculateKeyType(w.ForeignTicker));
+				// Verify Pin here
+				double nPin = AddressToPin(w.ForeignAddress);
+				bool fMask = CompareMask2(w.nForeignAmount, nPin);
+				if (!fMask)
+					LogPrintf("\nFT1 %s, Pin %f, Amount %s, Valid %f ", w.ForeignTicker, nPin, RoundToString((double)w.nForeignAmount/COIN, 12), fMask);
+
+				w.ForeignSignatureValid = fMask;
 			}
 			w.SignatureValid = w.BBPSignatureValid && w.ForeignSignatureValid;
 
@@ -5745,7 +5818,7 @@ bool SendDWS(std::string& sTXID, std::string& sError, std::string sReturnAddress
 }
 
 
-bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
+bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
 	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -5753,12 +5826,12 @@ bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& 
 	boost::to_upper(sForeignTicker);
 
 	bool fForeignTickerValid = false;
-	if (sForeignTicker == "DASH" || sForeignTicker == "BTC" || sForeignTicker.empty())
+	if (sForeignTicker == "DASH" || sForeignTicker == "BTC" || sForeignTicker == "DOGE" || sForeignTicker == "LTC" || sForeignTicker.empty())
 		fForeignTickerValid = true;
 
 	if (!fForeignTickerValid)
 	{
-		sError = "Foreign ticker must be DASH || BTC.  ";
+		sError = "Foreign ticker must be DASH || BTC || LTC || DOGE.  ";
 		return false;
 	}
 
@@ -5770,24 +5843,22 @@ bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& 
 	
 	CAmount nForeignAmount = 0;
 	
-	double nFA = 0;
-	
+	SimpleUTXO s;
 	if (!sForeignTicker.empty())
 	{
-		nFA = QueryUTXO(sForeignTicker, sForeignAddress, GetElement(sForeignUTXO, "-", 0), cdbl(GetElement(sForeignUTXO, "-", 1), 0), sError);
+		s = QueryUTXO(GetAdjustedTime(), nTargetAmount, sForeignTicker, sForeignAddress, GetElement(sForeignUTXO, "-", 0), cdbl(GetElement(sForeignUTXO, "-", 1), 0), sError);
 		if (!sError.empty())
 		{
 			return false;
 		}
-		if (nFA <= 0)
+		if (s.nAmount <= 0)
 		{
 			sError = "Foreign ticker UTXO not found.";
 			return false;
 		}
-		LogPrintf("\nSendUTXO::Found foreign currency %s with value %f ", sForeignTicker, nFA);
+		LogPrintf("\nSendUTXO::Found foreign currency %s with value %f ", sForeignTicker, s.nAmount * COIN);
 	}
 
-	nForeignAmount = nFA * COIN;
 	if (nBBPAmount < 10000*COIN || nBBPAmount > 10000000*COIN)
 	{
 		sError = "BBP Amount too low or high.  BBP amount must be between 10,000 and 10MM.  ";
@@ -5796,9 +5867,9 @@ bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& 
 
 	if (!sForeignTicker.empty())
 	{
-		if (nFA <= 0 || nFA > 10000000*COIN)
+		if (s.nAmount <= 0 || (s.nAmount/COIN) > 10000000)
 		{
-			sError = "Foreign amount out of bounds.  Foreign Amount must be between .00000001 and 10MM. ";
+			sError = "Foreign amount out of bounds.  Foreign Amount must be between .00000001 and 10MM. [" + RoundToString((double)s.nAmount/COIN, 12) + "]. ";
 			return false;
 		}
 		bool fForeignDuplicate = IsDuplicateUTXO(sForeignUTXO);
@@ -5807,12 +5878,15 @@ bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& 
 			sError = "Duplicate foreign utxo.  ";
 			return false;
 		}
-		bool fForeignSigValid = VerifyNonstandardSignature(sForeignAddress, sForeignUTXO, sForeignSig, CalculateKeyType(sForeignTicker));
-		if (!fForeignSigValid)
+		// Now we verify the pin instead of the signature:
+		double nPin = AddressToPin(sForeignAddress);
+		bool fMask = CompareMask2(s.nAmount, nPin);
+		if (!fMask)
 		{
-			sError + "Foreign signature invalid. ";
+			sError += "Foreign pin invalid. ";
 			return false;
 		}
+
 	}
 
 	bool fDuplicate = IsDuplicateUTXO(sBBPUTXO);
@@ -5825,19 +5899,17 @@ bool SendUTXOStake(std::string sForeignTicker, std::string& sTXID, std::string& 
 	double nUSDBBP = nBTCPrice * nBBPPrice;
 	double nUSDForeign = nBTCPrice * nForeignPrice;
 	double nBBPValueUSD = nUSDBBP * ((double)nBBPAmount / COIN);
-	double nForeignValueUSD = nUSDForeign * ((double)nForeignAmount / COIN);
+	double nForeignValueUSD = nUSDForeign * ((double)s.nAmount / COIN);
 	LogPrintf(" CryptoPrice BBP %s , Foreign %s, ForeignValue %f  ", RoundToString(nBBPPrice, 12), RoundToString(nForeignPrice, 12), nForeignValueUSD);
 
-	
 	std::string sPK = "UTXOSTAKE-" + sBBPUTXO;
-			
-
+	
 	std::string sPayload = "<MT>UTXOSTAKE</MT><MK>" + sPK + "</MK><MV><utxostake><foreignticker>" + sForeignTicker + "</foreignticker><bbputxo>" + sBBPUTXO + "</bbputxo><height>" 
 			+ RoundToString(chainActive.Tip()->nHeight, 0) 
 			+ "</height><foreignutxo>"+ sForeignUTXO + "</foreignutxo><cpk>" + sCPK + "</cpk><bbpsig>"+ sBBPSig + "</bbpsig><foreignsig>"+ sForeignSig 
 			+ "</foreignsig><time>" + RoundToString(GetAdjustedTime(), 0) + "</time>"
 			+ "<bbpamount>" + RoundToString((double)nBBPAmount / COIN, 2) + "</bbpamount><bbpaddress>" + sBBPAddress + "</bbpaddress><foreignaddress>" + sForeignAddress + "</foreignaddress><foreignamount>" 
-			+ RoundToString((double)nForeignAmount / COIN, 4) + "</foreignamount><bbpprice>"
+			+ RoundToString((double)s.nAmount / COIN, 12) + "</foreignamount><bbpprice>"
 			+ RoundToString(nBBPPrice, 12) + "</bbpprice><foreignprice>" + RoundToString(nForeignPrice, 12)
 			+ "</foreignprice><btcprice>"+ RoundToString(nBTCPrice, 12) + "</btcprice>"
 			+ "<bbpvalue>" + RoundToString(nBBPValueUSD, 2) + "</bbpvalue><foreignvalue>"+ RoundToString(nForeignValueUSD, 2) + "</foreignvalue></utxostake></MV>";
@@ -6299,13 +6371,18 @@ int AssimilateUTXO(UTXOStake d)
 				nStatus++;
 		if (!d.ForeignTicker.empty())
 		{
-			double nValue = QueryUTXO(d.ForeignTicker, d.ForeignAddress, GetElement(d.ForeignUTXO, "-", 0), cdbl(GetElement(d.ForeignUTXO, "-", 1), 0), sError);
+			SimpleUTXO s = QueryUTXO(d.Time, (double)d.nForeignAmount/COIN, d.ForeignTicker, d.ForeignAddress, GetElement(d.ForeignUTXO, "-", 0), cdbl(GetElement(d.ForeignUTXO, "-", 1), 0), sError);
 			if (!sError.empty())
 			{
 				LogPrintf("\nAssimilateUTXO Bad Ticker %s , %s ", d.ForeignTicker, sError);
 			}
-			if (nValue > std::floor(d.nForeignAmount/COIN) && nValue > 0)
+			// Verify the pin
+			double nPin = AddressToPin(d.ForeignAddress);
+			bool fMask = CompareMask2(s.nAmount, nPin);
+			if (s.nAmount > 0 && fMask && s.nAmount >= d.nForeignAmount)
+			{
 				nStatus++;
+			}
 		}
 	}
 	mapUTXOStatus[d.TXID] = nStatus;
@@ -6324,6 +6401,10 @@ std::string GetUTXOSummary(std::string sCPK)
 	int nCount = 0;
 	double nBBPQuantity = 0;
 	double nForeignQuantity = 0;
+	double nForeignValue = 0;
+	double nBBPValue = 0;
+	double nBBPCount = 0;
+	double nForeignCount = 0;
 	for (int i = 0; i < uStakes.size(); i++)
 	{
 		UTXOStake d = uStakes[i];
@@ -6338,10 +6419,14 @@ std::string GetUTXOSummary(std::string sCPK)
 				{
 					sTicker = "BBP";
 					nBBPQuantity += (double)(d.nBBPAmount / COIN);
+					nBBPValue += d.nBBPValueUSD;
+					nBBPCount++;
 				}
 				else
 				{
 					nForeignQuantity += (double)(d.nForeignAmount / COIN);
+					nForeignValue += d.nForeignValueUSD;
+					nForeignCount++;
 				}
 				mapTickers[sTicker] = sTicker;
 				nCount++;
@@ -6355,9 +6440,13 @@ std::string GetUTXOSummary(std::string sCPK)
 		sTickers += tick.first + ", ";
 	}
 	sTickers = Mid(sTickers, 0, sTickers.length()-2);
-	std::string sSummary = "<html><br>Tickers: " + sTickers + "<br>Stake Quantity: " + RoundToString(nCount, 0) 
-		+ "<br>Total BBP Quantity: " + RoundToString(nBBPQuantity, 2) + " BBP"
-		+ "<br>Total Foreign Quantity: " + RoundToString(nForeignQuantity, 2) 
+	std::string sSummary = "<html><br>Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0) 
+		+ "<br>Total BBP Amount: " + RoundToString(nBBPQuantity, 2) + " BBP"
+		+ "<br>Total BBP Value: $" + RoundToString(nBBPValue, 2) 
+		+ "<br>Total BBP Count: " + RoundToString(nBBPCount, 0)
+		+ "<br>Total Foreign Amount: " + RoundToString(nForeignQuantity, 12) 
+		+ "<br>Total Foreign Value: $" + RoundToString(nForeignValue, 2) 
+		+ "<br>Total Foreign Count: " + RoundToString(nForeignCount, 0)
 		+ "<br>Total Value: $" + RoundToString(nTotal, 2) + "<br></html>";
 	return sSummary;
 }
@@ -6412,10 +6501,10 @@ double SumUTXO()
 	return nTotal;
 }
 
-double CalculateUTXOReward()
+double CalculateUTXOReward(int nStakeCount)
 {
 	int iNextSuperblock = 0;
-	double UTXO_GSC_PCT = .95;  // Healing is 5%; make this more robust if necessary
+	double UTXO_GSC_PCT = .95;  // Healing is 5%; Ensure this is dynamic in the future
 	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
 	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, 0, false) * UTXO_GSC_PCT;
 	double nTotal = SumUTXO();
@@ -6427,6 +6516,7 @@ double CalculateUTXOReward()
 	LogPrintf("\nReward %f, Total %f, DWU %f ", nAnnualReward, nTotal, nDWU);
 	if (nDWU > 2.0)
 		nDWU = 2.0;
+	nDWU = nDWU * nStakeCount;
 	return nDWU;
 }
 	
@@ -6438,4 +6528,61 @@ std::string strReplace(std::string& str, const std::string& oldStr, const std::s
      pos += newStr.length();
   }
   return str;
+}
+
+int HexToInteger2(const std::string& hex){ 	int x = 0; 	std::stringstream ss; 	ss << std::hex << hex; 	ss >> x; 	return x; }
+
+double ConvertHexToDouble2(std::string hex) 
+{
+	int d = HexToInteger2(hex); 	double dOut = (double)d; 	return dOut; 
+}
+
+
+double AddressToPin(std::string sAddress)
+{
+
+	if (sAddress.length() < 20)
+		return -1;
+
+ 	 std::string sHash = RetrieveMd5(sAddress);
+	 std::string sMath5 = sHash.substr(0, 5); // 0 - 1,048,575
+	 double d = ConvertHexToDouble2("0x" + sMath5) / 11.6508;
+
+	 int nMin = 10000;
+	 int nMax = 99999;
+	 d += nMin;
+
+	 if (d > nMax)
+		 d = nMax;
+
+	 d = std::floor(d);
+	 return d;
+
+	// Why a 5 digit pin?  Looking at the allowable suffix size (digits of scale after the decimal point), we have 8 in scale to work with.  Since BTC is currently at $32,000 per coin as of Jan 2021, doing a 6 digit pin would mean the stake overhead would be at least $250 before the user even uses their first $1 of stake value (not very appetizing).
+	// So we move down to a 5 digit pin, and then the stake suffix consumes about $22 of value (affordable for most people).
+	// Note that this monetary overhead is not actually *lost*, it is given right back to the user, but this issue is more of a convenience issue (people dont want to tie up $225 just to test a $2 stake).
+	// With 5 digits, they can tie up $1-$22 to test a stake.
+}
+
+std::vector<DACResult> GetDataListVector(std::string sType)
+{
+	std::vector<DACResult> vec;
+	boost::to_upper(sType);
+	for (auto ii : mvApplicationCache) 
+	{
+		if (Contains(ii.first, sType))
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			int64_t nTimestamp = v.second;
+			if (nTimestamp > 0)
+			{
+				DACResult d;
+				d.PrimaryKey = GetElement(ii.first, "[-]", 1);
+				d.Response = v.first;
+				d.nTime = nTimestamp;
+				vec.push_back(d);
+			}
+		}
+	}
+	return vec;
 }

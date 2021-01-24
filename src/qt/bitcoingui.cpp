@@ -116,6 +116,7 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 	proposalListAction(0),
 	proposalAddMenuAction(0),
 	userEditMenuAction(0),
+	memorizeScriptureMenuAction(0),
 	OneClickMiningAction(0),
  	sinnerAction(0),
     TheLordsPrayerAction(0),
@@ -551,6 +552,10 @@ void BitcoinGUI::createActions()
     userEditMenuAction->setStatusTip(tr("My User Record"));
     userEditMenuAction->setEnabled(false);
 	
+	memorizeScriptureMenuAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("Memorize Scriptures"), this);
+    memorizeScriptureMenuAction->setStatusTip(tr("Memorize Scriptures"));
+    memorizeScriptureMenuAction->setEnabled(false);
+	
     usedSendingAddressesAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("&Sending addresses..."), this);
     usedSendingAddressesAction->setStatusTip(tr("Show the list of used sending addresses and labels"));
     usedReceivingAddressesAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("&Receiving addresses..."), this);
@@ -589,6 +594,7 @@ void BitcoinGUI::createActions()
 	connect(proposalListAction, SIGNAL(triggered()), this, SLOT(gotoProposalListPage()));
 	connect(proposalAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoProposalAddPage()));
 	connect(userEditMenuAction, SIGNAL(triggered()), this, SLOT(gotoUserEditPage()));
+	connect(memorizeScriptureMenuAction, SIGNAL(triggered()), this, SLOT(gotoMemorizeScripturePage()));
 	connect(businessObjectListMenuAction, SIGNAL(triggered()), this, SLOT(gotoBusinessObjectListPage()));
     
 	// CHAT
@@ -706,7 +712,11 @@ void BitcoinGUI::createMenuBar()
 		QMenu *useredit = appMenuBar->addMenu(tr("User Record"));
 		useredit->addAction(userEditMenuAction);
 		useredit->addAction(userEditMenuAction);
-		
+
+		QMenu *qmmemorizescriptures = appMenuBar->addMenu(tr("Memorize Scriptures"));
+		qmmemorizescriptures->addAction(memorizeScriptureMenuAction);
+		qmmemorizescriptures->addAction(memorizeScriptureMenuAction);
+
         QMenu *menuChat = appMenuBar->addMenu(tr("&Chat"));
         menuChat->addAction(openChatGeneralAction);
         menuChat->addAction(openChatPMAction);
@@ -918,6 +928,7 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     proposalListAction->setEnabled(enabled);
     proposalAddMenuAction->setEnabled(enabled);
 	userEditMenuAction->setEnabled(enabled);
+	memorizeScriptureMenuAction->setEnabled(enabled);
 	OneClickMiningAction->setEnabled(enabled);
 	businessObjectListMenuAction->setEnabled(enabled);
 }
@@ -1119,6 +1130,15 @@ void BitcoinGUI::gotoUserEditPage()
     userEditMenuAction->setChecked(true);
     if (walletFrame)
 		walletFrame->gotoUserEditPage();
+}
+
+void BitcoinGUI::gotoMemorizeScripturePage()
+{
+	if (!clientModel)
+		return;
+	memorizeScriptureMenuAction->setChecked(true);
+	if (walletFrame)
+		walletFrame->gotoMemorizeScripturePage();
 }
 
 void BitcoinGUI::gotoProposalAddPage()
