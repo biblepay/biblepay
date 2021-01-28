@@ -1165,10 +1165,13 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
         ret.push_back(Pair("disk_size", stats.nDiskSize));
 		ret.push_back(Pair("total_burned", ValueFromAmount(stats.nTotalBurned)));
 		ret.push_back(Pair("total_dac", ValueFromAmount(stats.nTotalDAC)));
+		// Support for BXs:
 	    ret.push_back(Pair("total_amount", ValueFromAmount(stats.nTotalAmount)));
+		// Circulating = Emitted minus burned
 		ret.push_back(Pair("total_circulating_money_supply", ValueFromAmount(stats.nTotalAmount)));
 		double nPct = ((stats.nTotalAmount/COIN) + .01) / 5200000000;
 		ret.push_back(Pair("percent_emitted", nPct));
+
 		// Total Liabilities include future unpaid DWS + one day of unpaid DAC donations
 		std::vector<WhaleStake> vWhales = GetDWS(false);		
 		double nWhaleLiabilities = 0;
@@ -1177,6 +1180,28 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
 			if (!vWhales[i].paid)
 				nWhaleLiabilities += vWhales[i].TotalOwed;
 		}
+
+		// Emission target, Dec 2021: https://wiki.biblepay.org/Emission_Schedule_2020
+		double nEmissionTargetDec2021 = 2847218800;
+		ret.push_back(Pair("emission_target_dec_2021", nEmissionTargetDec2021));
+
+		int64_t Dec2021_Epoch = 1640470023;
+		double dTotalDeflationComponent = .50; 
+		// With APM on and total deflation to date, we are in money saving mode for approx 150 more days.  By Dec 2021 our total circulating supply should match the above wiki page.
+		// Once our budget is reconciled, we will disable dws whale staking and stick with our static emission schedule (that uses UTXO staking via GSC).
+		
+		int64_t nRemainingDays = (Dec2021_Epoch - GetAdjustedTime()) / 86400;
+		int64_t nGenesisBlock = 1496347844;
+		int64_t nDaysSinceGenesis = (GetAdjustedTime() - nGenesisBlock) / 86400;
+
+		double nEmissionPerDay = stats.nTotalAmount/COIN / nDaysSinceGenesis;
+		double nSythesizedTarget2021 = (nRemainingDays * (nEmissionPerDay * dTotalDeflationComponent)) + (stats.nTotalAmount / COIN) + nWhaleLiabilities;
+		ret.push_back(Pair("avg_emissions_per_day", nEmissionPerDay));
+		ret.push_back(Pair("estimated_emissions_as_of_dec_2021", nSythesizedTarget2021));
+
+		double nBudgetaryHealthPct = nSythesizedTarget2021 / nEmissionTargetDec2021;
+		ret.push_back(Pair("budgetary_health_pct_dec_2021", nBudgetaryHealthPct));
+		
 		ret.push_back(Pair("future_whale_stake_liabilities", nWhaleLiabilities));
 		ret.push_back(Pair("total_supply_plus_liabilities", nWhaleLiabilities + (double)(stats.nTotalAmount/COIN)));
     } else {
@@ -1995,23 +2020,6 @@ UniValue exec(const JSONRPCRequest& request)
 		double nReward = CalculateUTXOReward(1);
 		results.push_back(Pair("DWU", nReward));
 	}
-	else if (sItem == "listutxostakes")
-	{
-		std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
-		for (int i = 0; i < uStakes.size(); i++)
-		{
-			UTXOStake d = uStakes[i];
-			if (d.found && d.nValue > 0)
-			{
-				int nStatus = GetUTXOStatus(d.TXID);
-				
-				std::string sSigs = "Sigs: " + d.SignatureNarr;
-				
-				std::string sRow = "#" + RoundToString(i+1, 0) + ":  Amount: " + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker + ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs;
-				results.push_back(Pair(d.TXID.GetHex(), sRow));
-			}
-		}
-	}
 	else if (sItem == "testmask")
 	{
 		double nAmt = cdbl(request.params[1].get_str(), 8);
@@ -2024,7 +2032,7 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "testmem")
 	{
-		std::vector<DACResult> d = GetDataListVector("memorizer");
+		std::vector<DACResult> d = GetDataListVector("memorizer", 9999);
 		for (int i = 0; i < d.size(); i++)
 		{
 			results.push_back(Pair("pk", d[i].PrimaryKey));

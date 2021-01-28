@@ -48,7 +48,10 @@ std::string sCorrectBook;
 
 void MemorizeScriptureDialog::PopulateNewVerse()
 {
-	std::vector<DACResult> d = GetDataListVector("memorizer");
+	std::vector<DACResult> d = GetDataListVector("memorizer", 9999);
+	if (d.empty())
+		return;
+
 	int i = rand() % d.size();
 
 	std::string sBook = GetElement(d[i].PrimaryKey, "|", 0);

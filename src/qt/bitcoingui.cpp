@@ -23,6 +23,7 @@
 #include "platformstyle.h"
 #include "rpcconsole.h"
 #include "utilitydialog.h"
+#include "menudialog.h"
 #include "businessobjectlist.h"
 #include "chatdialog.h"
 
@@ -327,7 +328,6 @@ void BitcoinGUI::createActions()
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
 #endif
     tabGroup->addAction(overviewAction);
-
     sendCoinsAction = new QAction(QIcon(":/icons/" + theme + "/send"), tr("&Send"), this);
     sendCoinsAction->setStatusTip(tr("Send coins to another address"));
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
@@ -339,7 +339,7 @@ void BitcoinGUI::createActions()
 #endif
     tabGroup->addAction(sendCoinsAction);
 
-	// DAC
+	// BBP
 	proposalListAction = new QAction(QIcon(":/icons/" + theme + "/edit"), tr("&Proposals"), this);
 	proposalListAction->setStatusTip(tr("List Proposals"));
 	proposalListAction->setToolTip(proposalListAction->statusTip());
@@ -365,7 +365,6 @@ void BitcoinGUI::createActions()
     receiveCoinsMenuAction = new QAction(QIcon(":/icons/" + theme + "/receiving_addresses"), receiveCoinsAction->text(), this);
     receiveCoinsMenuAction->setStatusTip(receiveCoinsAction->statusTip());
     receiveCoinsMenuAction->setToolTip(receiveCoinsMenuAction->statusTip());
-
 
     historyAction = new QAction(QIcon(":/icons/" + theme + "/history"), tr("&Transactions"), this);
     historyAction->setStatusTip(tr("Browse transaction history"));
@@ -411,13 +410,12 @@ void BitcoinGUI::createActions()
 	tabGroup->addAction(exchangeAction);
 	connect(exchangeAction, SIGNAL(triggered()), this, SLOT(showExchange()));
 
+	// We can reserve this icon for something useful - but for now make it invisible
 	webAction = new QAction(QIcon(":/icons/" + theme + "/account32"), tr("&Web"), this);
 	webAction->setStatusTip(tr("Web"));
 	webAction->setToolTip(webAction->statusTip());
-	webAction->setCheckable(true);
-	tabGroup->addAction(webAction);
-	connect(webAction, SIGNAL(triggered()), this, SLOT(showDecentralizedWeb()));
-
+	webAction->setCheckable(false);
+	webAction->setVisible(false);
     // These showNormalIfMinimized are needed because Send Coins and Receive Coins
     // can be triggered from the tray menu, and need to show the GUI to be useful.
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -440,6 +438,9 @@ void BitcoinGUI::createActions()
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     quitAction->setMenuRole(QAction::QuitRole);
 	
+    univAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("BiblePay University"), this);
+    univAction->setStatusTip(tr("Show the BiblePay University"));
+    univAction->setMenuRole(QAction::AboutRole);
 
     sinnerAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("The Sinners Prayer"), this);
     sinnerAction->setStatusTip(tr("Show the Sinners Prayer"));
@@ -583,8 +584,8 @@ void BitcoinGUI::createActions()
 	// Read Bible Actions
 	connect(sinnerAction, SIGNAL(triggered()), this, SLOT(sinnerClicked()));
     connect(TheLordsPrayerAction, SIGNAL(triggered()), this, SLOT(TheLordsPrayerClicked()));
-
-	
+	connect(univAction, SIGNAL(triggered()), this, SLOT(univClicked()));
+		
     connect(TheApostlesCreedAction, SIGNAL(triggered()), this, SLOT(TheApostlesCreedClicked()));
     connect(TheNiceneCreedAction, SIGNAL(triggered()), this, SLOT(TheNiceneCreedClicked()));
     connect(ReadBibleAction, SIGNAL(triggered()), this, SLOT(ReadBibleClicked()));
@@ -721,6 +722,9 @@ void BitcoinGUI::createMenuBar()
         menuChat->addAction(openChatGeneralAction);
         menuChat->addAction(openChatPMAction);
 		menuChat->addAction(openChatPMEncryptedAction);
+
+		QMenu *menuUniv = appMenuBar->addMenu(tr("&BBP University"));
+		menuUniv->addAction(univAction);
 
 		QMenu *businessObjects = appMenuBar->addMenu(tr("&Leaderboard"));
 		businessObjects->addAction(businessObjectListMenuAction);
@@ -988,6 +992,14 @@ void BitcoinGUI::optionsClicked()
 
     OptionsDialog dlg(this, enableWallet);
     dlg.setModel(clientModel->getOptionsModel());
+    dlg.exec();
+}
+
+void BitcoinGUI::univClicked()
+{
+    if(!clientModel) 
+		return;
+    MenuDialog dlg(this);
     dlg.exec();
 }
 

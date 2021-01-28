@@ -46,6 +46,19 @@ struct CPK
   bool fValid = false;
 };
 
+struct PriceQuote
+{
+	double nForeignPrice = 0;
+	double nBTCPrice = 0;
+	double nBBPPrice = 0;
+	double nUSDBBP = 0;
+	double nUSDForeign = 0;
+	double nBBPValueUSD = 0;
+	double nForeignValueUSD = 0;
+	CAmount nBBPQty = 0;
+	CAmount nForeignQty = 0;
+};
+
 struct UserRecord
 {
 	std::string CPK;
@@ -544,7 +557,8 @@ double CalculateUTXOReward(int nStakeCount);
 std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr);
 double AddressToPin(std::string sAddress);
 bool CompareMask2(CAmount nAmount, double nMask);
-std::vector<DACResult> GetDataListVector(std::string sType);
+std::vector<DACResult> GetDataListVector(std::string sType, int nDaysLimit);
+PriceQuote GetPriceQuote(std::string sForeignSymbol, CAmount nBBPQty, CAmount nForeignQty);
 int64_t HRDateToTimestamp(std::string sDate);
 
 #endif

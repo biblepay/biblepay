@@ -1586,8 +1586,14 @@ UniValue easystake(const JSONRPCRequest& request)
 		
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sBBPAddress;
-	CAmount nReturnAmount = 0;
-	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nReturnAmount);
+	CAmount nBBPReturnAmount = 0;
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	if (sBBPUTXO.empty())
+	{
+		// They dont have one with 1+ day of age; try one without age
+		LogPrintf("\nEasyStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
+		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+	}
 	if (sBBPUTXO.empty())
 	{
 		sError = "Unable to find a BBP UTXO greater than " + RoundToString(nMin, 2) + ".";
@@ -1597,7 +1603,7 @@ UniValue easystake(const JSONRPCRequest& request)
 
 	results.push_back(Pair("BBP UTXO", sBBPUTXO));
 	results.push_back(Pair("BBP Address", sBBPAddress));
-	results.push_back(Pair("BBP Amount", (double)nReturnAmount/COIN));
+	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
 	std::string sForeignAddress = request.params[1].getValStr();
 	std::string sForeignTicker = GetSymbolFromAddress(sForeignAddress);
 	
@@ -1614,18 +1620,11 @@ UniValue easystake(const JSONRPCRequest& request)
 	
 	int nStakeCount = sForeignTicker.empty() ? 1 : 2;
 	double nDWU = CalculateUTXOReward(nStakeCount);
-	// ToDo - make a pricing class out of this from here:
-	double nForeignPrice = GetCryptoPrice(sForeignTicker);
-	double nBTCPrice = GetCryptoPrice("btc");
-	double nBBPPrice = GetCryptoPrice("bbp");
-	double nUSDBBP = nBTCPrice * nBBPPrice;
-	double nUSDForeign = nBTCPrice * nForeignPrice;
-	double nBBPValueUSD = nUSDBBP * ((double)nReturnAmount / COIN);
-	double nForeignValueUSD = nUSDForeign * ((double)s.nAmount / COIN);
-	// To Here - and remember to update the duplicate code in 'sendutxostake' 
-	results.push_back(Pair("Foreign Value USD", nForeignValueUSD));
-	results.push_back(Pair("BBP Value USD", nBBPValueUSD));
-	results.push_back(Pair("DWU", nDWU));
+	PriceQuote p = GetPriceQuote(sForeignTicker, nBBPReturnAmount, s.nAmount);
+
+	results.push_back(Pair("Foreign Value USD", p.nForeignValueUSD));
+	results.push_back(Pair("BBP Value USD", p.nBBPValueUSD));
+	results.push_back(Pair("DWU", nDWU * 100));
 
 	double nPin = AddressToPin(sForeignAddress);
 	results.push_back(Pair("Pin", nPin));
@@ -1659,13 +1658,10 @@ UniValue easystake(const JSONRPCRequest& request)
 		{
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
 			LockUTXOStakes();
-			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
-			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
-
 			if (!sForeignTicker.empty())
 			{
 				results.push_back(Pair("Foreign Ticker", sForeignTicker));
-				results.push_back(Pair("Foreign Value USD", ds.nForeignValueUSD)); //
+				results.push_back(Pair("Foreign Value USD", ds.nForeignValueUSD)); 
 				results.push_back(Pair("Foreign Amount", (double)ds.nForeignAmount/COIN));
 			}
 			results.push_back(Pair("UTXO Value", ds.nValue));
@@ -1688,8 +1684,15 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 		throw std::runtime_error(sHelp.c_str());
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sBBPAddress;
-	CAmount nReturnAmount = 0;
-	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nReturnAmount);
+	CAmount nBBPReturnAmount = 0;
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	if (sBBPUTXO.empty())
+	{
+		// They dont have one with 1+ day of age; try one without age
+		LogPrintf("\nEasyBBPStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
+		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+	}
+	
 	if (sBBPUTXO.empty())
 	{
 		sError = "Unable to find a BBP UTXO greater than " + RoundToString(nMin, 2) + ".";
@@ -1698,17 +1701,15 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 	UniValue results(UniValue::VOBJ);
 	results.push_back(Pair("BBP UTXO", sBBPUTXO));
 	results.push_back(Pair("BBP Address", sBBPAddress));
-	results.push_back(Pair("BBP Amount", (double)nReturnAmount/COIN));
+	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
 	double nDWU = CalculateUTXOReward(1);
-	results.push_back(Pair("DWU", nDWU));
+	results.push_back(Pair("DWU", nDWU * 100));
 	
 	bool fDryRun = cdbl(request.params[1].getValStr(), 0) == 0;
 
-	double nBTCPrice = GetCryptoPrice("btc");
-	double nBBPPrice = GetCryptoPrice("bbp");
-	double nUSDBBP = nBTCPrice * nBBPPrice;
-	double nBBPValueUSD = nUSDBBP * ((double)nReturnAmount / COIN);
-	results.push_back(Pair("BBP Value USD", nBBPValueUSD));
+	PriceQuote p = GetPriceQuote("bbp", nBBPReturnAmount, 0);
+
+	results.push_back(Pair("BBP Value USD", p.nBBPValueUSD));
 
 	std::string sTXID;
 	UTXOStake ds;
@@ -1734,8 +1735,6 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 		{
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
 			LockUTXOStakes();
-			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
-			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
 			results.push_back(Pair("UTXO Value", ds.nValue));
 			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
 			results.push_back(Pair("TXID", sTXID));
@@ -1906,6 +1905,36 @@ UniValue dashstake(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue listexpenses(const JSONRPCRequest& request)
+{
+	std::string sHelp = "You must specify listexpenses max_days";
+	UniValue results(UniValue::VOBJ);
+
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error(sHelp.c_str());
+	double nMaxDays = cdbl(request.params[0].get_str(), 0);
+	std::map<std::string, Orphan> mapOrphans;
+	std::map<std::string, Expense> mapExpenses;
+	std::map<std::string, double> mapDAC = DACEngine(mapOrphans, mapExpenses);
+	double nTotalExp = 0;
+	for (auto expense : mapExpenses)
+	{
+		int nType = expense.second.nUSDAmount > 0 ? 0 : 1;
+		std::string sNarr = nType == 0 ? "Exp" : "Rev";
+		int nElapsedDays  = GetAdjustedTime() - expense.second.nTime / 86400;
+		if (nElapsedDays < nMaxDays)
+		{
+			std::string sRow = sNarr + " USD: " + RoundToString(expense.second.nUSDAmount, 2) + " BBP: " + RoundToString(expense.second.nBBPAmount, 2);
+			std::string sKey = expense.second.Added + "-" + expense.second.Charity; 
+			results.push_back(Pair(sKey, sRow));
+			if (expense.second.nUSDAmount > 0)
+				nTotalExp += expense.second.nUSDAmount;
+		}
+
+	}
+	results.push_back(Pair("Total USD Expense", nTotalExp));
+	return results;
+}
 
 UniValue dws(const JSONRPCRequest& request)
 {
@@ -2280,6 +2309,25 @@ UniValue dwsquote(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue listdacdonations(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify listdacdonations daylimit.");
+	double dDayLimit = cdbl(request.params[0].get_str(), 0);
+	UniValue results(UniValue::VOBJ);
+
+	std::vector<DACResult> d = GetDataListVector("gift", dDayLimit);
+	CAmount nTotal = 0;
+	for (int i = 0; i < d.size(); i++)
+	{
+		CAmount nAmount = cdbl(d[i].Response, 2) * COIN;
+		nTotal += nAmount;
+		results.push_back(Pair(d[i].PrimaryKey, (double)nAmount/COIN));
+	}
+	results.push_back(Pair("Total", (double)nTotal/COIN));
+	return results;
+}
+
 UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 {
 	if (request.fHelp || (request.params.size() != 1  &&  request.params.size() != 2 ))
@@ -2327,6 +2375,30 @@ UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 		results.push_back(Pair("rxheader", ExtractXML(block.RandomXData, "<rxheader>", "</rxheader>")));
 		results.push_back(Pair("rxkey", block.RandomXKey.GetHex()));
 	} 
+	return results;
+}
+
+UniValue listutxostakes(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all");
+	UniValue results(UniValue::VOBJ);
+	
+	double nType = cdbl(request.params[0].get_str(), 0);
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
+
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+	for (int i = 0; i < uStakes.size(); i++)
+	{
+		UTXOStake d = uStakes[i];
+		if ((sCPK == d.CPK && nType == 0 && d.found && d.nValue > 0) || (nType == 1 && d.found && d.nValue > 0))
+		{
+			int nStatus = GetUTXOStatus(d.TXID);
+			std::string sSigs = "Sigs: " + d.SignatureNarr;
+			std::string sRow = "#" + RoundToString(i+1, 0) + ":  Amount: " + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker + ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs;
+			results.push_back(Pair(d.TXID.GetHex(), sRow));
+		}
+	}
 	return results;
 }
 
@@ -2478,7 +2550,10 @@ static const CRPCCommand commands[] =
 	{ "evo",                "dws",                          &dws,                           false, {}  },
 	{ "evo",                "dwsquote",                     &dwsquote,                      false, {}  },
 	{ "evo",                "easystake",                    &easystake,                     false, {}  },
-	{ "evo",                "easybbpstake",                 &easybbpstake,               false, {}  },
+	{ "evo",                "listutxostakes",               &listutxostakes,                false, {}  },
+	{ "evo",                "listdacdonations",             &listdacdonations,              false, {}  },
+	{ "evo",                "listexpenses",                 &listexpenses,                  false, {}  },
+	{ "evo",                "easybbpstake",                 &easybbpstake,                  false, {}  },
 	{ "evo",                "utxostake",                    &utxostake,                     false, {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,            false, {}  },
 	{ "evo",                "getpobhhash",                  &getpobhhash,                   false, {}  },

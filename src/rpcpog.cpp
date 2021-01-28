@@ -1844,6 +1844,13 @@ void MemorizePrayer(std::string sMessage, int64_t nTime, double dAmount, int iPo
 {
 	if (sMessage.empty()) return;
 	TxMessage t = GetTxMessage(sMessage, nTime, iPosition, sTxID, dAmount, dFoundationDonation, nHeight);
+	std::string sGift = ExtractXML(sMessage, "<gift>", "</gift>");
+	if (!sGift.empty())
+	{
+		double nAmt = cdbl(ExtractXML(sGift, "<amount>", "</amount>"), 2);
+		WriteCache("GIFT", sTxID, RoundToString(nAmt, 2), nTime, false);	
+	}
+
 	std::string sDiary = ExtractXML(sMessage, "<diary>", "</diary>");
 	
 	if (!sDiary.empty())
@@ -3143,7 +3150,7 @@ DACResult DSQL_ReadOnlyQuery(std::string sXMLSource)
 	std::string sDomain = "https://" + GetSporkValue("bms");
 	int iTimeout = 30000;
 	DACResult b;
-	b.Response = Uplink(true, "", sDomain, sXMLSource, SSL_PORT, iTimeout, 4);
+	b.Response = Uplink(false, "", sDomain, sXMLSource, SSL_PORT, iTimeout, 4);
 	return b;
 }
 
@@ -6399,8 +6406,8 @@ std::string GetUTXOSummary(std::string sCPK)
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
 	double nTotal = 0;
 	int nCount = 0;
-	double nBBPQuantity = 0;
-	double nForeignQuantity = 0;
+	CAmount nBBPQuantity = 0;
+	CAmount nForeignQuantity = 0;
 	double nForeignValue = 0;
 	double nBBPValue = 0;
 	double nBBPCount = 0;
@@ -6418,13 +6425,13 @@ std::string GetUTXOSummary(std::string sCPK)
 				if (sTicker.empty())
 				{
 					sTicker = "BBP";
-					nBBPQuantity += (double)(d.nBBPAmount / COIN);
+					nBBPQuantity += d.nBBPAmount;
 					nBBPValue += d.nBBPValueUSD;
 					nBBPCount++;
 				}
 				else
 				{
-					nForeignQuantity += (double)(d.nForeignAmount / COIN);
+					nForeignQuantity += d.nForeignAmount;
 					nForeignValue += d.nForeignValueUSD;
 					nForeignCount++;
 				}
@@ -6441,10 +6448,10 @@ std::string GetUTXOSummary(std::string sCPK)
 	}
 	sTickers = Mid(sTickers, 0, sTickers.length()-2);
 	std::string sSummary = "<html><br>Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0) 
-		+ "<br>Total BBP Amount: " + RoundToString(nBBPQuantity, 2) + " BBP"
+		+ "<br>Total BBP Amount: " + RoundToString(nBBPQuantity/COIN, 2) + " BBP"
 		+ "<br>Total BBP Value: $" + RoundToString(nBBPValue, 2) 
 		+ "<br>Total BBP Count: " + RoundToString(nBBPCount, 0)
-		+ "<br>Total Foreign Amount: " + RoundToString(nForeignQuantity, 12) 
+		+ "<br>Total Foreign Amount: " + RoundToString(nForeignQuantity/COIN, 12) 
 		+ "<br>Total Foreign Value: $" + RoundToString(nForeignValue, 2) 
 		+ "<br>Total Foreign Count: " + RoundToString(nForeignCount, 0)
 		+ "<br>Total Value: $" + RoundToString(nTotal, 2) + "<br></html>";
@@ -6467,6 +6474,7 @@ std::string ScanBlockForNewUTXO(const CBlock& block)
 				std::string sBBPAddress = GetUTXO(sUTXO, 0, nValue);
 				CTransactionRef tx = block.vtx[n];
 				double nVinAge = GetVINAge2(block.GetBlockTime(), tx, nMinAmount, false);
+				// We only pay the mining reward on UTXOs with 24 hours+ of coin age
 				if (nValue > 0 && nVinAge > 1 && !sBBPAddress.empty())
 				{
 					CBitcoinAddress addr2(sBBPAddress);
@@ -6564,7 +6572,7 @@ double AddressToPin(std::string sAddress)
 	// With 5 digits, they can tie up $1-$22 to test a stake.
 }
 
-std::vector<DACResult> GetDataListVector(std::string sType)
+std::vector<DACResult> GetDataListVector(std::string sType, int nDays)
 {
 	std::vector<DACResult> vec;
 	boost::to_upper(sType);
@@ -6574,7 +6582,8 @@ std::vector<DACResult> GetDataListVector(std::string sType)
 		{
 			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
 			int64_t nTimestamp = v.second;
-			if (nTimestamp > 0)
+			int nElapsedDays = (GetAdjustedTime() - nTimestamp) / 86400;
+			if ((nTimestamp > 0 && nDays == 0) || (nElapsedDays <= nDays && nTimestamp > 0 && nDays != 0))
 			{
 				DACResult d;
 				d.PrimaryKey = GetElement(ii.first, "[-]", 1);
@@ -6586,3 +6595,19 @@ std::vector<DACResult> GetDataListVector(std::string sType)
 	}
 	return vec;
 }
+
+PriceQuote GetPriceQuote(std::string sForeignSymbol, CAmount xBBPQty, CAmount xForeignQty)
+{
+	PriceQuote p;
+	p.nBBPQty = xBBPQty;
+	p.nForeignQty = xForeignQty;
+	p.nForeignPrice = GetCryptoPrice(sForeignSymbol);
+	p.nBTCPrice = GetCryptoPrice("btc");
+	p.nBBPPrice = GetCryptoPrice("bbp");
+	p.nUSDBBP = p.nBTCPrice * p.nBBPPrice;
+	p.nUSDForeign = p.nBTCPrice * p.nForeignPrice;
+	p.nBBPValueUSD = p.nUSDBBP * ((double)p.nBBPQty / COIN);
+	p.nForeignValueUSD = p.nUSDForeign * ((double)p.nForeignQty / COIN);
+	return p;
+}
+

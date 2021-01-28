@@ -35,6 +35,7 @@ class UnitDisplayStatusBarControl;
 class WalletFrame;
 class WalletModel;
 class HelpMessageDialog;
+class MenuDialog;
 class ModalOverlay;
 
 class CWallet;
@@ -113,6 +114,7 @@ private:
 	QAction *webAction;
 	QAction *OneClickMiningAction;
 	QAction *sinnerAction;
+	QAction *univAction;
 	QAction *TheLordsPrayerAction;
 	QAction *TheApostlesCreedAction;
 	QAction *TheNiceneCreedAction;
@@ -159,6 +161,7 @@ private:
     Notificator *notificator;
     RPCConsole *rpcConsole;
     HelpMessageDialog *helpMessageDialog;
+	MenuDialog *menuDialog;
     ModalOverlay *modalOverlay;
 
 #ifdef Q_OS_MAC
@@ -282,6 +285,7 @@ private Q_SLOTS:
 
 	/** DAC - Show built-in prayers or commandments **/
 	void sinnerClicked();
+	void univClicked();
 	void TheLordsPrayerClicked();
 	void TheApostlesCreedClicked();
 	void TheNiceneCreedClicked();

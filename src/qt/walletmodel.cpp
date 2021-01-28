@@ -380,8 +380,9 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 					recDAC.txtMessage = vecSend[0].txtMessage;
 					if (iPos == 1)
 					{
-						std::string sGiftXML = "<gift><amount>" + RoundToString(nMyTotalGift, 2) + "</amount><gift>";
+						std::string sGiftXML = "<gift><amount>" + RoundToString(nMyTotalGift, 2) + "</amount></gift>";
 						recDAC.txtMessage = sGiftXML;
+						sOptPrayer += sGiftXML;
 						vecSend[0] = recDAC;
 					}
 					else
