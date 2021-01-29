@@ -995,12 +995,14 @@ struct CCoinsStats
     uint256 hashSerialized;
     uint64_t nDiskSize;
     CAmount nTotalAmount;
-
+	CAmount nTotalBurned;
     CCoinsStats() : nHeight(0), nTransactions(0), nTransactionOutputs(0), nTotalAmount(0) {}
 };
 
 static void ApplyStats(CCoinsStats &stats, CHashWriter& ss, const uint256& hash, const std::map<uint32_t, Coin>& outputs)
 {
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+
     assert(!outputs.empty());
     ss << hash;
     ss << VARINT(outputs.begin()->second.nHeight * 2 + outputs.begin()->second.fCoinBase);
@@ -1011,6 +1013,12 @@ static void ApplyStats(CCoinsStats &stats, CHashWriter& ss, const uint256& hash,
         ss << VARINT(output.second.out.nValue);
         stats.nTransactionOutputs++;
         stats.nTotalAmount += output.second.out.nValue;
+		// BIBLEPAY - Track Burned Coins
+		std::string sPK = PubKeyToAddress(output.second.out.scriptPubKey);
+		if (sPK == consensusParams.BurnAddress)
+		{
+			stats.nTotalBurned += output.second.out.nValue;
+		}
     }
     ss << VARINT(0);
 }
@@ -1136,6 +1144,7 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
         ret.push_back(Pair("hash_serialized_2", stats.hashSerialized.GetHex()));
         ret.push_back(Pair("disk_size", stats.nDiskSize));
         ret.push_back(Pair("total_amount", ValueFromAmount(stats.nTotalAmount)));
+		ret.push_back(Pair("total_burned", ValueFromAmount(stats.nTotalBurned)));
     } else {
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Unable to read UTXO set");
     }
@@ -2402,6 +2411,10 @@ UniValue exec(const JSONRPCRequest& request)
 			results.push_back(Pair("error", "not found"));
 		}
 	}
+	else if (sItem == "printlastusedcoinagedata")
+	{
+		results.push_back(Pair("age_data", ReadCache("availablecoins", "age")));
+	}
 	else if (sItem == "createabn")
 	{
 		std::string sError;
@@ -2596,13 +2609,6 @@ UniValue exec(const JSONRPCRequest& request)
 		if (!sError.empty())
 			results.push_back(Pair("Errors", sError));
 		results.push_back(Pair("blsmessage", sXML));
-	}
-	else if (sItem == "testaes")
-	{
-		std::string sEnc = EncryptAES256("test", "abc");
-		std::string sDec = DecryptAES256(sEnc, "abc");
-		results.push_back(Pair("Enc", sEnc));
-		results.push_back(Pair("Dec", sDec));
 	}
 	else if (sItem == "associate")
 	{

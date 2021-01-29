@@ -3035,7 +3035,10 @@ bool CWallet::SelectCoins(const std::vector<COutput>& vAvailableCoins, const CAm
 				nInputsConsumed++;
 			}
 			if (nInputsConsumed > MAX_GSC_INPUTS)
+			{
+				LogPrintf("\nUsed more than %f inputs in SelectCoins!", nInputsConsumed);
 				break;
+			}
 			if (nFoundCoinAge > nMinCoinAge && nTotalRequired >= nMinSpend && nValueRet >= nTargetValue) 
 				break;
 		}

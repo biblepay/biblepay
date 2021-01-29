@@ -1751,6 +1751,8 @@ UniValue dwsquote(const JSONRPCRequest& request)
 	UniValue results(UniValue::VOBJ);
 	double dDetails = 0;
 	double dAdvanced = 0;
+	double dTotal = 0;
+
 	if (request.params.size() > 0)
 		dDetails = cdbl(request.params[0].get_str(), 0);
 	double dPaid = 2;
@@ -1759,7 +1761,7 @@ UniValue dwsquote(const JSONRPCRequest& request)
 
 	if (request.params.size() > 2)
 		dAdvanced = cdbl(request.params[2].get_str(), 0);
-
+	
 	if (dDetails == 1 || dDetails == 2)
 	{
 		std::vector<WhaleStake> w = GetDWS(true);
@@ -1776,6 +1778,8 @@ UniValue dwsquote(const JSONRPCRequest& request)
 					+ RoundToString(ws.ActualDWU*100, 4) + ", Duration: " + RoundToString(ws.Duration, 0) + ", BurnHeight: " + RoundToString(ws.BurnHeight, 0) 
 					+ ", RewardHeight: " + RoundToString(nRewardHeight, 0) + " [" + RoundToString(ws.MaturityHeight, 0) + "], MaturityDate: " + TimestampToHRDate(ws.MaturityTime) + ", ReturnAddress: " + ws.ReturnAddress;
 					std::string sKey = ws.CPK + " " + RoundToString(i+1, 0);
+				dTotal += ws.Amount;
+
 				// ToDo: Add parameter to show the return_to_address if user desires it
 				results.push_back(Pair(sKey, sRow));
 			}
@@ -1799,7 +1803,9 @@ UniValue dwsquote(const JSONRPCRequest& request)
 	results.push_back(Pair("Total Gross Burns Today", wm.nTotalGrossBurnsToday));
 	
 	results.push_back(Pair("Total Burns Today", wm.nTotalBurnsToday));
-	
+	if (dTotal > 0)
+		results.push_back(Pair("Total Burns in Report", dTotal));
+
 	results.push_back(Pair("30 day DWU", RoundToString(GetDWUBasedOnMaturity(30, wm.DWU) * 100, 4)));
 	results.push_back(Pair("90 day DWU", RoundToString(GetDWUBasedOnMaturity(90, wm.DWU) * 100, 4)));
 	results.push_back(Pair("180 day DWU", RoundToString(GetDWUBasedOnMaturity(180, wm.DWU) * 100, 4)));
@@ -1924,6 +1930,25 @@ UniValue bls_generate(const JSONRPCRequest& request)
     return ret;
 }
 
+UniValue newuser(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify newuser emailaddress");
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	UniValue results(UniValue::VOBJ);
+	std::string sEmail = request.params[0].get_str();
+	std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
+	std::string sXML = "<email>" + sEmail + "</email><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
+	DACResult b = DSQL_ReadOnlyQuery("BMS/NewUser", sXML);
+	std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
+	std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
+	double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
+	results.push_back(Pair("Outcome", sOutcome));
+	results.push_back(Pair("Narrative", sNarr));
+	results.push_back(Pair("Amount Rewarded", nAmount));
+	return results;
+}
+
 void bls_fromsecret_help()
 {
     throw std::runtime_error(
@@ -2005,6 +2030,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "dwsquote",                     &dwsquote,                      false, {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,            false, {}  },
 	{ "evo",                "getpobhhash",                  &getpobhhash,                   false, {}  },
+	{ "evo",                "newuser",                      &newuser,                       false, {}  },
     { "evo",                "bls",                          &_bls,                          false, {}  },
     { "evo",                "protx",                        &protx,                         false, {}  },
 	{ "evo",                "createnonfinancialtransaction",&createnonfinancialtransaction, false, {}  },
