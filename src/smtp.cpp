@@ -536,8 +536,8 @@ void smtp_SENDMAIL(std::string sData)
 
 	e.Body = sData;
 	
-	e.nType = 1;
-	e.nVersion = 1;
+	e.nType = 2;
+	e.nVersion = 2;
 	e.nTime = GetAdjustedTime();
 	e.Encrypted = false;
 
