@@ -253,6 +253,12 @@ void pop3_LIST(std::string sWhat)
 				nOrdinal++;
 				std::string sRow = RoundToString(nOrdinal, 0) + " " + myEmail.GetHash().GetHex();
 				sReplies += sRow + "\r\n";
+				if (fDebuggingEmail)
+				{
+					LogPrintf("\nPOP3::LIST From %s, To %s, Body [%s], nTime %f  ",
+						myEmail.FromEmail, myEmail.ToEmail, Mid(myEmail.Body, 1, 256), myEmail.nTime);
+
+				}
 			}
 		}
 		sReplies += ".\r\n";
@@ -858,8 +864,10 @@ void ThreadSMTP(CConnman& connman)
 		smtp_acceptor.listen();
 		smtp_acceptor.async_accept(smtp_socket, smtp_accept_handler);
 		smtp_connected=true;
-		//RequestMissingEmails();
-		
+		// MISSION CRITICAL TO DO - REMOVE
+		RequestMissingEmails();
+		// End of MISSION CRITICAL
+
 		for (int i = 0; i < 10*60*1; i++)
 		{
 		

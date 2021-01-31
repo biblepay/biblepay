@@ -57,10 +57,23 @@ void MemorizeScriptureDialog::PopulateNewVerse()
 	std::string sBook = GetElement(d[i].PrimaryKey, "|", 0);
 	int iChapter = cdbl(GetElement(d[i].PrimaryKey, "|", 1), 0);
 	int iVerse = cdbl(GetElement(d[i].PrimaryKey, "|", 2), 0);
+
+	std::string sBookEnd = GetElement(d[i].Response, "|", 0);
+	int iChapterEnd = cdbl(GetElement(d[i].Response, "|", 1), 0);
+	int iVerseEnd = cdbl(GetElement(d[i].Response, "|", 2), 0);
+
 	int iStart = 0;
 	int iEnd = 0;
 	GetBookStartEnd(sBook, iStart, iEnd);
-	std::string sVerse = GetVerseML("EN", sBook, iChapter, iVerse, iStart - 1, iEnd);
+	std::string sTotalVerses;
+	if (iVerseEnd < iVerse)
+		iVerseEnd = iVerse;
+	for (int j = iVerse; j <= iVerseEnd && j >= iVerse; j++)
+	{
+		std::string sPrefix = fMode == 1 ? "" : RoundToString(j, 0) + ".  ";
+		std::string sVerse = sPrefix + GetVerseML("EN", sBook, iChapter, j, iStart - 1, iEnd);
+		sTotalVerses += sVerse + "\r\n";
+	}
 	clear();
 	ui->txtChapter->setText(GUIUtil::TOQS(RoundToString(iChapter, 0)));
 	ui->txtVerse->setText(GUIUtil::TOQS(RoundToString(iVerse, 0)));
@@ -71,7 +84,7 @@ void MemorizeScriptureDialog::PopulateNewVerse()
 	nCorrectVerse = iVerse;
 	nCorrectChapter = iChapter;
 	ui->txtBook->setText(GUIUtil::TOQS(sLocalBook));
-	ui->txtScripture->setPlainText(GUIUtil::TOQS(sVerse));
+	ui->txtScripture->setPlainText(GUIUtil::TOQS(sTotalVerses));
 	// Set read only
 
 	ui->txtChapter->setReadOnly(!fMode);

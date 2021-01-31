@@ -61,7 +61,7 @@ bool CEmailRequest::RelayTo(CNode* pnode, CConnman& connman) const
 
 void CEmail::SetNull()
 {
-    nVersion = 1;
+    nVersion = 2;
     nTime = 0;
 	Encrypted = false;
 	Headers.clear();
@@ -96,11 +96,8 @@ std::string CEmail::ToString() const
 
 std::string CEmail::Serialize1()
 {
-	//std::string sIllegal = ExtractXML(obj.Body, "<emailpacket1>", "</emailpacket1>");
-	//std::string sMyCopy = obj.Body;
-	//std::string sMessaged = strReplace(sMyCopy, sIllegal, "");
 	std::string sData = "<emailpacket1><headers1>" + Headers + "</headers1><fromemail1>" + FromEmail + "</fromemail1><toemail1>" + ToEmail + "</toemail1><time1>" 
-		+ RoundToString(nTime, 0) + "</time1><body1>" + Body + "</body1></emailpacket1>";
+		+ RoundToString(nTime, 0) + "</time1><body1>" + Body + "</body1><version1>" + RoundToString(nVersion, 0) + "</version1></emailpacket1>";
 	return sData;
 }
 
@@ -113,6 +110,7 @@ void CEmail::Deserialize1(std::string sData)
 	nTime = cdbl(ExtractXML(sPacket, "<time1>", "</time1>"), 0);
 	Body = ExtractXML(sPacket, "<body1>", "</body1>");
 	Headers = ExtractXML(sPacket, "<headers1>", "</headers1>");
+	nVersion = (int)cdbl(ExtractXML(sPacket, "<version1>", "</version1>"), 0);
 }
 
 
@@ -155,18 +153,12 @@ bool CEmail::RelayTo(CNode* pnode, CConnman& connman)
 CEmail CEmail::getEmailByHash(const uint256 &hash)
 {
     CEmail retval;
-    //map<uint256, CEmail>::iterator mi = mapEmails.find(hash);
-    //if(mi != mapEmails.end())
-     //       retval = mi->second;
-	// Ensure the body is deserialized
-	int iDes = retval.EDeserialize(hash);
+    int iDes = retval.EDeserialize(hash);
 	if (!retval.IsNull())
 	{
 		mapEmails[retval.GetHash()] = retval;
 	}
 	bool fIsMine = retval.IsMine();
-	LogPrintf("\r\nCEMail::Deserialized %f %f %f %s %s IsMine %f ", retval.nTime, retval.Body.length(),  iDes, retval.FromEmail, retval.ToEmail, fIsMine);
-
     return retval;
 }
 
@@ -221,7 +213,6 @@ int CEmail::EDeserialize(uint256 Hash)
 			nTime = 0;
 			return -2;
 		}
-
 	}
 	return 1;
 }
@@ -229,7 +220,13 @@ int CEmail::EDeserialize(uint256 Hash)
 bool CEmail::IsMine()
 {
 	if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos)
-		return true;
+	{
+		// And its valid
+		if (!FromEmail.empty() && !ToEmail.empty() && nTime > GetAdjustedTime() - (86400 * 30) && !Body.empty() && nVersion == 2)
+		{
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -237,12 +234,10 @@ bool CEmail::ProcessEmail()
 {
 	if (IsNull())
 	{
-		LogPrintf("\nSMTP::ProcessEmail -- Null %f", 8030);
 		return false;
 	}
 	if (Body.empty())
 	{
-		LogPrintf("\nSMTP::ProcessEmail -- Body Null %f", 8029);
 		return false;
 	}
 
@@ -265,15 +260,8 @@ bool CEmail::ProcessEmail()
 	}
 	if (nSz <= 0)
 	{
-		
 		std::string sData = Serialize1();
-		//		LogPrintf("\nSMTP::WriteDataToFile1 %f %s [%s]", sData.length(), MyHash.GetHex(), ToEmail);
-		//		sData = strReplace(sData, "\r\r\n", "\r\n");
-		//		sData = strReplace(sData, "\n\n\r", "\r\n");
-
-
 		WriteDataToFile(sTarget, sData);
-		
 		LogPrintf("\nSMTP::WriteDataToFile2 %f %s [%s]", sData.length(), MyHash.GetHex(), ToEmail);
 	}
 	// Relinquish Memory

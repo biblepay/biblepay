@@ -2210,6 +2210,25 @@ UniValue claimreward(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue newuser(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify newuser emailaddress");
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	UniValue results(UniValue::VOBJ);
+	std::string sEmail = request.params[0].get_str();
+	std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
+	std::string sXML = "<email>" + sEmail + "</email><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
+	DACResult b = DSQL_ReadOnlyQuery("BMS/NewUser", sXML);
+	std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
+	std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
+	double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
+	results.push_back(Pair("Outcome", sOutcome));
+	results.push_back(Pair("Narrative", sNarr));
+	results.push_back(Pair("Amount Rewarded", nAmount));
+	return results;
+}
+
 UniValue dwsquote(const JSONRPCRequest& request)
 {
 	// Dynamic Whale Staking
@@ -2395,7 +2414,10 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 		{
 			int nStatus = GetUTXOStatus(d.TXID);
 			std::string sSigs = "Sigs: " + d.SignatureNarr;
-			std::string sRow = "#" + RoundToString(i+1, 0) + ":  Amount: " + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker + ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs;
+			std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
+				+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
+				+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
+	
 			results.push_back(Pair(d.TXID.GetHex(), sRow));
 		}
 	}
@@ -2554,6 +2576,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "listdacdonations",             &listdacdonations,              false, {}  },
 	{ "evo",                "listexpenses",                 &listexpenses,                  false, {}  },
 	{ "evo",                "easybbpstake",                 &easybbpstake,                  false, {}  },
+	{ "evo",                "newuser",                      &newuser,                       false, {}  },
 	{ "evo",                "utxostake",                    &utxostake,                     false, {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,            false, {}  },
 	{ "evo",                "getpobhhash",                  &getpobhhash,                   false, {}  },
