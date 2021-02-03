@@ -2400,7 +2400,7 @@ UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 UniValue listutxostakes(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1) 
-		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all");
+		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all/2=spent");
 	UniValue results(UniValue::VOBJ);
 	
 	double nType = cdbl(request.params[0].get_str(), 0);
@@ -2410,15 +2410,18 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 	for (int i = 0; i < uStakes.size(); i++)
 	{
 		UTXOStake d = uStakes[i];
-		if ((sCPK == d.CPK && nType == 0 && d.found && d.nValue > 0) || (nType == 1 && d.found && d.nValue > 0))
+		int nStatus = GetUTXOStatus(d.TXID);
+		if (nStatus != -1 || nType == 2)
 		{
-			int nStatus = GetUTXOStatus(d.TXID);
-			std::string sSigs = "Sigs: " + d.SignatureNarr;
-			std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
-				+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
-				+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
+			if ((sCPK == d.CPK && nType == 0 && d.found && d.nValue > 0) || (nType == 1 && d.found && d.nValue > 0) || (nType == 2 && d.found && d.nValue > 0))
+			{
+				std::string sSigs = "Sigs: " + d.SignatureNarr;
+				std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
+					+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
+					+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
 	
-			results.push_back(Pair(d.TXID.GetHex(), sRow));
+				results.push_back(Pair(d.TXID.GetHex(), sRow));
+			}
 		}
 	}
 	return results;

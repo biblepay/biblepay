@@ -217,15 +217,56 @@ int CEmail::EDeserialize(uint256 Hash)
 	return 1;
 }
 
+
+bool ScanBody(std::string data)
+{
+	std::string sCopy(data.c_str());
+	boost::to_upper(sCopy);
+	bool fScan = (Contains(sCopy, "SUBJECT:") && Contains(sCopy, "TO:") && Contains(sCopy, "FROM:"));
+	return fScan;
+}
+
+bool CEmail::IsRead()
+{
+	bool fRead = HashExistsInDataFile("emails_read", GetHash().GetHex());
+	return fRead;
+}
+
 bool CEmail::IsMine()
 {
-	if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos)
+	bool fExpired = nTime < (GetAdjustedTime() - (86400 * 30));
+	if (fExpired || Body.empty() || FromEmail.empty() || ToEmail.empty() || nVersion < 2 || nVersion > 3)
+		return false;
+
+	if (nVersion == 3)
 	{
-		// And its valid
-		if (!FromEmail.empty() && !ToEmail.empty() && nTime > GetAdjustedTime() - (86400 * 30) && !Body.empty() && nVersion == 2)
+		// Check for decryption
+		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+		std::string sError;
+		std::string sDec = RSA_Decrypt_String(sPrivPath, Body, sError);
+		bool fScan = findStringCaseInsensitive(sDec, "subject:");
+		if (sError.empty() && fScan)
 		{
 			return true;
 		}
+		else
+		{
+			LogPrintf("\nCEmail::IsMine()::ERROR::Unable to Decrypt email destined to Us!  From %s, Length %f ", FromEmail.c_str(), Body.length());
+		}
+	}
+
+	bool fScan = findStringCaseInsensitive(Body, "subject:");
+	if (!fScan)
+		return false;
+
+	if (ToEmail.find("all@biblepay.core") != std::string::npos && nVersion == 2)
+	{
+		// Mail to all
+		return true;
+	}
+	else if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos && nVersion == 2)
+	{
+			return true;
 	}
 	return false;
 }

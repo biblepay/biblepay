@@ -2046,6 +2046,15 @@ UniValue exec(const JSONRPCRequest& request)
 			results.push_back(Pair("v", sVerse));
 		}
 	}
+	else if (sItem == "testic")
+	{
+		std::string sNN = request.params[1].get_str();
+		bool h = HashExistsInDataFile("h", sNN);
+		results.push_back(Pair(sNN, h));
+		AppendStorageFile("h", sNN);
+		h = HashExistsInDataFile("h", sNN);
+		results.push_back(Pair(sNN, h));
+	}
 	else if (sItem == "testrsacreate")
 	{
 		RSAKey r = GetMyRSAKey();

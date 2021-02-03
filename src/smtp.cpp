@@ -163,7 +163,7 @@ int GetMessageSize()
 		CEmail myEmail = CEmail::getEmailByHash(it.first);
 		//	LogPrintf("Email hash %s ", myEmail.GetHash().GetHex());
 
-		if (myEmail.IsMine())
+		if (myEmail.IsMine() && !myEmail.IsRead())
 		{
 			nTotal += myEmail.Body.length();
 		}
@@ -179,7 +179,7 @@ int GetMessageCount()
 		CEmail myEmail = CEmail::getEmailByHash(it.first);
 		if (fDebuggingEmail)
 			LogPrintf("\nGetMessageCount %f %s %s", nTotal, myEmail.ToEmail, msMyInternalEmailAddress);
-		if (myEmail.IsMine())
+		if (myEmail.IsMine() && !myEmail.IsRead())
 		{
 			nTotal++;
 		}
@@ -193,7 +193,7 @@ CEmail GetEmailByID(int nID)
 	for (auto it : mapEmails) 
 	{
 		CEmail myEmail = CEmail::getEmailByHash(it.first);
-		if (myEmail.IsMine())
+		if (myEmail.IsMine() && !myEmail.IsRead())
 		{
 			nOrdinal++;
 			if (nOrdinal == nID)
@@ -219,7 +219,7 @@ void Forensic()
 		for (auto it : mapEmails) 
 		{
 			CEmail myEmail = CEmail::getEmailByHash(it.first);
-			if (myEmail.IsMine())
+			if (myEmail.IsMine() && !myEmail.IsRead())
 			{
 				nOrdinal++;
 				LogPrintf("\r\nSMTP::Forensic From %s, To %s, Body %s, Size %f ", myEmail.ToEmail, myEmail.FromEmail, Mid(myEmail.Body, 1, 100), myEmail.Body.length());
@@ -248,7 +248,7 @@ void pop3_LIST(std::string sWhat)
 		for (auto it : mapEmails) 
 		{
 			CEmail myEmail = CEmail::getEmailByHash(it.first);
-			if (myEmail.IsMine())
+			if (myEmail.IsMine() && !myEmail.IsRead())
 			{
 				nOrdinal++;
 				std::string sRow = RoundToString(nOrdinal, 0) + " " + myEmail.GetHash().GetHex();
@@ -298,7 +298,6 @@ void pop3_TOP(std::string sWhat)
 	pop3_send(sReply);
 }
 
-
 void pop3_RETR(std::string sNo)
 {
 	double nMsgNo = cdbl(GetElement(sNo, " ", 1), 0);
@@ -306,9 +305,36 @@ void pop3_RETR(std::string sNo)
 	if (!e.IsNull())
 	{
 		std::string sID = "Message-Id: <" + e.GetHash().GetHex() + ">";
-		LogPrintf("\r\nFound Email %s", Mid(e.Body, 0, 100));
-		std::string sReply = "+OK " + RoundToString(e.Body.length(), 0) + " octets\r\n" + e.Body + "\r\n\r\n\r\n.\r\n";
-		pop3_send(sReply);
+		if (fDebuggingEmail)
+			LogPrintf("\r\nFound Email %s", Mid(e.Body, 0, 100));
+
+		// Check for decryption if this is Encrypted
+		if (e.nVersion == 3)
+		{
+			std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+			std::string sError;
+			std::string sDec = RSA_Decrypt_String(sPrivPath, e.Body, sError);
+			if (!sError.empty())
+			{
+				std::string sFail = "Failed to decrypt e-mail with private key " + sPrivPath + ".  \r\nNOTE:  You must protect your RSA key or you will lose access to all of your encrypted e-mails.";
+				std::string sReply = "+OK " + RoundToString(e.Body.length(), 0) + " octets\r\n" + sFail + "\r\n\r\n\r\n.\r\n";
+				pop3_send(sReply);
+			}
+			else
+			{
+				sDec = strReplace(sDec, "[encrypted]", "[decrypted]");
+				std::string sReply = "+OK " + RoundToString(e.Body.length(), 0) + " octets\r\n" + sDec + "\r\n\r\n\r\n.\r\n";
+				pop3_send(sReply);
+			}
+		}
+		else
+		{
+			std::string sReply = "+OK " + RoundToString(e.Body.length(), 0) + " octets\r\n" + e.Body + "\r\n\r\n\r\n.\r\n";
+			pop3_send(sReply);
+		}
+		// If we made it this far, we can mark it as deleted on the server:
+
+		AppendStorageFile("emails_read", e.GetHash().GetHex());
 	}
 	else
 	{
@@ -518,18 +544,7 @@ void smtp_SENDMAIL(std::string sData)
 	e.FromEmail = msEmailFrom;
 	e.ToEmail = EmailVectorToString(msEmailTo);
 
-	// If the email is encrypted, this is where we apply the RSA key:
-
-	std::string sPubPath =  GetSANDirectory4() + "pubkey.pub";
-	std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
 	std::string sError;
-	// Mission critical todo (spork_rsa needs to be enabled):
-	/*
-	std::string sEnc = RSA_Encrypt_String(sPubPath, sData ,sError);
-	std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
-	e = sDec;
-
-	*/
 
 	sData = strReplace(sData, "\r\n.\r\n", "");
 	LogPrintf("SMTP::SENDMAIL1 %f ", sData.length());
@@ -539,7 +554,40 @@ void smtp_SENDMAIL(std::string sData)
 	e.nType = 2;
 	e.nVersion = 2;
 	e.nTime = GetAdjustedTime();
-	e.Encrypted = false;
+	bool fIsEncrypted = Contains(e.Body, "[encrypted]");
+	e.Encrypted = fIsEncrypted;
+
+	// If the subject contains the encryption flag, and... 2-2-2021
+	// Verify we have the destination users key
+	if (e.Encrypted)
+	{
+		e.nVersion = 3;
+		if (msEmailTo.size() < 1 || msEmailTo.size() > 1)
+		{
+			std::string sReply = "422 REJECTED - Encrypted E-mails must go to 1 recipient.\r\n";
+			smtp_send(sReply);
+			smtp_close();
+			return;
+		}
+		UserRecord u = GetUserRecord(CleanType2(msEmailTo[0]));
+		if (u.RSAPublicKey.length() < 256)
+		{
+			std::string sReply = "422 REJECTED - Unable to find recipient public key.\r\n";
+			smtp_send(sReply);
+			smtp_close();
+			return;
+		}
+		std::string sError;
+		std::string sEncBody = RSA_Encrypt_String_With_Key(u.RSAPublicKey, e.Body, sError);
+		if (!sError.empty())
+		{
+			std::string sReply = "422 REJECTED - Unable to encrypt body with recipient public key.\r\n";
+			smtp_send(sReply);
+			smtp_close();
+			return;
+		}
+		e.Body = sEncBody;
+	}
 
 	uint256 eHash = e.GetHash();
 	
@@ -798,49 +846,6 @@ void ThreadPOP3(CConnman& connman)
 	}
 }
 
-//Request missing e-mails (Those less than 30 days old, paid for, in transactions, not on our hard drive)
-void RequestMissingEmails()
-{
-	for (auto ii : mvApplicationCache) 
-	{
-		if (Contains(ii.first, "EMAIL"))
-		{
-			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
-			int64_t nTimestamp = v.second;
-			std::string sTXID = GetElement(ii.first, "[-]", 1);
-			uint256 hashInput = uint256S(sTXID);
-			std::string sFileName = "email_" + hashInput.GetHex() + ".eml";
-			std::string sTarget = GetSANDirectory4() + sFileName;
-			int64_t nSz = GETFILESIZE(sTarget);
-			if (nSz <= 0)
-			{
-				//LogPrintf("\nSMTP::Requesting Missing Email %s ", sFileName);
-				CEmailRequest erequest;
-				erequest.RequestID = hashInput;
-				bool nSent = false;
-				g_connman->ForEachNode([&erequest, &nSent](CNode* pnode) 
-				{
-					erequest.RelayTo(pnode, *g_connman);
-			    });
-				//	LogPrintf("\nSMTP::RequestMissingEmails - Requesting %s %f ", sFileName, nSz);
-
-			}
-			else
-			{
-				//LogPrintf("\nSMTP::RequestMissingEmails - Found %s %f ", sFileName, nSz);
-				std::map<uint256, CEmail>::iterator mi = mapEmails.find(hashInput);
-				if (mi == mapEmails.end())
-				{
-					CEmail e;
-					e.EDeserialize(hashInput);
-					uint256 MyHash = e.GetHash();
-					e.Body = std::string();
-					mapEmails.insert(std::make_pair(MyHash, e));
-				}
-			}
-		}
-	}
-}
 
 
 void ThreadSMTP(CConnman& connman)
@@ -854,7 +859,7 @@ void ThreadSMTP(CConnman& connman)
 	int64_t nTimer = 0;
 	fDebuggingEmail = cdbl(GetArg("-debuggingemail", "0"), 0) == 1;
 	LogPrintf("\nSMTPServer::DebuggingMode %f ", fDebuggingEmail);
-
+	
 	while (1==1)
 	{
 		smtp_socket.close();
@@ -863,23 +868,14 @@ void ThreadSMTP(CConnman& connman)
 	
 		smtp_acceptor.listen();
 		smtp_acceptor.async_accept(smtp_socket, smtp_accept_handler);
-		smtp_connected=true;
-		// MISSION CRITICAL TO DO - REMOVE
-		RequestMissingEmails();
-		// End of MISSION CRITICAL
+		smtp_connected = true;
 
 		for (int i = 0; i < 10*60*1; i++)
 		{
 		
 			  MilliSleep(100);
 			  nTimer++;
-			  if (nTimer % 50000 == 0)
-			  {
-				  // 2 minutes - TODO; change this to 5 minutes
-				  LogPrintf("\nSMTP::RequestMissingEmails %f ", GetAdjustedTime());
-				  RequestMissingEmails();
-			  }
-    	 	  if (!smtp_connected || ShutdownRequested())
+			  if (!smtp_connected || ShutdownRequested())
 				  break;
 			  
 			  try

@@ -100,7 +100,7 @@ public:
     uint256 GetHash();
 	bool ProcessEmail(); 
 	bool IsMine();
-
+	bool IsRead();
     bool RelayTo(CNode* pnode, CConnman& connman);
 	
     static void Notify(const std::string& strMessage, bool fThread);

@@ -9,6 +9,57 @@
 
 
 static int64_t nPoosProcessTime = 0;
+static int64_t nSleepTime = 0;
+
+
+//Request missing e-mails (Those less than 30 days old, paid for, in transactions, not on our hard drive)
+void RequestMissingEmails()
+{
+	int iReq = 0;
+	LogPrintf("\nRequestMissingEmails::Start %f ", GetAdjustedTime());
+
+	for (auto ii : mvApplicationCache) 
+	{
+		if (Contains(ii.first, "EMAIL"))
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			int64_t nTimestamp = v.second;
+			std::string sTXID = GetElement(ii.first, "[-]", 1);
+			uint256 hashInput = uint256S(sTXID);
+			std::string sFileName = "email_" + hashInput.GetHex() + ".eml";
+			std::string sTarget = GetSANDirectory4() + sFileName;
+			int64_t nSz = GETFILESIZE(sTarget);
+			if (nSz <= 0)
+			{
+				//LogPrintf("\nSMTP::Requesting Missing Email %s ", sFileName);
+				CEmailRequest erequest;
+				erequest.RequestID = hashInput;
+				bool nSent = false;
+				g_connman->ForEachNode([&erequest, &nSent](CNode* pnode) 
+				{
+					erequest.RelayTo(pnode, *g_connman);
+			    });
+				//	LogPrintf("\nSMTP::RequestMissingEmails - Requesting %s %f ", sFileName, nSz);
+			}
+			else
+			{
+				//LogPrintf("\nSMTP::RequestMissingEmails - Found %s %f ", sFileName, nSz);
+				std::map<uint256, CEmail>::iterator mi = mapEmails.find(hashInput);
+				if (mi == mapEmails.end())
+				{
+					CEmail e;
+					e.EDeserialize(hashInput);
+					uint256 MyHash = e.GetHash();
+					e.Body = std::string();
+					mapEmails.insert(std::make_pair(MyHash, e));
+				}
+			}
+		}
+	}
+	LogPrintf("\nRequestMissingEmails::End %f ", GetAdjustedTime());
+}
+
+
 void ThreadPOOS(CConnman& connman)
 {
 	if (false)
@@ -102,6 +153,12 @@ void ThreadPOOS(CConnman& connman)
 			if (ShutdownRequested())
 				break;
 			MilliSleep(1000);
+			nSleepTime++;
+			if (nSleepTime > (60 * 15))
+			{
+				nSleepTime = 0;
+				RequestMissingEmails();
+			}
 		}
 	}
 }

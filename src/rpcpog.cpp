@@ -3484,6 +3484,15 @@ std::string GetResDataBySearch(std::string sSearch)
 UserRecord GetUserRecord(std::string sSourceCPK)
 {
 	UserRecord u;
+
+	if (sSourceCPK == "all")
+	{
+		u.NickName = "ALL";
+		u.InternalEmail = "all@biblepay.core";
+		u.Found = true;
+		return u;
+	}
+
 	u.NickName = "N/A";
 	u.Found = false;
 	for (auto ii : mvApplicationCache) 
@@ -3852,7 +3861,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 				double nUSDForeign = nBTCPrice * nForeignPrice;
 				w.nBBPValueUSD = nUSDBBP * ((double)w.nBBPAmount / COIN);
 				w.nForeignValueUSD = nUSDForeign * ((double)w.nForeignAmount / COIN);
-				LogPrintf("\nGetUTXOStake::Values USD %f, Foreign USD %f, ForeignPrice %f, USDForeign %f", w.nBBPValueUSD, w.nForeignValueUSD, nForeignPrice, nUSDForeign);
+				LogPrintf("\nGetUTXOStake::Values USD %f, Foreign USD %f, ForeignPrice %f, USDForeign %f, Foreign Amount %s", w.nBBPValueUSD, w.nForeignValueUSD, nForeignPrice, nUSDForeign, AmountToString(w.nForeignAmount));
 			}
 
 			w.BBPAddress = ExtractXML(w.XML, "<bbpaddress>", "</bbpaddress>");
@@ -6448,10 +6457,10 @@ std::string GetUTXOSummary(std::string sCPK)
 	}
 	sTickers = Mid(sTickers, 0, sTickers.length()-2);
 	std::string sSummary = "<html><br>Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0) 
-		+ "<br>Total BBP Amount: " + RoundToString(nBBPQuantity/COIN, 2) + " BBP"
+		+ "<br>Total BBP Amount: " + RoundToString((double)nBBPQuantity/COIN, 2) + " BBP"
 		+ "<br>Total BBP Value: $" + RoundToString(nBBPValue, 2) 
 		+ "<br>Total BBP Count: " + RoundToString(nBBPCount, 0)
-		+ "<br>Total Foreign Amount: " + RoundToString(nForeignQuantity/COIN, 12) 
+		+ "<br>Total Foreign Amount: " + AmountToString(nForeignQuantity)
 		+ "<br>Total Foreign Value: $" + RoundToString(nForeignValue, 2) 
 		+ "<br>Total Foreign Count: " + RoundToString(nForeignCount, 0)
 		+ "<br>Total Value: $" + RoundToString(nTotal, 2) + "<br></html>";
@@ -6611,3 +6620,50 @@ PriceQuote GetPriceQuote(std::string sForeignSymbol, CAmount xBBPQty, CAmount xF
 	return p;
 }
 
+void AppendStorageFile(std::string sDataStoreName, std::string sData)
+{
+	std::string sSuffix = fProd ? "_prod" : "_testnet";
+	std::string sTarget = GetSANDirectory2() + sDataStoreName + sSuffix;
+	FILE *outFile = fopen(sTarget.c_str(), "a");
+	std::string sRow = sData + "\r\n";
+	fputs(sRow.c_str(), outFile);
+    fclose(outFile);
+}
+
+bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle)
+{
+  auto it = std::search(
+    strHaystack.begin(), strHaystack.end(),
+    strNeedle.begin(),   strNeedle.end(),
+    [](char ch1, char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+  );
+  return (it != strHaystack.end() );
+}
+
+
+bool HashExistsInDataFile(std::string sDataStoreName, std::string sHash)
+{
+	std::string sSuffix = fProd ? "_prod" : "_testnet";
+	std::string sTarget = GetSANDirectory2() + sDataStoreName + sSuffix;
+	int iFileSize = GETFILESIZE(sTarget);
+	if (iFileSize < 1)
+		return false;
+
+	boost::filesystem::path pathIn(sTarget);
+    std::ifstream streamIn;
+    streamIn.open(pathIn.string().c_str());
+	if (!streamIn) 
+		return false;
+	std::string line;
+	int iRows = 0;
+    while(std::getline(streamIn, line))
+    {
+		if (findStringCaseInsensitive(line, sHash))
+		{
+			streamIn.close();
+			return true;
+		}
+	}
+	streamIn.close();
+	return false;
+}

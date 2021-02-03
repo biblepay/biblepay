@@ -392,6 +392,7 @@ std::string TimestampToHRDate(double dtm);
 std::string GetArrayElement(std::string s, std::string delim, int iPos);
 void GetMiningParams(int nPrevHeight, bool& f7000, bool& f8000, bool& f9000, bool& fTitheBlocksActive);
 std::string RetrieveTxOutInfo(const CBlockIndex* pindexLast, int iLookback, int iTxOffset, int ivOutOffset, int iDataType);
+bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle);
 double GetBlockMagnitude(int nChainHeight);
 uint256 PercentToBigIntBase(int iPercent);
 std::string GetIPFromAddress(std::string sAddress);
@@ -560,5 +561,7 @@ bool CompareMask2(CAmount nAmount, double nMask);
 std::vector<DACResult> GetDataListVector(std::string sType, int nDaysLimit);
 PriceQuote GetPriceQuote(std::string sForeignSymbol, CAmount nBBPQty, CAmount nForeignQty);
 int64_t HRDateToTimestamp(std::string sDate);
+void AppendStorageFile(std::string sDataStoreName, std::string sData);
+bool HashExistsInDataFile(std::string sDataStoreName, std::string sHash);
 
 #endif
