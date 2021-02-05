@@ -114,10 +114,6 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 	orphanAction(0),
 	exchangeAction(0),
 	webAction(0),
-	proposalListAction(0),
-	proposalAddMenuAction(0),
-	userEditMenuAction(0),
-	memorizeScriptureMenuAction(0),
 	OneClickMiningAction(0),
  	sinnerAction(0),
     TheLordsPrayerAction(0),
@@ -126,9 +122,14 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     ReadBibleAction(0),
     TheTenCommandmentsAction(0),
     JesusConciseCommandmentsAction(0),
+	proposalListAction(0),
+	proposalAddMenuAction(0),
+	userEditMenuAction(0),
+	memorizeScriptureMenuAction(0),
 	openChatGeneralAction(0),
     openChatPMAction(0),
 	openChatPMEncryptedAction(0),
+	univAction(0),
     businessObjectListMenuAction(0),
     receiveCoinsAction(0),
     receiveCoinsMenuAction(0),
@@ -438,10 +439,6 @@ void BitcoinGUI::createActions()
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     quitAction->setMenuRole(QAction::QuitRole);
 	
-    univAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("BiblePay University"), this);
-    univAction->setStatusTip(tr("Show the BiblePay University"));
-    univAction->setMenuRole(QAction::AboutRole);
-
     sinnerAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("The Sinners Prayer"), this);
     sinnerAction->setStatusTip(tr("Show the Sinners Prayer"));
     sinnerAction->setMenuRole(QAction::AboutRole);
@@ -467,12 +464,7 @@ void BitcoinGUI::createActions()
     OneClickMiningAction = new QAction(QIcon(":/icons/" + theme + "/editpaste"), tr("One Click Mining Configuration"), this);
     OneClickMiningAction->setStatusTip(tr("One Click Mining Configuration"));
 
-    aboutAction = new QAction(QIcon(":/icons/" + theme + "/about"), tr("&About %1").arg(tr(PACKAGE_NAME)), this);
-    aboutAction->setStatusTip(tr("Show information about DAC Core"));
-    aboutAction->setMenuRole(QAction::AboutRole);
-    aboutAction->setEnabled(false);
-
-
+	// Chat	
     openChatGeneralAction = new QAction(QIcon(":/icons/" + theme + "/chat"), tr("Chat Room - General"), this);
     openChatGeneralAction->setStatusTip(tr("Open General Chat Room"));
     openChatGeneralAction->setEnabled(false);
@@ -484,6 +476,16 @@ void BitcoinGUI::createActions()
 	openChatPMEncryptedAction = new QAction(QIcon(":/icons/" + theme + "/chat"), tr("Private Message - Encrypted"), this);
     openChatPMEncryptedAction->setStatusTip(tr("Open Private Message (With Encryption) Window"));
     openChatPMEncryptedAction->setEnabled(false);
+
+	// BBP-U
+	univAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("BiblePay University"), this);
+    univAction->setStatusTip(tr("Show the BiblePay University"));
+    univAction->setMenuRole(QAction::AboutRole);
+	
+    aboutAction = new QAction(QIcon(":/icons/" + theme + "/about"), tr("&About %1").arg(tr(PACKAGE_NAME)), this);
+    aboutAction->setStatusTip(tr("Show information about DAC Core"));
+    aboutAction->setMenuRole(QAction::AboutRole);
+    aboutAction->setEnabled(false);
 
     aboutQtAction = new QAction(QIcon(":/icons/" + theme + "/about_qt"), tr("About &Qt"), this);
     aboutQtAction->setStatusTip(tr("Show information about Qt"));
@@ -584,8 +586,6 @@ void BitcoinGUI::createActions()
 	// Read Bible Actions
 	connect(sinnerAction, SIGNAL(triggered()), this, SLOT(sinnerClicked()));
     connect(TheLordsPrayerAction, SIGNAL(triggered()), this, SLOT(TheLordsPrayerClicked()));
-	connect(univAction, SIGNAL(triggered()), this, SLOT(univClicked()));
-		
     connect(TheApostlesCreedAction, SIGNAL(triggered()), this, SLOT(TheApostlesCreedClicked()));
     connect(TheNiceneCreedAction, SIGNAL(triggered()), this, SLOT(TheNiceneCreedClicked()));
     connect(ReadBibleAction, SIGNAL(triggered()), this, SLOT(ReadBibleClicked()));
@@ -602,7 +602,10 @@ void BitcoinGUI::createActions()
 	connect(openChatGeneralAction, SIGNAL(triggered()), this, SLOT(openChatGeneralClicked()));
     connect(openChatPMAction, SIGNAL(triggered()), this, SLOT(openChatPMClicked()));
 	connect(openChatPMEncryptedAction, SIGNAL(triggered()), this, SLOT(openChatPMEncryptedClicked()));
-	
+
+	// BBP Univ Actions
+	connect(univAction, SIGNAL(triggered()), this, SLOT(univClicked()));
+
     // Jump directly to tabs in RPC-console
     connect(openInfoAction, SIGNAL(triggered()), this, SLOT(showInfo()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showConsole()));
@@ -933,6 +936,7 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     proposalAddMenuAction->setEnabled(enabled);
 	userEditMenuAction->setEnabled(enabled);
 	memorizeScriptureMenuAction->setEnabled(enabled);
+	univAction->setEnabled(enabled);
 	OneClickMiningAction->setEnabled(enabled);
 	businessObjectListMenuAction->setEnabled(enabled);
 }
