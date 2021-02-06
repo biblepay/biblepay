@@ -480,8 +480,8 @@ void BitcoinGUI::createActions()
 	// BBP-U
 	univAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("BiblePay University"), this);
     univAction->setStatusTip(tr("Show the BiblePay University"));
-    univAction->setMenuRole(QAction::AboutRole);
-	
+    univAction->setEnabled(false);
+
     aboutAction = new QAction(QIcon(":/icons/" + theme + "/about"), tr("&About %1").arg(tr(PACKAGE_NAME)), this);
     aboutAction->setStatusTip(tr("Show information about DAC Core"));
     aboutAction->setMenuRole(QAction::AboutRole);
