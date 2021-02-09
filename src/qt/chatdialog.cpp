@@ -54,7 +54,6 @@ void ChatDialog::setTitle()
 {
 	std::string sExtraNarr = fEncryptedChat ? "Encrypted " : "";
 	std::string sPM = fPrivateChat ? "Private " + sExtraNarr + "Messaging - " + sNickName + " & " + sRecipientName : "Public Chat - " + sRecipientName;
-	
 	this->setWindowTitle(GUIUtil::TOQS(sPM));
 }
 
@@ -91,29 +90,9 @@ std::string ChatDialog::Decrypt(std::string sEnc)
 		return sEnc;
 	if (fEncryptedChat)
 	{
-		/*
-		if (this->PrivateKey.empty())
-		{
-			RSAKey r = GetMyRSAKey();
-			if (r.PrivateKey.length() < 1000)
-			{
-				sMessage += "Sorry, we can't find your RSA public key.  To make one, please go to your User Record and save your nickname and ensure the RSA public key is generated. ";
-			}
-			else
-			{
-				this->PrivateKey = r.PrivateKey;
-			}
-		}
-		*/
-	
 		std::string sError;
-//		std::string sDec = RSA_Decrypt_String_With_Key(this->PrivateKey, sEnc, sError);
-
 		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
 		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
-		
-
-		// 1-10-2021
 		sMessage = "(Encrypted) " + sDec;
 		if (!sError.empty())
 		{
@@ -155,7 +134,7 @@ void ChatDialog::receivedEvent(QString sMessage)
 		if (!bCancelDisplay) 
 		{
 			std::string sMessage = Decrypt(c.sPayload);
-			appendMessage(c.sFromNickName, sMessage, c.nPriority);
+			appendMessage(c.sFromNickName, sMessage, c.nPriority, c.nTime);
 			QList<QListWidgetItem *> items = listWidget->findItems(GUIUtil::TOQS(c.sFromNickName), Qt::MatchExactly);
 			if (items.isEmpty()) 
 				newParticipant(c.sFromNickName);
@@ -165,7 +144,7 @@ void ChatDialog::receivedEvent(QString sMessage)
 
 }
 
-void ChatDialog::appendMessage(std::string sFrom, std::string sMessage, int nPriority)
+void ChatDialog::appendMessage(std::string sFrom, std::string sMessage, int nPriority, int64_t nTime)
 {
      if (sFrom.empty() || sMessage.empty()) 
 		 return;
@@ -173,7 +152,9 @@ void ChatDialog::appendMessage(std::string sFrom, std::string sMessage, int nPri
      QTextCursor cursor(textEdit->textCursor());
      cursor.movePosition(QTextCursor::End);
      QTextTable *table = cursor.insertTable(1, 2, tableFormat);
-     table->cellAt(0, 0).firstCursorPosition().insertText('<' + GUIUtil::TOQS(sFrom) + "> ");
+	 // Suggested by MIP - Add timestamp - 2-8-2021
+	 
+     table->cellAt(0, 0).firstCursorPosition().insertText(GUIUtil::TOQS("<" + sFrom + " " + TimestampToHRDate(nTime) + "> "));
 	
      QTextTableCell cell = table->cellAt(0, 1);
 	 QTextCharFormat format = cell.format();
@@ -249,7 +230,7 @@ void ChatDialog::appendMessage(std::string sFrom, std::string sMessage, int nPri
 		 c.sToNickName = sRecipientName;
 		 SendChat(c);
 		 if (fPrivateChat || fEncryptedChat)
-			 appendMessage(sNickName, GUIUtil::FROMQS(text), c.nPriority);
+			 appendMessage(sNickName, GUIUtil::FROMQS(text), c.nPriority, c.nTime);
      }
 
      lineEdit->clear();
@@ -306,7 +287,6 @@ void ChatDialog::appendMessage(std::string sFrom, std::string sMessage, int nPri
 			std::string sNarr = "This conversation is successfully being encrypted.  No bytes will be seen on the network in clear text.  ";
 			QMessageBox::warning(this, tr("Success"), GUIUtil::TOQS(sNarr), QMessageBox::Ok, QMessageBox::Ok);
 		}
-
 	}
 
 	if (!sErr.empty())
@@ -342,5 +322,5 @@ void ChatDialog::appendMessage(std::string sFrom, std::string sMessage, int nPri
 	c.sToNickName = sRecipientName;
 	SendChat(c);
 	if (fPrivateChat || fEncryptedChat) 
-		appendMessage(sNickName, c.sPayload, c.nPriority);
+		appendMessage(sNickName, c.sPayload, c.nPriority, c.nTime);
 }

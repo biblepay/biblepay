@@ -49,7 +49,7 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	sFlow += "\n\nWhen you are ready for your final exam, you will click the Final Exam link next to Foundation of Faith.  This is our certification test interface.  We will allow you to use this interface as many times as necessary.  This interface supports Exam Testing Mode and Exam Review mode.  In review mode you will see all of the questions answers so you can go back and learn those subjects better in the course material and or online. ";
 	sFlow += "BiblePay will store your final exam score by your wallet CPK so that you can print out your grades.  ";
 	
-	std::string s1 = "\n\n\n\nCourse Materials - Module 1 - Introduction to Biblical Studies - 18 Credits";
+	std::string s1 = "\n\n<hr>\n\nCourse Materials - Module 1 - Introduction to Biblical Studies - 18 Credits";
 	s1 += "\n\n1.  <a href='FOF'>Foundations of Faith</a> stresses the importance of proper spiritual foundations for life and ministry, by focusing on foundations of Christian Faith, identified by Hebrews 6:1 : Repentance, Faith, baptism, laying on of hands, resurrection, and eternal judgement.  ";
 	s1 += "\n      <a href='FOF_FE'>Final Exam</a>";
 
@@ -62,7 +62,29 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	s1 += "\n\n4.  <a href='NTS'>New Testament Survey</a> provides an overview of the New Testament, and outlines each book.  ";
 	s1 += "\n      <a href='NTS_FE'>Final Exam</a>";
 	
-	s1 += "\n\n\n\nNOTE:  Modules 2-4 are coming soon.  ";
+	s1 += "\n\n<hr>\n\nCourse Materials - Module 2 - Applying Biblical Studies Personally - 21 Credits";
+	s1 += "\n\n5.  <a href='DBWV'>Developing a Biblical World View</a> examines the Biblical world view from Genesis through Revelation.  ";
+	s1 += "  God's plan for the nations of the world from the beginning of time is detailed.  Current worldwide spiritual need is also presented. ";
+	s1 += "\n      <a href='DBWV_FE'>Final Exam</a>";
+
+	s1 += "\n\n6.  <a href='KL'>Kingdom Living</a> is a course focusing on the Kingdom of God.  The \"Gospel of the Kingdom\" shall be preached in all the world before the return of the Lord Jesus Christ ";
+	s1 += " (Matthew 24:14). Understanding of Kingdom principles is necessary if one is to spread the Gospel of the Kingdom.  ";
+	s1 += "This course focuses on patterns and principles of Kingdom living applicable to life and ministry.";
+	s1 += "\n      <a href='KL_FE'>Final Exam</a>";
+
+	s1 += "\n\n7.  <a href='KGV'>Knowing God's Voice</a> explains how God speaks to men today and how to find His general and specific plans for life.  A Christian model for decision making is presented, along with guidelines for overcoming wrong decisions, steps to take if you have missed the will of God, and methods for dealing with questionable practices. ";
+	s1 += "\n      <a href='xKGV_FE'>Final Exam</a>";
+
+	s1 += "\n\n8.  <a href='HSM'>Ministry of the Holy Spirit</a> focuses on the ministry of the Holy Spirit, spiritual fruit, and spiritual gifts.  Students are guided in discovery of their own spiritual gifts and position of ministry in the Body of Christ.";
+	s1 += "\n      <a href='xHSM_FE'>Final Exam</a>";
+
+	s1 += "\n\n9.  <a href='SW'>Spiritual Strategies</a> is a Manual of Spiritual Warfare.  This course moves participants beyond the natural world into the realm of the spirit.  Tactics of the enemy are analyzed and strategies of spiritual warfare assuring victory over the principalities and powers of the spirit world are explained.";
+	s1 += "\n      <a href='xSW_FE'>Final Exam</a>";
+
+	s1 += "\n\n10. <a href='PP'>Power Principles</a> explains how the early church was born in a demonstration of the power of God.  Power principles taught in this course equip students for spiritual harvest and moves them from being spectators to demonstrators of the power of God.";
+	s1 += "\n      <a href='xPP_FE'>Final Exam</a>";
+
+	s1 += "\n\n\n\nNOTE:  Modules 3-4 are coming soon.  ";
 
 	 std::string s2 = sWelcome + sFlow + s1;
 
@@ -97,6 +119,7 @@ void MenuDialog::myLink(QString h)
 	std::string sURL;
 	std::string sFA;
 	std::string sDomain = "https://foundation.biblepay.org/Univ/";
+	// Module 1, added Jan 2021
 	if (s1 == "FOF")
 	{
 		sURL = sDomain + "Foundations Of Faith.pdf";
@@ -129,7 +152,55 @@ void MenuDialog::myLink(QString h)
 	{
 		sFA = "NTSurvey_key.xml";
 	}
-
+	// Module 2, Added Feb 6th, 2021
+	else if (s1 == "DBWV")
+	{
+		sURL = sDomain + "Developing A Biblical World View.pdf";
+	}
+	else if (s1 == "KL")
+	{
+		sURL = sDomain + "Kingdom Living.pdf";
+	}
+	else if (s1 == "KGV")
+	{
+		sURL = sDomain + "Knowing The Voice Of God.pdf";
+	}
+	else if (s1 == "HSM")
+	{
+		sURL = sDomain + "Ministry Of The Holy Spirit.pdf";
+	}
+	else if (s1 == "SW")
+	{
+		sURL = sDomain + "Spiritual Strategies (Warfare).pdf";
+	}
+	else if (s1 == "PP")
+	{
+		sURL = sDomain + "PowerPrinciples.pdf";
+	}
+	else if (s1 == "DBWV_FE")
+	{
+		sFA = "DevelopingBiblicalWorldView_key.xml";
+	}
+	else if (s1 == "KL_FE")
+	{
+		sFA = "KingdomLiving_key.xml";
+	}
+	else if (s1 == "KGV_FE")
+	{
+		sFA = "KnowingGodsVoice_key.xml";
+	}
+	else if (s1 == "HSM_FE")
+	{
+		sFA = "HolySpiritMinistry_key.xml";
+	}
+	else if (s1 == "SW_FE")
+	{
+		sFA = "SpiritualWarfare_key.xml";
+	}
+	else if (s1 == "PP_FE")
+	{
+		sFA = "PowerPrinciples_key.xml";
+	}
 
 	if (!sURL.empty())
 	{

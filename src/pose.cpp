@@ -7,10 +7,8 @@
 #include "utiltime.h"
 #include "masternode-sync.h"
 
-
 static int64_t nPoosProcessTime = 0;
 static int64_t nSleepTime = 0;
-
 
 //Request missing e-mails (Those less than 30 days old, paid for, in transactions, not on our hard drive)
 void RequestMissingEmails()

@@ -37,7 +37,14 @@ FinalExamDialog::FinalExamDialog(QWidget *parent, std::string sFinalExam) :
     QString theme = GUIUtil::getThemeName();
 	// Pull in the final exam
 	DACResult b = DSQL_ReadOnlyQuery("Univ/" + sFinalExam);
+	
 	std::string sAnswerKey = ExtractXML(b.Response, "<KEY>", "</KEY>");
+	if (sAnswerKey.empty())
+	{
+		LogPrintf("\nAnswerKey Missing %f", 8054);
+		this->close();
+		return;
+	}
 	vecAnswerKey = Split(sAnswerKey.c_str(), ",");
 	std::string sQ = ExtractXML(b.Response, "<QUESTIONS>", "</QUESTIONS>");
 	std::string sCourse = "Final Exam: " + ExtractXML(b.Response, "<COURSE>", "</COURSE>");
@@ -250,7 +257,6 @@ void FinalExamDialog::UpdateDisplay()
 
 	// Find the first verse to do the initial population.
 	PopulateQuestion();
-
 }
 
 void FinalExamDialog::setModel(WalletModel *model)

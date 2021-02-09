@@ -25,7 +25,7 @@ class ChatDialog : public QDialog, private Ui::ChatDialog
      void setClientModel(ClientModel *model);
 
 public Q_SLOTS:
-     void appendMessage(std::string sFrom, std::string sMessage, int nPriority);
+     void appendMessage(std::string sFrom, std::string sMessage, int nPriority, int64_t nTime);
      void newParticipant(std::string sNickName);
      void participantLeft(std::string sNickName);
  

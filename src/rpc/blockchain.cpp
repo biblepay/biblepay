@@ -997,16 +997,16 @@ UniValue getblock(const JSONRPCRequest& request)
 
 struct CCoinsStats
 {
-    int nHeight;
+    int nHeight = 0;
     uint256 hashBlock;
     uint64_t nTransactions;
     uint64_t nTransactionOutputs;
     uint256 hashSerialized;
     uint64_t nDiskSize;
-    CAmount nTotalAmount;
-	CAmount nTotalBurned;
-    CAmount nTotalDAC;
-    CCoinsStats() : nHeight(0), nTransactions(0), nTransactionOutputs(0), nTotalAmount(0) {}
+    CAmount nTotalAmount = 0;
+	CAmount nTotalBurned = 0;
+    CAmount nTotalDAC = 0;
+    CCoinsStats() : nHeight(0), nTransactions(0), nTransactionOutputs(0), nTotalAmount(0), nTotalBurned(0), nTotalDAC(0) {}
 };
 
 static void ApplyStats(CCoinsStats &stats, CHashWriter& ss, const uint256& hash, const std::map<uint32_t, Coin>& outputs)

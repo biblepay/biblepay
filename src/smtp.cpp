@@ -302,7 +302,13 @@ void pop3_RETR(std::string sNo)
 {
 	double nMsgNo = cdbl(GetElement(sNo, " ", 1), 0);
 	CEmail e = GetEmailByID(nMsgNo);
-	if (!e.IsNull())
+	if (e.IsNull() || !e.IsMine() || e.Body.empty())
+	{
+		std::string sReply = "-ERR Message Removed from Network\r\n";
+		pop3_send(sReply);
+		return;
+	}
+	else
 	{
 		std::string sID = "Message-Id: <" + e.GetHash().GetHex() + ">";
 		if (fDebuggingEmail)
@@ -317,8 +323,10 @@ void pop3_RETR(std::string sNo)
 			if (!sError.empty())
 			{
 				std::string sFail = "Failed to decrypt e-mail with private key " + sPrivPath + ".  \r\nNOTE:  You must protect your RSA key or you will lose access to all of your encrypted e-mails.";
-				std::string sReply = "+OK " + RoundToString(e.Body.length(), 0) + " octets\r\n" + sFail + "\r\n\r\n\r\n.\r\n";
+				std::string sReply = "-ERR " + sFail;
+				LogPrintf("\r\nPOP3::DecryptionError %s ", sFail);
 				pop3_send(sReply);
+				return;
 			}
 			else
 			{
@@ -335,12 +343,6 @@ void pop3_RETR(std::string sNo)
 		// If we made it this far, we can mark it as deleted on the server:
 
 		AppendStorageFile("emails_read", e.GetHash().GetHex());
-	}
-	else
-	{
-		LogPrintf("\r\nNotFound %f", 9007);
-		pop3_send("+OK\r\n.\r\n");
-		return;
 	}
 }
 
@@ -553,7 +555,11 @@ void smtp_SENDMAIL(std::string sData)
 	
 	e.nType = 2;
 	e.nVersion = 2;
-	e.nTime = GetAdjustedTime();
+	std::string sSubject = ExtractXML(e.Body, "Subject:", "\n");
+	e.Headers = sSubject;
+
+	e.nTime = std::floor(GetAdjustedTime() / 100) * 100;
+
 	bool fIsEncrypted = Contains(e.Body, "[encrypted]");
 	e.Encrypted = fIsEncrypted;
 
