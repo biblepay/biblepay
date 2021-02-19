@@ -119,3 +119,5 @@ Changes between 1.5.2.9-1.5.4.4:
 - Enforce 3meg email limit
 - Bump version and cutover height for prod
 - Decrease quorum size to be more reflective of our Paid-sponsorship-orphan sanctuary model
+1.5.4.5b - Mandatory Upgrade for Entire Network
+- Ensure Pop3 class can be disabled (for sancs with shared hosting)
