@@ -648,7 +648,7 @@ void RPCConsole::setClientModel(ClientModel *model)
         showOrHideBanTableIfRequired();
 
         // Provide initial values
-        ui->clientVersion->setText(model->formatFullVersion());
+        ui->clientVersion->setText(model->formatFullVersion() + " Tribulation");
         ui->clientUserAgent->setText(model->formatSubVersion());
         ui->dataDir->setText(model->dataDir());
         ui->startupTime->setText(model->formatClientStartupTime());
@@ -882,8 +882,7 @@ void RPCConsole::setNumBlocks(int count, const QDateTime& blockDate, double nVer
 {
     if (!headers) {
         ui->numberOfBlocks->setText(QString::number(count));
-		ui->numberOfSidechainBlocks->setText(QString::number(nSideChainHeight));
-        ui->lastBlockTime->setText(blockDate.toString());
+		ui->lastBlockTime->setText(blockDate.toString());
     }
 }
 

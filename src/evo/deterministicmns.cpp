@@ -319,11 +319,10 @@ int CDeterministicMNList::CalcPenalty(int percent) const
 
 void CDeterministicMNList::PoSePunish(const uint256& proTxHash, int penalty, bool debugLogs)
 {
-
-	if (penalty == 0)
+    if (penalty == 0)
 		return;
-
-    assert(penalty > 0);
+	
+	assert(penalty > 0);
 
     auto dmn = GetMN(proTxHash);
 	if (!dmn)

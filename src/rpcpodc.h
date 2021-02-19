@@ -11,16 +11,14 @@
 
 #include <univalue.h>
 
-std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr);
 double GetCryptoPrice(std::string sURL);
 bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string& sError, std::string& sSignature);
 std::string GetGithubVersion();
-std::string SerializeSanctuaryQuorumTrigger(int iContractAssessmentHeight, int nEventBlockHeight, std::string sContract);
 bool VerifySigner(std::string sXML);
 double GetPBase(double& out_BTC, double& out_BBP);
 std::string GetCPID();
 bool GetTransactionTimeAndAmount(uint256 txhash, int nVout, int64_t& nTime, CAmount& nAmount);
-std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, bool Sign, std::string sExtraPayload, std::string& sError);
+std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, int nSign, std::string sExtraPayload, std::string& sError);
 std::string ToYesNo(bool bValue);
 bool VoteForGobject(uint256 govobj, std::string sVoteOutcome, std::string& sError);
 int64_t GetDCCFileAge();

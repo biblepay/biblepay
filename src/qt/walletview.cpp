@@ -20,6 +20,8 @@
 #include "transactionview.h"
 #include "walletmodel.h"
 #include "proposaladddialog.h"
+#include "userdialog.h"
+#include "memorizescripturedialog.h"
 #include "businessobjectlist.h"
 #include "ui_interface.h"
 #include <QAction>
@@ -72,6 +74,9 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
 
     receiveCoinsPage = new ReceiveCoinsDialog(platformStyle);
 	proposalAddPage = new ProposalAddDialog(platformStyle);
+	userEditPage = new UserDialog(platformStyle);
+	memorizeScripturePage = new MemorizeScriptureDialog(platformStyle);
+
 	proposalListPage = new Proposals(platformStyle);
     businessObjectListPage = new BusinessObjectList(platformStyle);
     
@@ -85,6 +90,8 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     addWidget(receiveCoinsPage);
     addWidget(sendCoinsPage);
 	addWidget(proposalAddPage);
+	addWidget(userEditPage);
+	addWidget(memorizeScripturePage);
 	addWidget(proposalListPage);
 	addWidget(businessObjectListPage);
 
@@ -165,6 +172,8 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
     receiveCoinsPage->setModel(_walletModel);
     sendCoinsPage->setModel(_walletModel);
 	proposalAddPage->setModel(_walletModel);
+	userEditPage->setModel(_walletModel);
+	memorizeScripturePage->setModel(_walletModel);
 	proposalListPage->setModel(_walletModel);
 	businessObjectListPage->setModel(_walletModel);
 
@@ -259,6 +268,18 @@ void WalletView::gotoProposalAddPage()
 {
 	setCurrentWidget(proposalAddPage);
 	proposalAddPage->UpdateDisplay();
+}
+
+void WalletView::gotoUserEditPage()
+{
+	setCurrentWidget(userEditPage);
+	userEditPage->UpdateDisplay();
+}
+
+void WalletView::gotoMemorizeScripturePage()
+{
+	setCurrentWidget(memorizeScripturePage);
+	memorizeScripturePage->UpdateDisplay();
 }
 
 void WalletView::gotoProposalListPage()

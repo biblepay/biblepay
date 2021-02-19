@@ -74,6 +74,9 @@ const char *QSIGREC="qsigrec";
 const char *CLSIG="clsig";
 const char *ISLOCK="islock";
 const char *MNAUTH="mnauth";
+const char *CHAT="chat";
+const char *EMAIL="email";
+const char *EMAILREQUEST="emailrequest";
 };
 
 static const char* ppszTypeName[] =
@@ -111,6 +114,9 @@ static const char* ppszTypeName[] =
     NetMsgType::QSIGREC,
     NetMsgType::CLSIG,
     NetMsgType::ISLOCK,
+	NetMsgType::CHAT,
+	NetMsgType::EMAIL,
+	NetMsgType::EMAILREQUEST,
 };
 
 /** All known message types. Keep this in the same order as the list of
@@ -179,6 +185,9 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::CLSIG,
     NetMsgType::ISLOCK,
     NetMsgType::MNAUTH,
+	NetMsgType::CHAT,
+	NetMsgType::EMAIL,
+	NetMsgType::EMAILREQUEST,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
 

@@ -181,10 +181,10 @@
       <item>
        <widget class="QCheckBox" name="chkDWS">
         <property name="toolTip">
-         <string>Burn this amount of BiblePay as a Dynamic Whale Stake for 90 days.  You will receive the stake back at the end plus a stake reward (quoted when you click send).</string>
+         <string>Send UTXO Stake.  If you win the block you receive the block reward.  You also receive perpetual returns in the UTXO leaderboard.</string>
         </property>
         <property name="text">
-         <string>Dynamic Whale Stake?</string>
+         <string>Send UTXO Stake?</string>
         </property>
        </widget>
       </item>
@@ -396,13 +396,13 @@
       <item>
        <widget class="QCheckBox" name="chkDonate">
         <property name="toolTip">
-         <string>Send Coins to Orphan Foundation to Support Orphans?</string>
+         <string>Send Coins to DAC to Support Orphans?</string>
         </property>
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Donate to Foundation?</string>
+         <string>Donate to DAC?</string>
         </property>
        </widget>
       </item>
@@ -415,7 +415,7 @@
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Add Tithe for Foundation?</string>
+         <string>Add Tithe for DAC?</string>
         </property>
        </widget>
       </item>
@@ -431,6 +431,10 @@
       </item>
       <item>
        <widget class="QCheckBox" name="chkDiary">
+       <property name="toolTip">
+                <string>Add a Diary Entry (Healing Campaign)</string>
+       </property>
+        
         <property name="text">
          <string>Add Diary Entry?</string>
         </property>

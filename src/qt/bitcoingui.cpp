@@ -23,7 +23,9 @@
 #include "platformstyle.h"
 #include "rpcconsole.h"
 #include "utilitydialog.h"
+#include "menudialog.h"
 #include "businessobjectlist.h"
+#include "chatdialog.h"
 
 #ifdef ENABLE_WALLET
 #include "privatesend-client.h"
@@ -112,8 +114,6 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
 	orphanAction(0),
 	exchangeAction(0),
 	webAction(0),
-	proposalListAction(0),
-	proposalAddMenuAction(0),
 	OneClickMiningAction(0),
  	sinnerAction(0),
     TheLordsPrayerAction(0),
@@ -122,7 +122,15 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *_platformStyle, const NetworkStyle *
     ReadBibleAction(0),
     TheTenCommandmentsAction(0),
     JesusConciseCommandmentsAction(0),
-	businessObjectListMenuAction(0),
+	proposalListAction(0),
+	proposalAddMenuAction(0),
+	userEditMenuAction(0),
+	memorizeScriptureMenuAction(0),
+	openChatGeneralAction(0),
+    openChatPMAction(0),
+	openChatPMEncryptedAction(0),
+	univAction(0),
+    businessObjectListMenuAction(0),
     receiveCoinsAction(0),
     receiveCoinsMenuAction(0),
     optionsAction(0),
@@ -321,7 +329,6 @@ void BitcoinGUI::createActions()
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
 #endif
     tabGroup->addAction(overviewAction);
-
     sendCoinsAction = new QAction(QIcon(":/icons/" + theme + "/send"), tr("&Send"), this);
     sendCoinsAction->setStatusTip(tr("Send coins to another address"));
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
@@ -333,7 +340,7 @@ void BitcoinGUI::createActions()
 #endif
     tabGroup->addAction(sendCoinsAction);
 
-	// DAC
+	// BBP
 	proposalListAction = new QAction(QIcon(":/icons/" + theme + "/edit"), tr("&Proposals"), this);
 	proposalListAction->setStatusTip(tr("List Proposals"));
 	proposalListAction->setToolTip(proposalListAction->statusTip());
@@ -404,13 +411,12 @@ void BitcoinGUI::createActions()
 	tabGroup->addAction(exchangeAction);
 	connect(exchangeAction, SIGNAL(triggered()), this, SLOT(showExchange()));
 
+	// We can reserve this icon for something useful - but for now make it invisible
 	webAction = new QAction(QIcon(":/icons/" + theme + "/account32"), tr("&Web"), this);
 	webAction->setStatusTip(tr("Web"));
 	webAction->setToolTip(webAction->statusTip());
-	webAction->setCheckable(true);
-	tabGroup->addAction(webAction);
-	connect(webAction, SIGNAL(triggered()), this, SLOT(showDecentralizedWeb()));
-
+	webAction->setCheckable(false);
+	webAction->setVisible(false);
     // These showNormalIfMinimized are needed because Send Coins and Receive Coins
     // can be triggered from the tray menu, and need to show the GUI to be useful.
     connect(overviewAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
@@ -433,7 +439,6 @@ void BitcoinGUI::createActions()
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     quitAction->setMenuRole(QAction::QuitRole);
 	
-
     sinnerAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("The Sinners Prayer"), this);
     sinnerAction->setStatusTip(tr("Show the Sinners Prayer"));
     sinnerAction->setMenuRole(QAction::AboutRole);
@@ -458,6 +463,24 @@ void BitcoinGUI::createActions()
 
     OneClickMiningAction = new QAction(QIcon(":/icons/" + theme + "/editpaste"), tr("One Click Mining Configuration"), this);
     OneClickMiningAction->setStatusTip(tr("One Click Mining Configuration"));
+
+	// Chat	
+    openChatGeneralAction = new QAction(QIcon(":/icons/" + theme + "/chat"), tr("Chat Room - General"), this);
+    openChatGeneralAction->setStatusTip(tr("Open General Chat Room"));
+    openChatGeneralAction->setEnabled(false);
+
+    openChatPMAction = new QAction(QIcon(":/icons/" + theme + "/chat"), tr("Private Message"), this);
+    openChatPMAction->setStatusTip(tr("Open Private Message Window"));
+    openChatPMAction->setEnabled(false);
+
+	openChatPMEncryptedAction = new QAction(QIcon(":/icons/" + theme + "/chat"), tr("Private Message - Encrypted"), this);
+    openChatPMEncryptedAction->setStatusTip(tr("Open Private Message (With Encryption) Window"));
+    openChatPMEncryptedAction->setEnabled(false);
+
+	// BBP-U
+	univAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("BiblePay University"), this);
+    univAction->setStatusTip(tr("Show the BiblePay University"));
+    univAction->setEnabled(false);
 
     aboutAction = new QAction(QIcon(":/icons/" + theme + "/about"), tr("&About %1").arg(tr(PACKAGE_NAME)), this);
     aboutAction->setStatusTip(tr("Show information about DAC Core"));
@@ -527,6 +550,15 @@ void BitcoinGUI::createActions()
     proposalAddMenuAction->setStatusTip(tr("Add Proposal"));
     proposalAddMenuAction->setEnabled(false);
 	
+	// User Edit Action
+    userEditMenuAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("My User Record"), this);
+    userEditMenuAction->setStatusTip(tr("My User Record"));
+    userEditMenuAction->setEnabled(false);
+	
+	memorizeScriptureMenuAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("Memorize Scriptures"), this);
+    memorizeScriptureMenuAction->setStatusTip(tr("Memorize Scriptures"));
+    memorizeScriptureMenuAction->setEnabled(false);
+	
     usedSendingAddressesAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("&Sending addresses..."), this);
     usedSendingAddressesAction->setStatusTip(tr("Show the list of used sending addresses and labels"));
     usedReceivingAddressesAction = new QAction(QIcon(":/icons/" + theme + "/address-book"), tr("&Receiving addresses..."), this);
@@ -562,8 +594,18 @@ void BitcoinGUI::createActions()
     connect(JesusConciseCommandmentsAction, SIGNAL(triggered()), this, SLOT(JesusConciseCommandmentsClicked()));
 	connect(proposalListAction, SIGNAL(triggered()), this, SLOT(gotoProposalListPage()));
 	connect(proposalAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoProposalAddPage()));
+	connect(userEditMenuAction, SIGNAL(triggered()), this, SLOT(gotoUserEditPage()));
+	connect(memorizeScriptureMenuAction, SIGNAL(triggered()), this, SLOT(gotoMemorizeScripturePage()));
 	connect(businessObjectListMenuAction, SIGNAL(triggered()), this, SLOT(gotoBusinessObjectListPage()));
     
+	// CHAT
+	connect(openChatGeneralAction, SIGNAL(triggered()), this, SLOT(openChatGeneralClicked()));
+    connect(openChatPMAction, SIGNAL(triggered()), this, SLOT(openChatPMClicked()));
+	connect(openChatPMEncryptedAction, SIGNAL(triggered()), this, SLOT(openChatPMEncryptedClicked()));
+
+	// BBP Univ Actions
+	connect(univAction, SIGNAL(triggered()), this, SLOT(univClicked()));
+
     // Jump directly to tabs in RPC-console
     connect(openInfoAction, SIGNAL(triggered()), this, SLOT(showInfo()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showConsole()));
@@ -670,6 +712,22 @@ void BitcoinGUI::createMenuBar()
 		QMenu *proposals = appMenuBar->addMenu(tr("&Proposals"));
 		proposals->addAction(proposalListAction);
 		proposals->addAction(proposalAddMenuAction);
+
+		QMenu *useredit = appMenuBar->addMenu(tr("User Record"));
+		useredit->addAction(userEditMenuAction);
+		useredit->addAction(userEditMenuAction);
+
+		QMenu *qmmemorizescriptures = appMenuBar->addMenu(tr("Memorize Scriptures"));
+		qmmemorizescriptures->addAction(memorizeScriptureMenuAction);
+		qmmemorizescriptures->addAction(memorizeScriptureMenuAction);
+
+        QMenu *menuChat = appMenuBar->addMenu(tr("&Chat"));
+        menuChat->addAction(openChatGeneralAction);
+        menuChat->addAction(openChatPMAction);
+		menuChat->addAction(openChatPMEncryptedAction);
+
+		QMenu *menuUniv = appMenuBar->addMenu(tr("&BBP University"));
+		menuUniv->addAction(univAction);
 
 		QMenu *businessObjects = appMenuBar->addMenu(tr("&Leaderboard"));
 		businessObjects->addAction(businessObjectListMenuAction);
@@ -876,6 +934,9 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     JesusConciseCommandmentsAction->setEnabled(enabled);
     proposalListAction->setEnabled(enabled);
     proposalAddMenuAction->setEnabled(enabled);
+	userEditMenuAction->setEnabled(enabled);
+	memorizeScriptureMenuAction->setEnabled(enabled);
+	univAction->setEnabled(enabled);
 	OneClickMiningAction->setEnabled(enabled);
 	businessObjectListMenuAction->setEnabled(enabled);
 }
@@ -938,6 +999,14 @@ void BitcoinGUI::optionsClicked()
     dlg.exec();
 }
 
+void BitcoinGUI::univClicked()
+{
+    if(!clientModel) 
+		return;
+    MenuDialog dlg(this);
+    dlg.exec();
+}
+
 void BitcoinGUI::sinnerClicked()
 {
     if(!clientModel) return;
@@ -967,9 +1036,44 @@ void CenterWidget(QWidget *widget, bool bTile)
     widget->move(x, y);
 }
 
-void BitcoinGUI::TheApostlesCreedClicked()
+void BitcoinGUI::openChatGeneralClicked()
+{
+    if(!clientModel) 
+		return;
+	UserRecord myUser = GetMyUserRecord();
+
+    ChatDialog *dlg = new ChatDialog(this, false, false, myUser.NickName, "General");
+    dlg->setClientModel(this->clientModel);
+    dlg->show();
+    CenterWidget(dlg, true);
+}
+
+void BitcoinGUI::openChatPMClicked()
 {
     if(!clientModel) return;
+	UserRecord myUser = GetMyUserRecord();
+
+    ChatDialog *dlg = new ChatDialog(this, true, false, myUser.NickName, "");
+    dlg->setClientModel(this->clientModel);
+    dlg->show();
+    CenterWidget(dlg, true);
+}
+
+void BitcoinGUI::openChatPMEncryptedClicked()
+{
+   if(!clientModel) 
+	   return;
+   UserRecord myRec = GetMyUserRecord();
+   ChatDialog *dlg = new ChatDialog(this, true, true, myRec.NickName, "");
+   dlg->setClientModel(this->clientModel);
+   dlg->show();
+   CenterWidget(dlg, true);
+}
+
+void BitcoinGUI::TheApostlesCreedClicked()
+{
+    if(!clientModel) 
+		return;
     HelpMessageDialog dlg(this, HelpMessageDialog::prayer, 2, uint256S("0x0"), "");
     dlg.exec();
 }
@@ -1032,6 +1136,25 @@ void BitcoinGUI::showExchange()
 {
 	std::string sURL = "https://www.southxchange.com/Market/Book/BBP/BTC";
 	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
+}
+
+
+void BitcoinGUI::gotoUserEditPage()
+{
+	if (!clientModel) 
+		return;
+    userEditMenuAction->setChecked(true);
+    if (walletFrame)
+		walletFrame->gotoUserEditPage();
+}
+
+void BitcoinGUI::gotoMemorizeScripturePage()
+{
+	if (!clientModel)
+		return;
+	memorizeScriptureMenuAction->setChecked(true);
+	if (walletFrame)
+		walletFrame->gotoMemorizeScripturePage();
 }
 
 void BitcoinGUI::gotoProposalAddPage()
@@ -1514,6 +1637,9 @@ void BitcoinGUI::showEvent(QShowEvent *event)
     openRepairAction->setEnabled(true);
     aboutAction->setEnabled(true);
     optionsAction->setEnabled(true);
+	openChatGeneralAction->setEnabled(true);
+    openChatPMAction->setEnabled(true);
+	openChatPMEncryptedAction->setEnabled(true);
 }
 
 #ifdef ENABLE_WALLET
@@ -1676,9 +1802,30 @@ void BitcoinGUI::detectShutdown()
 
 	// Governance - Check to see if we should submit a proposal
     nProposalModulus++;
-    if (nProposalModulus % 30 == 0 && !fLoadingIndex)
+    if (nProposalModulus % 30 == 0 && !fLoadingIndex && fWarmBootFinished)
     {
         nProposalModulus = 0;
+		// Chat - If someone is paging us...
+		UserRecord myRec = GetMyUserRecord();
+
+        if (mlPaged > 1 && !msPagedFrom.empty() && clientModel)
+        {
+            mlPaged = 0;
+            ChatDialog *dlg = new ChatDialog(this, true, false, myRec.NickName, msPagedFrom);
+            dlg->setClientModel(this->clientModel);
+            dlg->show();
+            msPagedFrom = "";
+        }
+
+		if (mlPagedEncrypted > 1 && !msPagedFrom.empty() && clientModel)
+        {
+            mlPagedEncrypted = 0;
+            ChatDialog *dlg = new ChatDialog(this, true, true, myRec.NickName, msPagedFrom);
+            dlg->setClientModel(this->clientModel);
+            dlg->show();
+            msPagedFrom = "";
+        }
+        
 		// Opening a web resource
 		if (!msURL.empty())
 		{

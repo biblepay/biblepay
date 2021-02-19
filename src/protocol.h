@@ -280,6 +280,9 @@ extern const char *QSIGREC;
 extern const char *CLSIG;
 extern const char *ISLOCK;
 extern const char *MNAUTH;
+extern const char *CHAT;
+extern const char *EMAIL;
+extern const char *EMAILREQUEST;
 };
 
 /* Get a vector of all valid message types (see above) */
@@ -383,6 +386,9 @@ enum GetDataMsg {
     MSG_QUORUM_RECOVERED_SIG = 28,
     MSG_CLSIG = 29,
     MSG_ISLOCK = 30,
+	MSG_CHAT=70,
+	MSG_EMAIL=71,
+	MSG_EMAILREQUEST=72,
 };
 
 /** inv message data */

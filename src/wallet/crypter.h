@@ -112,15 +112,29 @@ public:
 };
 
 bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, const std::string& sIV, std::string& sCiphertext);
+
 std::string EncryptAES256(std::string sPlaintext, std::string sKey);
+std::string EncryptAES256WithIV(std::string sPlaintext, std::string sKey, std::string sIV);
 
 bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, const std::string& sIV, SecureString& sPlaintext);
 std::string DecryptAES256(std::string s64, std::string sKey);
+std::string DecryptAES256WithIV(std::string s64, std::string sKey, std::string sIV);
 
 bool BibleDecrypt(const std::vector<unsigned char>& vchCiphertext,std::vector<unsigned char>& vchPlaintext);
 bool BibleEncrypt(std::vector<unsigned char> vchPlaintext, std::vector<unsigned char> &vchCiphertext);
 std::vector<unsigned char> StringToVector(std::string sData);
 std::string VectorToString(std::vector<unsigned char> v);
+
+
+int RSA_GENERATE_KEYPAIR(std::string sPublicKeyPath, std::string sPrivateKeyPath);
+unsigned char *RSA_ENCRYPT_CHAR(std::string sPubKeyPath, unsigned char *plaintext, int plaintext_length, int& cipher_len, int& rsa_len, std::string& sError);
+void RSA_Encrypt_File(std::string sPubKeyPath, std::string sSourcePath, std::string sEncryptPath, std::string& sError);
+unsigned char *RSA_DECRYPT_CHAR(std::string sPriKeyPath, unsigned char *ciphertext, int ciphrtext_size, int& plaintxt_len, std::string& sError);
+void RSA_Decrypt_File(std::string sPriKeyPath, std::string sSourcePath, std::string sDecryptPath, std::string sError);
+std::string RSA_Encrypt_String(std::string sPubKeyPath, std::string sData, std::string& sError);
+std::string RSA_Decrypt_String(std::string sPrivKeyPath, std::string sData, std::string& sError);
+std::string RSA_Encrypt_String_With_Key(std::string sPubKey, std::string sData, std::string& sError);
+std::string RSA_Decrypt_String_With_Key(std::string sPrivKey, std::string sData, std::string& sError);
 
 
 /** Keystore which keeps the private keys encrypted.
@@ -161,14 +175,8 @@ public:
 
 	std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
 	std::vector<char> ReadAllBytes(char const* filename);
-	int RSA_GENERATE_KEYPAIR(std::string sPublicKeyPath, std::string sPrivateKeyPath);
-	unsigned char *RSA_ENCRYPT_CHAR(std::string sPubKeyPath, unsigned char *plaintext, int plaintext_length, int& cipher_len, std::string& sError);
-	void RSA_Encrypt_File(std::string sPubKeyPath, std::string sSourcePath, std::string sEncryptPath, std::string& sError);
-	unsigned char *RSA_DECRYPT_CHAR(std::string sPriKeyPath, unsigned char *ciphertext, int ciphrtext_size, int& plaintxt_len, std::string& sError);
-	void RSA_Decrypt_File(std::string sPriKeyPath, std::string sSourcePath, std::string sDecryptPath, std::string sError);
-	std::string RSA_Encrypt_String(std::string sPubKeyPath, std::string sData, std::string& sError);
-	std::string RSA_Decrypt_String(std::string sPrivKeyPath, std::string sData, std::string& sError);
 
+	
 	
 	CCryptoKeyStore() : fUseCrypto(false), fDecryptionThoroughlyChecked(false), fOnlyMixingAllowed(false)
     {

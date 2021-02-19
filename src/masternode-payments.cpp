@@ -98,7 +98,7 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
     if (fDebug && fDebugSpam)
 		LogPrintf("block.vtx[0]->GetValueOut() %lld <= blockReward %lld\n", block.vtx[0]->GetValueOut()/COIN, blockReward/COIN);
 
-    CAmount nSuperblockMaxValue =  blockReward + CSuperblock::GetPaymentsLimit(nBlockHeight, true);
+    CAmount nSuperblockMaxValue =  blockReward + CSuperblock::GetPaymentsLimit(nBlockHeight, block.GetBlockTime(), true);
     bool isSuperblockMaxValueMet = (block.vtx[0]->GetValueOut() <= nSuperblockMaxValue);
 
 	if (fDebugSpam)
@@ -161,7 +161,7 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
     }
 
     // this actually also checks for correct payees and not only amount
-    if (!CSuperblockManager::IsValid(*block.vtx[0], nBlockHeight, blockReward)) {
+    if (!CSuperblockManager::IsValid(*block.vtx[0], nBlockHeight, blockReward, block.GetBlockTime())) {
         // triggered but invalid? that's weird
         LogPrintf("%s -- ERROR: Invalid superblock detected at height %d: %s", __func__, nBlockHeight, block.vtx[0]->ToString());
         // should NOT allow invalid superblocks, when superblocks are enabled
@@ -173,7 +173,7 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
     return true;
 }
 
-bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward)
+bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward, int64_t nTime)
 {
     if(fLiteMode) {
         //there is no budget data to use to check anything, let's just accept the longest chain
@@ -208,7 +208,7 @@ bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount bloc
 				return true;
 			}
     
-            if(CSuperblockManager::IsValid(txNew, nBlockHeight, blockReward)) 
+            if(CSuperblockManager::IsValid(txNew, nBlockHeight, blockReward, nTime)) 
 			{
                 LogPrint("gobject", "%s -- Valid superblock at height %d: %s", __func__, nBlockHeight, txNew.ToString());
                 // continue validation, should also pay MN
@@ -483,7 +483,7 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 						break;
 					}
 					// Automatic Price Mooning
-					if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (blockReward == APM_REWARD * COIN))
+					if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (blockReward == APM_REWARD * COIN || blockReward == APM2_REWARD * COIN))
 					{
 						found = true;
 						break;

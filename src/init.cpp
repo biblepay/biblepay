@@ -72,6 +72,7 @@
 #include "llmq/quorums_init.h"
 #include "llmq/quorums_init.h"
 #include "pose.h"
+#include "smtp.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -100,6 +101,8 @@
 
 extern void ThreadSendAlert(CConnman& connman);
 extern void ThreadPOOS(CConnman& connman);
+extern void ThreadSMTP(CConnman& connman);
+extern void ThreadPOP3(CConnman& connman);
 
 bool fFeeEstimatesInitialized = false;
 static const bool DEFAULT_PROXYRANDOMIZE = true;
@@ -214,8 +217,7 @@ void Interrupt(boost::thread_group& threadGroup)
     InterruptRPC();
     InterruptREST();
     InterruptTorControl();
-	//InterruptPOOS();
-    llmq::InterruptLLMQSystem();
+	llmq::InterruptLLMQSystem();
     if (g_connman)
         g_connman->Interrupt();
     threadGroup.interrupt_all();
@@ -2207,7 +2209,16 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
         uiInterface.NotifyBlockTip.disconnect(BlockNotifyGenesisWait);
     }
 
-    // ********************************************************* Step 12: start node
+	double dDisableSMTP = cdbl(GetArg("-disablesmtp", "0"), 0);
+	double dDisablePOP3 = cdbl(GetArg("-disablepop3", "0"), 0);
+
+	LogPrintf("\nPop3 %f SMTP %f Servers ", dDisableSMTP, dDisablePOP3);
+
+	if (dDisableSMTP != 1)
+		threadGroup.create_thread(boost::bind(&ThreadSMTP, boost::ref(connman)));
+	if (dDisablePOP3 != 1)
+		threadGroup.create_thread(boost::bind(&ThreadPOP3, boost::ref(connman)));
+	// ********************************************************* Step 12: start node
 
     //// debug print
     LogPrintf("mapBlockIndex.size() = %u\n",   mapBlockIndex.size());
@@ -2222,7 +2233,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 	// Load Researchers into RAM
 	uiInterface.InitMessage(_("Loading PODC Researchers..."));
 	LoadResearchers();
-	LockDashStakes();
+	LockUTXOStakes();
 
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 
@@ -2259,7 +2270,8 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
-
+	fWarmBootFinished = true;
+    
 #ifdef ENABLE_WALLET
     if (pwalletMain)
         pwalletMain->postInitProcess(scheduler);
@@ -2267,6 +2279,5 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     threadGroup.create_thread(boost::bind(&ThreadSendAlert, boost::ref(connman)));
 	threadGroup.create_thread(boost::bind(&ThreadPOOS, boost::ref(connman)));
-
     return !fRequestShutdown;
 }

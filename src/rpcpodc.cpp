@@ -49,15 +49,6 @@ std::string ToYesNo(bool bValue)
 	return sYesNo;
 }
 
-std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr)
-{
-  size_t pos = 0;
-  while((pos = str.find(oldStr, pos)) != std::string::npos){
-     str.replace(pos, oldStr.length(), newStr);
-     pos += newStr.length();
-  }
-  return str;
-}
 
 bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string& sError, std::string& sSignature)
 {
@@ -93,7 +84,7 @@ bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string&
 }
 
 
-std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, bool Sign, std::string sExtraPayload, std::string& sError)
+std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, int nSign, std::string sExtraPayload, std::string& sError)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
     std::string sAddress = consensusParams.FoundationAddress;
@@ -103,8 +94,8 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 		sError = "Invalid Destination Address";
 		return sError;
 	}
-    CAmount nAmount = CAmountFromValue(dStorageFee);
-	CAmount nMinimumBalance = CAmountFromValue(dStorageFee);
+    CAmount nAmount = dStorageFee * COIN;
+	CAmount nMinimumBalance = dStorageFee * COIN;
     CWalletTx wtx;
 	boost::to_upper(sPrimaryKey); // DC Message can't be found if not uppercase
 	boost::to_upper(sType);
@@ -114,9 +105,11 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 	std::string sMessageValue     = "<MV>" + sValue + "</MV>";
 	std::string sNonce            = "<NONCE>" + sNonceValue + "</NONCE>";
 	std::string sMessageSig = "";
-	if (Sign)
+	std::string sSignature = "";
+
+	if (nSign==1)
 	{
-		std::string sSignature = "";
+		// Sign as if this is a spork
 		bool bSigned = SignStake(consensusParams.FoundationAddress, sValue + sNonceValue, sError, sSignature);
 		if (bSigned) 
 		{
@@ -124,8 +117,26 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 			sMessageSig += "<BOSIG>" + sSignature + "</BOSIG>";
 			sMessageSig += "<BOSIGNER>" + consensusParams.FoundationAddress + "</BOSIGNER>";
 		}
-		if (!bSigned) LogPrintf("Unable to sign spork %s ", sError);
+		if (!bSigned)
+			LogPrintf("Unable to sign spork %s ", sError);
 		LogPrintf(" Signing Nonce%f , With spork Sig %s on message %s  \n", (double)GetAdjustedTime(), 
+			 sMessageSig.c_str(), sValue.c_str());
+	}
+	else if (nSign == 2)
+	{
+		// Sign as if this is a business object
+		std::string sSignCPK = DefaultRecAddress("Christian-Public-Key");
+
+		bool bSigned = SignStake(sSignCPK, sValue + sNonceValue, sError, sSignature);
+		if (bSigned) 
+		{
+			sMessageSig = "<SPORKSIG>" + sSignature + "</SPORKSIG>";
+			sMessageSig += "<BOSIG>" + sSignature + "</BOSIG>";
+			sMessageSig += "<BOSIGNER>" + sSignCPK + "</BOSIGNER>";
+		}
+		if (!bSigned)
+			LogPrintf("Unable to sign business object %s ", sError);
+		LogPrintf(" Signing Nonce%f , With business-object Sig %s on message %s  \n", (double)GetAdjustedTime(), 
 			 sMessageSig.c_str(), sValue.c_str());
 	}
 	std::string s1 = sMessageType + sMessageKey + sMessageValue + sNonce + sMessageSig + sExtraPayload;
@@ -136,6 +147,11 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
 
 	if (!sError.empty())
 		return std::string();
+	if (sMessageType == "cpk")
+	{
+		// For the user record - The below did not work - Research
+		// WriteCache(sMessageType, sMessageKey, sMessageValue, GetAdjustedTime(), true);
+	}
     return wtx.GetHash().GetHex().c_str();
 }
 
@@ -150,6 +166,9 @@ std::string GetGithubVersion()
 
 double GetCryptoPrice(std::string sSymbol)
 {
+	if (sSymbol.empty())
+		return 0;
+
 	boost::to_lower(sSymbol);
 
 	double nLast = cdbl(ReadCacheWithMaxAge("price", sSymbol, (60 * 30)), 12);
@@ -272,7 +291,7 @@ std::map<std::string, Researcher> GetPayableResearchers()
 	std::map<std::string, std::string> cpid_reverse_lookup;
 	for (auto ii : mvApplicationCache)
 	{
-		if (Contains(ii.first.first, "CPK-WCG"))
+		if (Contains(ii.first, "CPK-WCG"))
 		{
 			std::string sData = ii.second.first;
 			int64_t nLockTime = ii.second.second;

@@ -282,10 +282,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     CValidationState state;
     if (!TestBlockValidityLite(state, chainparams, *pblock, pindexPrev, false, false, true, true)) 
 	{
-		if (fDebugSpam)
-			LogPrint("miner", "BibleMiner failed to create new block\n");
-        return NULL;
+		if (true)
+			LogPrint("miner", "BiblePayMiner failed to create a valid new block\n");
+		MilliSleep(10000);
     }
+
     int64_t nTime2 = GetTimeMicros();
 
 	if (fDebugSpam)
@@ -601,6 +602,12 @@ bool CreateBlockForStratum(std::string sAddress, uint256 uRandomXKey, std::vecto
 	boost::shared_ptr<CReserveScript> coinbaseScript;
     GetMainSignals().ScriptForMining(coinbaseScript);
 	std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, sAddress, uRandomXKey, vRandomXHeader));
+	std::string sUTXO = ScanBlockForNewUTXO(pblocktemplate->block);
+	if (!sUTXO.empty())
+	{
+		std::unique_ptr<CBlockTemplate> p1(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, sUTXO, uRandomXKey, vRandomXHeader));
+		pblocktemplate = std::move(p1);
+	}
 	if (!pblocktemplate.get())
     {
 		LogPrint("miner", "CreateBlockForStratum::No block to mine %f", iThreadID);
@@ -680,8 +687,15 @@ recover:
 			// Create Evo block
 			uint256 uRXKey = uint256S("0x01");
 			std::vector<unsigned char> vchRXHeader = ParseHex("00");
-	
 			std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, "", uRXKey, vchRXHeader));
+	
+			std::string sUTXO = ScanBlockForNewUTXO(pblocktemplate->block);
+			if (!sUTXO.empty())
+			{
+				std::unique_ptr<CBlockTemplate> p1(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, sUTXO, uRXKey, vchRXHeader));
+				pblocktemplate = std::move(p1);
+			}
+
 			if (!pblocktemplate.get())
             {
 				MilliSleep(15000);

@@ -145,6 +145,7 @@ int64_t LateBlockIndex(const CBlockIndex* pindexPrev, int iMinutes);
 static const std::string BUSINESS_OBJECTS = "BUSINESS_OBJECTS";
 static const int SSL_PORT = 443;
 static const int APM_REWARD = 7;
+static const int APM2_REWARD = 2500;
 static const int MINIMUM_EMAIL_LENGTH = 5; 
 static const int BLOCKS_PER_DAY = 205;
 static const int SANCTUARY_COLLATERAL = 4500001;
@@ -161,6 +162,11 @@ static const int BIBLE_BOOKS_COUNT = 65;
 static const int BIBLE_VERSE_COUNT = 99;
 static const int GSC_MIN_CONFIRMS = 5;
 static const double GSC_DUST = .01;
+static const int MAX_EMAIL_AGE = 60 * 60 * 24 * 30;
+
+extern std::string msPagedFrom;
+extern int mlPaged;
+extern int mlPagedEncrypted;
 
 extern int PRAYER_MODULUS;
 extern int miGlobalPrayerIndex;
@@ -168,14 +174,19 @@ extern int miGlobalDiaryIndex;
 extern SecureString msEncryptedString;
 extern std::string sOS;
 extern bool fEnforceSanctuaryPort;
+extern bool fWarmBootFinished;
+
 extern std::string msGithubVersion;
 extern std::string msLanguage;
 extern std::string msSessionID;
+extern std::string msMyInternalEmailAddress;
 extern std::string msMasterNodeLegacyPrivKey;
 extern std::string msGlobalStatus;
 extern std::string msGlobalStatus2;
 extern std::string msGlobalStatus3;
 extern std::string sGlobalPoolURL;
+class CEmail;
+extern std::map<uint256, CEmail> mapEmails;
 
 struct QueuedProposal;
 extern std::vector<QueuedProposal> mvQueuedProposals;
@@ -254,7 +265,7 @@ extern bool fLargeWorkInvalidChainFound;
 extern int nSideChainHeight;
 
 extern std::map<uint256, int64_t> mapRejectedBlocks;
-extern std::map<std::pair<std::string, std::string>, std::pair<std::string, int64_t>> mvApplicationCache;
+extern std::map<std::string, std::pair<std::string, int64_t>> mvApplicationCache;
 
 struct IPFSTransaction;
 struct POSEScore;
@@ -264,6 +275,8 @@ struct DashUTXO;
 extern std::map<std::string, IPFSTransaction> mapSidechainTransactions;
 extern std::map<std::string, DashUTXO> mapDashUTXO;
 extern std::map<std::string, int> mapPOOSStatus;
+extern std::map<uint256, int> mapUTXOStatus;
+extern bool fUTXOSTested;
 extern std::atomic<bool> fDIP0001ActiveAtTip;
 extern std::map<std::string, Researcher> mvResearchers;
 

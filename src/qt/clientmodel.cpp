@@ -196,6 +196,12 @@ void ClientModel::updateNumConnections(int numConnections)
     Q_EMIT numConnectionsChanged(numConnections);
 }
 
+void ClientModel::updateChatEvent(QString sMessage)
+{
+	Q_EMIT chatEvent(sMessage);
+} 
+
+
 void ClientModel::updateNetworkActive(bool networkActive)
 {
     Q_EMIT networkActiveChanged(networkActive);
@@ -316,6 +322,13 @@ static void NotifyNumConnectionsChanged(ClientModel *clientmodel, int newNumConn
                               Q_ARG(int, newNumConnections));
 }
 
+static void NotifyChatEvent(ClientModel *clientmodel, std::string sMessage)
+{
+	QMetaObject::invokeMethod(clientmodel, "updateChatEvent", Qt::QueuedConnection,
+		 Q_ARG(QString, GUIUtil::TOQS(sMessage)));
+}
+
+
 static void NotifyNetworkActiveChanged(ClientModel *clientmodel, bool networkActive)
 {
     QMetaObject::invokeMethod(clientmodel, "updateNetworkActive", Qt::QueuedConnection,
@@ -386,6 +399,7 @@ void ClientModel::subscribeToCoreSignals()
     uiInterface.NotifyBlockTip.connect(boost::bind(BlockTipChanged, this, _1, _2, false));
     uiInterface.NotifyHeaderTip.connect(boost::bind(BlockTipChanged, this, _1, _2, true));
     uiInterface.NotifyMasternodeListChanged.connect(boost::bind(NotifyMasternodeListChanged, this, _1));
+	uiInterface.NotifyChatEvent.connect(boost::bind(NotifyChatEvent, this, _1));
     uiInterface.NotifyAdditionalDataSyncProgressChanged.connect(boost::bind(NotifyAdditionalDataSyncProgressChanged, this, _1));
 }
 
@@ -401,4 +415,5 @@ void ClientModel::unsubscribeFromCoreSignals()
     uiInterface.NotifyHeaderTip.disconnect(boost::bind(BlockTipChanged, this, _1, _2, true));
     uiInterface.NotifyMasternodeListChanged.disconnect(boost::bind(NotifyMasternodeListChanged, this, _1));
     uiInterface.NotifyAdditionalDataSyncProgressChanged.disconnect(boost::bind(NotifyAdditionalDataSyncProgressChanged, this, _1));
+	uiInterface.NotifyChatEvent.disconnect(boost::bind(NotifyChatEvent, this, _1));
 }

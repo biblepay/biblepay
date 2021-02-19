@@ -35,6 +35,7 @@ class UnitDisplayStatusBarControl;
 class WalletFrame;
 class WalletModel;
 class HelpMessageDialog;
+class MenuDialog;
 class ModalOverlay;
 
 class CWallet;
@@ -113,13 +114,20 @@ private:
 	QAction *webAction;
 	QAction *OneClickMiningAction;
 	QAction *sinnerAction;
+	QAction *univAction;
 	QAction *TheLordsPrayerAction;
 	QAction *TheApostlesCreedAction;
 	QAction *TheNiceneCreedAction;
 	QAction *ReadBibleAction;
 	QAction *TheTenCommandmentsAction;
 	QAction *JesusConciseCommandmentsAction;
+	QAction *openChatGeneralAction;
+	QAction *openChatPMAction;
+	QAction *openChatPMEncryptedAction;
+
 	QAction *proposalAddMenuAction;
+	QAction *userEditMenuAction;
+	QAction *memorizeScriptureMenuAction;
 	QAction *proposalListAction;
 	QAction *businessObjectListMenuAction;
 	// Note: Any orphaned Action results in a crash (pun intended)
@@ -153,6 +161,7 @@ private:
     Notificator *notificator;
     RPCConsole *rpcConsole;
     HelpMessageDialog *helpMessageDialog;
+	MenuDialog *menuDialog;
     ModalOverlay *modalOverlay;
 
 #ifdef Q_OS_MAC
@@ -259,6 +268,8 @@ private Q_SLOTS:
 
 	/** Switch to Proposal Add page */
 	void gotoProposalAddPage();
+	void gotoUserEditPage();
+	void gotoMemorizeScripturePage();
 	void gotoProposalListPage();
 	void OneClickMiningClicked();
 	void gotoBusinessObjectListPage();
@@ -274,6 +285,7 @@ private Q_SLOTS:
 
 	/** DAC - Show built-in prayers or commandments **/
 	void sinnerClicked();
+	void univClicked();
 	void TheLordsPrayerClicked();
 	void TheApostlesCreedClicked();
 	void TheNiceneCreedClicked();
@@ -288,6 +300,11 @@ private Q_SLOTS:
     /** Show debug window */
     void showDebugWindow();
 
+	/** Show Chat window **/
+	void openChatGeneralClicked();
+	void openChatPMClicked();
+	void openChatPMEncryptedClicked();
+	
     /** Show debug window and set focus to the appropriate tab */
     void showInfo();
     void showConsole();

@@ -144,6 +144,8 @@ struct Params {
 	std::string FoundationPODSAddress;
 	std::string FoundationQTAddress;
 	std::string BurnAddress;
+	std::string BurnAddressOrphanDonations;
+	std::string BurnAddressWhaleMatches;
 
 	int nDCCSuperblockStartBlock;
 	int nDCCSuperblockCycle;
@@ -165,6 +167,7 @@ struct Params {
 	int PODC_LAST_BLOCK;
 	int POOM_PHASEOUT_HEIGHT;
 	int POOS_HEIGHT;
+	int TRIBULATION_HEIGHT;
 	// End of Bible Pay Settings
 
     /** Block height and hash at which BIP34 becomes active */

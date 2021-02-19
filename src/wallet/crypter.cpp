@@ -151,6 +151,35 @@ std::string RPAD(std::string sUnpadded, int nLength)
 	return sUnpadded;
 }
 
+std::string DecryptAES256WithIV(std::string s64, std::string sKey, std::string sIV)
+{
+	std::string sEnc = DecodeBase64(s64);
+	sKey = RPAD(sKey, 32);
+	SecureString sSCKey(sKey.c_str());
+    SecureString sValue;
+    if(!DecryptAES256(sSCKey, sEnc, sIV, sValue))
+    {
+		return "-1";
+    }
+    return sValue.c_str();
+}
+
+std::string EncryptAES256WithIV(std::string sPlaintext, std::string sKey, std::string sIV)
+{
+	sKey = RPAD(sKey, 32);
+	SecureString sSCKey(sKey.c_str());
+	std::string sCipherValue;
+	SecureString SCPlainText(sPlaintext.c_str());
+	bool fSuccess = EncryptAES256(sSCKey, SCPlainText, sIV, sCipherValue);
+	if (!fSuccess)
+	{
+		return "-1";
+	}
+	std::string sEnc = EncodeBase64(sCipherValue);
+	return sEnc;
+}
+
+
 std::string DecryptAES256(std::string s64, std::string sKey)
 {
 	std::string sIV = "eb5a781ea9da2ef3";
@@ -187,7 +216,7 @@ std::string EncryptAES256(std::string sPlaintext, std::string sKey)
 bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, const std::string& sIV, std::string& sCiphertext)
 {
     // Verify key sizes
-    if(sKey.size() != 32 || sIV.size() != AES_BLOCKSIZE) {
+    if(sKey.size() != 32 || (sIV.size() != AES_BLOCKSIZE && !sIV.empty())) {
         LogPrintf("crypter EncryptAES256 - Invalid key or block size: Key: %d sIV:%d for %f\n", sKey.size(), sIV.size(), AES_BLOCKSIZE);
         return false;
     }
@@ -197,7 +226,14 @@ bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, con
     sCiphertext.resize(sPlaintext.size() + AES_BLOCKSIZE);
 
     AES256CBCEncrypt enc((const unsigned char*) &sKey[0], (const unsigned char*) &sIV[0], true);
-    size_t nLen = enc.Encrypt((const unsigned char*) &sPlaintext[0], sPlaintext.size(), (unsigned char*) &sCiphertext[0]);
+
+	if (sIV.empty())
+	{
+		unsigned char iv[16] = { 0x0 };
+		AES256CBCEncrypt enc((const unsigned char*) &sKey[0], (unsigned char*) &iv, true);
+	}
+
+	size_t nLen = enc.Encrypt((const unsigned char*) &sPlaintext[0], sPlaintext.size(), (unsigned char*) &sCiphertext[0]);
     if(nLen < sPlaintext.size())
         return false;
     sCiphertext.resize(nLen);
@@ -283,8 +319,8 @@ static bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<u
 bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, const std::string& sIV, SecureString& sPlaintext)
 {
     // Verify key sizes
-    if(sKey.size() != 32 || sIV.size() != AES_BLOCKSIZE) {
-        LogPrintf("crypter DecryptAES256 - Invalid key or block size\n");
+	if(sKey.size() != 32 || (sIV.size() != AES_BLOCKSIZE && !sIV.empty())) {
+          LogPrintf("crypter DecryptAES256 - Invalid key or block size\n");
         return false;
     }
 
@@ -294,6 +330,13 @@ bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, con
     sPlaintext.resize(nLen);
 
     AES256CBCDecrypt dec((const unsigned char*) &sKey[0], (const unsigned char*) &sIV[0], true);
+
+	if (sIV.empty())
+	{
+		unsigned char iv[16] = { 0x0 };
+		AES256CBCEncrypt DEC((const unsigned char*) &sKey[0], (unsigned char*) &iv, true);
+	}
+
     nLen = dec.Decrypt((const unsigned char*) &sCiphertext[0], sCiphertext.size(), (unsigned char*) &sPlaintext[0]);
     if(nLen == 0)
         return false;
@@ -455,6 +498,17 @@ std::vector<char> ReadAllBytes(char const* filename)
     return result;
 }
 
+int64_t GETFILESIZE2(std::string sPath)
+{
+	// Due to Windows taking up "getfilesize" we changed this to uppercase.
+	if (!boost::filesystem::exists(sPath)) 
+		return 0;
+	if (!boost::filesystem::is_regular_file(sPath))
+		return 0;
+	return (int64_t)boost::filesystem::file_size(sPath);
+}
+
+
 std::string GetSANDirectory3()
 {
 	 boost::filesystem::path pathConfigFile(GetArg("-conf", GetConfFileName()));
@@ -469,7 +523,7 @@ std::string GetSANDirectory3()
 	 return sDir;
 }
 
-unsigned char *RSA_ENCRYPT_CHAR(std::string sPubKeyPath, unsigned char *plaintext, int plaintext_length, int& cipher_len, std::string& sError)
+unsigned char *RSA_ENCRYPT_CHAR(std::string sPubKeyPath, unsigned char *plaintext, int plaintext_length, int& cipher_len, int& rsa_len, std::string& sError)
 {
 	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 	EVP_CIPHER_CTX_init(ctx);
@@ -498,6 +552,7 @@ unsigned char *RSA_ENCRYPT_CHAR(std::string sPubKeyPath, unsigned char *plaintex
 	/* compute max ciphertext len, see man EVP_CIPHER */
 	int max_cipher_len = plaintext_length + EVP_CIPHER_CTX_block_size(ctx) - 1;
 	ciphertext = (unsigned char*)malloc(size_header + max_cipher_len);
+	rsa_len = size_header + max_cipher_len;
 	/* Write out the encrypted key length, then the encrypted key, then the iv (the IV length is fixed by the cipher we have chosen). */
 	int pos = 0;
 	memcpy(ciphertext + pos, &eklen_n, sizeof(eklen_n));
@@ -539,7 +594,8 @@ void RSA_Encrypt_File(std::string sPubKeyPath, std::string sSourcePath, std::str
 	unsigned char *long_ciphertext = (unsigned char *)malloc(uData.size() + 10000);
 	memcpy(long_ciphertext, &uData[0], uData.size());
 	size_t messageLength = uData.size() + 10000;
-	ciphertext = RSA_ENCRYPT_CHAR(sPubKeyPath, long_ciphertext, messageLength, cipher_len, sError);
+	int rsa_len = 0;
+	ciphertext = RSA_ENCRYPT_CHAR(sPubKeyPath, long_ciphertext, messageLength, cipher_len, rsa_len, sError);
 	if (sError.empty())
 	{
 		std::ofstream fd(sEncryptPath.c_str());
@@ -577,10 +633,11 @@ unsigned char *RSA_DECRYPT_CHAR(std::string sPriKeyPath, unsigned char *cipherte
 	memcpy(iv, ciphertext + pos, EVP_CIPHER_iv_length(EVP_des_ede_cbc()));
 	pos += EVP_CIPHER_iv_length(EVP_des_ede_cbc());
 	int total_len = 0;
-	// Now we have our encrypted_key and the iv we can decrypt the reamining
+	// Now we have our encrypted_key and the iv we can decrypt the remaining
 	if (!EVP_OpenInit(ctx, EVP_des_ede_cbc(), encrypted_key, encrypted_key_length, iv, pkey))
 	{
-		fprintf(stderr, "RSADecrypt::EVP_OpenInit: failed.\n");
+		LogPrintf("Key file loc %s", sPriKeyPath.c_str());
+		fprintf(stderr, "RSADecrypt::EVP_OpenInit: failed. \n");
 		sError = "EVP_OpenInit Failed.";
 		return plaintext;
 	}
@@ -629,33 +686,112 @@ void RSA_Decrypt_File(std::string sPrivKeyPath, std::string sSourcePath, std::st
 }
 
 
+int FindLoc(std::string sData)
+{
+	if (sData.empty() || sData.length() < 2)
+		return 0;
+
+	for (int i = 0; i < sData.length()-1; i++)
+	{
+		int iChar = sData.at(i);
+		int iChar2 = sData.at(i+1);
+		if (iChar == (char)1 && iChar2 == (char)1)
+			return i;
+	}
+	return 0;
+}
+
 std::string RSA_Encrypt_String(std::string sPubKeyPath, std::string sData, std::string& sError)
 {
-	std::string sEncPath =  GetSANDirectory3() + "temp";
-	std::ofstream fd(sEncPath.c_str());
-	fd.write(sData.c_str(), sizeof(char)*sData.size());
+	int64_t nSz = GETFILESIZE2(sPubKeyPath);
+	if (nSz <= 0)
+	{
+		sError = "Public Key File does not exist.";
+		return "-1";
+	}
+	if (sData.empty())
+	{
+		sError = "Source data empty";
+		return "-3";
+	}
+
+	int cipher_len = 0;
+	std::vector<unsigned char> mData(sData.begin(), sData.end());
+	mData.push_back((char)1);
+	mData.push_back((char)1);
+	int rsa_len = 0;
+	unsigned char *z3 = RSA_ENCRYPT_CHAR(sPubKeyPath, &mData[0], mData.size(), cipher_len, rsa_len, sError);
+	std::string sHex = HexStr(z3, z3 + rsa_len);
+    return sHex;
+}
+
+std::string RSA_Encrypt_String_With_Key(std::string sPubKey, std::string sData, std::string& sError)
+{
+	if (sPubKey.empty())
+	{
+		sError = "Public Key Empty";
+		return "-2";
+	}
+	std::string sPath = GetSANDirectory3();
+	std::string sPubKeyPath = sPath + "pubkey_temp.pub";
+	std::ofstream fd(sPubKeyPath.c_str());
+	fd.write((const char*)sPubKey.c_str(), sPubKey.length());
 	fd.close();
-	std::string sTargPath = GetSANDirectory3() + "temp_enc";
-	RSA_Encrypt_File(sPubKeyPath, sEncPath, sTargPath, sError);
-	if (!sError.empty()) return "";
-	std::vector<char> vOut = ReadAllBytes(sTargPath.c_str());
-	std::string sResults(vOut.begin(), vOut.end());
-	return sResults;
+	std::string newData = RSA_Encrypt_String(sPubKeyPath, sData, sError);
+	return newData;
+}
+
+std::string RSA_Decrypt_String_With_Key(std::string sPrivKey, std::string sData, std::string& sError)
+{
+	if (sPrivKey.empty())
+	{
+		sError = "Private Key Empty";
+		return "-2";
+	}
+	if (sData.empty())
+	{
+		sError = "Encryption data empty.";
+		return "-4";
+	}
+	std::string sPath = GetSANDirectory3();
+	std::string sPrivKeyPath = sPath + "privkey_temp.priv";
+	std::ofstream fd(sPrivKeyPath.c_str());
+	fd.write((const char*)sPrivKey.c_str(), sPrivKey.length());
+	fd.close();
+	std::string newData = RSA_Decrypt_String(sPrivKeyPath, sData, sError);
+	return newData;
 }
 
 std::string RSA_Decrypt_String(std::string sPrivKeyPath, std::string sData, std::string& sError)
 {
-	std::string sEncPath =  GetSANDirectory3() + "temp_dec";
-	std::ofstream fd(sEncPath.c_str());
-	fd.write(sData.c_str(), sizeof(char)*sData.size());
-
-	fd.close();
-	std::string sTargPath = GetSANDirectory3() + "temp_dec_unenc";
-	RSA_Decrypt_File(sPrivKeyPath, sEncPath, sTargPath, sError);
-	if (!sError.empty()) return "";
-	std::vector<char> vOut = ReadAllBytes(sTargPath.c_str());
-	std::string sResults(vOut.begin(), vOut.end());
-	return sResults;
+	int64_t nSz = GETFILESIZE2(sPrivKeyPath);
+	if (nSz <= 0)
+	{
+		sError = "Private Key not found";
+		return "-1";
+	}
+	if (sData.empty())
+	{
+		sError = "Decryption data empty.";
+		return "-5";
+	}
+	std::vector<unsigned char> v = ParseHex(sData);
+	if (v.size() < 2)
+	{
+		sError = "Decryption hex empty";
+		return "-6";
+	}
+	int plaintext_len = 0;
+	unsigned char *dec1 = RSA_DECRYPT_CHAR(sPrivKeyPath, &v[0], v.size(), plaintext_len, sError);
+	std::string strDec(reinterpret_cast<char*>(dec1), plaintext_len);
+	int iLoc = FindLoc(strDec);
+	if (iLoc < 1)
+	{
+		sError = "Decryption markers empty.";
+		return "-7";
+	}
+	std::string sFinal = strDec.substr(0, iLoc);
+	return sFinal;
 }
 
 

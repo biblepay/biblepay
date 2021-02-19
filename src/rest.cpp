@@ -71,6 +71,7 @@ static bool RESTERR(HTTPRequest* req, enum HTTPStatusCode status, std::string me
 {
 	req->WriteHeader("Content-Type", "text/plain");
 	req->WriteHeader("Access-Control-Allow-Origin", "*");
+	LogPrintf("\nResterr %s", message);
 	req->WriteReply(status, message + "\r\n");
 	return false;
 }
@@ -138,6 +139,8 @@ static bool rest_headers(HTTPRequest* req,
     const RetFormat rf = ParseDataFormat(param, strURIPart);
     std::vector<std::string> path;
     boost::split(path, param, boost::is_any_of("/"));
+
+	LogPrintf("\nRest_Headers Param %s", param);
 
     if (path.size() != 2)
         return RESTERR(req, HTTP_BAD_REQUEST, "No header count specified. Use /rest/headers/<count>/<hash>.<ext>.");
@@ -458,6 +461,7 @@ static bool rest_mempool_imagetest(HTTPRequest* req, const std::string& strURIPa
         return false;
     std::string param;
     const RetFormat rf = ParseDataFormat(param, strURIPart);
+	LogPrintf("\nrest_mempool uripart %s param %s ", strURIPart, param);
 
     switch (rf) {
     case RF_JSON: {
@@ -776,6 +780,7 @@ static const struct {
       {"/rest/chaininfo", rest_chaininfo},
       {"/rest/mempool/info", rest_mempool_info},
 	  {"/rest/mempool/imagetest", rest_mempool_imagetest},
+	  {"/rest/1", rest_mempool_imagetest},
       {"/rest/mempool/contents", rest_mempool_contents},
 	  {"/rest/pushtx/", rest_pushtx},
 	  {"/rest/getaddressutxos/", rest_getaddressutxos},

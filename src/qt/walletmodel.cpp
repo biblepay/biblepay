@@ -7,6 +7,7 @@
 
 #include "addresstablemodel.h"
 #include "consensus/validation.h"
+#include "smartcontract-server.h"
 #include "guiconstants.h"
 #include "guiutil.h"
 #include "paymentserver.h"
@@ -258,6 +259,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 	std::string sOptPrayer;
 	bool fDiaryEntry = false;
 	bool fDWS = false;
+	bool fDonate = false;
     const Consensus::Params& consensusParams = Params().GetConsensus();
 	CAmount nSundries = 0;
 	CAmount nDWSAmount = 0;
@@ -272,6 +274,9 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 
 		if (rcp.fDWS)
 			fDWS = true;
+
+		if (rcp.fDonate)
+			fDonate = true;
 
         if (rcp.paymentRequest.IsInitialized())
         {   // PaymentRequest...
@@ -346,6 +351,51 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         }
     }
 
+	// DAC Donate Process
+	if (fDonate)
+	{
+		std::map<std::string, Orphan> mapOrphans;
+		std::map<std::string, Expense> mapExpenses;
+		std::map<std::string, double> mapDAC = DACEngine(mapOrphans, mapExpenses);
+		int iPos = 0;
+		if (mapDAC.size() > 0 && total > 0)
+		{
+			setAddress.clear();
+			nAddresses=0;
+			double nMyTotalGift = (double)total/COIN;
+			for (auto dacAllocation : mapDAC)
+			{
+				std::string sAllocatedCharity = dacAllocation.first;
+				double nPct = dacAllocation.second;
+				double nAllocationAmount = nMyTotalGift * nPct;
+				if (nPct <= 1 && nAllocationAmount > 0)
+				{
+					iPos++;
+					bool fSubFee = vecSend[0].fSubtractFeeFromAmount;
+					CScript spkDAC = GetScriptForDestination(CBitcoinAddress(sAllocatedCharity).Get());
+					CAmount nTithe = nAllocationAmount * COIN;
+					CRecipient recDAC = {spkDAC, nTithe, fSubFee};
+					std::string sAddrF = PubKeyToAddress(spkDAC);
+					setAddress.insert(GUIUtil::TOQS(sAddrF));
+					recDAC.txtMessage = vecSend[0].txtMessage;
+					if (iPos == 1)
+					{
+						std::string sGiftXML = "<gift><amount>" + RoundToString(nMyTotalGift, 2) + "</amount></gift>";
+						recDAC.txtMessage = sGiftXML;
+						sOptPrayer += sGiftXML;
+						vecSend[0] = recDAC;
+					}
+					else
+					{
+						vecSend.push_back(recDAC);
+					}
+					++nAddresses;
+
+				}
+			}
+		}
+	}
+
 	// This should never really happen, yet another safety check, just in case.
     if (wallet->IsLocked() && !fDiaryEntry)
 	{
@@ -378,6 +428,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 
     if(setAddress.size() != nAddresses)
     {
+		//1-4-2021
         return DuplicateAddress;
     }
 

@@ -86,6 +86,9 @@ public:
     /** Number of network connections changed. */
     boost::signals2::signal<void (int newNumConnections)> NotifyNumConnectionsChanged;
 
+    /** Chat Event */
+	boost::signals2::signal<void (std::string sMessage)> NotifyChatEvent;
+
     /** Network activity state changed. */
     boost::signals2::signal<void (bool networkActive)> NotifyNetworkActiveChanged;
 

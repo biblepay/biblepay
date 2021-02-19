@@ -256,7 +256,7 @@ void SetCurrencyName(std::string sEXE)
 {
 	boost::to_lower(sEXE);
 	msEXE = sEXE;
-	bool fDAC = Contains2(msEXE, "dac");
+	bool fDAC = Contains2(msEXE, "dac") && false;
 
 	if (fDAC)
 	{

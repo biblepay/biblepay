@@ -3035,10 +3035,7 @@ bool CWallet::SelectCoins(const std::vector<COutput>& vAvailableCoins, const CAm
 				nInputsConsumed++;
 			}
 			if (nInputsConsumed > MAX_GSC_INPUTS)
-			{
-				LogPrintf("\nUsed more than %f inputs in SelectCoins!", nInputsConsumed);
 				break;
-			}
 			if (nFoundCoinAge > nMinCoinAge && nTotalRequired >= nMinSpend && nValueRet >= nTargetValue) 
 				break;
 		}
@@ -3606,6 +3603,43 @@ std::vector<COutput> CWallet::GetExternalPurseBalance(std::string sPurseAddress,
 	return vOut;
 }
 
+std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress, CAmount& nReturnAmount)
+{
+	CAmount MIN_UTXO_AMOUNT = 10000 * COIN;
+	CAmount MAX_UTXO_AMOUNT = 10000000 * COIN;
+	std::vector<COutput> vAvailableCoins;
+	bool fUseInstantSend = false;
+	double nMinCoinAge = 0;
+	LOCK2(cs_main, cs_wallet);
+    {
+	    AvailableCoins(vAvailableCoins, true, NULL, false, ALL_COINS, fUseInstantSend, nMinCoinAge, 0);
+	}
+	double nFoundCoinAge = 0;
+	std::sort(vAvailableCoins.rbegin(), vAvailableCoins.rend(), CompareByCoinAge());
+	std::string sUTXO;
+
+	BOOST_FOREACH(const COutput& out, vAvailableCoins)
+    {
+		if(!out.fSpendable)
+                continue;
+		const CWalletTx *pcoin = out.tx;
+		CAmount nAmount = pcoin->tx->vout[out.i].nValue;
+		std::string sRecip = PubKeyToAddress(pcoin->tx->vout[out.i].scriptPubKey);
+
+		int nDepth = pcoin->GetDepthInMainChain();
+		double nAge = 0;
+		double nWeight = GetCoinWeight(out, nAge);
+		if (nAge >= nMinAge && nAmount >= MIN_UTXO_AMOUNT && nAmount <= MAX_UTXO_AMOUNT && nAmount > (nMinimumAmount + (1*COIN)))
+		{
+			sUTXO = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
+			sAddress = sRecip;
+			nReturnAmount = nAmount;
+			return sUTXO;
+		}
+	}
+	
+	return sUTXO;
+}
 
 double CWallet::GetAntiBotNetWalletWeight(double nMinCoinAge, CAmount& nTotalRequired)
 {
@@ -3899,7 +3933,23 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
 
 						if (!sOptPrayerData.empty() && txNew.vout.size() > 0)
 						{
-							txNew.vout[0].sTxOutMessage = sOptPrayerData;
+							// R Andrews - Distribute extremely long messages over multiple transactions
+							/*
+							if (sOptPrayerData.length() > 3000)
+							{
+								double nReq = ceil(sOptPrayerData.length() / 3000);
+								for (int iReq = 0; iReq < nReq && iReq < txNew.vout.size(); iReq++)
+								{
+									int nPointer = ((iReq) * 3000) + 1;
+									std::string sChunk = Mi(sOptPrayerData, nPointer, 3000);
+									txNew.vout[iReq].sTxOutMessage = sChunk;
+								}
+							}
+							else
+							*/
+							{
+								txNew.vout[0].sTxOutMessage = sOptPrayerData;
+							}
 						}
                         // Never create dust outputs; if we would, just
                         // add the dust to the fee.

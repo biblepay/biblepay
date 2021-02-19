@@ -51,6 +51,8 @@ ProposalAddDialog::ProposalAddDialog(const PlatformStyle *platformStyle, QWidget
 	ui->cmbExpenseType->addItem("P2P");
 	ui->cmbExpenseType->addItem("IT");
 	ui->cmbExpenseType->addItem("SPORK");
+	ui->cmbExpenseType->addItem("XSPORK-ORPHAN");
+	ui->cmbExpenseType->addItem("XSPORK-CHARITY");
  }
 
 

@@ -61,9 +61,9 @@ std::string CActiveMasternodeManager::GetStatus() const
 
 void CActiveMasternodeManager::Init()
 {
-    LOCK(cs_main);
-
+    
     if (!fMasternodeMode) return;
+	LOCK(cs_main);
 
 	if (chainActive.Tip()->nHeight < Params().GetConsensus().DIP0003Height)
 		return;
@@ -136,7 +136,7 @@ void CActiveMasternodeManager::UpdatedBlockTip(const CBlockIndex* pindexNew, con
 
 	if (pindexNew->nHeight < Params().GetConsensus().LLMQHeight)
 		return;
-	 
+
     if (state == MASTERNODE_READY) {
         auto oldMNList = deterministicMNManager->GetListForBlock(pindexNew->pprev);
         auto newMNList = deterministicMNManager->GetListForBlock(pindexNew);

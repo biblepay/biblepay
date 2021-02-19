@@ -1539,6 +1539,295 @@ UniValue getpobhhash(const JSONRPCRequest& request)
 	return results;
 }
 
+std::string GetSymbolFromAddress(std::string sAddress)
+{
+	// Return the cryptocurrency symbol from a base58 address:
+	std::string sSymbol;
+	if (sAddress.empty() || sAddress.length() < 34)
+	{
+		return "N/A";
+	}
+	std::string sPrefix = sAddress.substr(0, 1);
+	if (sPrefix == "B")
+	{
+		sSymbol = "BBP";
+	}
+	else if (sPrefix == "X")
+	{
+		sSymbol = "DASH";
+	}
+	else if (sPrefix == "M" || sPrefix == "L")
+	{
+		sSymbol = "LTC";
+	}
+	else if (sPrefix ==  "D")
+	{
+		sSymbol = "DOGE";
+	}
+	else if (sPrefix == "1")
+	{
+		sSymbol = "BTC";
+	}
+	else
+	{
+		sSymbol = "N/A";
+	}
+	return sSymbol;
+}
+
+UniValue easystake(const JSONRPCRequest& request)
+{
+	// Jan 20, 2021 - Easy Stake - R ANDREWS - BIBLEPAY
+		
+	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real";
+	std::string sError;
+	if (request.fHelp || (request.params.size() != 4))
+		throw std::runtime_error(sHelp.c_str());
+		
+	double nMin = cdbl(request.params[0].getValStr(), 2);
+	std::string sBBPAddress;
+	CAmount nBBPReturnAmount = 0;
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	if (sBBPUTXO.empty())
+	{
+		// They dont have one with 1+ day of age; try one without age
+		LogPrintf("\nEasyStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
+		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+	}
+	if (sBBPUTXO.empty())
+	{
+		sError = "Unable to find a BBP UTXO greater than " + RoundToString(nMin, 2) + ".";
+		throw std::runtime_error(sError);
+	}
+	UniValue results(UniValue::VOBJ);
+
+	results.push_back(Pair("BBP UTXO", sBBPUTXO));
+	results.push_back(Pair("BBP Address", sBBPAddress));
+	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
+	std::string sForeignAddress = request.params[1].getValStr();
+	std::string sForeignTicker = GetSymbolFromAddress(sForeignAddress);
+	
+	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
+	bool fDryRun = cdbl(request.params[3].getValStr(), 0) == 0;
+	bool fReturnFirst = (nForeignAmount == -1);
+	// Find the UTXO by amount
+	SimpleUTXO s = QueryUTXO(GetAdjustedTime(), nForeignAmount, sForeignTicker, sForeignAddress, "", 0, sError, fReturnFirst);
+	results.push_back(Pair("Foreign Symbol", sForeignTicker));
+
+	results.push_back(Pair("Foreign Amount", (double)s.nAmount/COIN));
+	results.push_back(Pair("Foreign UTXO", s.TXID));
+	results.push_back(Pair("Foreign Ordinal", s.nOrdinal));
+	
+	int nStakeCount = sForeignTicker.empty() ? 1 : 2;
+	double nDWU = CalculateUTXOReward(nStakeCount);
+	PriceQuote p = GetPriceQuote(sForeignTicker, nBBPReturnAmount, s.nAmount);
+
+	results.push_back(Pair("Foreign Value USD", p.nForeignValueUSD));
+	results.push_back(Pair("BBP Value USD", p.nBBPValueUSD));
+	results.push_back(Pair("DWU", nDWU * 100));
+
+	double nPin = AddressToPin(sForeignAddress);
+	results.push_back(Pair("Pin", nPin));
+	bool fValid = CompareMask2(s.nAmount, nPin);
+	if (!fValid)
+		sError = "The pin is not valid for this receive address.";
+	results.push_back(Pair("pin_valid", fValid));
+	results.push_back(Pair("Error", sError));
+	std::string sTXID;
+	UTXOStake ds;
+
+	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	if (!sError.empty())
+	{
+		results.push_back(Pair("BBP Signing Error", sError));
+		return results;
+	}
+
+	// At this point if it is not a dry run; send it
+	if (!fDryRun && sError.empty())
+	{
+		LockUTXOStakes();
+		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		std::string sForeignUTXO = s.TXID + "-" + RoundToString(s.nOrdinal, 0);
+		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, "", sCPK, false, ds);
+		if (!fSent || !sError.empty())
+		{
+			results.push_back(Pair("Error (Not Sent)", sError));
+		}
+		else
+		{
+			ds = GetUTXOStakeByUTXO(sBBPUTXO);
+			LockUTXOStakes();
+			if (!sForeignTicker.empty())
+			{
+				results.push_back(Pair("Foreign Ticker", sForeignTicker));
+				results.push_back(Pair("Foreign Value USD", ds.nForeignValueUSD)); 
+				results.push_back(Pair("Foreign Amount", (double)ds.nForeignAmount/COIN));
+			}
+			results.push_back(Pair("UTXO Value", ds.nValue));
+			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
+			results.push_back(Pair("TXID", sTXID));
+		}
+	}
+	else
+	{
+		results.push_back(Pair("Dry Run Mode", fDryRun));
+	}
+	return results;
+}
+
+UniValue easybbpstake(const JSONRPCRequest& request)
+{
+	std::string sHelp = "You must specify easybbpstake minimum_bbp_amount 0=dry_run/1=real";
+	std::string sError;
+	if (request.fHelp || (request.params.size() != 2))
+		throw std::runtime_error(sHelp.c_str());
+	double nMin = cdbl(request.params[0].getValStr(), 2);
+	std::string sBBPAddress;
+	CAmount nBBPReturnAmount = 0;
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	if (sBBPUTXO.empty())
+	{
+		// They dont have one with 1+ day of age; try one without age
+		LogPrintf("\nEasyBBPStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
+		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+	}
+	
+	if (sBBPUTXO.empty())
+	{
+		sError = "Unable to find a BBP UTXO greater than " + RoundToString(nMin, 2) + ".";
+		throw std::runtime_error(sError);
+	}
+	UniValue results(UniValue::VOBJ);
+	results.push_back(Pair("BBP UTXO", sBBPUTXO));
+	results.push_back(Pair("BBP Address", sBBPAddress));
+	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
+	double nDWU = CalculateUTXOReward(1);
+	results.push_back(Pair("DWU", nDWU * 100));
+	
+	bool fDryRun = cdbl(request.params[1].getValStr(), 0) == 0;
+
+	PriceQuote p = GetPriceQuote("bbp", nBBPReturnAmount, 0);
+
+	results.push_back(Pair("BBP Value USD", p.nBBPValueUSD));
+
+	std::string sTXID;
+	UTXOStake ds;
+	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	if (!sError.empty())
+	{
+		results.push_back(Pair("BBP Signing Error", sError));
+		return results;
+	}
+
+	// At this point if it is not a dry run; send it
+	if (!fDryRun && sError.empty())
+	{
+		LockUTXOStakes();
+		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		std::string sForeignUTXO = "";
+		bool fSent = SendUTXOStake(0, "", sTXID, sError, sBBPAddress, sBBPUTXO, "", sForeignUTXO, sBBPSig, "", sCPK, false, ds);
+		if (!fSent || !sError.empty())
+		{
+			results.push_back(Pair("Error (Not Sent)", sError));
+		}
+		else
+		{
+			ds = GetUTXOStakeByUTXO(sBBPUTXO);
+			LockUTXOStakes();
+			results.push_back(Pair("UTXO Value", ds.nValue));
+			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
+			results.push_back(Pair("TXID", sTXID));
+		}
+	}
+	else
+	{
+		results.push_back(Pair("Dry Run Mode", fDryRun));
+	}
+
+	return results;
+}
+
+UniValue utxostake(const JSONRPCRequest& request)
+{
+	// UTXO Staking and UTXO mining
+	// This allows you to lock up Y amount of a foreign currency + Z amount of BBP in a contract, and receive daily rewards on this contract.
+
+	// Example:
+	// utxostake BBP_UTXO-ORDINAL DASH_UTXO+ORDINAL DASH_SIGNATURE 0=test/1=authorize
+	// To create a signature, from DASH type:  signmessage dash_public_key DASH-UTXO-ORDINAL <enter>.  Copy the Dash signature into the BiblePay 'dashstake' command.
+
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+		
+	std::string sHelp = "You must specify utxostake BBP_ADDRESS BBP_UTXO-ORDINAL I_AGREE=Authorize [Optional: FOREIGN_TICKER FOREIGN_ADDRESS FOREIGN_UTXO-ORDINAL FOREIGN_CURRENCY_SIGNATURE]\n" + GetHowey(true, false);
+	
+	if (request.fHelp || (request.params.size() != 7 && request.params.size() != 3))
+		throw std::runtime_error(sHelp.c_str());
+		
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+
+	std::string sBBPAddress = request.params[0].get_str();
+	std::string sBBPUTXO = request.params[1].get_str();
+	std::string sAuth = request.params[2].get_str();
+
+	std::string sForeignTicker, sForeignAddress, sForeignUTXO, sForeignSig;
+
+	if (request.params.size() > 3)
+	{
+		sForeignTicker = request.params[3].get_str();
+		sForeignAddress = request.params[4].get_str();
+		sForeignUTXO = request.params[5].get_str();
+		sForeignSig = request.params[6].get_str();
+	}
+
+	std::string sError;
+
+	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	UniValue results(UniValue::VOBJ);
+
+	if (!sError.empty())
+	{
+		results.push_back(Pair("BBP Signing Error", sError));
+		return results;
+	}
+
+	std::string sTXID;
+	UTXOStake ds;
+	if (sAuth == "I_AGREE")
+	{
+		LockUTXOStakes();
+
+		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, sForeignSig, sCPK, false, ds);
+		if (!fSent || !sError.empty())
+		{
+			results.push_back(Pair("Error (Not Sent)", sError));
+		}
+		else
+		{
+			ds = GetUTXOStakeByUTXO(sBBPUTXO);
+			LockUTXOStakes();
+			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
+			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
+
+			if (!sForeignTicker.empty())
+			{
+				results.push_back(Pair("Foreign Ticker", sForeignTicker));
+				results.push_back(Pair("Foreign Value USD", ds.nForeignValueUSD)); //
+				results.push_back(Pair("Foreign Amount", (double)ds.nForeignAmount/COIN));
+			}
+			results.push_back(Pair("UTXO Value", ds.nValue));
+			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
+			results.push_back(Pair("TXID", sTXID));
+		}
+	}
+	else
+	{
+		throw std::runtime_error(sHelp.c_str());
+	}
+	return results;
+}
+
+
 UniValue dashstake(const JSONRPCRequest& request)
 {
 	// Dash Staking
@@ -1597,8 +1886,7 @@ UniValue dashstake(const JSONRPCRequest& request)
 		else
 		{
 			ds = GetDashStakeByUTXO(sBBPUTXO);
-			LockDashStakes();
-			results.push_back(Pair("Monthly Earnings", ds.MonthlyEarnings));
+			LockUTXOStakes();
 			results.push_back(Pair("DWU", ds.ActualDWU * 100));
 			results.push_back(Pair("Next Payment Height", ds.Height + BLOCKS_PER_DAY));
 			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
@@ -1617,6 +1905,36 @@ UniValue dashstake(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue listexpenses(const JSONRPCRequest& request)
+{
+	std::string sHelp = "You must specify listexpenses max_days";
+	UniValue results(UniValue::VOBJ);
+
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error(sHelp.c_str());
+	double nMaxDays = cdbl(request.params[0].get_str(), 0);
+	std::map<std::string, Orphan> mapOrphans;
+	std::map<std::string, Expense> mapExpenses;
+	std::map<std::string, double> mapDAC = DACEngine(mapOrphans, mapExpenses);
+	double nTotalExp = 0;
+	for (auto expense : mapExpenses)
+	{
+		int nType = expense.second.nUSDAmount > 0 ? 0 : 1;
+		std::string sNarr = nType == 0 ? "Exp" : "Rev";
+		int nElapsedDays  = GetAdjustedTime() - expense.second.nTime / 86400;
+		if (nElapsedDays < nMaxDays)
+		{
+			std::string sRow = sNarr + " USD: " + RoundToString(expense.second.nUSDAmount, 2) + " BBP: " + RoundToString(expense.second.nBBPAmount, 2);
+			std::string sKey = expense.second.Added + "-" + expense.second.Charity; 
+			results.push_back(Pair(sKey, sRow));
+			if (expense.second.nUSDAmount > 0)
+				nTotalExp += expense.second.nUSDAmount;
+		}
+
+	}
+	results.push_back(Pair("Total USD Expense", nTotalExp));
+	return results;
+}
 
 UniValue dws(const JSONRPCRequest& request)
 {
@@ -1671,6 +1989,78 @@ UniValue dws(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue getpin(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, etc. \r\n");
+	UniValue results(UniValue::VOBJ);
+	std::string s2 = request.params[0].get_str();
+	if (s2.length() != 34)
+	{
+		throw std::runtime_error("Address must be 34 characters long. ");
+	}
+	double nPin = AddressToPin(s2);
+	results.push_back(Pair("pin", nPin));
+	return results;
+}
+
+UniValue give(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify give amount.  \r\nThis amount will be donated to our decentralized autonomous charity automatically, and auto distributed across our orphans.  To see the current percentages and orphans type exec dacengine.\r\n");
+	UniValue results(UniValue::VOBJ);
+
+	double dGive = cdbl(request.params[0].get_str(), 2);
+    
+	int nChangePosRet = -1;
+	bool fSubtractFeeFromAmount = true;
+	std::vector<CRecipient> vecSend;
+	std::map<std::string, Orphan> mapOrphan;
+	std::map<std::string, Expense> mapExpenses;
+	std::map<std::string, double> mapDAC = DACEngine(mapOrphan, mapExpenses);
+	for (auto dacAllocation : mapDAC)
+	{
+		std::string sAllocatedCharity = dacAllocation.first;
+		double nPct = dacAllocation.second;
+		if (nPct > 0 && nPct <= 1)
+		{
+			// ToDo:  Report to the user the % and Charity Name as we iterate through the gift, and show which orphans were affected by this persons generosity
+			results.push_back(Pair("Allocated Charity", sAllocatedCharity));
+			CBitcoinAddress baCharity(sAllocatedCharity);
+			CScript spkCharity = GetScriptForDestination(baCharity.Get());
+			CAmount nAmount = dGive * nPct * COIN;
+			results.push_back(Pair("Amount", (double)nAmount/COIN));
+			CRecipient recipient = {spkCharity, nAmount, false, fSubtractFeeFromAmount};
+			vecSend.push_back(recipient);
+		}
+	}
+	CAmount nFeeRequired = 0;
+	bool fUseInstantSend = false;
+	std::string sError;
+	CValidationState state;
+	CReserveKey reserveKey(pwalletMain);
+	CWalletTx wtx;
+	std::string sGiftXML = "<gift><amount>" + RoundToString(dGive, 2) + "</amount></gift>";
+	bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, NULL, true, ALL_COINS, fUseInstantSend, 0, sGiftXML);
+	if (!fCreated)    
+	{
+		results.push_back(Pair("Error", sError));
+	}
+	else
+	{
+		if (!pwalletMain->CommitTransaction(wtx, reserveKey, g_connman.get(), state, NetMsgType::TX))
+		{
+			throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
+		}
+	}
+	results.push_back(Pair("txid", wtx.GetHash().GetHex()));
+	if (fCreated)
+	{
+		results.push_back(Pair("Thank You", "May your family be blessed with the richest blessings of Abraham, Isaac and Jacob. "));
+	}
+	return results;
+}
+
 UniValue dashstakequote(const JSONRPCRequest& request)
 {
 	// Dash Whale Staking
@@ -1718,7 +2108,8 @@ UniValue dashstakequote(const JSONRPCRequest& request)
 
 				std::string sKey = ws.CPK + "-" + RoundToString(i + 1, 0) + "-" + ws.BBPUTXO + "-" + ws.DashUTXO;
 
-				results.push_back(Pair(sKey, sRow));
+				if (fPassesPaymentRequirements)
+					results.push_back(Pair(sKey, sRow));
 			}
 		}
 	}
@@ -1742,17 +2133,111 @@ UniValue dashstakequote(const JSONRPCRequest& request)
 	return results;
 }
 
+bool IsStakeInBlock(int nHeight, WhaleStake ws, double& nShortPct)
+{
+	CBlockIndex* pindex = FindBlockByHeight(nHeight);
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	if (!pindex) 
+		return false;
+	CBlock block;
+	std::string sMsg;
+	nShortPct = 0;
+	double nHighAmount = 0;
+	if (ReadBlockFromDisk(block, pindex, consensusParams)) 
+	{
+		double dFoundationDonation = 0;
+		for (unsigned int i = 0; i < block.vtx[0]->vout.size(); i++)
+		{
+			sMsg += block.vtx[0]->vout[i].sTxOutMessage;
+			double dAmount = (double)block.vtx[0]->vout[i].nValue / COIN;
+			bool fWhaleReward = Contains(RoundToString(dAmount, 4), ".1527");
+			std::string sPK = PubKeyToAddress(block.vtx[0]->vout[i].scriptPubKey);
+			if (fWhaleReward && (sPK == ws.ReturnAddress || sPK == ws.CPK) && RoundToString(dAmount, 0) == RoundToString(ws.TotalOwed, 0))
+				return true;
+			if (fWhaleReward && (sPK == ws.ReturnAddress || sPK == ws.CPK))
+			{
+				if (dAmount > nHighAmount)
+					nHighAmount = dAmount;
+			}
+		}
+		if (nHighAmount > 0)
+		{
+			nShortPct = 1 - (nHighAmount / ws.TotalOwed+.0001);
+			if (nShortPct > .99 && nShortPct < 1.01)
+					nShortPct = 1.0;
+			return true;
+		}
+	}
+	if (block.vtx[0]->vout.size() < 5)
+	{
+		nShortPct = 1.01;
+		return false;
+	}
+	nShortPct = 1.0;
+	return false;
+}
+
+UniValue claimreward(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 2))
+		throw std::runtime_error("You must specify claimreward non_biblepay_public_address non_biblepay_signature.");
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	UniValue results(UniValue::VOBJ);
+
+	std::string sPub = request.params[0].get_str();
+	std::string sSig = request.params[1].get_str();
+	// ToDo:  Print the campaign name here along with the coin-type.  For now, we start with DASH (76).
+	int nKeyType = 76;
+	bool fVerified = VerifyNonstandardSignature(sPub, "bbp", sSig, nKeyType);
+	if (!fVerified)
+	{
+		results.push_back(Pair("Results", "Sorry, the signature is invalid.  Please try copying the signature from the source wallet with https://wiki.biblepay.org/Scratchpad.  Maybe it has invalid characters. "));
+	}
+	else
+	{
+		// Check to see if there is a reward to be claimed
+		std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
+		std::string sXML = "<non_bbp_pubkey>" + sPub + "</non_bbp_pubkey><non_bbp_signature>" + sSig + "</non_bbp_signature><non_bbp_keytype>" + RoundToString(nKeyType, 0) 
+			+ "</non_bbp_keytype><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
+		DACResult b = DSQL_ReadOnlyQuery("BMS/CheckReward", sXML);
+		std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
+		std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
+		double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
+		results.push_back(Pair("Outcome", sOutcome));
+		results.push_back(Pair("Narrative", sNarr));
+		results.push_back(Pair("Amount Rewarded", nAmount));
+	}
+	return results;
+}
+
+UniValue newuser(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify newuser emailaddress");
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	UniValue results(UniValue::VOBJ);
+	std::string sEmail = request.params[0].get_str();
+	std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
+	std::string sXML = "<email>" + sEmail + "</email><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
+	DACResult b = DSQL_ReadOnlyQuery("BMS/NewUser", sXML);
+	std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
+	std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
+	double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
+	results.push_back(Pair("Outcome", sOutcome));
+	results.push_back(Pair("Narrative", sNarr));
+	results.push_back(Pair("Amount Rewarded", nAmount));
+	return results;
+}
+
 UniValue dwsquote(const JSONRPCRequest& request)
 {
 	// Dynamic Whale Staking
-	if (request.fHelp || (request.params.size() != 0 && request.params.size() != 1 && request.params.size() != 2))
-		throw std::runtime_error("You must specify dwsquote [optional 1=my whale stakes only, 2=all whale stakes] [optional 1=Include Paid/Unpaid, 2=Include Unpaid only (default)].");
+	if (request.fHelp || (request.params.size() != 0 && request.params.size() != 1 && request.params.size() != 2 && request.params.size() != 3))
+		throw std::runtime_error("You must specify dwsquote [optional 1=my whale stakes only, 2=all whale stakes] [optional 1=Include Paid/Unpaid, 2=Include Unpaid only (default), 3=Paid Only, 4=Paid with Anomolies only] [Optional 1=Advanced Totals,0=Default Totals].");
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	UniValue results(UniValue::VOBJ);
 	double dDetails = 0;
 	double dAdvanced = 0;
-	double dTotal = 0;
-
 	if (request.params.size() > 0)
 		dDetails = cdbl(request.params[0].get_str(), 0);
 	double dPaid = 2;
@@ -1761,7 +2246,9 @@ UniValue dwsquote(const JSONRPCRequest& request)
 
 	if (request.params.size() > 2)
 		dAdvanced = cdbl(request.params[2].get_str(), 0);
-	
+
+	double dTotal = 0;
+	double dTotalImpact = 0;
 	if (dDetails == 1 || dDetails == 2)
 	{
 		std::vector<WhaleStake> w = GetDWS(true);
@@ -1770,14 +2257,38 @@ UniValue dwsquote(const JSONRPCRequest& request)
 		{
 			WhaleStake ws = w[i];
 			bool fIncForPayment = (!ws.paid && dPaid == 2) || (dPaid == 1);
-				if (ws.found && fIncForPayment && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK)))
-				{
-				// results.push_back(Pair("Return Address", ws.ReturnAddress));
-				int nRewardHeight = GetWhaleStakeSuperblockHeight(ws.MaturityHeight);
+			int nRewardHeight = GetWhaleStakeSuperblockHeight(ws.MaturityHeight);
+
+			if (dPaid == 3 || dPaid == 4)
+				fIncForPayment = nRewardHeight < chainActive.Tip()->nHeight;
+			double nShtPct = 0;
+			bool fInBlock = IsStakeInBlock(nRewardHeight, ws, nShtPct);
+			if (nRewardHeight > 1 && nRewardHeight < 233640)
+			{
+				nShtPct = 0;
+				fInBlock = true;
+			}
+
+			if (dPaid == 4 && !(nShtPct > 0))
+				fIncForPayment = false;
+
+			if (ws.found && fIncForPayment && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK)))
+			{
+				std::string sInBlock = ToYesNo(fInBlock);
+				if (nShtPct > 0)
+					sInBlock += " (-" + RoundToString(nShtPct * 100, 2) + "%)";
+				if (nRewardHeight > chainActive.Tip()->nHeight)
+					sInBlock = "FUTURE";
 				std::string sRow = "Burned: " + RoundToString(ws.Amount, 2) + ", Reward: " + RoundToString(ws.TotalOwed, 2) + ", DWU: " 
 					+ RoundToString(ws.ActualDWU*100, 4) + ", Duration: " + RoundToString(ws.Duration, 0) + ", BurnHeight: " + RoundToString(ws.BurnHeight, 0) 
-					+ ", RewardHeight: " + RoundToString(nRewardHeight, 0) + " [" + RoundToString(ws.MaturityHeight, 0) + "], MaturityDate: " + TimestampToHRDate(ws.MaturityTime) + ", ReturnAddress: " + ws.ReturnAddress;
+					+ ", RewardHeight: " + RoundToString(nRewardHeight, 0) + " [" + RoundToString(ws.MaturityHeight, 0) + "], MaturityDate: " + TimestampToHRDate(ws.MaturityTime) 
+					+ ", ReturnAddress: " + ws.ReturnAddress + ", InBlock: " + sInBlock;
 					std::string sKey = ws.CPK + " " + RoundToString(i+1, 0);
+				if (dPaid == 4)
+				{
+					sRow += ", Impact: " + RoundToString(ws.TotalOwed * nShtPct, 2);
+					dTotalImpact += ws.TotalOwed * nShtPct;
+				}
 				dTotal += ws.Amount;
 
 				// ToDo: Add parameter to show the return_to_address if user desires it
@@ -1785,9 +2296,14 @@ UniValue dwsquote(const JSONRPCRequest& request)
 			}
 		}
 	}
-	results.push_back(Pair("Metrics", "v1.2"));
+	// NOTE:  Rob paid for all anomalies up to block 233640, so we need to cross those off this report for prod.
+	results.push_back(Pair("Metrics", "v1.3"));
 	// Call out for Whale Metrics
 	WhaleMetric wm = GetWhaleMetrics(chainActive.Tip()->nHeight, true);
+	if (dPaid==4)
+	{
+		results.push_back(Pair("Total Impact", dTotalImpact));
+	}
 	if (dAdvanced == 1)
 	{
 		results.push_back(Pair("Total Gross Commitments Due Today", wm.nTotalGrossCommitmentsDueToday));
@@ -1803,13 +2319,31 @@ UniValue dwsquote(const JSONRPCRequest& request)
 	results.push_back(Pair("Total Gross Burns Today", wm.nTotalGrossBurnsToday));
 	
 	results.push_back(Pair("Total Burns Today", wm.nTotalBurnsToday));
-	if (dTotal > 0)
-		results.push_back(Pair("Total Burns in Report", dTotal));
+	results.push_back(Pair("Total Burns in Report", dTotal));
 
 	results.push_back(Pair("30 day DWU", RoundToString(GetDWUBasedOnMaturity(30, wm.DWU) * 100, 4)));
 	results.push_back(Pair("90 day DWU", RoundToString(GetDWUBasedOnMaturity(90, wm.DWU) * 100, 4)));
 	results.push_back(Pair("180 day DWU", RoundToString(GetDWUBasedOnMaturity(180, wm.DWU) * 100, 4)));
 	results.push_back(Pair("365 day DWU", RoundToString(GetDWUBasedOnMaturity(365, wm.DWU) * 100, 4)));
+	return results;
+}
+
+UniValue listdacdonations(const JSONRPCRequest& request)
+{
+	if (request.fHelp || (request.params.size() != 1))
+		throw std::runtime_error("You must specify listdacdonations daylimit.");
+	double dDayLimit = cdbl(request.params[0].get_str(), 0);
+	UniValue results(UniValue::VOBJ);
+
+	std::vector<DACResult> d = GetDataListVector("gift", dDayLimit);
+	CAmount nTotal = 0;
+	for (int i = 0; i < d.size(); i++)
+	{
+		CAmount nAmount = cdbl(d[i].Response, 2) * COIN;
+		nTotal += nAmount;
+		results.push_back(Pair(d[i].PrimaryKey, (double)nAmount/COIN));
+	}
+	results.push_back(Pair("Total", (double)nTotal/COIN));
 	return results;
 }
 
@@ -1836,8 +2370,6 @@ UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 	bool f8000;
 	bool f9000;
 	bool fTitheBlocksActive;
-	//GetMiningParams(pindexPrev->nHeight, f7000, f8000, f9000, fTitheBlocksActive);
-	//const Consensus::Params& consensusParams = Params().GetConsensus();
 	results.push_back(Pair("blockhash", block.GetHash().GetHex()));
 	results.push_back(Pair("nonce", (uint64_t)block.nNonce));
 	results.push_back(Pair("version", block.nVersion));
@@ -1862,6 +2394,36 @@ UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 		results.push_back(Pair("rxheader", ExtractXML(block.RandomXData, "<rxheader>", "</rxheader>")));
 		results.push_back(Pair("rxkey", block.RandomXKey.GetHex()));
 	} 
+	return results;
+}
+
+UniValue listutxostakes(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all/2=spent");
+	UniValue results(UniValue::VOBJ);
+	
+	double nType = cdbl(request.params[0].get_str(), 0);
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
+
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+	for (int i = 0; i < uStakes.size(); i++)
+	{
+		UTXOStake d = uStakes[i];
+		int nStatus = GetUTXOStatus(d.TXID);
+		if (nStatus != -1 || nType == 2)
+		{
+			if ((sCPK == d.CPK && nType == 0 && d.found && d.nValue > 0) || (nType == 1 && d.found && d.nValue > 0) || (nType == 2 && d.found && d.nValue > 0))
+			{
+				std::string sSigs = "Sigs: " + d.SignatureNarr;
+				std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
+					+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
+					+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
+	
+				results.push_back(Pair(d.TXID.GetHex(), sRow));
+			}
+		}
+	}
 	return results;
 }
 
@@ -1928,25 +2490,6 @@ UniValue bls_generate(const JSONRPCRequest& request)
     ret.push_back(Pair("secret", sk.ToString()));
     ret.push_back(Pair("public", sk.GetPublicKey().ToString()));
     return ret;
-}
-
-UniValue newuser(const JSONRPCRequest& request)
-{
-	if (request.fHelp || (request.params.size() != 1))
-		throw std::runtime_error("You must specify newuser emailaddress");
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	UniValue results(UniValue::VOBJ);
-	std::string sEmail = request.params[0].get_str();
-	std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
-	std::string sXML = "<email>" + sEmail + "</email><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
-	DACResult b = DSQL_ReadOnlyQuery("BMS/NewUser", sXML);
-	std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
-	std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
-	double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
-	results.push_back(Pair("Outcome", sOutcome));
-	results.push_back(Pair("Narrative", sNarr));
-	results.push_back(Pair("Amount Rewarded", nAmount));
-	return results;
 }
 
 void bls_fromsecret_help()
@@ -2023,14 +2566,23 @@ static const CRPCCommand commands[] =
 	{ "evo",                "bookname",                     &bookname,                      false, {}  },
 	{ "evo",                "books",                        &books,                         false, {}  },
 	{ "evo",                "datalist",                     &datalist,                      false, {}  },
+	{ "evo",                "claimreward",                  &claimreward,                   false, {}  },
 	{ "evo",                "dashpay",                      &dashpay,                       false, {}  },
 	{ "evo",                "dashstakequote",               &dashstakequote,                false, {}  },
 	{ "evo",                "dashstake",                    &dashstake,                     false, {}  },
+	{ "evo",                "give",                         &give,                          false, {}  },
+	{ "evo",                "getpin",                       &getpin,                        false, {}  },
 	{ "evo",                "dws",                          &dws,                           false, {}  },
 	{ "evo",                "dwsquote",                     &dwsquote,                      false, {}  },
+	{ "evo",                "easystake",                    &easystake,                     false, {}  },
+	{ "evo",                "listutxostakes",               &listutxostakes,                false, {}  },
+	{ "evo",                "listdacdonations",             &listdacdonations,              false, {}  },
+	{ "evo",                "listexpenses",                 &listexpenses,                  false, {}  },
+	{ "evo",                "easybbpstake",                 &easybbpstake,                  false, {}  },
+	{ "evo",                "newuser",                      &newuser,                       false, {}  },
+	{ "evo",                "utxostake",                    &utxostake,                     false, {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,            false, {}  },
 	{ "evo",                "getpobhhash",                  &getpobhhash,                   false, {}  },
-	{ "evo",                "newuser",                      &newuser,                       false, {}  },
     { "evo",                "bls",                          &_bls,                          false, {}  },
     { "evo",                "protx",                        &protx,                         false, {}  },
 	{ "evo",                "createnonfinancialtransaction",&createnonfinancialtransaction, false, {}  },
