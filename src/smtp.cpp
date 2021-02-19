@@ -535,7 +535,7 @@ std::string EmailVectorToString(std::vector<std::string> sVector)
 	return sMyList;
 }
 
-
+int MAX_EMAIL_SIZE = 3000000;
 void smtp_SENDMAIL(std::string sData)
 {
 	if (fDebuggingEmail)
@@ -609,7 +609,7 @@ void smtp_SENDMAIL(std::string sData)
 	LogPrintf("\nSMTP::Send::EMAIL HASH %s Length %f Paid %f ", eHash.GetHex(), e.Body.length(), fPaid);
 	
 
-	if (fPaid && e.Body.length() < 3000000)
+	if (fPaid && e.Body.length() < MAX_EMAIL_SIZE)
 	{
 		e.ProcessEmail();
 		SendEmail(e);

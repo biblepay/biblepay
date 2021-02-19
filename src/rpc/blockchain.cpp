@@ -2055,6 +2055,12 @@ UniValue exec(const JSONRPCRequest& request)
 		h = HashExistsInDataFile("h", sNN);
 		results.push_back(Pair(sNN, h));
 	}
+	else if (sItem == "testverse1")
+	{
+		std::string sRange = request.params[1].get_str();
+		std::string sOutput = GetPopUpVerses(sRange);
+		results.push_back(Pair("output", sOutput));
+	}
 	else if (sItem == "testrsacreate")
 	{
 		RSAKey r = GetMyRSAKey();

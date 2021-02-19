@@ -73,7 +73,7 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	s1 += "\n      <a href='KL_FE'>Final Exam</a>";
 
 	s1 += "\n\n7.  <a href='KGV'>Knowing God's Voice</a> explains how God speaks to men today and how to find His general and specific plans for life.  A Christian model for decision making is presented, along with guidelines for overcoming wrong decisions, steps to take if you have missed the will of God, and methods for dealing with questionable practices. ";
-	s1 += "\n      <a href='xKGV_FE'>Final Exam</a>";
+	s1 += "\n      <a href='KGV_FE'>Final Exam</a>";
 
 	s1 += "\n\n8.  <a href='HSM'>Ministry of the Holy Spirit</a> focuses on the ministry of the Holy Spirit, spiritual fruit, and spiritual gifts.  Students are guided in discovery of their own spiritual gifts and position of ministry in the Body of Christ.";
 	s1 += "\n      <a href='xHSM_FE'>Final Exam</a>";

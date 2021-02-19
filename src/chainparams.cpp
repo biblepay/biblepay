@@ -243,18 +243,18 @@ public:
 		consensus.BIP65Height = 123200; // 00000000000076d8fcea02ec0963de4abfd01e771fec0863f960c2c64fe6f357
 		consensus.BIP66Height = 123200; // 00000000000b1fa2dfa312863570e13fae9ca7b5566cb27e55422620b469aefa
 
-		consensus.DIP0001Height = 280000;
+		consensus.DIP0001Height = 580000;
 		// The correct DIP3 height in PROD (this is the height where sanctuaries are initially registered in DM mode)
 		consensus.DIP0003Height = 133891;
 		// September 2020 Go-Live (POOS)
 		consensus.POOS_HEIGHT = 217000; // Sept 2020 Mandatory Upgrade height
-		consensus.LLMQHeight = 320000; // The first attempt at llmq quorums that conform to voting out bad quorum members
-		consensus.LLMQHeight2 = 320000;
-		consensus.TRIBULATION_HEIGHT = 260000;
+		consensus.LLMQHeight = 580000; // The first attempt at llmq quorums that conform to voting out bad quorum members
+		consensus.LLMQHeight2 = 580000;
+		consensus.TRIBULATION_HEIGHT = 255000;  // Go Live for BiblePay Mandatory 1.5.4.4 - March 1st, 2021
 
-		consensus.DIP0003EnforcementHeight = 320000;
-		consensus.DIP0003HeightPhase2 = 320000;
-		consensus.DIP0008Height = 322000;
+		consensus.DIP0003EnforcementHeight = 580000;
+		consensus.DIP0003HeightPhase2 = 580000;
+		consensus.DIP0008Height = 582000;
 		// End of September 2020 Go-Live (POOS)
 
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 

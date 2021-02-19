@@ -198,7 +198,30 @@ void FinalExamDialog::PopulateQuestion()
 	else
 	{
 		// Training Mode
-		ui->txtAnswer->setPlainText(GUIUtil::TOQS(ExtractAnswer(vecAnswerKey[nCurrentQuestion])));
+		// In Training Mode, if we have any bible verses in the answer, lets include the actual scripture to help the student:
+		std::string sExpandedAnswer = ExtractAnswer(vecAnswerKey[nCurrentQuestion]);
+
+		std::vector<std::string> vSourceScripture = Split(sExpandedAnswer.c_str(), " ");
+		std::string sExpandedVerses;
+		for (int i = 0; i < (int)vSourceScripture.size()-1; i++)
+		{
+			std::string sScrip = vSourceScripture[i] + " " + vSourceScripture[i + 1];
+			sExpandedVerses = GetPopUpVerses(sScrip);
+			double nEV = cdbl(sExpandedVerses, 0);
+			if (nEV == 0 && !sExpandedVerses.empty())
+			{
+				break;
+			}
+			else
+			{
+				sExpandedVerses = std::string();
+			}
+		}
+		if (!sExpandedVerses.empty())
+		{
+			sExpandedAnswer += "\r\n\r\n" + sExpandedVerses;
+		}
+		ui->txtAnswer->setPlainText(GUIUtil::TOQS(sExpandedAnswer));
 	}
 
 	std::string sCaption = fMode == 0  ?  "Switch to TEST Mode" : "Switch to REVIEW Mode";

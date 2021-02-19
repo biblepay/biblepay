@@ -1303,10 +1303,10 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 
 int GetRequiredQuorumLevel(int nHeight)
 {
-	static int MINIMUM_QUORUM_PROD = 10;
-	static int MINIMUM_QUORUM_TESTNET = 3;
+	static int MINIMUM_QUORUM_PROD = 5;
+	static int MINIMUM_QUORUM_TESTNET = 2;
 	int nCount = deterministicMNManager->GetListAtChainTip().GetValidMNsCount();
-	int nReq = nCount * .20;
+	int nReq = nCount * .15;
 	int nMinimumQuorum = fProd ? MINIMUM_QUORUM_PROD : MINIMUM_QUORUM_TESTNET;
 	if (nReq < nMinimumQuorum) nReq = nMinimumQuorum;
 	return nReq;

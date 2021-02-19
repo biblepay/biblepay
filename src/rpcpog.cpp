@@ -21,6 +21,7 @@
 #include "evo/specialtx.h"
 #include "evo/deterministicmns.h"
 #include "rpc/server.h"
+#include "kjv.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
@@ -6666,4 +6667,46 @@ bool HashExistsInDataFile(std::string sDataStoreName, std::string sHash)
 	}
 	streamIn.close();
 	return false;
+}
+
+std::string GetPopUpVerses(std::string sRange)
+{
+	std::vector<std::string> vR = Split(sRange.c_str(), " ");
+	if (vR.size() < 2)
+		return "-1";
+
+	std::string sBook = vR[0];
+	std::string sChapterRange = vR[1];
+	std::vector<std::string> vChap = Split(sChapterRange.c_str(), ":");
+	if (vChap.size() < 2)
+		return "-2";
+
+	double nChapter = cdbl(vChap[0], 0);
+	if (nChapter < 1)
+		return "-3";
+	std::vector<std::string> vChapRange = Split(vChap[1].c_str(), "-");
+	if (vChapRange.size() < 2)
+		return "-4";
+	double nVerseStart = cdbl(vChapRange[0], 0);
+	double nVerseEnd = cdbl(vChapRange[1], 0);
+	if (nVerseStart < 1 || nVerseEnd < 1)
+		return "-5";
+
+	std::string sShortBook = GetBookByName(sBook);
+
+	int iStart = 0;
+	int iEnd = 0;
+	GetBookStartEnd(sShortBook, iStart, iEnd);
+	std::string sTotalVerses = sRange + "\r\n";
+	LogPrintf("\r\nShort Book %s, chapter %f st %f, end %f", sShortBook, nChapter, iStart, iEnd);
+
+	if (nVerseEnd < nVerseStart)
+		nVerseEnd = nVerseStart;
+	for (int j = nVerseStart; j <= nVerseEnd; j++)
+	{
+		std::string sVerse = GetVerseML("EN", sShortBook, nChapter, j, iStart - 1, iEnd);
+		sTotalVerses += sVerse + "\r\n";
+	}
+	return sTotalVerses;
+	
 }

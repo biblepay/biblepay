@@ -563,5 +563,6 @@ PriceQuote GetPriceQuote(std::string sForeignSymbol, CAmount nBBPQty, CAmount nF
 int64_t HRDateToTimestamp(std::string sDate);
 void AppendStorageFile(std::string sDataStoreName, std::string sData);
 bool HashExistsInDataFile(std::string sDataStoreName, std::string sHash);
+std::string GetPopUpVerses(std::string sRange);
 
 #endif
