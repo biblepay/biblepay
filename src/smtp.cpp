@@ -818,7 +818,7 @@ void ThreadPOP3(CConnman& connman)
 	// If you want even more security you can use the biblepay core wallet inbox.  You can also look into opensource e-mail clients like firebird if you do not trust outlook.
 	int nPOP3Port = (int)cdbl(GetArg("-smtpport", "30110"), 0);
 
-	tcp::endpoint pop3_endpoint{tcp::v4(), nPOP3Port};
+	tcp::endpoint pop3_endpoint{tcp::v4(), (unsigned short)nPOP3Port};
 	tcp::acceptor pop3_acceptor{ioservice, pop3_endpoint};
 	LogPrintf("\r\nThreadPOP3::Listening on port %f ", nPOP3Port);
 	std::cout << "\r\nListening on port " << RoundToString(nPOP3Port, 0) << std::endl;
@@ -866,7 +866,7 @@ void ThreadSMTP(CConnman& connman)
 	int nSMTPPort = (int)cdbl(GetArg("-smtpport", "30025"), 0);
 	std::cout << "POP3-Listening " << RoundToString(nSMTPPort, 0) << std::endl;
 
-	tcp::endpoint smtp_endpoint{tcp::v4(), nSMTPPort};
+	tcp::endpoint smtp_endpoint{tcp::v4(), (unsigned short)nSMTPPort};
 	tcp::acceptor smtp_acceptor{ioservice, smtp_endpoint};
 
 	int64_t nTimer = 0;
