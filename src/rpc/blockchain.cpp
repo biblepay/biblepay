@@ -2360,7 +2360,7 @@ UniValue exec(const JSONRPCRequest& request)
 		double nMin = cdbl(request.params[1].getValStr(), 2);
 		std::string sAddress;
 		CAmount nReturnAmount;
-		std::string sUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sAddress, nReturnAmount);
+		std::string sUTXO = pwalletMain->GetBestUTXO(nMin * COIN, .01, sAddress, nReturnAmount);
 		results.push_back(Pair("UTXO", sUTXO));
 		results.push_back(Pair("Address", sAddress));
 		results.push_back(Pair("Amount", (double)nReturnAmount/COIN));

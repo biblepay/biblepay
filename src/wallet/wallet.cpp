@@ -2735,7 +2735,7 @@ double GetCoinWeight(COutput o, double& nAge)
 	return nWeight;
 }
 
- struct CompareByCoinAge
+struct CompareByCoinAge
 {
     bool operator()(const COutput& t1,
                     const COutput& t2) const
@@ -2746,6 +2746,23 @@ double GetCoinWeight(COutput o, double& nAge)
 		return nWeight1 > nWeight2;
     }
 };
+
+
+struct CompareByCoinValue
+{
+    bool operator()(const COutput& t1,
+                    const COutput& t2) const
+    {
+		const CWalletTx *pcoin = t1.tx;
+		CAmount nAmount = pcoin->tx->vout[t1.i].nValue;
+	
+		const CWalletTx *pcoin2 = t2.tx;
+		CAmount nAmount2 = pcoin2->tx->vout[t2.i].nValue;
+	
+		return nAmount > nAmount2;
+    }
+};
+
 
 static void ApproximateBestSubset(std::vector<std::pair<CAmount, std::pair<const CWalletTx*,unsigned int> > >vValue, const CAmount& nTotalLower, const CAmount& nTargetValue,
                                   std::vector<char>& vfBest, CAmount& nBest, bool fUseInstantSend = false, int iterations = 1000)
@@ -3615,7 +3632,9 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 	    AvailableCoins(vAvailableCoins, true, NULL, false, ALL_COINS, fUseInstantSend, nMinCoinAge, 0);
 	}
 	double nFoundCoinAge = 0;
-	std::sort(vAvailableCoins.rbegin(), vAvailableCoins.rend(), CompareByCoinAge());
+	std::sort(vAvailableCoins.rbegin(), vAvailableCoins.rend(), CompareByCoinValue());
+
+
 	std::string sUTXO;
 
 	BOOST_FOREACH(const COutput& out, vAvailableCoins)
@@ -3629,7 +3648,12 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 		int nDepth = pcoin->GetDepthInMainChain();
 		double nAge = 0;
 		double nWeight = GetCoinWeight(out, nAge);
-		if (nAge >= nMinAge && nAmount >= MIN_UTXO_AMOUNT && nAmount <= MAX_UTXO_AMOUNT && nAmount > (nMinimumAmount + (1*COIN)))
+		if (nMinimumAmount % 86)
+		{
+			std::string sForensics = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
+			LogPrintf("GetBestUTXO::TXID %s, Amount %f, Weight %f, Depth %f=", sForensics, nAmount/COIN, nWeight, nDepth);
+		}
+		if (nAge >= nMinAge && nAmount >= MIN_UTXO_AMOUNT && nAmount <= MAX_UTXO_AMOUNT && nAmount > nMinimumAmount)
 		{
 			sUTXO = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
 			sAddress = sRecip;
@@ -3638,7 +3662,9 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 		}
 	}
 	
-	return sUTXO;
+	sAddress = "";
+	nReturnAmount = 0;
+	return "";
 }
 
 double CWallet::GetAntiBotNetWalletWeight(double nMinCoinAge, CAmount& nTotalRequired)

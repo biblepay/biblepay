@@ -90,6 +90,12 @@ void SendCoinsEntry::updateFoundationAddress()
 		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().FoundationPODSAddress));
 	    ui->payAmount->setFocus();
 	}
+	else
+	{
+		ui->payTo->setText("");
+		ui->payAmount->clear();
+        ui->payAmount->setFocus();
+	}
 }
 
 void SendCoinsEntry::updateBurnAddress()
@@ -101,6 +107,13 @@ void SendCoinsEntry::updateBurnAddress()
 	{
 		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().BurnAddress));
 	    ui->payAmount->setFocus();
+	}
+	else
+	{
+		// Clear the to address, so people dont accidentally burn bbp without a utxo-stake (recommended by https://forum.biblepay.org/index.php?topic=517.msg10227#msg10227)
+		ui->payTo->setText("");
+		ui->payAmount->clear();
+        ui->payAmount->setFocus();
 	}
 }
 

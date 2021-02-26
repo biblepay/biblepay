@@ -140,6 +140,22 @@ void FinalExamDialog::StripNumber()
 	ui->txtQuestion->setPlainText(GUIUtil::TOQS(sMyQ));
 }
 
+std::string ScanAnswerForPopUpVerses(std::string sRefText)
+{
+	std::vector<std::string> vSourceScripture = Split(sRefText.c_str(), " ");
+	std::string sExpandedAnswer;
+	for (int i = 0; i < (int)vSourceScripture.size()-1; i++)
+	{
+		std::string sScrip = vSourceScripture[i] + " " + vSourceScripture[i + 1];
+		std::string sExpandedVerses = GetPopUpVerses(sScrip);
+		if (!sExpandedVerses.empty())
+		{
+			sExpandedAnswer += sExpandedVerses + "\r\n\r\n";
+		}
+	}
+	return sExpandedAnswer;
+}
+
 void FinalExamDialog::PopulateQuestion()
 {
 	if (nCurrentQuestion > vecA.size())
@@ -200,27 +216,9 @@ void FinalExamDialog::PopulateQuestion()
 		// Training Mode
 		// In Training Mode, if we have any bible verses in the answer, lets include the actual scripture to help the student:
 		std::string sExpandedAnswer = ExtractAnswer(vecAnswerKey[nCurrentQuestion]);
-
-		std::vector<std::string> vSourceScripture = Split(sExpandedAnswer.c_str(), " ");
-		std::string sExpandedVerses;
-		for (int i = 0; i < (int)vSourceScripture.size()-1; i++)
-		{
-			std::string sScrip = vSourceScripture[i] + " " + vSourceScripture[i + 1];
-			sExpandedVerses = GetPopUpVerses(sScrip);
-			double nEV = cdbl(sExpandedVerses, 0);
-			if (nEV == 0 && !sExpandedVerses.empty())
-			{
-				break;
-			}
-			else
-			{
-				sExpandedVerses = std::string();
-			}
-		}
-		if (!sExpandedVerses.empty())
-		{
-			sExpandedAnswer += "\r\n\r\n" + sExpandedVerses;
-		}
+		std::string sRefText = sExpandedAnswer + " " + vecQ[nCurrentQuestion];
+		std::string sBiblicalRefs = ScanAnswerForPopUpVerses(sRefText);
+		sExpandedAnswer += "\r\n\r\n" + sBiblicalRefs;
 		ui->txtAnswer->setPlainText(GUIUtil::TOQS(sExpandedAnswer));
 	}
 

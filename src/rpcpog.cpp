@@ -2582,6 +2582,12 @@ bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickNa
 		return false;
 	}
 	WriteCacheDouble(sProjectId, chainActive.Tip()->nHeight);
+	// For the user edit page:  2-26-2021
+	if (sProjectId == "cpk")
+	{
+		WriteCache("CPK", sCPK, sData, GetAdjustedTime());
+		LogPrintf("\r\ncpk %s",sData);
+	}
 	return true;
 }
 
@@ -3051,16 +3057,6 @@ int64_t GetCacheEntryAge(std::string sSection, std::string sKey)
 	int64_t nTimestamp = v.second;
 	int64_t nAge = GetAdjustedTime() - nTimestamp;
 	return nAge;
-}
-
-void LogPrintWithTimeLimit(std::string sSection, std::string sValue, int64_t nMaxAgeInSeconds)
-{
-	int64_t nAge = GetCacheEntryAge(sSection, sValue);
-	if (nAge < nMaxAgeInSeconds) 
-		return;
-	// Otherwise, print the log
-	LogPrintf("%s::%s", sSection, sValue);
-	WriteCache(sSection, sValue, sValue, GetAdjustedTime());
 }
 
 std::vector<std::string> GetVectorOfFilesInDirectory(const std::string &dirPath, const std::vector<std::string> dirSkipList = { })
@@ -6563,7 +6559,11 @@ std::vector<DACResult> GetDataListVector(std::string sType, int nDays)
 				d.PrimaryKey = GetElement(ii.first, "[-]", 1);
 				d.Response = v.first;
 				d.nTime = nTimestamp;
-				vec.push_back(d);
+				bool fPush = true;
+				if (sType == "memorizer" && v.first == "0") 
+					fPush = false;
+				if (fPush)
+					vec.push_back(d);
 			}
 		}
 	}
@@ -6637,24 +6637,36 @@ std::string GetPopUpVerses(std::string sRange)
 {
 	std::vector<std::string> vR = Split(sRange.c_str(), " ");
 	if (vR.size() < 2)
-		return "-1";
+		return "";
 
 	std::string sBook = vR[0];
 	std::string sChapterRange = vR[1];
 	std::vector<std::string> vChap = Split(sChapterRange.c_str(), ":");
 	if (vChap.size() < 2)
-		return "-2";
+		return "";
 
 	double nChapter = cdbl(vChap[0], 0);
 	if (nChapter < 1)
-		return "-3";
+		return "";
 	std::vector<std::string> vChapRange = Split(vChap[1].c_str(), "-");
+
 	if (vChapRange.size() < 2)
-		return "-4";
+	{
+		vChap[1] = vChap[1] + "-" + vChap[1];
+		vChapRange = Split(vChap[1].c_str(), "-");
+	}
 	double nVerseStart = cdbl(vChapRange[0], 0);
 	double nVerseEnd = cdbl(vChapRange[1], 0);
 	if (nVerseStart < 1 || nVerseEnd < 1)
-		return "-5";
+		return "";
+
+	if (sBook == "I Corinthians")
+		sBook = "1 Corinthians";  // Harvest Time format->KJV format
+	if (sBook == "I John")
+		sBook = "1 John";
+	if (sBook == "Corinthians")
+		sBook = "1 Corinthians";
+
 
 	std::string sShortBook = GetBookByName(sBook);
 
@@ -6672,5 +6684,4 @@ std::string GetPopUpVerses(std::string sRange)
 		sTotalVerses += sVerse + "\r\n";
 	}
 	return sTotalVerses;
-	
 }

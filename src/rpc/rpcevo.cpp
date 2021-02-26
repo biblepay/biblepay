@@ -1587,12 +1587,12 @@ UniValue easystake(const JSONRPCRequest& request)
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
-	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	if (sBBPUTXO.empty())
 	{
 		// They dont have one with 1+ day of age; try one without age
 		LogPrintf("\nEasyStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
-		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	}
 	if (sBBPUTXO.empty())
 	{
@@ -1685,12 +1685,12 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
-	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	if (sBBPUTXO.empty())
 	{
 		// They dont have one with 1+ day of age; try one without age
 		LogPrintf("\nEasyBBPStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
-		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	}
 	
 	if (sBBPUTXO.empty())

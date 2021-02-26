@@ -4110,21 +4110,21 @@ bool TestBlockValidityLite(CValidationState& state, const CChainParams& chainpar
 	{
 		std::string sErr = "TestBlockValidityLite " + FormatStateMessage(state);
 		if (fLog)
-			LogPrintWithTimeLimit("Consensus::ContextualCheckBlockHeader", sErr, 60 * 10);
+			LogPrint("consensus", "ContextualCheckBlockHeader %s", sErr);
 		return false;
 	}
 	else if (!CheckBlock(block, state, chainparams.GetConsensus(), fCheckPOW, fCheckMerkleRoot))
 	{
 		std::string sErr = "TestBlockValidityLite " + FormatStateMessage(state);
 		if (fLog)
-			LogPrintWithTimeLimit("Consensus::CheckBlock", sErr, 60 * 10);
+			LogPrint("consensus", "ContextualCheckBlockHeader %s", sErr);
 		return false;
 	}
 	else if (!ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindexPrev, fMining))
 	{
 		std::string sErr = "TestBlockValidityLite " + FormatStateMessage(state);
 		if (fLog)
-			LogPrintWithTimeLimit("Consensus::ContextualCheckBlock", sErr, 60 * 10);
+			LogPrint("consensus", "ContextualCheckBlockHeader %s", sErr);
 		return false;
 	}
 

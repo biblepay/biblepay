@@ -404,7 +404,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients, QString strFee,
 			std::string sError;
 			CAmount nReturnAmount = 0;
 
-			std::string sUTXO = pwalletMain->GetBestUTXO(nUTXOAmount, 1, sBBPAddress, nReturnAmount);
+			std::string sUTXO = pwalletMain->GetBestUTXO(nUTXOAmount, .01, sBBPAddress, nReturnAmount);
 			if (sUTXO.empty() || sBBPAddress.empty())
 			{
 				sNarr += "Unable to create UTXO stake.  Unable to find any BBP between 10K & 10MM older than 24 hours. ";
