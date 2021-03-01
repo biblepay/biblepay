@@ -142,3 +142,12 @@ contrib/devtools/windows/DevelopBiblePay.sln
 contrib/devtools/windows/DevelopBiblePay.suo
 src/.vs/src/v15/.suo
 src/.vs/VSWorkspaceState.json
+src/.vs/CMake Overview
+src/.vs/ProjectSettings.json
+src/.vs/slnx.sqlite
+src/.vs/src/v16/.suo
+src/.vs/src/v16/Browse.VC.db
+contrib/Windows/Burn/.vs/Burn/v16/Server/sqlite3/storage.ide
+*.lock
+*.suo
+contrib/Windows/Burn/Burn.suo

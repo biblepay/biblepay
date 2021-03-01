@@ -2422,6 +2422,10 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 	
 				results.push_back(Pair(d.TXID.GetHex(), sRow));
 			}
+			if (nType == 3)
+			{
+				AssimilateUTXO(d);
+			}
 		}
 	}
 	return results;

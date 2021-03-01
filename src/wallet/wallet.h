@@ -849,7 +849,7 @@ public:
      * populate vCoins with vector of available COutputs.
      */
     void AvailableCoins(std::vector<COutput>& vCoins, bool fOnlySafe=true, const CCoinControl *coinControl = NULL, bool fIncludeZeroValue=false, AvailableCoinsType nCoinType=ALL_COINS, bool fUseInstantSend = false
-		,double dMinCoinAge = 0, CAmount nMinimumSpend = 0) const;
+		,double dMinCoinAge = 0, CAmount nMinimumSpend = 0, CAmount nMaxSpend = 0) const;
 
     /**
      * Shuffle and select coins until nTargetValue is reached while avoiding

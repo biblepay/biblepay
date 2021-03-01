@@ -17,7 +17,7 @@
 #include "keystore.h"
 #include "validation.h"
 #include "net.h"
-#include "rpcpog.h"
+#include "crypter.h"
 #include "policy/policy.h"
 #include "primitives/block.h"
 #include "primitives/transaction.h"
@@ -2634,7 +2634,7 @@ bool IsPODCDenominated(CAmount nAmount)
 }
 
 void CWallet::AvailableCoins(std::vector<COutput>& vCoins, bool fOnlySafe, const CCoinControl *coinControl, bool fIncludeZeroValue, 
-	AvailableCoinsType nCoinType, bool fUseInstantSend, double dMinCoinAge, CAmount nMinimumSpend) const
+	AvailableCoinsType nCoinType, bool fUseInstantSend, double dMinCoinAge, CAmount nMinimumSpend, CAmount nMaxSpend) const
 {
     vCoins.clear();
     {
@@ -2704,7 +2704,11 @@ void CWallet::AvailableCoins(std::vector<COutput>& vCoins, bool fOnlySafe, const
 						found = false;
 					}
 				}
-		
+				if (nMaxSpend > 0)
+				{
+					if (pcoin->tx->vout[i].nValue > nMaxSpend)
+						found = false;
+				}
                 if(!found) continue;
 
                 isminetype mine = IsMine(pcoin->tx->vout[i]);
@@ -3637,6 +3641,8 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 
 	std::string sUTXO;
 
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
+
 	BOOST_FOREACH(const COutput& out, vAvailableCoins)
     {
 		if(!out.fSpendable)
@@ -3653,12 +3659,22 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 			std::string sForensics = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
 			LogPrintf("GetBestUTXO::TXID %s, Amount %f, Weight %f, Depth %f=", sForensics, nAmount/COIN, nWeight, nDepth);
 		}
-		if (nAge >= nMinAge && nAmount >= MIN_UTXO_AMOUNT && nAmount <= MAX_UTXO_AMOUNT && nAmount > nMinimumAmount)
+		bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
+		bool fSpent = IsSpent(pcoin->tx->GetHash(), out.i);
+
+		if (!fSpent && !fLocked)
 		{
-			sUTXO = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
-			sAddress = sRecip;
-			nReturnAmount = nAmount;
-			return sUTXO;
+			if (nAge >= nMinAge && nAmount >= MIN_UTXO_AMOUNT && nAmount <= MAX_UTXO_AMOUNT && nAmount > nMinimumAmount)
+			{
+				sUTXO = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
+				bool fDuplicate = IsDuplicateUTXO(uStakes, sUTXO);
+				if (!fDuplicate)
+				{
+					sAddress = sRecip;
+					nReturnAmount = nAmount;
+					return sUTXO;
+				}
+			}
 		}
 	}
 	
@@ -3726,6 +3742,9 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
 								bool fUseInstantSend, int nExtraPayloadSize, std::string sOptPrayerData, double dMinCoinAge, CAmount nMinSpend, 
 								CAmount nExactSpend, std::string sPursePubKey)
 {
+	// Extract the maximum amount from the contract before spending any coins (this prevents big coins from being spent for the 1bbp stake transaction fee).
+	CAmount nMaxSpend = cdbl(ExtractXMLValue(sOptPrayerData, "<nmaxspend>", "</nmaxspend>"), 2) * COIN;
+
     if (!llmq::IsOldInstantSendEnabled()) {
         // The new system does not require special handling for InstantSend as this is all done in CInstantSendManager.
         // There is also no need for an extra fee anymore.
@@ -3804,7 +3823,7 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
         LOCK2(cs_main, cs_wallet);
         {
             std::vector<COutput> vAvailableCoins;
-            AvailableCoins(vAvailableCoins, true, coinControl, false, nCoinType, fUseInstantSend, dMinCoinAge, nMinSpend);
+            AvailableCoins(vAvailableCoins, true, coinControl, false, nCoinType, fUseInstantSend, dMinCoinAge, nMinSpend, nMaxSpend);
 			if (dMinCoinAge > 0)
 				std::sort(vAvailableCoins.rbegin(), vAvailableCoins.rend(), CompareByCoinAge());
             int nInstantSendConfirmationsRequired = Params().GetConsensus().nInstantSendConfirmationsRequired;

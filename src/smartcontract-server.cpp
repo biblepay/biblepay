@@ -930,15 +930,11 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 			if (d.found && d.nValue > 0)
 			{
 				int nStatus = GetUTXOStatus(d.TXID);
-				LogPrintf("\nLeaderboard::UTXO1 nStatus %f", nStatus);
-
 				if (nStatus > 0)
 				{
 					// Entry into the UTXO campaign
 					UserRecord u = GetUserRecord(d.CPK);
 					{
-						LogPrintf("\nLeaderboard::UTXO1 cpk %s", d.CPK);
-
 						// Legacy code that adds a CPK reward, then a CPK-Campgin reward
 						CPK c = mPoints[d.CPK];
 						c.sCampaign = sThisCampaign;
@@ -948,7 +944,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 						c.nPoints += nPoints;
 						mCampaignPoints[sThisCampaign] += nPoints;
 						mPoints[d.CPK] = c;
-							
 						// CPK-Campaign
 						CPK cCPKCampaignPoints = mCPKCampaignPoints[d.CPK + sThisCampaign];
 						cCPKCampaignPoints.sAddress = d.CPK;
@@ -962,7 +957,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	}
 	// End of UTXO Staking
 
-	
 	
 	// PODC 2.0
 	// This dedicated area allows us to pay the unbanked each day *or* the researchers with collateral staked.

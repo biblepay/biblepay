@@ -57,6 +57,25 @@ void RequestMissingEmails()
 	LogPrintf("\nRequestMissingEmails::End %f ", GetAdjustedTime());
 }
 
+void SanctuaryOracleProcess()
+{
+	// Sanctuary side UTXO Oracle Process
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+	for (int i = 0; i < uStakes.size(); i++)
+	{
+		UTXOStake d = uStakes[i];
+		if (d.found)
+		{
+			int nStatus = GetUTXOStatus(d.TXID);
+			if (nStatus == 0)
+			{
+				AssimilateUTXO(d);
+			}
+		}
+	}
+	fUTXOSTested = true;
+	// End of Sanctuary side UTXO Oracle Process
+}
 
 void ThreadPOOS(CConnman& connman)
 {
@@ -71,6 +90,9 @@ void ThreadPOOS(CConnman& connman)
 
 		try
 		{
+
+			SanctuaryOracleProcess();
+
 			double nOrphanBanning = GetSporkDouble("EnableOrphanSanctuaryBanning", 0);
 			bool fConnectivity = POOSOrphanTest("status", 60 * 60);
 			bool fPOOSEnabled = nOrphanBanning == 1 && fConnectivity;
@@ -120,32 +142,13 @@ void ThreadPOOS(CConnman& connman)
 				if (false)
 					SyncSideChain(chainActive.Tip()->nHeight);
 			}
-			// Sanctuary side UTXO Oracle Process
-			std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
-
-			for (int i = 0; i < uStakes.size(); i++)
-			{
-				UTXOStake d = uStakes[i];
-				if (d.found)
-				{
-					int nStatus = GetUTXOStatus(d.TXID);
-					if (nStatus == 0)
-					{
-						AssimilateUTXO(d);
-					}
-				}
-			}
-			fUTXOSTested = true;
-
-			// End of Sanctuary side UTXO Oracle Process
-
 		}
 		catch(...)
 		{
 			LogPrintf("Error encountered in POOS main loop. %f \n", 0);
 		}
-		int nSleepLength = nIterations < 5 ? 60*5 : 60*30;
-
+		int nSleepLength = nIterations < 6 ? 60 * (nIterations + 1) : 60 * 20;
+		
 		for (int i = 0; i < nSleepLength; i++)
 		{
 			if (ShutdownRequested())

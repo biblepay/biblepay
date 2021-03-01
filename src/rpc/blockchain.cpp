@@ -2005,7 +2005,8 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sTXID = request.params[1].get_str();
 		double nType = cdbl(request.params[2].get_str(), 0);
 		CAmount nValue = 0;
-		std::string sAddress = GetUTXO(sTXID, nType, nValue);
+		std::string sErr;
+		std::string sAddress = GetUTXO(sTXID, nType, nValue, sErr);
 		results.push_back(Pair("address", sAddress));
 		results.push_back(Pair("value", (double)nValue/COIN));
 	}
