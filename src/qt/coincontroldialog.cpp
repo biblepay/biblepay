@@ -835,7 +835,7 @@ void CoinControlDialog::updateView()
                 coinControl->UnSelect(outpt); // just to be sure
                 itemOutput->setDisabled(true);
                 itemOutput->setIcon(COLUMN_CHECKBOX, QIcon(":/icons/" + theme + "/lock_closed"));
-				if (out.tx->tx->vout[out.i].nValue != SANCTUARY_COLLATERAL)
+				if (out.tx->tx->vout[out.i].nValue != SANCTUARY_COLLATERAL * COIN)
 				{
 					nTotalLockedCoins += out.tx->tx->vout[out.i].nValue;
 				}
