@@ -497,6 +497,20 @@
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="lblTotalCoinsLocked">
+     <property name="text">
+      <string>Total Coins Locked: 0</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="lblTotalCoinsStaked">
+     <property name="text">
+      <string>Total Coins Staked: 0</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Maximum" vsizetype="Fixed">

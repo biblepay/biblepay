@@ -22,6 +22,7 @@
 
 #include "netbase.h"
 #include "rpcpog.h"
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 
 #include "evo/specialtx.h"
 #include "evo/providertx.h"
@@ -1579,12 +1580,16 @@ UniValue easystake(const JSONRPCRequest& request)
 {
 	// Jan 20, 2021 - Easy Stake - R ANDREWS - BIBLEPAY
 		
-	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real";
+	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real  [Optional `Ticker`=Override Foreign Ticker]";
 	std::string sError;
-	if (request.fHelp || (request.params.size() != 4))
+	if (request.fHelp || (request.params.size() != 4 && request.params.size() != 5))
 		throw std::runtime_error(sHelp.c_str());
 		
 	double nMin = cdbl(request.params[0].getValStr(), 2);
+	std::string sTickerOverride;
+	if (request.params.size() > 4)
+		sTickerOverride = request.params[4].getValStr();
+
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
 	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
@@ -1606,7 +1611,10 @@ UniValue easystake(const JSONRPCRequest& request)
 	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
 	std::string sForeignAddress = request.params[1].getValStr();
 	std::string sForeignTicker = GetSymbolFromAddress(sForeignAddress);
-	
+	if (!sTickerOverride.empty())
+		sForeignTicker = sTickerOverride;
+	boost::to_upper(sForeignTicker);
+		
 	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
 	bool fDryRun = cdbl(request.params[3].getValStr(), 0) == 0;
 	bool fReturnFirst = (nForeignAmount == -1);
@@ -2399,11 +2407,12 @@ UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 
 UniValue listutxostakes(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
-		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all/2=spent");
+    if (request.fHelp || request.params.size() != 2) 
+		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all 0=unspent/1=all");
 	UniValue results(UniValue::VOBJ);
 	
-	double nType = cdbl(request.params[0].get_str(), 0);
+	double nMineType = cdbl(request.params[0].get_str(), 0);
+	double nSpentType = cdbl(request.params[0].get_str(), 0);
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
@@ -2411,21 +2420,23 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 	{
 		UTXOStake d = uStakes[i];
 		int nStatus = GetUTXOStatus(d.TXID);
-		if (nStatus != -1 || nType == 2)
+		if (d.found && d.nValue > 0)
 		{
-			if ((sCPK == d.CPK && nType == 0 && d.found && d.nValue > 0) || (nType == 1 && d.found && d.nValue > 0) || (nType == 2 && d.found && d.nValue > 0))
+			if ((nMineType == 0 && sCPK == d.CPK) || nMineType == 1)
 			{
-				std::string sSigs = "Sigs: " + d.SignatureNarr;
-				std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
-					+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
-					+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
-	
-				results.push_back(Pair(d.TXID.GetHex(), sRow));
+				if (nStatus != -1 || nSpentType == 1)
+				{
+					std::string sSigs = "Sigs: " + d.SignatureNarr;
+					std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
+						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
+						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
+					results.push_back(Pair(d.TXID.GetHex(), sRow));
+				}
 			}
-			if (nType == 3)
-			{
-				AssimilateUTXO(d);
-			}
+		}
+		if (nSpentType == 3)
+		{
+			AssimilateUTXO(d);
 		}
 	}
 	return results;

@@ -494,6 +494,8 @@ void CoinControlDialog::viewItemChanged(QTreeWidgetItem* item, int column)
 }
 
 // shows count of locked unspent outputs
+static CAmount nTotalLockedCoins = 0;
+static CAmount nTotalUTXOCoins = 0;
 void CoinControlDialog::updateLabelLocked()
 {
     std::vector<COutPoint> vOutpts;
@@ -688,6 +690,12 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
     l4->setToolTip(toolTip4);
     l7->setToolTip(toolTipDust);
     l8->setToolTip(toolTip4);
+	std::string sTL = "Total Coins Locked: " + RoundToString((double)nTotalLockedCoins/COIN, 2);
+	std::string sTS = "Total Coins Staked: " + RoundToString((double)nTotalUTXOCoins/COIN, 2);
+
+	dialog->findChild<QLabel *>("lblTotalCoinsLocked")          ->setText(GUIUtil::TOQS(sTL));
+	dialog->findChild<QLabel *>("lblTotalCoinsStaked")          ->setText(GUIUtil::TOQS(sTS));
+
     dialog->findChild<QLabel *>("labelCoinControlFeeText")      ->setToolTip(l3->toolTip());
     dialog->findChild<QLabel *>("labelCoinControlAfterFeeText") ->setToolTip(l4->toolTip());
     dialog->findChild<QLabel *>("labelCoinControlBytesText")    ->setToolTip(l5->toolTip());
@@ -702,6 +710,9 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 
 void CoinControlDialog::updateView()
 {
+	nTotalUTXOCoins = 0;
+	nTotalLockedCoins = 0;
+
     if (!model || !model->getOptionsModel() || !model->getAddressTableModel())
         return;
 
@@ -718,6 +729,7 @@ void CoinControlDialog::updateView()
 
     std::map<QString, std::vector<COutput> > mapCoins;
     model->listCoins(mapCoins);
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
 
     BOOST_FOREACH(const PAIRTYPE(QString, std::vector<COutput>)& coins, mapCoins) {
         CCoinControlWidgetItem *itemWalletAddress = new CCoinControlWidgetItem();
@@ -823,6 +835,17 @@ void CoinControlDialog::updateView()
                 coinControl->UnSelect(outpt); // just to be sure
                 itemOutput->setDisabled(true);
                 itemOutput->setIcon(COLUMN_CHECKBOX, QIcon(":/icons/" + theme + "/lock_closed"));
+				if (out.tx->tx->vout[out.i].nValue != SANCTUARY_COLLATERAL)
+				{
+					nTotalLockedCoins += out.tx->tx->vout[out.i].nValue;
+				}
+            }
+			std::string sUTXO = txhash.GetHex() + "-" + RoundToString(out.i, 0);
+			bool fUTXO = IsDuplicateUTXO(uStakes, sUTXO);
+			if (fUTXO)
+			{
+			    itemOutput->setIcon(COLUMN_CHECKBOX, QIcon(":/icons/" + theme + "/utxo_lock_closed"));
+				nTotalUTXOCoins += out.tx->tx->vout[out.i].nValue;
             }
 
             // set checkbox

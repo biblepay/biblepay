@@ -3853,13 +3853,10 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 			w.ForeignSignature = ExtractXML(w.XML, "<foreignsig>", "</foreignsig>");
 			w.nBBPPrice = cdbl(ExtractXML(w.XML, "<bbpprice>", "</bbpprice>"), 12);
 			w.ForeignTicker = ExtractXML(w.XML, "<foreignticker>", "</foreignticker>");
-
-
 			w.nForeignPrice = cdbl(ExtractXML(w.XML, "<foreignprice>", "</foreignprice>"), 12);
 			w.nBTCPrice = cdbl(ExtractXML(w.XML, "<btcprice>", "</btcprice>"), 12);
 			w.nBBPValueUSD = cdbl(ExtractXML(w.XML, "<bbpvalue>", "</bbpvalue>"), 2);
 			w.nForeignValueUSD = cdbl(ExtractXML(w.XML, "<foreignvalue>", "</foreignvalue>"), 2);
-
 			w.nBBPAmount = cdbl(ExtractXML(w.XML, "<bbpamount>", "</bbpamount>"), 2) * COIN;
 			w.nForeignAmount = StringToAmount(ExtractXML(w.XML, "<foreignamount>", "</foreignamount>"));
 
@@ -3871,9 +3868,14 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 				double nBBPPrice = GetCryptoPrice("bbp");
 				double nUSDBBP = nBTCPrice * nBBPPrice;
 				double nUSDForeign = nBTCPrice * nForeignPrice;
+				if (boost::iequals(w.ForeignTicker, "BTC"))
+				{
+					nUSDForeign = nBTCPrice;
+				}
 				w.nBBPValueUSD = nUSDBBP * ((double)w.nBBPAmount / COIN);
 				w.nForeignValueUSD = nUSDForeign * ((double)w.nForeignAmount / COIN);
-				LogPrintf("\nGetUTXOStake::Values USD %f, Foreign USD %f, ForeignPrice %f, USDForeign %f, Foreign Amount %s", w.nBBPValueUSD, w.nForeignValueUSD, nForeignPrice, nUSDForeign, AmountToString(w.nForeignAmount));
+				LogPrint("UTXO", "\nGetUTXOStake::Values USD %f, Foreign USD %f, ForeignPrice %f, USDForeign %f, Foreign Amount %s", w.nBBPValueUSD, w.nForeignValueUSD, nForeignPrice, 
+					nUSDForeign, AmountToString(w.nForeignAmount));
 			}
 
 			w.BBPAddress = ExtractXML(w.XML, "<bbpaddress>", "</bbpaddress>");
@@ -6367,7 +6369,7 @@ int AssimilateUTXO(UTXOStake d)
 	CAmount nBBPAmount = 0;
 	std::string sErr;
 	std::string sAddress = GetUTXO(d.BBPUTXO, -1, nBBPAmount, sErr);
-	if (nBBPAmount <= 0)
+	if (nBBPAmount <= 0 || d.ForeignTicker == "BBP")
 	{
 		// SPENT
 		nStatus = -1;
@@ -6628,6 +6630,8 @@ PriceQuote GetPriceQuote(std::string sForeignSymbol, CAmount xBBPQty, CAmount xF
 	p.nBBPPrice = GetCryptoPrice("bbp");
 	p.nUSDBBP = p.nBTCPrice * p.nBBPPrice;
 	p.nUSDForeign = p.nBTCPrice * p.nForeignPrice;
+	if (boost::iequals(sForeignSymbol, "BTC"))
+		p.nUSDForeign = p.nBTCPrice;
 	p.nBBPValueUSD = p.nUSDBBP * ((double)p.nBBPQty / COIN);
 	p.nForeignValueUSD = p.nUSDForeign * ((double)p.nForeignQty / COIN);
 	return p;

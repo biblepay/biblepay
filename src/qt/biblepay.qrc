@@ -48,6 +48,7 @@
         <file alias="tx_output">res/icons/drkblue/tx_output.png</file>
         <file alias="tx_inout">res/icons/drkblue/tx_inout.png</file>
         <file alias="lock_closed">res/icons/drkblue/lock_closed.png</file>
+        <file alias="utxo_lock_closed">res/icons/drkblue/utxo_lock_closed.png</file>
         <file alias="lock_open">res/icons/drkblue/lock_open.png</file>
         <file alias="key">res/icons/drkblue/key.png</file>
         <file alias="filesave">res/icons/drkblue/filesave.png</file>
@@ -110,6 +111,7 @@
         <file alias="tx_output">res/icons/bezaleel/tx_output.png</file>
         <file alias="tx_inout">res/icons/bezaleel/tx_inout.png</file>
         <file alias="lock_closed">res/icons/bezaleel/lock_closed.png</file>
+        <file alias="utxo_lock_closed">res/icons/bezaleel/utxo_lock_closed.png</file>
         <file alias="lock_open">res/icons/bezaleel/lock_open.png</file>
         <file alias="key">res/icons/bezaleel/key.png</file>
         <file alias="filesave">res/icons/bezaleel/filesave.png</file>
@@ -172,6 +174,7 @@
             <file alias="tx_output">res/icons/dacicons/tx_output.png</file>
             <file alias="tx_inout">res/icons/dacicons/tx_inout.png</file>
             <file alias="lock_closed">res/icons/dacicons/lock_closed.png</file>
+            <file alias="utxo_lock_closed">res/icons/dacicons/utxo_lock_closed.png</file>
             <file alias="lock_open">res/icons/dacicons/lock_open.png</file>
             <file alias="key">res/icons/dacicons/key.png</file>
             <file alias="filesave">res/icons/dacicons/filesave.png</file>
@@ -234,6 +237,7 @@
         <file alias="tx_output">res/icons/light/tx_output.png</file>
         <file alias="tx_inout">res/icons/light/tx_inout.png</file>
         <file alias="lock_closed">res/icons/light/lock_closed.png</file>
+        <file alias="utxo_lock_closed">res/icons/light/utxo_lock_closed.png</file>
         <file alias="lock_open">res/icons/light/lock_open.png</file>
         <file alias="key">res/icons/light/key.png</file>
         <file alias="filesave">res/icons/light/filesave.png</file>
@@ -296,6 +300,7 @@
         <file alias="tx_output">res/icons/light-retro/tx_output.png</file>
         <file alias="tx_inout">res/icons/light-retro/tx_inout.png</file>
         <file alias="lock_closed">res/icons/light-retro/lock_closed.png</file>
+        <file alias="utxo_lock_closed">res/icons/light-retro/utxo_lock_closed.png</file>
         <file alias="lock_open">res/icons/light-retro/lock_open.png</file>
         <file alias="key">res/icons/light-retro/key.png</file>
         <file alias="filesave">res/icons/light-retro/filesave.png</file>
@@ -358,6 +363,7 @@
         <file alias="tx_output">res/icons/trad/tx_output.png</file>
         <file alias="tx_inout">res/icons/trad/tx_inout.png</file>
         <file alias="lock_closed">res/icons/trad/lock_closed.png</file>
+        <file alias="utxo_lock_closed">res/icons/trad/utxo_lock_closed.png</file>
         <file alias="lock_open">res/icons/trad/lock_open.png</file>
         <file alias="key">res/icons/trad/key.png</file>
         <file alias="filesave">res/icons/trad/filesave.png</file>
