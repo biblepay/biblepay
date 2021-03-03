@@ -693,8 +693,13 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 	std::string sTL = "Total Coins Locked: " + RoundToString((double)nTotalLockedCoins/COIN, 2);
 	std::string sTS = "Total Coins Staked: " + RoundToString((double)nTotalUTXOCoins/COIN, 2);
 
-	dialog->findChild<QLabel *>("lblTotalCoinsLocked")          ->setText(GUIUtil::TOQS(sTL));
-	dialog->findChild<QLabel *>("lblTotalCoinsStaked")          ->setText(GUIUtil::TOQS(sTS));
+	QLabel *lblCL = 	dialog->findChild<QLabel *>("lblTotalCoinsLocked");
+	if (lblCL)
+		lblCL->setText(GUIUtil::TOQS(sTL));
+
+	QLabel *lblCS =     dialog->findChild<QLabel *>("lblTotalCoinsStaked");
+	if (lblCS)
+		lblCS->setText(GUIUtil::TOQS(sTS));
 
     dialog->findChild<QLabel *>("labelCoinControlFeeText")      ->setToolTip(l3->toolTip());
     dialog->findChild<QLabel *>("labelCoinControlAfterFeeText") ->setToolTip(l4->toolTip());

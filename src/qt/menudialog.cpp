@@ -76,7 +76,7 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	s1 += "\n      <a href='KGV_FE'>Final Exam</a>";
 
 	s1 += "\n\n8.  <a href='HSM'>Ministry of the Holy Spirit</a> focuses on the ministry of the Holy Spirit, spiritual fruit, and spiritual gifts.  Students are guided in discovery of their own spiritual gifts and position of ministry in the Body of Christ.";
-	s1 += "\n      <a href='xHSM_FE'>Final Exam</a>";
+	s1 += "\n      <a href='HSM_FE'>Final Exam</a>";
 
 	s1 += "\n\n9.  <a href='SW'>Spiritual Strategies</a> is a Manual of Spiritual Warfare.  This course moves participants beyond the natural world into the realm of the spirit.  Tactics of the enemy are analyzed and strategies of spiritual warfare assuring victory over the principalities and powers of the spirit world are explained.";
 	s1 += "\n      <a href='xSW_FE'>Final Exam</a>";
