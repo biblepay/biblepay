@@ -2003,9 +2003,9 @@ UniValue getpin(const JSONRPCRequest& request)
 		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, etc. \r\n");
 	UniValue results(UniValue::VOBJ);
 	std::string s2 = request.params[0].get_str();
-	if (s2.length() != 34)
+	if (s2.length() != 34 && s2.length() != 42)
 	{
-		throw std::runtime_error("Address must be 34 characters long. ");
+		throw std::runtime_error("Address must be 34 characters long (BTC/ALTCOIN) or 42 characters long (ETH). ");
 	}
 	double nPin = AddressToPin(s2);
 	results.push_back(Pair("pin", nPin));
@@ -2414,6 +2414,9 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 	double nMineType = cdbl(request.params[0].get_str(), 0);
 	double nSpentType = cdbl(request.params[0].get_str(), 0);
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
+	CAmount nTotalForeignAmount = 0;
+	CAmount nTotalAmount = 0;
+	std::map<std::string, CAmount> mapAmounts;
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
 	for (int i = 0; i < uStakes.size(); i++)
@@ -2431,6 +2434,9 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
 						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
 					results.push_back(Pair(d.TXID.GetHex(), sRow));
+					nTotalAmount += d.nBBPAmount;
+					nTotalForeignAmount += d.nForeignAmount;
+					mapAmounts[d.ReportTicker] += d.ReportTicker == "BBP" ? d.nBBPAmount : d.nForeignAmount;
 				}
 			}
 		}
@@ -2439,6 +2445,13 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 			AssimilateUTXO(d);
 		}
 	}
+	for (const auto& kv : mapAmounts) 
+	{
+		results.push_back(Pair("Total " + kv.first, AmountToString(kv.second)));
+	}
+	results.push_back(Pair("Total Foreign", AmountToString(nTotalForeignAmount)));
+    results.push_back(Pair("Total Hybrid BBP", AmountToString(nTotalAmount)));
+    
 	return results;
 }
 

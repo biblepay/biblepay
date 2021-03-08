@@ -79,7 +79,7 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	s1 += "\n      <a href='HSM_FE'>Final Exam</a>";
 
 	s1 += "\n\n9.  <a href='SW'>Spiritual Strategies</a> is a Manual of Spiritual Warfare.  This course moves participants beyond the natural world into the realm of the spirit.  Tactics of the enemy are analyzed and strategies of spiritual warfare assuring victory over the principalities and powers of the spirit world are explained.";
-	s1 += "\n      <a href='xSW_FE'>Final Exam</a>";
+	s1 += "\n      <a href='SW_FE'>Final Exam</a>";
 
 	s1 += "\n\n10. <a href='PP'>Power Principles</a> explains how the early church was born in a demonstration of the power of God.  Power principles taught in this course equip students for spiritual harvest and moves them from being spectators to demonstrators of the power of God.";
 	s1 += "\n      <a href='xPP_FE'>Final Exam</a>";
@@ -195,7 +195,7 @@ void MenuDialog::myLink(QString h)
 	}
 	else if (s1 == "SW_FE")
 	{
-		sFA = "SpiritualWarfare_key.xml";
+		sFA = "SpiritualStrategies_key.xml";
 	}
 	else if (s1 == "PP_FE")
 	{

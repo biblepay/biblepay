@@ -2651,6 +2651,7 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("Total_Target_Spend", dTotal));
 		if (uGovObjHash == uint256S("0x0"))
 		{
+			results.push_back(Pair("contract_empty_voting", 1));
 			// create the contract
 			std::string sQuorumTrigger = SerializeSanctuaryQuorumTrigger(iLastSuperblock, iNextSuperblock, GetAdjustedTime(), sContract);
 			std::string sGobjectHash;
@@ -2747,10 +2748,14 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sType = request.params[1].get_str();
 		std::string sPrimaryKey = request.params[2].get_str();
 		std::string sValue = request.params[3].get_str();
+
 		if (sType.empty() || sPrimaryKey.empty() || sValue.empty())
 			throw std::runtime_error(sError);
 		sError;
 		double dFee = fProd ? 10 : 5001;
+		// Allows a datastore chain value to be saved if blank (an edit)
+		if (sValue == "[null]")
+			sValue = "";
     	std::string sResult = SendBlockchainMessage(sType, sPrimaryKey, sValue, dFee, 1, "", sError);
 		results.push_back(Pair("Sent", sValue));
 		results.push_back(Pair("TXID", sResult));

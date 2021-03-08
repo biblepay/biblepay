@@ -1140,6 +1140,15 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		// Dynamic Whale Staking - R Andrews - 11/11/2019
 		double dTotalWhalePayments = 0;
 		std::vector<WhaleStake> dws = GetPayableWhaleStakes(nHeight, dTotalWhalePayments);
+
+		// Pre-calculate WS totals first...
+		double MAX_WS_TRIB = 1999999;
+		double nWSPct1 = MAX_WS_TRIB / (dTotalWhalePayments + .01);
+		if (nWSPct1 > 1)
+			nWSPct1 = 1;
+		// End of Pre-Calculate WS ...
+
+		double dTotalWSPaid = 0;
 		for (int iWhale = 0; iWhale < dws.size(); iWhale++)
 		{
 			WhaleStake ws = dws[iWhale];
@@ -1147,19 +1156,19 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 			// Note:  This vector only contains mature (owed) burns for this day.
 			if (ws.found && ws.TotalOwed > 0 && !ws.ReturnAddress.empty())
 			{
+				double nIndOwed = ws.TotalOwed * nWSPct1;
 				sAddresses += ws.ReturnAddress + "|";
-				sPayments += RoundToString(ws.TotalOwed, 4) + "|";
-				DWSData += "<DWSROW><DWSADDR>" + ws.ReturnAddress + "</DWSADDR><DWSAMT>" + RoundToString(ws.TotalOwed, 4) + "</DWSAMT></DWSROW>";
+				sPayments += RoundToString(nIndOwed, 4) + "|";
+				dTotalWSPaid += nIndOwed;
+				DWSData += "<DWSROW><DWSADDR>" + ws.ReturnAddress + "</DWSADDR><DWSAMT>" + RoundToString(nIndOwed, 4) + "</DWSAMT></DWSROW>";
 			}
 		}
-		DWSData += "<DWSTOTAL>" + RoundToString(dTotalWhalePayments, 4) + "</DWSTOTAL>";
+		DWSData += "<DWSTOTAL>" + RoundToString(dTotalWSPaid, 4) + "</DWSTOTAL>";
 		QTData += DWSData;
 		LogPrintf("\nCreating GSC Contract with Whale Payments=%f over %f recs.", dTotalWhalePayments, dws.size());
 		// End of Dynamic Whale Staking 
 		// Note that we need to leave Dynamic Whale Staking in until the last stake is paid 
-
-
-
+		
 
 		// Dash Staking - R Andrews - 8/16/2020
 		std::string DSData;
@@ -1353,6 +1362,7 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	std::string sAmounts;
 	std::string sQTData;
 	uint256 uPamHash = GetPAMHashByContract(sMyContract);
+	
 	GetGSCGovObjByHeight(nHeight, uPamHash, iPendingVotes, uGovObjHash, sPaymentAddresses, sAmounts, sQTData);
 	
 	bool fOverBudget = IsOverBudget(nHeight, GetAdjustedTime(), sAmounts);
@@ -1642,7 +1652,7 @@ bool GetContractPaymentData(std::string sContract, int nBlockHeight, int nTime, 
 	}
 	if (dTotalPaid < 1 || (dTotalPaid * COIN) > nPaymentsLimit)
 	{
-		LogPrintf(" \n ** GetContractPaymentData::Superblock Payment Budget is out of bounds:  Limit %f,  Actual %f  ** \n", (double)nPaymentsLimit/COIN, (double)dTotalPaid);
+		LogPrintf("\n**GetContractPaymentData::Error::Superblock Payment Budget is out of bounds:  Limit %f,  Actual %f  ** \n", (double)nPaymentsLimit/COIN, (double)dTotalPaid);
 		return false;
 	}
 	return true;
@@ -1664,7 +1674,10 @@ std::string SerializeSanctuaryQuorumTrigger(int iContractAssessmentHeight, int n
 	std::string sHashes = ExtractXML(sContract, "<PROPOSALS>", "</PROPOSALS>");
 	bool bStatus = GetContractPaymentData(sContract, iContractAssessmentHeight, nTime, sPaymentAddresses, sPaymentAmounts);
 	if (!bStatus) 
+	{
+		LogPrintf("\nERROR::SerializeSanctuaryQuorumTrigger::Unable to Serialize %f", 1);
 		return std::string();
+	}
 	std::string sVoteData = ExtractXML(sContract, "<VOTEDATA>", "</VOTEDATA>");
 	std::string sSporkData = ExtractXML(sContract, "<SPORKS>", "</SPORKS>");
 	

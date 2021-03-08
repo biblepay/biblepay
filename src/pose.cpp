@@ -97,9 +97,9 @@ void ThreadPOOS(CConnman& connman)
 			bool fConnectivity = POOSOrphanTest("status", 60 * 60);
 			bool fPOOSEnabled = nOrphanBanning == 1 && fConnectivity;
 			int64_t nElapsed = GetAdjustedTime() - nPoosProcessTime;
-			if (nElapsed > (60 * 60 * 8))
+			if (nElapsed > (60 * 60 * 24))
 			{
-				// Once every 8 hours we clear the POOS statuses and start over (in case sanctuaries dropped out or added, or if the entire POOS system was disabled etc).
+				// Once every 24 hours we clear the POOS statuses and start over (in case sanctuaries dropped out or added, or if the entire POOS system was disabled etc).
 				mapPOOSStatus.clear();
 				nPoosProcessTime = GetAdjustedTime();
 				mapUTXOStatus.clear();
@@ -147,7 +147,7 @@ void ThreadPOOS(CConnman& connman)
 		{
 			LogPrintf("Error encountered in POOS main loop. %f \n", 0);
 		}
-		int nSleepLength = nIterations < 6 ? 60 * (nIterations + 1) : 60 * 20;
+		int nSleepLength = nIterations < 6 ? 60 * (nIterations + 1) : 60 * 30;
 		
 		for (int i = 0; i < nSleepLength; i++)
 		{
