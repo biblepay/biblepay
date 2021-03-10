@@ -32,7 +32,6 @@
 #include "validationinterface.h"
 #include "smartcontract-client.h"
 #include "governance-classes.h" // For superblock Height
-#include "rpcpodc.h"
 
 #include "evo/specialtx.h"
 #include "evo/cbtx.h"

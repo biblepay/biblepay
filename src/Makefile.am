@@ -169,7 +169,7 @@ BITCOIN_CORE_H = \
   rst.h \
   uto.h \
   rpcpog.h \
-  rpcpodc.h \
+  rpcutxo.h \
   bbpsocket.h \
   pose.h \
   smtp.h \
@@ -301,7 +301,7 @@ libbiblepay_server_a_SOURCES = \
   rst.cpp \
   uto.cpp \
   rpcpog.cpp \
-  rpcpodc.cpp \
+  rpcutxo.cpp \
   bbpsocket.cpp \
   pose.cpp \
   smtp.cpp \

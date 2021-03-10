@@ -32,7 +32,6 @@
 #include "utilstrencodings.h"
 #include "validationinterface.h"
 #include "rpcpog.h"
-#include "rpcpodc.h"
 #include "spork.h"
 #include "governance.h"
 #include "instantx.h"

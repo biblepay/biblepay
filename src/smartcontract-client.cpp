@@ -6,7 +6,6 @@
 #include "smartcontract-server.h"
 #include "util.h"
 #include "utilmoneystr.h"
-#include "rpcpodc.h"
 #include "rpcpog.h"
 #include "init.h"
 #include "activemasternode.h"

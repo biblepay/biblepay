@@ -17,7 +17,6 @@
 #include "txmempool.h"
 #include "utilstrencodings.h"
 #include "version.h"
-#include "rpcpodc.h"
 #include <boost/algorithm/string.hpp>
 
 #include <univalue.h>

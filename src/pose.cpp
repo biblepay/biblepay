@@ -104,6 +104,7 @@ void ThreadPOOS(CConnman& connman)
 				nPoosProcessTime = GetAdjustedTime();
 				mapUTXOStatus.clear();
 				fUTXOSTested = false;
+				SanctuaryOracleProcess();
 			}
 			if (nOrphanBanning != 1)
 			{

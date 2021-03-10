@@ -12,7 +12,6 @@
 #include "init.h"
 #include "rpcpog.h"
 #include "smartcontract-server.h"
-#include "rpcpodc.h"
 #include "validation.h"
 #include "masternode-sync.h"
 #include "messagesigner.h"

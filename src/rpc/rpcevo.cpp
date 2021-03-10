@@ -31,7 +31,6 @@
 #include "evo/cbtx.h"
 #include "smartcontract-client.h"
 #include "smartcontract-server.h"
-#include "rpcpodc.h"
 
 #include "bls/bls.h"
 
@@ -2241,13 +2240,26 @@ UniValue dwsquote(const JSONRPCRequest& request)
 {
 	// Dynamic Whale Staking
 	if (request.fHelp || (request.params.size() != 0 && request.params.size() != 1 && request.params.size() != 2 && request.params.size() != 3))
-		throw std::runtime_error("You must specify dwsquote [optional 1=my whale stakes only, 2=all whale stakes] [optional 1=Include Paid/Unpaid, 2=Include Unpaid only (default), 3=Paid Only, 4=Paid with Anomolies only] [Optional 1=Advanced Totals,0=Default Totals].");
+		throw std::runtime_error("You must specify dwsquote [optional 1=my whale stakes only, 2=all whale stakes, optional=User CPK] [optional 1=Include Paid/Unpaid, 2=Include Unpaid only (default), 3=Paid Only, 4=Paid with Anomolies only] [Optional 1=Advanced Totals,0=Default Totals].");
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	UniValue results(UniValue::VOBJ);
 	double dDetails = 0;
 	double dAdvanced = 0;
+	std::string sDrillCPK;
+	std::string sReportCPK;
 	if (request.params.size() > 0)
+	{
 		dDetails = cdbl(request.params[0].get_str(), 0);
+		sDrillCPK = request.params[0].get_str();
+		if (sDrillCPK.length() > 20)
+		{
+			sReportCPK = sDrillCPK;
+			dDetails = 4;
+		}
+	}
+
+	
+
 	double dPaid = 2;
 	if (request.params.size() > 1)
 		dPaid = cdbl(request.params[1].get_str(), 0);
@@ -2257,7 +2269,7 @@ UniValue dwsquote(const JSONRPCRequest& request)
 
 	double dTotal = 0;
 	double dTotalImpact = 0;
-	if (dDetails == 1 || dDetails == 2)
+	if (dDetails == 1 || dDetails == 2 || dDetails == 4)
 	{
 		std::vector<WhaleStake> w = GetDWS(true);
 		results.push_back(Pair("Total DWS Quantity", (int)w.size()));
@@ -2280,7 +2292,7 @@ UniValue dwsquote(const JSONRPCRequest& request)
 			if (dPaid == 4 && !(nShtPct > 0))
 				fIncForPayment = false;
 
-			if (ws.found && fIncForPayment && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK)))
+			if (ws.found && fIncForPayment && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK) || (dDetails = 4 && ws.CPK == sReportCPK)))
 			{
 				std::string sInBlock = ToYesNo(fInBlock);
 				if (nShtPct > 0)
@@ -2299,12 +2311,12 @@ UniValue dwsquote(const JSONRPCRequest& request)
 				}
 				dTotal += ws.Amount;
 
-				// ToDo: Add parameter to show the return_to_address if user desires it
 				results.push_back(Pair(sKey, sRow));
 			}
 		}
 	}
 	// NOTE:  Rob paid for all anomalies up to block 233640, so we need to cross those off this report for prod.
+	// Payment Round 2:  Paying BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8 5,342,000, Paying B7AuLcF2yYgPzhtPJXdwR8EjNLz4C7GLyH  1,207,000
 	results.push_back(Pair("Metrics", "v1.3"));
 	// Call out for Whale Metrics
 	WhaleMetric wm = GetWhaleMetrics(chainActive.Tip()->nHeight, true);

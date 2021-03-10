@@ -13,7 +13,6 @@
 #include "platformstyle.h"
 #include "walletmodel.h"
 #include "rpcpog.h"
-#include "rpcpodc.h"
 
 #include <QApplication>
 #include <QClipboard>

@@ -11,7 +11,6 @@
 #include "checkpoints.h"
 #include "wallet/crypter.h"
 #include "rpcpog.h"
-#include "rpcpodc.h"
 #include "kjv.h"
 #include "coins.h"
 #include "core_io.h"
@@ -22,6 +21,8 @@
 #include "policy/policy.h"
 #include "primitives/transaction.h"
 #include "rpc/server.h"
+#include "rpcutxo.h"
+
 #include "streams.h"
 #include "spork.h"
 #include "sync.h"
@@ -183,11 +184,6 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
 	result.push_back(Pair("subsidy", block.vtx[0]->vout[0].nValue/COIN));
-	std::string sCPK;
-	CheckABNSignature(block, sCPK);
-	if (!sCPK.empty())
-		result.push_back(Pair("cpk", sCPK));
-
 	result.push_back(Pair("blockversion", GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage)));
 	if (block.vtx.size() > 1)
 		result.push_back(Pair("sanctuary_reward", block.vtx[0]->vout[1].nValue/COIN));
@@ -2761,33 +2757,6 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("TXID", sResult));
 		if (!sError.empty()) results.push_back(Pair("Error", sError));
 	}
-	else if (sItem == "getabnweight")
-	{
-		CAmount nTotalReq = 0;
-		double dABN = pwalletMain->GetAntiBotNetWalletWeight(0, nTotalReq);
-		double dMin = 0;
-		double dDebug = 0;
-		if (request.params.size() > 1)
-			dMin = cdbl(request.params[1].get_str(), 2);
-		if (request.params.size() > 2)
-			dDebug = cdbl(request.params[2].get_str(), 2);
-		results.push_back(Pair("version", 2.6));
-		results.push_back(Pair("weight", dABN));
-		results.push_back(Pair("total_required", nTotalReq / COIN));
-		if (dMin > 0) 
-		{
-			dABN = pwalletMain->GetAntiBotNetWalletWeight(dMin, nTotalReq);
-			if (dDebug == 1)
-			{
-				std::string sData = ReadCache("coin", "age");
-				if (sData.length() < 1000000)
-					results.push_back(Pair("coin_age_data_pre_select", sData));
-			}
-
-			results.push_back(Pair("weight " + RoundToString(dMin, 2), dABN));
-			results.push_back(Pair("total_required " + RoundToString(dMin, 2), nTotalReq/COIN));
-		}
-	}
 	else if (sItem == "getpoints")
 	{
 		if (request.params.size() < 2)
@@ -2867,49 +2836,6 @@ UniValue exec(const JSONRPCRequest& request)
 		else
 		{
 			results.push_back(Pair("error", "not found"));
-		}
-	}
-	else if (sItem == "createabn")
-	{
-		std::string sError;
-		std::string sXML;
-		WriteCache("vin", "coinage", "", GetAdjustedTime());
-		WriteCache("availablecoins", "age", "", GetAdjustedTime());
-		WriteCache("coin", "age", "", GetAdjustedTime());
-
-		double dTargetWeight = 0;
-		if (request.params.size() > 1)
-			dTargetWeight = cdbl(request.params[1].get_str(), 2);
-		CReserveKey reserveKey(pwalletMain);
-		CWalletTx wtx = CreateAntiBotNetTx(chainActive.Tip(), dTargetWeight, reserveKey, sXML, "ppk", sError);
-	
-		results.push_back(Pair("xml", sXML));
-		results.push_back(Pair("err", sError));
-		if (sError.empty())
-		{
-				results.push_back(Pair("coin_age_data_selected", ReadCache("availablecoins", "age")));
-				results.push_back(Pair("success", wtx.GetHash().GetHex()));
-				double nAuditedWeight = GetAntiBotNetWeight(chainActive.Tip()->GetBlockTime(), wtx.tx, true, "");
-				std::string sData = ReadCache("coin", "age");
-				if (sData.length() < 1000000)
-					results.push_back(Pair("coin_age_data_pre_select", sData));
-				results.push_back(Pair("audited_weight", nAuditedWeight));
-				results.push_back(Pair("vin_coin_age_data", ReadCache("vin", "coinage")));
-		}
-		else
-		{
-			results.push_back(Pair("age_data", ReadCache("availablecoins", "age")));
-			if (true)
-			{
-				double nAuditedWeight = GetAntiBotNetWeight(chainActive.Tip()->GetBlockTime(), wtx.tx, true, "");
-				results.push_back(Pair("vin_coin_age_data", ReadCache("vin", "coinage")));
-				std::string sData1 = ReadCache("coin", "age");
-				if (sData1.length() < 1000000)
-						results.push_back(Pair("coin_age_data_pre_select", sData1));
-				results.push_back(Pair("total_audited_weight", nAuditedWeight));
-			}
-	
-			results.push_back(Pair("tx_create_error", sError));
 		}
 	}
 	else if (sItem == "cpk")
@@ -3380,38 +3306,6 @@ UniValue exec(const JSONRPCRequest& request)
 					double nGrandAdjustment = nClockAdjustment + nRecentTrend;
 					results.push_back(Pair("Recommended Next DGW adjustment", nGrandAdjustment));
 				}
-		}
-	}
-	else if (sItem == "antigpu")
-	{
-		if (request.params.size() != 2)
-			throw std::runtime_error("You must specify height.");
-		int nHeight = cdbl(request.params[1].get_str(), 0);
-		CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
-		if (pblockindex == NULL)   
-			throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
-		CBlock block;
-		const Consensus::Params& consensusParams = Params().GetConsensus();
-		if (ReadBlockFromDisk(block, pblockindex, consensusParams))
-		{
-			std::string sMsg = GetTransactionMessage(block.vtx[0]);
-			int nABNLocator = (int)cdbl(ExtractXML(sMsg, "<abnlocator>", "</abnlocator>"), 0);
-			if (block.vtx.size() >= nABNLocator) 
-			{
-				CTransactionRef tx = block.vtx[nABNLocator];
-
-				std::string sCPK = ExtractXML(tx->GetTxMessage(), "<abncpk>", "</abncpk>");
-				results.push_back(Pair("anti_gpu_xml", tx->GetTxMessage()));
-				results.push_back(Pair("cpk", sCPK));
-				bool fValid = CheckAntiBotNetSignature(tx, "abn", "");
-				results.push_back(Pair("sig_valid", fValid));
-				bool fAntiGPU = AntiGPU(block, pblockindex->pprev);
-				results.push_back(Pair("anti-gpu", fAntiGPU));
-			}
-		}
-		else
-		{
-			results.push_back(Pair("error", "Unable to read block."));
 		}
 	}
 	else if (sItem == "getdacinfo")

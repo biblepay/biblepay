@@ -18,7 +18,6 @@
 #include "wallet/db.h"
 #include "wallet/wallet.h"
 #include "rpcpog.h"
-#include "rpcpodc.h"
 #include "kjv.h"
 #include "instantx.h"
 

@@ -1128,7 +1128,7 @@ void BitcoinGUI::showDecentralizedWeb()
 
 void BitcoinGUI::showAccountability()
 {
-	std::string sURL = "https://web.biblepay.org/Accountability";
+	std::string sURL = "https://foundation.biblepay.org/Accountability";
 	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
 }
 

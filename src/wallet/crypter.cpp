@@ -636,8 +636,6 @@ unsigned char *RSA_DECRYPT_CHAR(std::string sPriKeyPath, unsigned char *cipherte
 	// Now we have our encrypted_key and the iv we can decrypt the remaining
 	if (!EVP_OpenInit(ctx, EVP_des_ede_cbc(), encrypted_key, encrypted_key_length, iv, pkey))
 	{
-		LogPrintf("Key file loc %s", sPriKeyPath.c_str());
-		fprintf(stderr, "RSADecrypt::EVP_OpenInit: failed. \n");
 		sError = "EVP_OpenInit Failed.";
 		return plaintext;
 	}

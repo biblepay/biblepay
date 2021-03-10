@@ -11,7 +11,6 @@
 #include "ui_helpmessagedialog.h"
 #include "rpcpog.h"
 #include "kjv.h"
-#include "rpcpodc.h"
 #include "validation.h"
 #include "bitcoingui.h"
 #include "clientmodel.h"

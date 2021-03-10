@@ -203,7 +203,6 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 
 void BusinessObjectList::cellDoubleClicked(int Y, int X)
 {
-	
 	QTableWidgetItem *item1(ui->tableWidget->item(Y, 2));
 	if (item1)
 	{
@@ -217,7 +216,6 @@ void BusinessObjectList::cellDoubleClicked(int Y, int X)
 			QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Ok, QMessageBox::Ok);
 		}
 	}
-
 }
 
 

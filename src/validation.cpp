@@ -17,7 +17,6 @@
 #include "consensus/validation.h"
 #include "hash.h"
 #include "rpcpog.h"
-#include "rpcpodc.h"
 #include "init.h"
 #include "policy/policy.h"
 #include "pow.h"
@@ -3681,45 +3680,6 @@ bool LateBlock(const CBlock& block, const CBlockIndex* pindexPrev, int iMinutes)
 	int64_t nAgeTip = block.GetBlockTime() - pindexPrev->nTime;
 	return (nAgeTip > (60 * iMinutes)) ? true : false;
 }
-
-bool AntiGPU(const CBlock& block, const CBlockIndex* pindexPrev)
-{
-	if (!pindexPrev) return false;
-	std::string CPK;
-	CheckABNSignature(block, CPK);
-	if (CPK.empty()) return false;
-
-	int iCheckWindow = fProd ? 4 : 1;
-	int64_t headerAge = block.GetBlockTime() - pindexPrev->nTime;
-	if (headerAge > (60 * 60 * 1)) return false;
-
-	const CBlockIndex *pindex = pindexPrev;
-	const CChainParams& chainparams = Params();
- 	for (int i = 0; i < iCheckWindow; i++)
-	{
-		if (pindex != NULL)
-		{
-			CBlock prevBlock;
-        	if (ReadBlockFromDisk(prevBlock, pindex, chainparams.GetConsensus()))
-			{
-				std::string lastCPK;
-				CheckABNSignature(prevBlock, lastCPK);
-				if (!lastCPK.empty() && !CPK.empty() && lastCPK == CPK)
-				{
-					LogPrintf("\n AntiGPU ERROR: CPK %s, height %f ", lastCPK, (double)pindexPrev->nHeight);
-					return true;
-				}
-			}
-			else
-			{
-				return false;
-			}
-			pindex = pindexPrev->pprev;
-		}
-	}
-	return false;
-}
-
 
 bool ContextualCheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev, bool fMining)
 {

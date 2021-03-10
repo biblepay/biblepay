@@ -82,7 +82,7 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	s1 += "\n      <a href='SW_FE'>Final Exam</a>";
 
 	s1 += "\n\n10. <a href='PP'>Power Principles</a> explains how the early church was born in a demonstration of the power of God.  Power principles taught in this course equip students for spiritual harvest and moves them from being spectators to demonstrators of the power of God.";
-	s1 += "\n      <a href='xPP_FE'>Final Exam</a>";
+	s1 += "\n      <a href='PP_FE'>Final Exam</a>";
 
 	s1 += "\n\n\n\nNOTE:  Modules 3-4 are coming soon.  ";
 
