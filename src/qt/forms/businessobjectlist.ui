@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>988</width>
-    <height>706</height>
+    <width>1295</width>
+    <height>847</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,9 +23,9 @@
    <property name="geometry">
     <rect>
      <x>9</x>
-     <y>29</y>
-     <width>971</width>
-     <height>671</height>
+     <y>40</y>
+     <width>1281</width>
+     <height>811</height>
     </rect>
    </property>
    <property name="minimumSize">
@@ -116,31 +116,31 @@
     <string>Summary View</string>
    </property>
   </widget>
-   <widget class="QLabel" name="lblLeaderboard">
-     <property name="geometry">
-       <rect>
-         <x>380</x>
-         <y>10</y>
-         <width>400</width>
-         <height>16</height>
-       </rect>
-     </property>
-     <property name="minimumSize">
-       <size>
-         <width>400</width>
-         <height>0</height>
-       </size>
-     </property>
-     <property name="font">
-       <font>
-         <weight>75</weight>
-         <bold>true</bold>
-       </font>
-     </property>
-     <property name="text">
-       <string>Leaderboard 1.0</string>
-     </property>
-   </widget>
+  <widget class="QLabel" name="lblLeaderboard">
+   <property name="geometry">
+    <rect>
+     <x>380</x>
+     <y>10</y>
+     <width>400</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>400</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="font">
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Leaderboard 1.1</string>
+   </property>
+  </widget>
   <zorder>label_debug</zorder>
   <zorder>tableWidget</zorder>
   <zorder>btnDetails</zorder>

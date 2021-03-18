@@ -6,11 +6,11 @@
 #define BITCOIN_NETADDRESS_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/coin-config.h"
+#include <config/biblepay-config.h>
 #endif
 
-#include "compat.h"
-#include "serialize.h"
+#include <compat.h>
+#include <serialize.h>
 
 #include <stdint.h>
 #include <string>
@@ -24,6 +24,7 @@ enum Network
     NET_IPV4,
     NET_IPV6,
     NET_TOR,
+    NET_INTERNAL,
 
     NET_MAX,
 };
@@ -37,15 +38,22 @@ class CNetAddr
 
     public:
         CNetAddr();
-        CNetAddr(const struct in_addr& ipv4Addr);
-        void Init();
+        explicit CNetAddr(const struct in_addr& ipv4Addr);
         void SetIP(const CNetAddr& ip);
 
+    private:
         /**
          * Set raw IPv4 or IPv6 address (in network byte order)
          * @note Only NET_IPV4 and NET_IPV6 are allowed for network.
          */
         void SetRaw(Network network, const uint8_t *data);
+
+    public:
+        /**
+          * Transform an arbitrary string into a non-routable ipv6 address.
+          * Useful for mapping resolved addresses back to their source.
+         */
+        bool SetInternal(const std::string& name);
 
         bool SetSpecial(const std::string &strName); // for Tor addresses
         bool IsIPv4() const;    // IPv4 mapped address (::FFFF:0:0/96, 0.0.0.0/0)
@@ -66,8 +74,8 @@ class CNetAddr
         bool IsTor() const;
         bool IsLocal() const;
         bool IsRoutable() const;
+        bool IsInternal() const;
         bool IsValid() const;
-        bool IsMulticast() const;
         enum Network GetNetwork() const;
         std::string ToString() const;
         std::string ToStringIP(bool fUseGetnameinfo = true) const;
@@ -75,13 +83,13 @@ class CNetAddr
         uint64_t GetHash() const;
         bool GetInAddr(struct in_addr* pipv4Addr) const;
         std::vector<unsigned char> GetGroup() const;
-        int GetReachabilityFrom(const CNetAddr *paddrPartner = NULL) const;
+        int GetReachabilityFrom(const CNetAddr *paddrPartner = nullptr) const;
 
-        CNetAddr(const struct in6_addr& pipv6Addr, const uint32_t scope = 0);
+        explicit CNetAddr(const struct in6_addr& pipv6Addr, const uint32_t scope = 0);
         bool GetIn6Addr(struct in6_addr* pipv6Addr) const;
 
         friend bool operator==(const CNetAddr& a, const CNetAddr& b);
-        friend bool operator!=(const CNetAddr& a, const CNetAddr& b);
+        friend bool operator!=(const CNetAddr& a, const CNetAddr& b) { return !(a == b); }
         friend bool operator<(const CNetAddr& a, const CNetAddr& b);
 
         ADD_SERIALIZE_METHODS;
@@ -118,7 +126,7 @@ class CSubNet
         bool IsValid() const;
 
         friend bool operator==(const CSubNet& a, const CSubNet& b);
-        friend bool operator!=(const CSubNet& a, const CSubNet& b);
+        friend bool operator!=(const CSubNet& a, const CSubNet& b) { return !(a == b); }
         friend bool operator<(const CSubNet& a, const CSubNet& b);
 
         ADD_SERIALIZE_METHODS;
@@ -141,14 +149,13 @@ class CService : public CNetAddr
         CService();
         CService(const CNetAddr& ip, unsigned short port);
         CService(const struct in_addr& ipv4Addr, unsigned short port);
-        CService(const struct sockaddr_in& addr);
-        void Init();
+        explicit CService(const struct sockaddr_in& addr);
         void SetPort(unsigned short portIn);
         unsigned short GetPort() const;
         bool GetSockAddr(struct sockaddr* paddr, socklen_t *addrlen) const;
         bool SetSockAddr(const struct sockaddr* paddr);
         friend bool operator==(const CService& a, const CService& b);
-        friend bool operator!=(const CService& a, const CService& b);
+        friend bool operator!=(const CService& a, const CService& b) { return !(a == b); }
         friend bool operator<(const CService& a, const CService& b);
         std::vector<unsigned char> GetKey() const;
         std::string ToString(bool fUseGetnameinfo = true) const;
@@ -156,7 +163,7 @@ class CService : public CNetAddr
         std::string ToStringIPPort(bool fUseGetnameinfo = true) const;
 
         CService(const struct in6_addr& ipv6Addr, unsigned short port);
-        CService(const struct sockaddr_in6& addr);
+        explicit CService(const struct sockaddr_in6& addr);
 
         ADD_SERIALIZE_METHODS;
 

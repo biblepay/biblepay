@@ -6,8 +6,8 @@
 """
     ZMQ example using python3's asyncio
 
-    Dash should be started with the command line arguments:
-        dashd -testnet -daemon \
+    BiblePay should be started with the command line arguments:
+        biblepayd -testnet -daemon \
                 -zmqpubrawtx=tcp://127.0.0.1:28332 \
                 -zmqpubrawblock=tcp://127.0.0.1:28332 \
                 -zmqpubhashtx=tcp://127.0.0.1:28332 \
@@ -36,7 +36,7 @@ import sys
 
 if not (sys.version_info.major >= 3 and sys.version_info.minor >= 4):
     print("This example only works with Python 3.4 and greater")
-    exit(1)
+    sys.exit(1)
 
 port = 28332
 
@@ -55,8 +55,10 @@ class ZMQHandler():
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "hashinstantsenddoublespend")
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawblock")
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawchainlock")
+        self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawchainlocksig")
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawtx")
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawtxlock")
+        self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawtxlocksig")
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawgovernancevote")
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawgovernanceobject")
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "rawinstantsenddoublespend")
@@ -67,7 +69,7 @@ class ZMQHandler():
         msg = yield from self.zmqSubSocket.recv_multipart()
         topic = msg[0]
         body = msg[1]
-        sequence = "Unknown";
+        sequence = "Unknown"
         if len(msg[-1]) == 4:
           msgSequence = struct.unpack('<I', msg[-1])[-1]
           sequence = str(msgSequence)
@@ -98,11 +100,17 @@ class ZMQHandler():
         elif topic == b"rawchainlock":
             print('- RAW CHAINLOCK ('+sequence+') -')
             print(binascii.hexlify(body[:80]).decode("utf-8"))
+        elif topic == b"rawchainlocksig":
+            print('- RAW CHAINLOCK SIG ('+sequence+') -')
+            print(binascii.hexlify(body[:80]).decode("utf-8"))
         elif topic == b"rawtx":
             print('- RAW TX ('+sequence+') -')
             print(binascii.hexlify(body).decode("utf-8"))
         elif topic == b"rawtxlock":
             print('- RAW TX LOCK ('+sequence+') -')
+            print(binascii.hexlify(body).decode("utf-8"))
+        elif topic == b"rawtxlocksig":
+            print('- RAW TX LOCK SIG ('+sequence+') -')
             print(binascii.hexlify(body).decode("utf-8"))
         elif topic == b"rawgovernancevote":
             print('- RAW GOVERNANCE VOTE ('+sequence+') -')

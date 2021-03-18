@@ -1,16 +1,19 @@
 // Copyright (c) 2012-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "addrman.h"
-#include "test/test_coin.h"
+#include <addrman.h>
+#include <test/test_biblepay.h>
 #include <string>
 #include <boost/test/unit_test.hpp>
-#include "hash.h"
-#include "serialize.h"
-#include "streams.h"
-#include "net.h"
-#include "netbase.h"
-#include "chainparams.h"
+#include <hash.h>
+#include <serialize.h>
+#include <streams.h>
+#include <net.h>
+#include <netbase.h>
+#include <chainparams.h>
+#include <util.h>
+
+#include <memory>
 
 class CAddrManSerializationMock : public CAddrMan
 {
@@ -71,6 +74,18 @@ CDataStream AddrmanToStream(CAddrManSerializationMock& _addrman)
 }
 
 BOOST_FIXTURE_TEST_SUITE(net_tests, BasicTestingSetup)
+
+BOOST_AUTO_TEST_CASE(cnode_listen_port)
+{
+    // test default
+    unsigned short port = GetListenPort();
+    BOOST_CHECK(port == Params().GetDefaultPort());
+    // test set port
+    unsigned short altPort = 12345;
+    gArgs.SoftSetArg("-port", std::to_string(altPort));
+    port = GetListenPort();
+    BOOST_CHECK(port == altPort);
+}
 
 BOOST_AUTO_TEST_CASE(caddrdb_read)
 {
@@ -162,14 +177,28 @@ BOOST_AUTO_TEST_CASE(cnode_simple_test)
     bool fInboundIn = false;
 
     // Test that fFeeler is false by default.
-    std::unique_ptr<CNode> pnode1(new CNode(id++, NODE_NETWORK, height, hSocket, addr, 0, 0, pszDest, fInboundIn));
+    std::unique_ptr<CNode> pnode1(new CNode(id++, NODE_NETWORK, height, hSocket, addr, 0, 0, CAddress(), pszDest, fInboundIn));
     BOOST_CHECK(pnode1->fInbound == false);
     BOOST_CHECK(pnode1->fFeeler == false);
 
     fInboundIn = true;
-    std::unique_ptr<CNode> pnode2(new CNode(id++, NODE_NETWORK, height, hSocket, addr, 1, 1, pszDest, fInboundIn));
+    std::unique_ptr<CNode> pnode2(new CNode(id++, NODE_NETWORK, height, hSocket, addr, 1, 1, CAddress(), pszDest, fInboundIn));
     BOOST_CHECK(pnode2->fInbound == true);
     BOOST_CHECK(pnode2->fFeeler == false);
+}
+
+BOOST_AUTO_TEST_CASE(PoissonNextSend)
+{
+    g_mock_deterministic_tests = true;
+    int64_t now = 5000;
+    int average_interval_seconds = 600;
+
+    auto poisson = ::PoissonNextSend(now, average_interval_seconds);
+    std::chrono::microseconds poisson_chrono = ::PoissonNextSend(std::chrono::microseconds{now}, std::chrono::seconds{average_interval_seconds});
+
+    BOOST_CHECK_EQUAL(poisson, poisson_chrono.count());
+
+    g_mock_deterministic_tests = false;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

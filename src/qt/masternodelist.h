@@ -1,12 +1,11 @@
 #ifndef MASTERNODELIST_H
 #define MASTERNODELIST_H
 
-#include "platformstyle.h"
-#include "primitives/transaction.h"
-#include "sync.h"
-#include "util.h"
+#include <primitives/transaction.h>
+#include <sync.h>
+#include <util.h>
 
-#include "evo/deterministicmns.h"
+#include <evo/deterministicmns.h>
 
 #include <QMenu>
 #include <QTimer>
@@ -33,7 +32,7 @@ class MasternodeList : public QWidget
     Q_OBJECT
 
 public:
-    explicit MasternodeList(const PlatformStyle* platformStyle, QWidget* parent = 0);
+    explicit MasternodeList(QWidget* parent = 0);
     ~MasternodeList();
 
     void setClientModel(ClientModel* clientModel);
@@ -72,9 +71,10 @@ private Q_SLOTS:
     void extraInfoDIP3_clicked();
     void copyProTxHash_clicked();
     void copyCollateralOutpoint_clicked();
+
+    void handleMasternodeListChanged();
 	void navigateToChild_clicked();
     void sponsorChild_clicked();
-    void handleMasternodeListChanged();
     void updateDIP3ListScheduled();
 };
 #endif // MASTERNODELIST_H

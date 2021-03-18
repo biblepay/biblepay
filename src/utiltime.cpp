@@ -1,51 +1,68 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/coin-config.h"
+#include <config/biblepay-config.h>
 #endif
 
-#include "tinyformat.h"
-#include "utiltime.h"
+#include <tinyformat.h>
+#include <utiltime.h>
+
+#include <atomic>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread.hpp>
 
-static int64_t nMockTime = 0; //!< For unit testing
+#include <chrono>
+
+static std::atomic<int64_t> nMockTime(0); //!< For unit testing
 
 int64_t GetTime()
 {
-    if (nMockTime) return nMockTime;
+    int64_t mocktime = nMockTime.load(std::memory_order_relaxed);
+    if (mocktime) return mocktime;
 
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
     assert(now > 0);
     return now;
 }
 
+template <typename T>
+T GetTime()
+{
+    const std::chrono::seconds mocktime{nMockTime.load(std::memory_order_relaxed)};
+
+    return std::chrono::duration_cast<T>(
+        mocktime.count() ?
+            mocktime :
+            std::chrono::microseconds{GetTimeMicros()});
+}
+template std::chrono::seconds GetTime();
+template std::chrono::milliseconds GetTime();
+template std::chrono::microseconds GetTime();
+
 void SetMockTime(int64_t nMockTimeIn)
 {
-    nMockTime = nMockTimeIn;
+    nMockTime.store(nMockTimeIn, std::memory_order_relaxed);
 }
 
-bool IsMockTime()
+int64_t GetMockTime()
 {
-    return nMockTime != 0;
+    return nMockTime.load(std::memory_order_relaxed);
 }
 
 int64_t GetTimeMillis()
 {
-    int64_t now = (boost::posix_time::microsec_clock::universal_time() -
-                   boost::posix_time::ptime(boost::gregorian::date(1970,1,1))).total_milliseconds();
+    int64_t now = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
     assert(now > 0);
     return now;
 }
 
 int64_t GetTimeMicros()
 {
-    int64_t now = (boost::posix_time::microsec_clock::universal_time() -
-                   boost::posix_time::ptime(boost::gregorian::date(1970,1,1))).total_microseconds();
+    int64_t now = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
     assert(now > 0);
     return now;
 }
@@ -53,14 +70,6 @@ int64_t GetTimeMicros()
 int64_t GetSystemTimeInSeconds()
 {
     return GetTimeMicros()/1000000;
-}
-
-/** Return a time useful for the debug log */
-int64_t GetLogTimeMicros()
-{
-    if (nMockTime) return nMockTime*1000000;
-
-    return GetTimeMicros();
 }
 
 void MilliSleep(int64_t n)

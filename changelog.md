@@ -11,7 +11,7 @@ Changes between 1.5.2.9-1.5.4.4:
 - Add RSA keys for User Encryption (for emails and chats)
 - Add burn addresses for DAC and DAC matches
 - Add audit params to dwsquote (this allows us to see if anyone is shorted in the future)
-- add rpc 'claimreward' - this allows dash easter eggs rewards to be claimed
+- add rpc 'claimreward' - this allows biblepay easter eggs rewards to be claimed
 - Added txoutsetinfo advanced metrics that track exact coin money supply
 - Added MultiSigSignRawTransaction and MultiSigCreateRawTransaction - Lets user create cash that is recallable if not spent (or N-of-X multisig transactions)
 - Added xspork-orphan, xspork-charity record types (this allows sanctuaries to add or edit these types of records in a decentralized way), and enables the DAC to allocate funds from the DacEngine
@@ -73,7 +73,7 @@ Changes between 1.5.2.9-1.5.4.4:
 - Fix SMTP for Windows
 1.5.3.7 - Mandatory Upgrade for testnet
 
-- Add support for BTC, LTC, DOGE, DASH and BBP utxostakes
+- Add support for BTC, LTC, DOGE, BIBLEPAY and BBP utxostakes
 - Add pin staking (rpc: getpin)
 - Ensure SMTP supports CC & BCC (we did this, please test)
 - Add Memorize Scriptures page with Learn Mode and Test Mode
@@ -119,3 +119,5 @@ Changes between 1.5.2.9-1.5.4.4:
 - Enforce 3meg email limit
 - Bump version and cutover height for prod
 - Decrease quorum size to be more reflective of our Paid-sponsorship-orphan sanctuary model
+1.5.4.5b - Mandatory Upgrade for Entire Network
+- Ensure Pop3 class can be disabled (for sancs with shared hosting)

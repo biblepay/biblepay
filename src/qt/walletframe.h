@@ -10,7 +10,6 @@
 
 class BitcoinGUI;
 class ClientModel;
-class PlatformStyle;
 class SendCoinsRecipient;
 class WalletModel;
 class WalletView;
@@ -31,7 +30,7 @@ class WalletFrame : public QFrame
     Q_OBJECT
 
 public:
-    explicit WalletFrame(const PlatformStyle *platformStyle, BitcoinGUI *_gui = 0);
+    explicit WalletFrame(BitcoinGUI* _gui = 0);
     ~WalletFrame();
 
     void setClientModel(ClientModel *clientModel);
@@ -57,8 +56,7 @@ private:
 
     bool bOutOfSync;
 
-    const PlatformStyle *platformStyle;
-
+public:
     WalletView *currentWalletView();
 
 public Q_SLOTS:
@@ -70,7 +68,8 @@ public Q_SLOTS:
     void gotoMasternodePage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
-	
+    /** Switch to send coins page */
+
 	/** Switch to Business Object List page */
 	void gotoBusinessObjectListPage();
 
@@ -80,8 +79,9 @@ public Q_SLOTS:
 	void gotoMemorizeScripturePage();
 	void gotoProposalListPage();
 
-    /** Switch to send coins page */
     void gotoSendCoinsPage(QString addr = "");
+    /** Switch to PrivateSend coins page */
+    void gotoPrivateSendCoinsPage(QString addr = "");
 
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
@@ -89,7 +89,7 @@ public Q_SLOTS:
     void gotoVerifyMessageTab(QString addr = "");
 
     /** Encrypt the wallet */
-    void encryptWallet(bool status);
+    void encryptWallet();
     /** Backup the wallet */
     void backupWallet();
     /** Change encrypted wallet passphrase */

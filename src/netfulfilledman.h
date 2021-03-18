@@ -1,14 +1,13 @@
-// Copyright (c) 2014-2018 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef NETFULFILLEDMAN_H
 #define NETFULFILLEDMAN_H
 
-#include "netaddress.h"
-#include "serialize.h"
-#include "sync.h"
+#include <netaddress.h>
+#include <serialize.h>
+#include <sync.h>
 
 class CNetFulfilledRequestManager;
 extern CNetFulfilledRequestManager netfulfilledman;
@@ -40,6 +39,8 @@ public:
 
     void AddFulfilledRequest(const CService& addr, const std::string& strRequest);
     bool HasFulfilledRequest(const CService& addr, const std::string& strRequest);
+
+    void RemoveAllFulfilledRequests(const CService& addr);
 
     void CheckAndRemove();
     void Clear();

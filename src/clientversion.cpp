@@ -2,32 +2,22 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "clientversion.h"
+#include <clientversion.h>
 
-#include "tinyformat.h"
+#include <tinyformat.h>
 
-#include <string>
 
 /**
  * Name of client reported in the 'version' message. Report the same name
- * for both dacd and dac-qt, to make it harder for attackers to
+ * for both biblepayd and biblepay-qt, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
 const std::string CLIENT_NAME("BiblePay Core");
 
-const int BIBLEPAY_VERSION_MAJOR = 1;
-const int BIBLEPAY_VERSION_MINOR = 5;
-const int BIBLEPAY_VERSION_REVISION = 4;
-const int BIBLEPAY_VERSION_BUILD = 4;
-
-const int BIBLE_VERSION =  1000000 * BIBLEPAY_VERSION_MAJOR
-                         +   10000 * BIBLEPAY_VERSION_MINOR
-                         +     100 * BIBLEPAY_VERSION_REVISION
-                         +       1 * BIBLEPAY_VERSION_BUILD;
 /**
  * Client version number
  */
-#define CLIENT_VERSION_SUFFIX "b"
+#define CLIENT_VERSION_SUFFIX "Harvest"
 
 
 /**
@@ -48,7 +38,7 @@ const int BIBLE_VERSION =  1000000 * BIBLEPAY_VERSION_MAJOR
 
 //! First, include build.h if requested
 #ifdef HAVE_BUILD_INFO
-#include "build.h"
+#include <obj/build.h>
 #endif
 
 //! git will put "#define GIT_ARCHIVE 1" on the next line inside archives. $Format:%n#define GIT_ARCHIVE 1$
@@ -58,13 +48,13 @@ const int BIBLE_VERSION =  1000000 * BIBLEPAY_VERSION_MAJOR
 #endif
 
 #define BUILD_DESC_WITH_SUFFIX(maj, min, rev, build, suffix) \
-    "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "-" DO_STRINGIZE(suffix)
+    "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "&" DO_STRINGIZE(suffix)
 
 #define BUILD_DESC_FROM_COMMIT(maj, min, rev, build, commit) \
-    "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "-g" commit
+    "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "+" commit
 
-#define BUILD_DESC_FROM_UNKNOWN(maj, min, rev, build) \
-    "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "-unk"
+#define BUILD_DESC_FROM_UNKNOWN(maj, min, rev, build, suffix) \
+    "v" DO_STRINGIZE(maj) "." DO_STRINGIZE(min) "." DO_STRINGIZE(rev) "." DO_STRINGIZE(build) "-"
 
 #ifndef BUILD_DESC
 #ifdef BUILD_SUFFIX
@@ -72,7 +62,7 @@ const int BIBLE_VERSION =  1000000 * BIBLEPAY_VERSION_MAJOR
 #elif defined(GIT_COMMIT_ID)
 #define BUILD_DESC BUILD_DESC_FROM_COMMIT(CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD, GIT_COMMIT_ID)
 #else
-#define BUILD_DESC BUILD_DESC_FROM_UNKNOWN(CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD)
+#define BUILD_DESC BUILD_DESC_FROM_UNKNOWN(CLIENT_VERSION_MAJOR, CLIENT_VERSION_MINOR, CLIENT_VERSION_REVISION, CLIENT_VERSION_BUILD, "")
 #endif
 #endif
 
@@ -88,10 +78,7 @@ std::string FormatVersion(int nVersion)
 
 std::string FormatFullVersion()
 {
-   
-	//NEW VERSION:
-	std::string v=strprintf("%d.%d.%d.%d", BIBLE_VERSION / 1000000, (BIBLE_VERSION / 10000) % 100, (BIBLE_VERSION / 100) % 100, BIBLE_VERSION % 100); 
-	return v;
+    return CLIENT_BUILD;
 }
 
 /** 

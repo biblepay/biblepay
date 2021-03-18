@@ -5,26 +5,27 @@
 #ifndef BITCOIN_QT_WALLETVIEW_H
 #define BITCOIN_QT_WALLETVIEW_H
 
-#include "amount.h"
-#include "masternodelist.h"
+#include <amount.h>
+#include <qt/masternodelist.h>
 
 #include <QStackedWidget>
+#include "rpcpog.h"
 
 class BitcoinGUI;
 class ClientModel;
 class OverviewPage;
-class PlatformStyle;
 class ReceiveCoinsDialog;
 class SendCoinsDialog;
 class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
 class AddressBookPage;
+class PlatformStyle;
 class BusinessObjectList;
 class ProposalAddDialog;
+class Proposals;
 class UserDialog;
 class MemorizeScriptureDialog;
-class Proposals;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -43,7 +44,7 @@ class WalletView : public QStackedWidget
     Q_OBJECT
 
 public:
-    explicit WalletView(const PlatformStyle *platformStyle, QWidget *parent);
+    explicit WalletView(QWidget* parent);
     ~WalletView();
 
     void setBitcoinGUI(BitcoinGUI *gui);
@@ -51,6 +52,7 @@ public:
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
     */
     void setClientModel(ClientModel *clientModel);
+    WalletModel *getWalletModel() { return walletModel; }
     /** Set the wallet model.
         The wallet model represents a bitcoin wallet, and offers access to the list of transactions, address book and sending
         functionality.
@@ -69,22 +71,22 @@ private:
     QWidget *transactionsPage;
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
+    SendCoinsDialog* privateSendCoinsPage;
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
     MasternodeList *masternodeListPage;
-    TransactionView *transactionView;
 
+    TransactionView *transactionView;
 	ProposalAddDialog *proposalAddPage;
+	
 	UserDialog *userEditPage;
 	MemorizeScriptureDialog *memorizeScripturePage;
-
 	Proposals *proposalListPage;
 	BusinessObjectList *businessObjectListPage;
 
     QProgressDialog *progressDialog;
     QLabel *transactionSum;
-    const PlatformStyle *platformStyle;
-
+	const PlatformStyle *platformStyle;
 public Q_SLOTS:
     /** Switch to overview (home) page */
     void gotoOverviewPage();
@@ -105,6 +107,9 @@ public Q_SLOTS:
 	/** Switch to Business Object List Page */
 	void gotoBusinessObjectListPage();
 
+    /** Switch to PrivateSend coins page */
+    void gotoPrivateSendCoinsPage(QString addr = "");
+
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
     /** Show Sign/Verify Message dialog and switch to verify message tab */
@@ -116,7 +121,7 @@ public Q_SLOTS:
     */
     void processNewTransaction(const QModelIndex& parent, int start, int /*end*/);
     /** Encrypt the wallet */
-    void encryptWallet(bool status);
+    void encryptWallet();
     /** Backup the wallet */
     void backupWallet();
     /** Change encrypted wallet passphrase */
@@ -141,7 +146,7 @@ public Q_SLOTS:
     void requestedSyncWarningInfo();
 
 
-    /** Update selected amount from transactionview */
+    /** Update selected BIBLEPAY amount from transactionview */
     void trxAmount(QString amount);
 Q_SIGNALS:
     /** Signal that we want to show the main window */

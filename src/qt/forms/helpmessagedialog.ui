@@ -67,7 +67,7 @@
         <bool>false</bool>
        </property>
        <property name="pixmap">
-        <pixmap resource="../biblepay.qrc">:/images/drkblue/about</pixmap>
+        <pixmap>:/images/drkblue/about</pixmap>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -313,32 +313,6 @@ p, li { white-space: pre-wrap; }
        <property name="topMargin">
         <number>33</number>
        </property>
-       <item>
-        <widget class="QPushButton" name="btnPreview">
-         <property name="text">
-          <string>Preview</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnPublish">
-         <property name="minimumSize">
-          <size>
-           <width>145</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>77</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Publish</string>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QDialogButtonBox" name="okButton">
          <property name="maximumSize">

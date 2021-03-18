@@ -26,16 +26,16 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>Biblepay-Qt</string>
+  <string>BiblePay-Qt</string>
 
   <key>CFBundleName</key>
-  <string>Biblepay-Qt</string>
+  <string>BiblePay-Qt</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.biblepay.Biblepay-Qt</string>
+  <string>org.biblepay-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -43,10 +43,10 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>org.biblepay.BiblePayment</string>
+      <string>org.biblepay.DashPayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
-        <string>biblepay</string>
+        <string>dash</string>
       </array>
     </dict>
   </array>
@@ -55,9 +55,9 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>org.biblepay.paymentrequest</string>
+      <string>org.dash.paymentrequest</string>
       <key>UTTypeDescription</key>
-      <string>Biblepay payment request</string>
+      <string>Dash payment request</string>
       <key>UTTypeConformsTo</key>
       <array>
         <string>public.data</string>
@@ -65,10 +65,10 @@
       <key>UTTypeTagSpecification</key>
       <dict>
         <key>public.mime-type</key>
-        <string>application/x-biblepay-payment-request</string>
+        <string>application/x-dash-payment-request</string>
         <key>public.filename-extension</key>
         <array>
-          <string>biblepaymentrequest</string>
+          <string>dashpaymentrequest</string>
         </array>
       </dict>
     </dict>
@@ -81,7 +81,7 @@
       <string>Editor</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>org.biblepay.paymentrequest</string>
+        <string>org.dash.paymentrequest</string>
       </array>
       <key>LSHandlerRank</key>
       <string>Owner</string>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1059</width>
-    <height>877</height>
+    <width>1134</width>
+    <height>1028</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -763,18 +763,18 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>700</width>
-       <height>64</height>
+       <width>977</width>
+       <height>100</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>700</width>
-       <height>64</height>
+       <width>977</width>
+       <height>100</height>
       </size>
      </property>
      <property name="text">
-      <string>.</string>
+      <string/>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -794,14 +794,14 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>700</width>
-       <height>175</height>
+       <width>977</width>
+       <height>245</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>750</width>
-       <height>300</height>
+       <width>977</width>
+       <height>245</height>
       </size>
      </property>
      <property name="font">
@@ -813,7 +813,7 @@
       </font>
      </property>
      <property name="text">
-      <string>..</string>
+      <string/>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -836,14 +836,14 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>700</width>
-       <height>5</height>
+       <width>977</width>
+       <height>50</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>850</width>
-       <height>125</height>
+       <width>977</width>
+       <height>50</height>
       </size>
      </property>
      <property name="font">
@@ -855,7 +855,7 @@
       </font>
      </property>
      <property name="text">
-      <string>                                                                                            .</string>
+      <string/>
      </property>
      <property name="margin">
       <number>10</number>

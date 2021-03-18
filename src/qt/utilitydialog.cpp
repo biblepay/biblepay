@@ -1,27 +1,28 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Dash Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/coin-config.h"
+#include <config/biblepay-config.h>
 #endif
 
-#include "utilitydialog.h"
-#include "ui_helpmessagedialog.h"
-#include "rpcpog.h"
-#include "kjv.h"
-#include "rpcpodc.h"
-#include "validation.h"
-#include "bitcoingui.h"
-#include "clientmodel.h"
-#include "guiconstants.h"
-#include "intro.h"
-#include "paymentrequestplus.h"
-#include "guiutil.h"
-#include "clientversion.h"
-#include "init.h"
-#include "util.h"
+#include <qt/utilitydialog.h>
+
+#include <qt/forms/ui_helpmessagedialog.h>
+
+#include <qt/bitcoingui.h>
+#include <qt/clientmodel.h>
+#include <qt/guiconstants.h>
+#include <qt/guiutil.h>
+#include <qt/intro.h>
+#include <qt/paymentrequestplus.h>
+#include <qt/guiutil.h>
+
+#include <clientversion.h>
+#include <init.h>
+#include <util.h>
+
 #include <stdio.h>
 
 #include <QCloseEvent>
@@ -30,6 +31,8 @@
 #include <QTextTable>
 #include <QTextCursor>
 #include <QVBoxLayout>
+#include "rpcpog.h"
+#include "kjv.h"
 
 /** "Help message" or "About" dialog box */
 HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPrayer, uint256 txid, std::string sPreview) :
@@ -37,6 +40,8 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
     ui(new Ui::HelpMessageDialog)
 {
     ui->setupUi(this);
+
+    GUIUtil::updateFonts();
 
     QString version = tr(PACKAGE_NAME) + " " + tr("version") + " " + QString::fromStdString(FormatFullVersion());
     /* On x86 add a bit specifier to the version so that users can distinguish between
@@ -47,13 +52,12 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
 #elif defined(__i386__ )
     version += " " + tr("(%1-bit)").arg(32);
 #endif
+
 	if (helpMode == prayer)
 	{
 		std::string sTitle;
 		std::string sPrayer = GetPrayer(iPrayer, sTitle);
 	    setWindowTitle(QString::fromStdString(sTitle));
-		ui->btnPublish->setVisible(false);
-		ui->btnPreview->setVisible(false);
 	    QString qsp = QString::fromStdString(sPrayer);
         // Make URLs clickable
         QRegExp uri("<(.*)>", Qt::CaseSensitive, QRegExp::RegExp2);
@@ -66,7 +70,8 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
         ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         ui->aboutMessage->setText(qsp);
         ui->aboutMessage->setWordWrap(true);
-        ui->helpMessage->setVisible(false);
+
+		ui->helpMessage->setVisible(false);
 		ui->comboBook->setVisible(false);
 		ui->comboChapter->setVisible(false);
 		ui->lblChapter->setVisible(false);
@@ -78,8 +83,6 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
 	{
 		// Make the combobox for choosing the Book of the Bible and the Chapter visible:
 		ui->comboBook->setVisible(true);
-		ui->btnPublish->setVisible(false);
-		ui->btnPreview->setVisible(false);
 		ui->comboChapter->setVisible(true);
 		ui->lblChapter->setVisible(true);
 		ui->lblBook->setVisible(true);
@@ -133,16 +136,15 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
         // Make URLs clickable
         QRegExp uri("<(.*)>", Qt::CaseSensitive, QRegExp::RegExp2);
         uri.setMinimal(true); // use non-greedy matching
-        licenseInfoHTML.replace(uri, "<a href=\"\\1\">\\1</a>");
+        licenseInfoHTML.replace(uri, QString("<a style=\"%1\"href=\"\\1\">\\1</a>").arg(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_COMMAND)));
         // Replace newlines with HTML breaks
         licenseInfoHTML.replace("\n", "<br>");
+
         ui->aboutMessage->setTextFormat(Qt::RichText);
         ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         text = version + "\n" + licenseInfo;
         ui->aboutMessage->setText(version + "<br><br>" + licenseInfoHTML);
-    	ui->btnPublish->setVisible(false);
-		ui->btnPreview->setVisible(false);
-	    ui->aboutMessage->setWordWrap(true);
+        ui->aboutMessage->setWordWrap(true);
         ui->helpMessage->setVisible(false);
 		ui->comboBook->setVisible(false);
 		ui->comboChapter->setVisible(false);
@@ -150,12 +152,10 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
 		ui->lblBook->setVisible(false);
 		ui->lblLanguages->setVisible(false);
 		ui->comboLanguages->setVisible(false);
-    }
-	else if (helpMode == cmdline) 
-	{
+    } else if (helpMode == cmdline) {
         setWindowTitle(tr("Command-line options"));
         QString header = tr("Usage:") + "\n" +
-            "  dac-qt [" + tr("command-line options") + "]                     " + "\n";
+            "  biblepay-qt [" + tr("command-line options") + "]                     " + "\n";
         QTextCursor cursor(ui->helpMessage->document());
         cursor.insertText(version);
         cursor.insertBlock();
@@ -163,12 +163,17 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
         cursor.insertBlock();
 
         std::string strUsage = HelpMessage(HMM_BITCOIN_QT);
-        const bool showDebug = GetBoolArg("-help-debug", false);
+        const bool showDebug = gArgs.GetBoolArg("-help-debug", false);
         strUsage += HelpMessageGroup(tr("UI Options:").toStdString());
         if (showDebug) {
             strUsage += HelpMessageOpt("-allowselfsignedrootcertificates", strprintf("Allow self signed root certificates (default: %u)", DEFAULT_SELFSIGNED_ROOTCERTS));
         }
         strUsage += HelpMessageOpt("-choosedatadir", strprintf(tr("Choose data directory on startup (default: %u)").toStdString(), DEFAULT_CHOOSE_DATADIR));
+        strUsage += HelpMessageOpt("-custom-css-dir", "Set a directory which contains custom css files. Those will be used as stylesheets for the UI.");
+        strUsage += HelpMessageOpt("-font-family", tr("Set the font family. Possible values: %1. (default: %2)").arg("SystemDefault, Montserrat").arg(GUIUtil::fontFamilyToString(GUIUtil::getFontFamilyDefault())).toStdString());
+        strUsage += HelpMessageOpt("-font-scale", tr("Set a scale factor which gets applied to the base font size. Possible range %1 (smallest fonts) to %2 (largest fonts). (default: %3)").arg(-100).arg(100).arg(GUIUtil::getFontScaleDefault()).toStdString());
+        strUsage += HelpMessageOpt("-font-weight-bold", tr("Set the font weight for bold texts. Possible range %1 to %2 (default: %3)").arg(0).arg(8).arg(GUIUtil::weightToArg(GUIUtil::getFontWeightBoldDefault())).toStdString());
+        strUsage += HelpMessageOpt("-font-weight-normal", tr("Set the font weight for normal texts. Possible range %1 to %2 (default: %3)").arg(0).arg(8).arg(GUIUtil::weightToArg(GUIUtil::getFontWeightNormalDefault())).toStdString());
         strUsage += HelpMessageOpt("-lang=<lang>", tr("Set language, for example \"de_DE\" (default: system locale)").toStdString());
         strUsage += HelpMessageOpt("-min", tr("Start minimized").toStdString());
         strUsage += HelpMessageOpt("-rootcertificates=<file>", tr("Set SSL root certificates for payment request (default: -system-)").toStdString());
@@ -176,6 +181,7 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
         strUsage += HelpMessageOpt("-resetguisettings", tr("Reset all settings changed in the GUI").toStdString());
         if (showDebug) {
             strUsage += HelpMessageOpt("-uiplatform", strprintf("Select platform to customize UI for (one of windows, macosx, other; default: %s)", BitcoinGUI::DEFAULT_UIPLATFORM));
+            strUsage += HelpMessageOpt("-debug-ui", "Updates the UI's stylesheets in realtime with changes made to the css files in -custom-css-dir and forces some widgets to show up which are usually only visible under certain circumstances. (default: 0)");
         }
         QString coreOptions = QString::fromStdString(strUsage);
         text = version + "\n" + header + "\n" + coreOptions;
@@ -191,7 +197,7 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
         QTextCharFormat bold;
         bold.setFontWeight(QFont::Bold);
 
-        Q_FOREACH (const QString &line, coreOptions.split("\n")) {
+        for (const QString &line : coreOptions.split("\n")) {
             if (line.startsWith("  -"))
             {
                 cursor.currentTable()->appendRows(1);
@@ -213,47 +219,55 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPr
 
         ui->helpMessage->moveCursor(QTextCursor::Start);
         ui->scrollArea->setVisible(false);
-        ui->aboutLogo->setVisible(false);
+		ui->helpMessage->setVisible(true);
+		ui->comboBook->setVisible(false);
+		ui->comboChapter->setVisible(false);
+		ui->lblChapter->setVisible(false);
+		ui->lblBook->setVisible(false);
+		ui->lblLanguages->setVisible(false);
+		ui->comboLanguages->setVisible(false);
+
     } else if (helpMode == pshelp) {
         setWindowTitle(tr("PrivateSend information"));
+		ui->comboBook->setVisible(false);
+		ui->comboChapter->setVisible(false);
+		ui->lblChapter->setVisible(false);
+		ui->lblBook->setVisible(false);
+		ui->lblLanguages->setVisible(false);
+		ui->comboLanguages->setVisible(false);
 
         ui->aboutMessage->setTextFormat(Qt::RichText);
         ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         ui->aboutMessage->setText(tr("\
 <h3>PrivateSend Basics</h3> \
 PrivateSend gives you true financial privacy by obscuring the origins of your funds. \
-All the coins in your wallet are comprised of different \"inputs\" which you can think of as separate, discrete coins.<br> \
-PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. \
+All the BiblePay in your wallet is comprised of different \"inputs\" which you can think of as separate, discrete coins.<br> \
+PrivateSend uses an innovative process to mix your inputs with the inputs of two or more other people, without having your coins ever leave your wallet. \
 You retain control of your money at all times.<hr> \
 <b>The PrivateSend process works like this:</b>\
 <ol type=\"1\"> \
 <li>PrivateSend begins by breaking your transaction inputs down into standard denominations. \
-These denominations are 0.001, 0.01, 0.1, 1 and 10 -- sort of like the paper money you use every day.</li> \
+These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.</li> \
 <li>Your wallet then sends requests to specially configured software nodes on the network, called \"masternodes.\" \
 These masternodes are informed then that you are interested in mixing a certain denomination. \
 No identifiable information is sent to the masternodes, so they never know \"who\" you are.</li> \
-<li>When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. \
+<li>When two or more other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. \
 The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. \
 Your wallet pays that denomination directly to itself, but in a different address (called a change address).</li> \
 <li>In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. \
 Each time the process is completed, it's called a \"round.\" Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.</li> \
 <li>This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, \
-your funds will already be anonymized. No additional waiting is required.</li> \
+your funds will already be mixed. No additional waiting is required.</li> \
 </ol> <hr>\
 <b>IMPORTANT:</b> Your wallet only contains 1000 of these \"change addresses.\" Every time a mixing event happens, up to 9 of your addresses are used up. \
 This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. \
 It can only do this, however, if you have automatic backups enabled.<br> \
 Consequently, users who have backups disabled will also have PrivateSend disabled. <hr>\
-For more information, see the <a href=\"https://docs.dash.org/en/latest/wallets/dashcore/privatesend-instantsend.html\">PrivateSend documentation</a>."
-        ));
+For more information, see the <a style=\"%1\" href=\"https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html\">PrivateSend documentation</a>."
+        ).arg(GUIUtil::getThemedStyleQString(GUIUtil::ThemedStyle::TS_COMMAND)));
         ui->aboutMessage->setWordWrap(true);
         ui->helpMessage->setVisible(false);
-        ui->aboutLogo->setVisible(false);
     }
-    // Theme dependent Gfx in About popup
-    QString helpMessageGfx = ":/images/" + GUIUtil::getThemeName() + "/about";
-    QPixmap pixmap = QPixmap(helpMessageGfx);
-    ui->aboutLogo->setPixmap(pixmap);
 }
 
 HelpMessageDialog::~HelpMessageDialog()
@@ -382,11 +396,17 @@ void HelpMessageDialog::on_comboChapterClicked(int iClick)
 ShutdownWindow::ShutdownWindow(QWidget *parent, Qt::WindowFlags f):
     QWidget(parent, f)
 {
+    setObjectName("ShutdownWindow");
+
+    GUIUtil::loadStyleSheet(this);
+
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(new QLabel(
         tr("%1 is shutting down...").arg(tr(PACKAGE_NAME)) + "<br /><br />" +
         tr("Do not shut down the computer until this window disappears.")));
     setLayout(layout);
+
+    GUIUtil::updateFonts();
 }
 
 QWidget *ShutdownWindow::showShutdownWindow(BitcoinGUI *window)

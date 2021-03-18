@@ -1,28 +1,27 @@
-// Copyright (c) 2018-2019 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2018-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "deterministicmns.h"
-#include "specialtx.h"
+#include <evo/deterministicmns.h>
+#include <evo/specialtx.h>
 
-#include "base58.h"
-#include "chainparams.h"
-#include "core_io.h"
-#include "script/standard.h"
-#include "ui_interface.h"
-#include "validation.h"
-#include "validationinterface.h"
+#include <base58.h>
+#include <chainparams.h>
+#include <core_io.h>
+#include <script/standard.h>
+#include <ui_interface.h>
+#include <validation.h>
+#include <validationinterface.h>
 
-#include "llmq/quorums_commitment.h"
-#include "llmq/quorums_utils.h"
+#include <llmq/quorums_commitment.h>
+#include <llmq/quorums_utils.h>
 
 #include <univalue.h>
 
 static const std::string DB_LIST_SNAPSHOT = "dmn_S";
 static const std::string DB_LIST_DIFF = "dmn_D";
 
-CDeterministicMNManager* deterministicMNManager;
+std::unique_ptr<CDeterministicMNManager> deterministicMNManager;
 
 std::string CDeterministicMNState::ToString() const
 {
@@ -30,16 +29,16 @@ std::string CDeterministicMNState::ToString() const
     std::string payoutAddress = "unknown";
     std::string operatorPayoutAddress = "none";
     if (ExtractDestination(scriptPayout, dest)) {
-        payoutAddress = CBitcoinAddress(dest).ToString();
+        payoutAddress = EncodeDestination(dest);
     }
     if (ExtractDestination(scriptOperatorPayout, dest)) {
-        operatorPayoutAddress = CBitcoinAddress(dest).ToString();
+        operatorPayoutAddress = EncodeDestination(dest);
     }
 
     return strprintf("CDeterministicMNState(nRegisteredHeight=%d, nLastPaidHeight=%d, nPoSePenalty=%d, nPoSeRevivedHeight=%d, nPoSeBanHeight=%d, nRevocationReason=%d, "
         "ownerAddress=%s, pubKeyOperator=%s, votingAddress=%s, addr=%s, payoutAddress=%s, operatorPayoutAddress=%s)",
         nRegisteredHeight, nLastPaidHeight, nPoSePenalty, nPoSeRevivedHeight, nPoSeBanHeight, nRevocationReason,
-        CBitcoinAddress(keyIDOwner).ToString(), pubKeyOperator.Get().ToString(), CBitcoinAddress(keyIDVoting).ToString(), addr.ToStringIPPort(false), payoutAddress, operatorPayoutAddress);
+        EncodeDestination(keyIDOwner), pubKeyOperator.Get().ToString(), EncodeDestination(keyIDVoting), addr.ToStringIPPort(false), payoutAddress, operatorPayoutAddress);
 }
 
 void CDeterministicMNState::ToJson(UniValue& obj) const
@@ -53,19 +52,24 @@ void CDeterministicMNState::ToJson(UniValue& obj) const
     obj.push_back(Pair("PoSeRevivedHeight", nPoSeRevivedHeight));
     obj.push_back(Pair("PoSeBanHeight", nPoSeBanHeight));
     obj.push_back(Pair("revocationReason", nRevocationReason));
-    obj.push_back(Pair("ownerAddress", CBitcoinAddress(keyIDOwner).ToString()));
-    obj.push_back(Pair("votingAddress", CBitcoinAddress(keyIDVoting).ToString()));
+    obj.push_back(Pair("ownerAddress", EncodeDestination(keyIDOwner)));
+    obj.push_back(Pair("votingAddress", EncodeDestination(keyIDVoting)));
 
     CTxDestination dest;
     if (ExtractDestination(scriptPayout, dest)) {
-        CBitcoinAddress payoutAddress(dest);
-        obj.push_back(Pair("payoutAddress", payoutAddress.ToString()));
+        obj.push_back(Pair("payoutAddress", EncodeDestination(dest)));
     }
     obj.push_back(Pair("pubKeyOperator", pubKeyOperator.Get().ToString()));
     if (ExtractDestination(scriptOperatorPayout, dest)) {
-        CBitcoinAddress operatorPayoutAddress(dest);
-        obj.push_back(Pair("operatorPayoutAddress", operatorPayoutAddress.ToString()));
+        obj.push_back(Pair("operatorPayoutAddress", EncodeDestination(dest)));
     }
+}
+
+uint64_t CDeterministicMN::GetInternalId() const
+{
+    // can't get it if it wasn't set yet
+    assert(internalId != std::numeric_limits<uint64_t>::max());
+    return internalId;
 }
 
 std::string CDeterministicMN::ToString() const
@@ -89,7 +93,7 @@ void CDeterministicMN::ToJson(UniValue& obj) const
     if (GetUTXOCoin(collateralOutpoint, coin)) {
         CTxDestination dest;
         if (ExtractDestination(coin.out.scriptPubKey, dest)) {
-            obj.push_back(Pair("collateralAddress", CBitcoinAddress(dest).ToString()));
+            obj.push_back(Pair("collateralAddress", EncodeDestination(dest)));
         }
     }
 
@@ -172,15 +176,6 @@ CDeterministicMNCPtr CDeterministicMNList::GetValidMNByCollateral(const COutPoin
 CDeterministicMNCPtr CDeterministicMNList::GetMNByService(const CService& service) const
 {
     return GetUniquePropertyMN(service);
-}
-
-CDeterministicMNCPtr CDeterministicMNList::GetValidMNByService(const CService& service) const
-{
-    auto dmn = GetUniquePropertyMN(service);
-    if (dmn && !IsMNValid(dmn)) {
-        return nullptr;
-    }
-    return dmn;
 }
 
 CDeterministicMNCPtr CDeterministicMNList::GetMNByInternalId(uint64_t internalId) const
@@ -319,18 +314,12 @@ int CDeterministicMNList::CalcPenalty(int percent) const
 
 void CDeterministicMNList::PoSePunish(const uint256& proTxHash, int penalty, bool debugLogs)
 {
-    if (penalty == 0)
-		return;
-	
-	assert(penalty > 0);
+    assert(penalty > 0);
 
     auto dmn = GetMN(proTxHash);
-	if (!dmn)
-	{
-		LogPrintf("PoSePunish trying to punish null masternode %f", 1);
-		return;
-	}
-    assert(dmn);
+    if (!dmn) {
+        throw(std::runtime_error(strprintf("%s: Can't find a masternode with proTxHash=%s", __func__, proTxHash.ToString())));
+    }
 
     int maxPenalty = CalcMaxPoSePenalty();
 
@@ -356,7 +345,9 @@ void CDeterministicMNList::PoSePunish(const uint256& proTxHash, int penalty, boo
 void CDeterministicMNList::PoSeDecrease(const uint256& proTxHash)
 {
     auto dmn = GetMN(proTxHash);
-    assert(dmn);
+    if (!dmn) {
+        throw(std::runtime_error(strprintf("%s: Can't find a masternode with proTxHash=%s", __func__, proTxHash.ToString())));
+    }
     assert(dmn->pdmnState->nPoSePenalty > 0 && dmn->pdmnState->nPoSeBanHeight == -1);
 
     auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
@@ -375,21 +366,21 @@ CDeterministicMNListDiff CDeterministicMNList::BuildDiff(const CDeterministicMNL
         } else if (fromPtr != toPtr || fromPtr->pdmnState != toPtr->pdmnState) {
             CDeterministicMNStateDiff stateDiff(*fromPtr->pdmnState, *toPtr->pdmnState);
             if (stateDiff.fields) {
-                diffRet.updatedMNs.emplace(toPtr->internalId, std::move(stateDiff));
+                diffRet.updatedMNs.emplace(toPtr->GetInternalId(), std::move(stateDiff));
             }
         }
     });
     ForEachMN(false, [&](const CDeterministicMNCPtr& fromPtr) {
         auto toPtr = to.GetMN(fromPtr->proTxHash);
         if (toPtr == nullptr) {
-            diffRet.removedMns.emplace(fromPtr->internalId);
+            diffRet.removedMns.emplace(fromPtr->GetInternalId());
         }
     });
 
     // added MNs need to be sorted by internalId so that these are added in correct order when the diff is applied later
     // otherwise internalIds will not match with the original list
     std::sort(diffRet.addedMNs.begin(), diffRet.addedMNs.end(), [](const CDeterministicMNCPtr& a, const CDeterministicMNCPtr& b) {
-        return a->internalId < b->internalId;
+        return a->GetInternalId() < b->GetInternalId();
     });
 
     return diffRet;
@@ -431,13 +422,13 @@ CDeterministicMNList CDeterministicMNList::ApplyDiff(const CBlockIndex* pindex, 
 
     for (const auto& id : diff.removedMns) {
         auto dmn = result.GetMNByInternalId(id);
-        assert(dmn);
+        if (!dmn) {
+            throw(std::runtime_error(strprintf("%s: can't find a removed masternode, id=%d", __func__, id)));
+        }
         result.RemoveMN(dmn->proTxHash);
     }
     for (const auto& dmn : diff.addedMNs) {
-        assert(dmn->internalId == result.GetTotalRegisteredCount());
         result.AddMN(dmn);
-        result.SetTotalRegisteredCount(result.GetTotalRegisteredCount() + 1);
     }
     for (const auto& p : diff.updatedMNs) {
         auto dmn = result.GetMNByInternalId(p.first);
@@ -447,11 +438,25 @@ CDeterministicMNList CDeterministicMNList::ApplyDiff(const CBlockIndex* pindex, 
     return result;
 }
 
-void CDeterministicMNList::AddMN(const CDeterministicMNCPtr& dmn)
+void CDeterministicMNList::AddMN(const CDeterministicMNCPtr& dmn, bool fBumpTotalCount)
 {
-    assert(!mnMap.find(dmn->proTxHash));
+    assert(dmn != nullptr);
+
+    if (mnMap.find(dmn->proTxHash)) {
+        throw(std::runtime_error(strprintf("%s: can't add a duplicate masternode with the same proTxHash=%s", __func__, dmn->proTxHash.ToString())));
+    }
+    if (mnInternalIdMap.find(dmn->GetInternalId())) {
+        throw(std::runtime_error(strprintf("%s: can't add a duplicate masternode with the same internalId=%d", __func__, dmn->GetInternalId())));
+    }
+    if (HasUniqueProperty(dmn->pdmnState->addr)) {
+        throw(std::runtime_error(strprintf("%s: can't add a masternode with a duplicate address %s", __func__, dmn->pdmnState->addr.ToStringIPPort(false))));
+    }
+    if (HasUniqueProperty(dmn->pdmnState->keyIDOwner) || HasUniqueProperty(dmn->pdmnState->pubKeyOperator)) {
+        throw(std::runtime_error(strprintf("%s: can't add a masternode with a duplicate key (%s or %s)", __func__, EncodeDestination(dmn->pdmnState->keyIDOwner), dmn->pdmnState->pubKeyOperator.Get().ToString())));
+    }
+
     mnMap = mnMap.set(dmn->proTxHash, dmn);
-    mnInternalIdMap = mnInternalIdMap.set(dmn->internalId, dmn->proTxHash);
+    mnInternalIdMap = mnInternalIdMap.set(dmn->GetInternalId(), dmn->proTxHash);
     AddUniqueProperty(dmn, dmn->collateralOutpoint);
     if (dmn->pdmnState->addr != CService()) {
         AddUniqueProperty(dmn, dmn->pdmnState->addr);
@@ -460,11 +465,20 @@ void CDeterministicMNList::AddMN(const CDeterministicMNCPtr& dmn)
     if (dmn->pdmnState->pubKeyOperator.Get().IsValid()) {
         AddUniqueProperty(dmn, dmn->pdmnState->pubKeyOperator);
     }
+    if (fBumpTotalCount) {
+        // nTotalRegisteredCount acts more like a checkpoint, not as a limit,
+        nTotalRegisteredCount = std::max(dmn->GetInternalId() + 1, (uint64_t)nTotalRegisteredCount);
+    }
 }
 
 void CDeterministicMNList::UpdateMN(const CDeterministicMNCPtr& oldDmn, const CDeterministicMNStateCPtr& pdmnState)
 {
     assert(oldDmn != nullptr);
+
+    if (HasUniqueProperty(oldDmn->pdmnState->addr) && GetUniquePropertyMN(oldDmn->pdmnState->addr)->proTxHash != oldDmn->proTxHash) {
+        throw(std::runtime_error(strprintf("%s: can't update a masternode with a duplicate address %s", __func__, oldDmn->pdmnState->addr.ToStringIPPort(false))));
+    }
+
     auto dmn = std::make_shared<CDeterministicMN>(*oldDmn);
     auto oldState = dmn->pdmnState;
     dmn->pdmnState = pdmnState;
@@ -478,7 +492,9 @@ void CDeterministicMNList::UpdateMN(const CDeterministicMNCPtr& oldDmn, const CD
 void CDeterministicMNList::UpdateMN(const uint256& proTxHash, const CDeterministicMNStateCPtr& pdmnState)
 {
     auto oldDmn = mnMap.find(proTxHash);
-    assert(oldDmn != nullptr);
+    if (!oldDmn) {
+        throw(std::runtime_error(strprintf("%s: Can't find a masternode with proTxHash=%s", __func__, proTxHash.ToString())));
+    }
     UpdateMN(*oldDmn, pdmnState);
 }
 
@@ -494,7 +510,9 @@ void CDeterministicMNList::UpdateMN(const CDeterministicMNCPtr& oldDmn, const CD
 void CDeterministicMNList::RemoveMN(const uint256& proTxHash)
 {
     auto dmn = GetMN(proTxHash);
-    assert(dmn != nullptr);
+    if (!dmn) {
+        throw(std::runtime_error(strprintf("%s: Can't find a masternode with proTxHash=%s", __func__, proTxHash.ToString())));
+    }
     DeleteUniqueProperty(dmn, dmn->collateralOutpoint);
     if (dmn->pdmnState->addr != CService()) {
         DeleteUniqueProperty(dmn, dmn->pdmnState->addr);
@@ -504,7 +522,7 @@ void CDeterministicMNList::RemoveMN(const uint256& proTxHash)
         DeleteUniqueProperty(dmn, dmn->pdmnState->pubKeyOperator);
     }
     mnMap = mnMap.erase(proTxHash);
-    mnInternalIdMap = mnInternalIdMap.erase(dmn->internalId);
+    mnInternalIdMap = mnInternalIdMap.erase(dmn->GetInternalId());
 }
 
 CDeterministicMNManager::CDeterministicMNManager(CEvoDB& _evoDb) :
@@ -526,11 +544,13 @@ bool CDeterministicMNManager::ProcessBlock(const CBlock& block, const CBlockInde
     CDeterministicMNListDiff diff;
 
     int nHeight = pindex->nHeight;
+	bool fDIP0003Enforced       = nHeight >= consensusParams.LLMQHeight;  // The gray area between deterministic-sancs-height and LLMQ-height
 
-    {
+    try {
         LOCK(cs);
 
         if (!BuildNewListFromBlock(block, pindex->pprev, _state, newList, true)) {
+            // pass the state returned by the function above
             return false;
         }
 
@@ -548,12 +568,29 @@ bool CDeterministicMNManager::ProcessBlock(const CBlock& block, const CBlockInde
         diff = oldList.BuildDiff(newList);
 
         evoDb.Write(std::make_pair(DB_LIST_DIFF, newList.GetBlockHash()), diff);
-        if ((nHeight % SNAPSHOT_LIST_PERIOD) == 0 || oldList.GetHeight() == -1) {
+        if ((nHeight % DISK_SNAPSHOT_PERIOD) == 0 || oldList.GetHeight() == -1) {
             evoDb.Write(std::make_pair(DB_LIST_SNAPSHOT, newList.GetBlockHash()), newList);
+            mnListsCache.emplace(newList.GetBlockHash(), newList);
             LogPrintf("CDeterministicMNManager::%s -- Wrote snapshot. nHeight=%d, mapCurMNs.allMNsCount=%d\n",
                 __func__, nHeight, newList.GetAllMNsCount());
         }
-    }
+
+        diff.nHeight = pindex->nHeight;
+        mnListDiffsCache.emplace(pindex->GetBlockHash(), diff);
+    } catch (const std::exception& e) {
+		// Another squirrely condition for Prod - we have DMs running in non-llmq mode
+		// We need to process the block for MN diff changes; but we cant ddos the node until after the llmq height
+		LogPrintf("CDeterministicMNManager::%s -- internal error: %s\n", __func__, e.what());
+	
+		if (fDIP0003Enforced)
+		{
+			return _state.DoS(100, false, REJECT_INVALID, "failed-dmn-block");
+		}
+		else
+		{
+			return true;
+		}
+	}
 
     // Don't hold cs while calling signals
     if (diff.HasChanges()) {
@@ -594,10 +631,8 @@ bool CDeterministicMNManager::UndoBlock(const CBlock& block, const CBlockIndex* 
             prevList = GetListForBlock(pindex->pprev);
         }
 
-        evoDb.Erase(std::make_pair(DB_LIST_DIFF, blockHash));
-        evoDb.Erase(std::make_pair(DB_LIST_SNAPSHOT, blockHash));
-
         mnListsCache.erase(blockHash);
+        mnListDiffsCache.erase(blockHash);
     }
 
     if (diff.HasChanges()) {
@@ -646,14 +681,15 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
         // has been reached, but the block hash will then point to the block at nMasternodeMinimumConfirmations
         int nConfirmations = pindexPrev->nHeight - dmn->pdmnState->nRegisteredHeight;
         if (nConfirmations >= Params().GetConsensus().nMasternodeMinimumConfirmations) {
-            CDeterministicMNState newState = *dmn->pdmnState;
-            newState.UpdateConfirmedHash(dmn->proTxHash, pindexPrev->GetBlockHash());
-            newList.UpdateMN(dmn->proTxHash, std::make_shared<CDeterministicMNState>(newState));
+            auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
+            newState->UpdateConfirmedHash(dmn->proTxHash, pindexPrev->GetBlockHash());
+            newList.UpdateMN(dmn->proTxHash, newState);
         }
     });
 
     DecreasePoSePenalties(newList);
 	
+	bool fDIP0003Enforced = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
     // we skip the coinbase
     for (int i = 1; i < (int)block.vtx.size(); i++) {
         const CTransaction& tx = *block.vtx[i];
@@ -666,13 +702,11 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
         if (tx.nType == TRANSACTION_PROVIDER_REGISTER) {
             CProRegTx proTx;
             if (!GetTxPayload(tx, proTx)) {
-                assert(false); // this should have been handled already
+                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
             }
 
-            auto dmn = std::make_shared<CDeterministicMN>();
+            auto dmn = std::make_shared<CDeterministicMN>(newList.GetTotalRegisteredCount());
             dmn->proTxHash = tx.GetHash();
-            dmn->internalId = newList.GetTotalRegisteredCount();
-            newList.SetTotalRegisteredCount(newList.GetTotalRegisteredCount() + 1);
 
             // collateralOutpoint is either pointing to an external collateral or to the ProRegTx itself
             if (proTx.collateralOutpoint.hash.IsNull()) {
@@ -701,24 +735,21 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
             }
 
             if (newList.HasUniqueProperty(proTx.addr)) {
-                return _state.DoS(100, false, REJECT_CONFLICT, "bad-protx-dup-addr");
+                return _state.DoS(100, false, REJECT_DUPLICATE, "bad-protx-dup-addr");
             }
             if (newList.HasUniqueProperty(proTx.keyIDOwner) || newList.HasUniqueProperty(proTx.pubKeyOperator)) {
-                return _state.DoS(100, false, REJECT_CONFLICT, "bad-protx-dup-key");
+                return _state.DoS(100, false, REJECT_DUPLICATE, "bad-protx-dup-key");
             }
 
             dmn->nOperatorReward = proTx.nOperatorReward;
-            dmn->pdmnState = std::make_shared<CDeterministicMNState>(proTx);
 
-            CDeterministicMNState dmnState = *dmn->pdmnState;
-            dmnState.nRegisteredHeight = nHeight;
-
+            auto dmnState = std::make_shared<CDeterministicMNState>(proTx);
+            dmnState->nRegisteredHeight = nHeight;
             if (proTx.addr == CService()) {
                 // start in banned pdmnState as we need to wait for a ProUpServTx
-                dmnState.nPoSeBanHeight = nHeight;
+                dmnState->nPoSeBanHeight = nHeight;
             }
-
-            dmn->pdmnState = std::make_shared<CDeterministicMNState>(dmnState);
+            dmn->pdmnState = dmnState;
 
             newList.AddMN(dmn);
 
@@ -729,16 +760,26 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
         } else if (tx.nType == TRANSACTION_PROVIDER_UPDATE_SERVICE) {
             CProUpServTx proTx;
             if (!GetTxPayload(tx, proTx)) {
-                assert(false); // this should have been handled already
+                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
             }
 
             if (newList.HasUniqueProperty(proTx.addr) && newList.GetUniquePropertyMN(proTx.addr)->proTxHash != proTx.proTxHash) {
-                return _state.DoS(100, false, REJECT_CONFLICT, "bad-protx-dup-addr");
+                return _state.DoS(100, false, REJECT_DUPLICATE, "bad-protx-dup-addr");
             }
 
             CDeterministicMNCPtr dmn = newList.GetMN(proTx.proTxHash);
-            if (!dmn) {
-                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+            if (!dmn) 
+			{
+				// Squirrely 
+				if (fDIP0003Enforced)
+				{
+				     return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+				}
+				else
+				{
+					return false;
+				}
+
             }
             auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
             newState->addr = proTx.addr;
@@ -766,12 +807,19 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
         } else if (tx.nType == TRANSACTION_PROVIDER_UPDATE_REGISTRAR) {
             CProUpRegTx proTx;
             if (!GetTxPayload(tx, proTx)) {
-                assert(false); // this should have been handled already
+                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
             }
 
             CDeterministicMNCPtr dmn = newList.GetMN(proTx.proTxHash);
             if (!dmn) {
-                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+				if (fDIP0003Enforced)
+				{
+					return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+				}
+				else
+				{
+					return false;
+				}
             }
             auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
             if (newState->pubKeyOperator.Get() != proTx.pubKeyOperator) {
@@ -792,12 +840,19 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
         } else if (tx.nType == TRANSACTION_PROVIDER_UPDATE_REVOKE) {
             CProUpRevTx proTx;
             if (!GetTxPayload(tx, proTx)) {
-                assert(false); // this should have been handled already
+                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
             }
 
             CDeterministicMNCPtr dmn = newList.GetMN(proTx.proTxHash);
             if (!dmn) {
-                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+				if (fDIP0003Enforced)
+				{
+                     return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+				}
+				else
+				{
+					return false;
+				}
             }
             auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
             newState->ResetOperatorFields();
@@ -813,18 +868,15 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
         } else if (tx.nType == TRANSACTION_QUORUM_COMMITMENT) {
             llmq::CFinalCommitmentTxPayload qc;
             if (!GetTxPayload(tx, qc)) {
-                assert(false); // this should have been handled already
+                return _state.DoS(100, false, REJECT_INVALID, "bad-qc-payload");
             }
             if (!qc.commitment.IsNull()) {
-                const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.commitment.llmqType);
+                const auto& params = Params().GetConsensus().llmqs.at(qc.commitment.llmqType);
                 int quorumHeight = qc.nHeight - (qc.nHeight % params.dkgInterval);
                 auto quorumIndex = pindexPrev->GetAncestor(quorumHeight);
                 if (!quorumIndex || quorumIndex->GetBlockHash() != qc.commitment.quorumHash) {
-					const Consensus::Params& consensusParams = Params().GetConsensus();
                     // we should actually never get into this case as validation should have catched it...but lets be sure
-					// And this also happens when we change the binary quorum params in the middle of the chain
-					if (nHeight >= consensusParams.DIP0003HeightPhase2)
-						return _state.DoS(100, false, REJECT_INVALID, "bad-qc-quorum-hash");
+                    return _state.DoS(100, false, REJECT_INVALID, "bad-qc-quorum-hash");
                 }
 
                 HandleQuorumCommitment(qc.commitment, quorumIndex, newList, debugLogs);
@@ -905,13 +957,13 @@ CDeterministicMNList CDeterministicMNManager::GetListForBlock(const CBlockIndex*
     LOCK(cs);
 
     CDeterministicMNList snapshot;
-    std::list<std::pair<const CBlockIndex*, CDeterministicMNListDiff>> listDiff;
+    std::list<const CBlockIndex*> listDiffIndexes;
 
     while (true) {
         // try using cache before reading from disk
-        auto it = mnListsCache.find(pindex->GetBlockHash());
-        if (it != mnListsCache.end()) {
-            snapshot = it->second;
+        auto itLists = mnListsCache.find(pindex->GetBlockHash());
+        if (itLists != mnListsCache.end()) {
+            snapshot = itLists->second;
             break;
         }
 
@@ -920,28 +972,51 @@ CDeterministicMNList CDeterministicMNManager::GetListForBlock(const CBlockIndex*
             break;
         }
 
+        // no snapshot found yet, check diffs
+        auto itDiffs = mnListDiffsCache.find(pindex->GetBlockHash());
+        if (itDiffs != mnListDiffsCache.end()) {
+            listDiffIndexes.emplace_front(pindex);
+            pindex = pindex->pprev;
+            continue;
+        }
+
         CDeterministicMNListDiff diff;
         if (!evoDb.Read(std::make_pair(DB_LIST_DIFF, pindex->GetBlockHash()), diff)) {
+            // no snapshot and no diff on disk means that it's the initial snapshot
             snapshot = CDeterministicMNList(pindex->GetBlockHash(), -1, 0);
             mnListsCache.emplace(pindex->GetBlockHash(), snapshot);
             break;
         }
 
-        listDiff.emplace_front(pindex, std::move(diff));
+        diff.nHeight = pindex->nHeight;
+        mnListDiffsCache.emplace(pindex->GetBlockHash(), std::move(diff));
+        listDiffIndexes.emplace_front(pindex);
         pindex = pindex->pprev;
     }
 
-    for (const auto& p : listDiff) {
-        auto diffIndex = p.first;
-        auto& diff = p.second;
+    for (const auto& diffIndex : listDiffIndexes) {
+        const auto& diff = mnListDiffsCache.at(diffIndex->GetBlockHash());
         if (diff.HasChanges()) {
             snapshot = snapshot.ApplyDiff(diffIndex, diff);
         } else {
             snapshot.SetBlockHash(diffIndex->GetBlockHash());
             snapshot.SetHeight(diffIndex->nHeight);
         }
+    }
 
-        mnListsCache.emplace(diffIndex->GetBlockHash(), snapshot);
+    if (tipIndex) {
+        // always keep a snapshot for the tip
+        if (snapshot.GetBlockHash() == tipIndex->GetBlockHash()) {
+            mnListsCache.emplace(snapshot.GetBlockHash(), snapshot);
+        } else {
+            // keep snapshots for yet alive quorums
+            for (auto& p_llmq : Params().GetConsensus().llmqs) {
+                if ((snapshot.GetHeight() % p_llmq.second.dkgInterval == 0) && (snapshot.GetHeight() + p_llmq.second.dkgInterval * (p_llmq.second.keepOldConnections + 1) >= tipIndex->nHeight)) {
+                    mnListsCache.emplace(snapshot.GetBlockHash(), snapshot);
+                    break;
+                }
+            }
+        }
     }
 
     return snapshot;
@@ -993,18 +1068,50 @@ void CDeterministicMNManager::CleanupCache(int nHeight)
 {
     AssertLockHeld(cs);
 
-    std::vector<uint256> toDelete;
+    std::vector<uint256> toDeleteLists;
+    std::vector<uint256> toDeleteDiffs;
     for (const auto& p : mnListsCache) {
-        if (p.second.GetHeight() + LISTS_CACHE_SIZE < nHeight) {
-            toDelete.emplace_back(p.first);
+        if (p.second.GetHeight() + LIST_DIFFS_CACHE_SIZE < nHeight) {
+            toDeleteLists.emplace_back(p.first);
+            continue;
+        }
+        bool fQuorumCache{false};
+        for (auto& p_llmq : Params().GetConsensus().llmqs) {
+            if ((p.second.GetHeight() % p_llmq.second.dkgInterval == 0) && (p.second.GetHeight() + p_llmq.second.dkgInterval * (p_llmq.second.keepOldConnections + 1) >= nHeight)) {
+                fQuorumCache = true;
+                break;
+            }
+        }
+        if (fQuorumCache) {
+            // at least one quorum could be using it, keep it
+            continue;
+        }
+        // no alive quorums using it, see if it was a cache for the tip or for a now outdated quorum
+        if (tipIndex && tipIndex->pprev && (p.first == tipIndex->pprev->GetBlockHash())) {
+            toDeleteLists.emplace_back(p.first);
+        } else {
+            for (auto& p_llmq : Params().GetConsensus().llmqs) {
+                if (p.second.GetHeight() % p_llmq.second.dkgInterval == 0) {
+                    toDeleteLists.emplace_back(p.first);
+                    break;
+                }
+            }
         }
     }
-    for (const auto& h : toDelete) {
+    for (const auto& h : toDeleteLists) {
         mnListsCache.erase(h);
+    }
+    for (const auto& p : mnListDiffsCache) {
+        if (p.second.nHeight + LIST_DIFFS_CACHE_SIZE < nHeight) {
+            toDeleteDiffs.emplace_back(p.first);
+        }
+    }
+    for (const auto& h : toDeleteDiffs) {
+        mnListDiffsCache.erase(h);
     }
 }
 
-bool CDeterministicMNManager::UpgradeDiff(CDBBatch& batch, const CBlockIndex* pindexNext, const CDeterministicMNList& curMNList, CDeterministicMNList& newMNList)
+void CDeterministicMNManager::UpgradeDiff(CDBBatch& batch, const CBlockIndex* pindexNext, const CDeterministicMNList& curMNList, CDeterministicMNList& newMNList)
 {
     CDataStream oldDiffData(SER_DISK, CLIENT_VERSION);
     if (!evoDb.GetRawDB().ReadDataStream(std::make_pair(DB_LIST_DIFF, pindexNext->GetBlockHash()), oldDiffData)) {
@@ -1012,7 +1119,7 @@ bool CDeterministicMNManager::UpgradeDiff(CDBBatch& batch, const CBlockIndex* pi
         newMNList = curMNList;
         newMNList.SetBlockHash(pindexNext->GetBlockHash());
         newMNList.SetHeight(pindexNext->nHeight);
-        return false;
+        return;
     }
 
     CDeterministicMNListDiff_OldFormat oldDiff;
@@ -1021,15 +1128,13 @@ bool CDeterministicMNManager::UpgradeDiff(CDBBatch& batch, const CBlockIndex* pi
     CDeterministicMNListDiff newDiff;
     size_t addedCount = 0;
     for (auto& p : oldDiff.addedMNs) {
-        auto dmn = std::make_shared<CDeterministicMN>(*p.second);
-        dmn->internalId = curMNList.GetTotalRegisteredCount() + addedCount;
+        auto dmn = std::make_shared<CDeterministicMN>(*p.second, curMNList.GetTotalRegisteredCount() + addedCount);
         newDiff.addedMNs.emplace_back(dmn);
-
         addedCount++;
     }
     for (auto& p : oldDiff.removedMns) {
         auto dmn = curMNList.GetMN(p);
-        newDiff.removedMns.emplace(dmn->internalId);
+        newDiff.removedMns.emplace(dmn->GetInternalId());
     }
 
     // applies added/removed MNs
@@ -1038,38 +1143,43 @@ bool CDeterministicMNManager::UpgradeDiff(CDBBatch& batch, const CBlockIndex* pi
     // manually apply updated MNs and calc new state diffs
     for (auto& p : oldDiff.updatedMNs) {
         auto oldMN = newMNList.GetMN(p.first);
+        if (!oldMN) {
+            throw(std::runtime_error(strprintf("%s: Can't find an old masternode with proTxHash=%s", __func__, p.first.ToString())));
+        }
         newMNList.UpdateMN(p.first, p.second);
         auto newMN = newMNList.GetMN(p.first);
-        assert(oldMN && newMN);
+        if (!newMN) {
+            throw(std::runtime_error(strprintf("%s: Can't find a new masternode with proTxHash=%s", __func__, p.first.ToString())));
+        }
 
         newDiff.updatedMNs.emplace(std::piecewise_construct,
-                std::forward_as_tuple(oldMN->internalId),
+                std::forward_as_tuple(oldMN->GetInternalId()),
                 std::forward_as_tuple(*oldMN->pdmnState, *newMN->pdmnState));
     }
 
     batch.Write(std::make_pair(DB_LIST_DIFF, pindexNext->GetBlockHash()), newDiff);
 
-    return true;
+    return;
 }
 
 // TODO this can be completely removed in a future version
-void CDeterministicMNManager::UpgradeDBIfNeeded()
+bool CDeterministicMNManager::UpgradeDBIfNeeded()
 {
     LOCK(cs_main);
 
     if (chainActive.Tip() == nullptr) {
-        return;
+        return true;
     }
 
     if (evoDb.GetRawDB().Exists(EVODB_BEST_BLOCK)) {
-        return;
+        return true;
     }
 
     // Removing the old EVODB_BEST_BLOCK value early results in older version to crash immediately, even if the upgrade
     // process is cancelled in-between. But if the new version sees that the old EVODB_BEST_BLOCK is already removed,
     // then we must assume that the upgrade process was already running before but was interrupted.
     if (chainActive.Height() > 1 && !evoDb.GetRawDB().Exists(std::string("b_b"))) {
-        LogPrintf("CDeterministicMNManager::%s -- ERROR, upgrade process was interrupted and can't be continued. You need to reindex now.\n", __func__);
+        return false;
     }
     evoDb.GetRawDB().Erase(std::string("b_b"));
 
@@ -1078,7 +1188,7 @@ void CDeterministicMNManager::UpgradeDBIfNeeded()
         auto dbTx = evoDb.BeginTransaction();
         evoDb.WriteBestBlock(chainActive.Tip()->GetBlockHash());
         dbTx->Commit();
-        return;
+        return true;
     }
 
     LogPrintf("CDeterministicMNManager::%s -- upgrading DB to use compact diffs\n", __func__);
@@ -1095,7 +1205,7 @@ void CDeterministicMNManager::UpgradeDBIfNeeded()
         CDeterministicMNList newMNList;
         UpgradeDiff(batch, pindex, curMNList, newMNList);
 
-        if ((nHeight % SNAPSHOT_LIST_PERIOD) == 0) {
+        if ((nHeight % DISK_SNAPSHOT_PERIOD) == 0) {
             batch.Write(std::make_pair(DB_LIST_SNAPSHOT, pindex->GetBlockHash()), newMNList);
             evoDb.GetRawDB().WriteBatch(batch);
             batch.Clear();
@@ -1114,4 +1224,6 @@ void CDeterministicMNManager::UpgradeDBIfNeeded()
     dbTx->Commit();
 
     evoDb.GetRawDB().CompactFull();
+
+    return true;
 }

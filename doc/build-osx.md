@@ -37,15 +37,15 @@ BiblePay Core is now available at `./src/biblepayd`
 
 Before running, it's recommended you create an RPC configuration file.
 
-    echo -e "rpcuser=biblepayrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/BiblepayCore/biblepay.conf"
+    echo -e "rpcuser=biblepayrpc\nrpcpassword=$(xxd -l 16 -p /dev/urandom)" > "/Users/${USER}/Library/Application Support/BiblePayCore/biblepay.conf"
 
-    chmod 600 "/Users/${USER}/Library/Application Support/BiblepayCore/biblepay.conf"
+    chmod 600 "/Users/${USER}/Library/Application Support/BiblePayCore/biblepay.conf"
 
 The first time you run biblepayd, it will start downloading the blockchain. This process could take several hours.
 
 You can monitor the download process by looking at the debug.log file:
 
-    tail -f $HOME/Library/Application\ Support/BiblepayCore/debug.log
+    tail -f $HOME/Library/Application\ Support/BiblePayCore/debug.log
 
 Other commands:
 -------

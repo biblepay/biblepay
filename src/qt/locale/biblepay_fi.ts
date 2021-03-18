@@ -70,12 +70,12 @@
         <translation>Vastaanottava osoite</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Nämä ovat Biblepay osoitteesi maksujen lähetykseen. Tarkista aina lähetettävä määrä ja vastaanottajan osoite ennen kuin lähetät varoja.</translation>
+        <source>These are your BiblePay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Nämä ovat BiblePay osoitteesi maksujen lähetykseen. Tarkista aina lähetettävä määrä ja vastaanottajan osoite ennen kuin lähetät varoja.</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Nämä ovat Biblepay osoitteesi suoritusten vastaanottamiseen. Suositellaan että käytät uutta osoitetta kullekin siirtotapahtumalle.</translation>
+        <source>These are your BiblePay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Nämä ovat BiblePay osoitteesi suoritusten vastaanottamiseen. Suositellaan että käytät uutta osoitetta kullekin siirtotapahtumalle.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -130,6 +130,45 @@
     </message>
 </context>
 <context>
+    <name>AppearanceWidget</name>
+    <message>
+        <source>Lighter</source>
+        <translation>Ohuempi</translation>
+    </message>
+    <message>
+        <source>Bolder</source>
+        <translation>Paksumpi</translation>
+    </message>
+    <message>
+        <source>Font Weight Normal:</source>
+        <translation>Fontin Painoarvo Normaali:</translation>
+    </message>
+    <message>
+        <source>Smaller</source>
+        <translation>Pienempi</translation>
+    </message>
+    <message>
+        <source>Bigger</source>
+        <translation>Isompi</translation>
+    </message>
+    <message>
+        <source>Font Scale:</source>
+        <translation>Fontin skaala:</translation>
+    </message>
+    <message>
+        <source>Font Family:</source>
+        <translation>Fontin perhe:</translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation>Teema:</translation>
+    </message>
+    <message>
+        <source>Font Weight Bold:</source>
+        <translation>Fontin Painoarvo Paksu:</translation>
+    </message>
+</context>
+<context>
     <name>AskPassphraseDialog</name>
     <message>
         <source>Passphrase Dialog</source>
@@ -137,7 +176,7 @@
     </message>
     <message>
         <source>Enter passphrase</source>
-        <translation>Kirjoita salasana</translation>
+        <translation>Anna salasana</translation>
     </message>
     <message>
         <source>New passphrase</source>
@@ -146,6 +185,10 @@
     <message>
         <source>Repeat new passphrase</source>
         <translation>Uusi salasana uudelleen</translation>
+    </message>
+    <message>
+        <source>Show password</source>
+        <translation>Näytä salasana</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
@@ -201,7 +244,7 @@
     </message>
     <message>
         <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your funds from being stolen by malware infecting your computer.</source>
-        <translation>%1 sulkeutuu nyt salauksen viimeistelyä varten. Muista että salaus pelkästään ei voi estää Biblepayiesi varastamista jos koneesi saastuu haittaohjelmilla tai viruksilla.</translation>
+        <translation>%1 sulkeutuu nyt salauksen viimeistelyä varten. Muista että salaus pelkästään ei voi estää varojesi varastamista jos koneesi saastuu haittaohjelmilla tai viruksilla.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. Previous backups of the unencrypted wallet file contain the same HD seed and still have full access to all your funds just like the new, encrypted wallet.</source>
@@ -256,14 +299,21 @@
     </message>
 </context>
 <context>
+    <name>BitcoinAmountField</name>
+    <message>
+        <source>Amount in %1</source>
+        <translation>Määrä %1</translation>
+    </message>
+</context>
+<context>
     <name>BitcoinGUI</name>
     <message>
-        <source>A fatal error occurred. Biblepay Core can no longer continue safely and will quit.</source>
-        <translation>Vakava virhe tapahtunut. Biblepay Core ei voi enää toimia turvallisesti ja sulkeutuu.</translation>
+        <source>A fatal error occurred. BiblePay Core can no longer continue safely and will quit.</source>
+        <translation>Vakava virhe tapahtunut. BiblePay Core ei voi enää toimia turvallisesti ja sulkeutuu.</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -286,8 +336,8 @@
         <translation>L&amp;ähetä</translation>
     </message>
     <message>
-        <source>Send coins to a Biblepay address</source>
-        <translation>Lähetä varoja Biblepay osoitteeseen</translation>
+        <source>Send coins to a BiblePay address</source>
+        <translation>Lähetä varoja BiblePay osoitteeseen</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
@@ -295,7 +345,7 @@
     </message>
     <message>
         <source>Request payments (generates QR codes and biblepay: URIs)</source>
-        <translation>Pyydä maksuja (Luo QR koodit ja Biblepay: URIt)</translation>
+        <translation>Pyydä maksuja (Luo QR koodit ja BiblePay: URIt)</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
@@ -322,8 +372,8 @@
         <translation>Sulje ohjelma</translation>
     </message>
     <message>
-        <source>Show information about Biblepay Core</source>
-        <translation>Näytä tietoja Biblepay Core:sta</translation>
+        <source>Show information about BiblePay Core</source>
+        <translation>Näytä tietoja BiblePay Core:sta</translation>
     </message>
     <message>
         <source>About &amp;Qt</source>
@@ -340,6 +390,10 @@
     <message>
         <source>&amp;About %1</source>
         <translation>&amp;Tietoja %1</translation>
+    </message>
+    <message>
+        <source>PrivateSend coins to a BiblePay address</source>
+        <translation>PrivateSend varoja BiblePay osoitteeseen</translation>
     </message>
     <message>
         <source>Modify configuration options for %1</source>
@@ -394,16 +448,16 @@
         <translation>&amp;Allekirjoita Viesti...</translation>
     </message>
     <message>
-        <source>Sign messages with your Biblepay addresses to prove you own them</source>
-        <translation>Allekirjoita viestit Biblepay osoitteillasi todistaaksesi että omistat ne</translation>
+        <source>Sign messages with your BiblePay addresses to prove you own them</source>
+        <translation>Allekirjoita viestit BiblePay osoitteillasi todistaaksesi että omistat ne</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
         <translation>&amp;Tarkista Viesti...</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Biblepay addresses</source>
-        <translation>Tarkista viestit ollaksesi varma että ne on allekirjoitettu määritetyillä Biblepay osoitteilla</translation>
+        <source>Verify messages to ensure they were signed with specified BiblePay addresses</source>
+        <translation>Tarkista viestit ollaksesi varma että ne on allekirjoitettu määritetyillä BiblePay osoitteilla</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -483,19 +537,23 @@
     </message>
     <message>
         <source>Open a biblepay: URI or payment request</source>
-        <translation>Avaa Biblepay: URI tai maksupyyntö</translation>
+        <translation>Avaa BiblePay: URI tai maksupyyntö</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
         <translation>&amp;Komentorivin valinnat</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible Biblepay command-line options</source>
+        <source>Show the %1 help message to get a list with possible BiblePay command-line options</source>
         <translation>Näytä %1 ohjelista komentorivin valinnoista</translation>
     </message>
     <message>
         <source>%1 client</source>
         <translation>%1 asiakasohjelma</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;unencrypted&lt;/b&gt;</source>
+        <translation>Lompakko on &lt;b&gt;salaamaton&lt;/b&gt;</translation>
     </message>
     <message>
         <source>&amp;PrivateSend information</source>
@@ -526,8 +584,8 @@
         <translation>Välilehtipalkki</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Biblepay network</source>
-        <translation><numerusform>%n aktiivinen yhteys Biblepay verkkoon</numerusform><numerusform>%n aktiivista yhteyttä Biblepay verkkoon</numerusform></translation>
+        <source>%n active connection(s) to BiblePay network</source>
+        <translation><numerusform>%n aktiivinen yhteys BiblePay verkkoon</numerusform><numerusform>%n aktiivista yhteyttä BiblePay verkkoon</numerusform></translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -598,6 +656,30 @@
         <translation>Tietoja</translation>
     </message>
     <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>Vastaanotettu ja lähetetty useita siirtotapahtumia</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>Lähetetty useita siirtotapahtumia</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>Vastaanotettu useita siirtotapahtumia</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>Lähetetty määrä: %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>Vastaanotettu määrä: %1
+</translation>
+    </message>
+    <message>
         <source>Date: %1
 </source>
         <translation>Pvm: %1
@@ -640,10 +722,6 @@
         <translation>HD avaimen generointi on &lt;b&gt;käytössä&lt;/b&gt;</translation>
     </message>
     <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>HD avaimen generointi &lt;b&gt;ei käytössä&lt;/b&gt;</translation>
-    </message>
-    <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
         <translation>Lompakko on &lt;b&gt;salattu&lt;/b&gt; ja tällä hetkellä &lt;b&gt;lukitsematta&lt;/b&gt;</translation>
     </message>
@@ -654,13 +732,6 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Lompakko on &lt;b&gt;salattu&lt;/b&gt; ja tällä hetkellä &lt;b&gt;lukittu&lt;/b&gt;</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>Verkkohälytys</translation>
     </message>
 </context>
 <context>
@@ -730,8 +801,8 @@
         <translation>Vastaanotettu osoitteeseen</translation>
     </message>
     <message>
-        <source>PS Rounds</source>
-        <translation>PS Kierrokset</translation>
+        <source>Mixing Rounds</source>
+        <translation>Sekoitus Kierrokset</translation>
     </message>
     <message>
         <source>Date</source>
@@ -798,10 +869,6 @@
         <translation>Vaihda "Lista tilaan" käyttääksesi tätä toimintoa.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>Ei anonyymeja syötteitä valittu. &lt;b&gt;PrivateSend poistetaan käytöstä.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Jos silti haluat käyttää PrivateSend:iä, poista ei anonyymit valinnat ensin ja valitse uudelleen PrivateSend optio.</translation>
-    </message>
-    <message>
         <source>(%1 locked)</source>
         <translation>(%1 lukittu)</translation>
     </message>
@@ -820,6 +887,30 @@
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>Voi vaihdella +/- %1 duffs per syöte.</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they were spent.</source>
+        <translation>Joitakin kolikoita ei valittu, koska ne oli käytetty.</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
+        <translation>Joitakin kolikoita ei valittu, koska niillä ei ole tarpeeksi sekoituskierroksia.</translation>
+    </message>
+    <message>
+        <source>Show all coins</source>
+        <translation>Näytä kaikki kolikot</translation>
+    </message>
+    <message>
+        <source>Hide PrivateSend coins</source>
+        <translation>Piilota PrivateSend kolikot</translation>
+    </message>
+    <message>
+        <source>Show all PrivateSend coins</source>
+        <translation>Näytä kaikki PrivateSend kolikot</translation>
+    </message>
+    <message>
+        <source>Show spendable coins only</source>
+        <translation>Näytä vain käytettävissä olevat kolikot</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -877,8 +968,8 @@
         <translation>Muokkaa lähettävää osoitetta</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Biblepay address.</source>
-        <translation>Annettu osoite "%1" ei ole pätevä Biblepay osoite.</translation>
+        <source>The entered address "%1" is not a valid BiblePay address.</source>
+        <translation>Annettu osoite "%1" ei ole pätevä BiblePay osoite.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
@@ -951,6 +1042,22 @@
         <translation>Valitse datahakemisto käynnistyksessä (oletus: %u)</translation>
     </message>
     <message>
+        <source>Set the font family. Possible values: %1. (default: %2)</source>
+        <translation>Aseta fonttiperhe. Mahdolliset arvot: %1. (oletus: %2)</translation>
+    </message>
+    <message>
+        <source>Set a scale factor which gets applied to the base font size. Possible range %1 (smallest fonts) to %2 (largest fonts). (default: %3)</source>
+        <translation>Aseta skaalauskerroin joka asetetaan perusfontille. Mahdolliset raja-arvot %1 (pienimmästä) - %2 (suurimpaan). (oletus: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for bold texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>Aseta fontin painoarvo paksulle tekstille. Mahdolliset raja-arvot %1 - %2 (oletus: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for normal texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>Aseta fontin painoarvo normaalille tekstille. Mahdolliset raja-arvot %1 - %2 (oletus: %3)</translation>
+    </message>
+    <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
         <translation>Aseta kieli, esim. "fi_FI" (oletus: sama kuin järjestelmän)</translation>
     </message>
@@ -968,15 +1075,15 @@
     </message>
     <message>
         <source>Reset all settings changed in the GUI</source>
-        <translation>Nollaa kaikki muokatut käyttöliittymän asetukset</translation>
+        <translation>Palauta kaikki muokatut käyttöliittymän asetukset</translation>
     </message>
     <message>
         <source>PrivateSend information</source>
         <translation>PrivateSend tietoja</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Biblepay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;PrivateSend perusteet&lt;/h3&gt; PrivateSend tarjoaa yksityisyyden hämärtämällä varojesi alkuperäisen osoitteen. Kaikki Biblepay:it lompakossasi muodostuvat erillisistä "syötteistä", joita voit ajatella erillisinä kolikkoina.&lt;br&gt; PrivateSend käyttää innovatiivista prosessia sekoittaakseen lompakkosi syötteet kahden muun ihmisen syötteisiin, siirtämättä varoja pois lompakostasi. Varojesi kontrolli pysyy aina sinulla.&lt;hr&gt; &lt;b&gt; PrivateSend prosessi toimii seuraavasti:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend aloittaa pilkkomalla siirtotapahtumiesi syötteet pienemmiksi standardi arvoiksi. Nämä arvot ovat 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY ja 10 BIBLEPAY.&lt;/li&gt; &lt;li&gt;Sitten lompakkosi lähettää pyynnön verkon palvelimille, joita kutsutaan "masternode:iksi". Masternodet saavat tiedon että haluat sekoittaa pilkottuja standardi arvoja. Mitään tunnistetietoja ei lähetetä masternode:ille, ne eivät koskaan tiedä "kuka" olet.&lt;/li&gt; &lt;li&gt;Kun 2 muuta käyttäjää ilmoittaa että he haluavat myös sekoittaa varoja, alkaa sekoitus-sessio. Masternodet sekoittavat standardi arvot ja ilmoittavat kaikille 3:lle käyttäjän lompakoille että maksavat sekoitetut arvot takaisin itselleen. Lompakkosi maksaa nuo sekoitetut arvot suoraan itselleen, mutta eri osoitteeseen (vaihto-osoite).&lt;/li&gt; &lt;li&gt;Jotta varojesi alkuperäinen lähde hämärretään, lompakkosi suorittaa tämän prosessin useita kertoja kaikilla standardi arvoilla. Aina kun prosessi on valmis, sitä kutsutaan "kierrokseksi". Jokainen PrivateSend kierros tekee eksponentiaalisesti vaikeammaksi löytää varojesi alkuperäisen osoitteen.&lt;/li&gt; &lt;li&gt;Tämä sekoitusprosessi tapahtuu taustalla ilman käyttäjän toimenpiteitä. Kun haluat myöhemmin tehdä anonyymin varojen siirron, on varasi valmiiksi sekoitettu eli anonymisoitu. Erillistä sekoitusta/odotusta ei tarvita.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;TÄRKEÄÄ:&lt;/b&gt; Lompakkosi sisältää vain 1000 "vaihto-osoitetta". Aina kun sekoitustapahtuma tehdään, max 9 osoitetta käytetään. Tämä tarkoittaa sitä että nuo 1000 osoitetta kestää noin 100 sekoitustapahtumaa. Kun 900 osoitetta on käytetty, lompakkosi täytyy tehdä lisää osoitteita. Se voi tehdä niitä vain jos automaattinen varmistus on käytössä.&lt;br&gt; Tästä seuraa että jos varmistus ei ole käytössä, myös PrivateSend on pois käytöstä. &lt;hr&gt;Katso lisätietoja &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend dokumentaatiosta&lt;/a&gt;.</translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the BiblePay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two or more other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two or more other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;PrivateSend perusteet&lt;/h3&gt; PrivateSend tarjoaa yksityisyyden hämärtämällä varojesi alkuperäisen osoitteen. Kaikki BiblePay:it lompakossasi muodostuvat erillisistä "syötteistä", joita voit ajatella erillisinä kolikkoina.&lt;br&gt; PrivateSend käyttää innovatiivista prosessia sekoittaakseen lompakkosi syötteet kahden muun ihmisen syötteisiin, siirtämättä varoja pois lompakostasi. Varojesi kontrolli pysyy aina sinulla.&lt;hr&gt; &lt;b&gt; PrivateSend prosessi toimii seuraavasti:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend aloittaa pilkkomalla siirtotapahtumiesi syötteet pienemmiksi standardi arvoiksi. Nämä arvot ovat 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY ja 10 BIBLEPAY.&lt;/li&gt; &lt;li&gt;Sitten lompakkosi lähettää pyynnön verkon palvelimille, joita kutsutaan "masternode:iksi". Masternodet saavat tiedon että haluat sekoittaa pilkottuja standardi arvoja. Mitään tunnistetietoja ei lähetetä masternode:ille, ne eivät koskaan tiedä "kuka" olet.&lt;/li&gt; &lt;li&gt;Kun 2 tai enemmän käyttäjää ilmoittaa että he haluavat myös sekoittaa varoja, alkaa sekoitus-sessio. Masternodet sekoittavat standardi arvot ja ilmoittavat kaikille 3:lle käyttäjän lompakoille että maksavat sekoitetut arvot takaisin itselleen. Lompakkosi maksaa nuo sekoitetut arvot suoraan itselleen, mutta eri osoitteeseen (vaihto-osoite).&lt;/li&gt; &lt;li&gt;Jotta varojesi alkuperäinen lähde hämärretään, lompakkosi suorittaa tämän prosessin useita kertoja kaikilla standardi arvoilla. Aina kun prosessi on valmis, sitä kutsutaan "kierrokseksi". Jokainen PrivateSend kierros tekee eksponentiaalisesti vaikeammaksi löytää varojesi alkuperäinen osoitte.&lt;/li&gt; &lt;li&gt;Tämä sekoitusprosessi tapahtuu taustalla ilman käyttäjän toimenpiteitä. Kun haluat myöhemmin tehdä varojen siirron, on varasi valmiiksi sekoitettu. Erillistä sekoitusta/odotusta ei tarvita.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;TÄRKEÄÄ:&lt;/b&gt; Lompakkosi sisältää vain 1000 "vaihto-osoitetta". Aina kun sekoitustapahtuma tehdään, max 9 osoitetta käytetään. Tämä tarkoittaa sitä että nuo 1000 osoitetta kestää noin 100 sekoitustapahtumaa. Kun 900 osoitetta on käytetty, lompakkosi täytyy tehdä lisää osoitteita. Se voi tehdä niitä vain jos automaattinen varmistus on käytössä.&lt;br&gt; Tästä seuraa että jos varmistus ei ole käytössä, myös PrivateSend on pois käytöstä. &lt;hr&gt;Katso lisätietoja &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend dokumentaatiosta&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
@@ -1022,8 +1129,8 @@
         <translation>Arviolta %1 GB dataa tallennetaan tähän hakemistoon.</translation>
     </message>
     <message>
-        <source>%1 will download and store a copy of the Biblepay block chain.</source>
-        <translation>%1 lataa ja tallentaa kopion Biblepay lohkoketjusta.</translation>
+        <source>%1 will download and store a copy of the BiblePay block chain.</source>
+        <translation>%1 lataa ja tallentaa kopion BiblePay lohkoketjusta.</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
@@ -1053,16 +1160,8 @@
         <translation>Lomake</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>IP Osoite</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Tila</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>Maksun Saaja</translation>
     </message>
     <message>
         <source>0</source>
@@ -1081,16 +1180,16 @@
         <translation>Solmuja Yht:</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>DIP3 Masternodet</translation>
-    </message>
-    <message>
         <source>Show only masternodes this wallet has keys for.</source>
         <translation>Näytä vain ne masternodet joiden avaimet ovat tässä lompakossa.</translation>
     </message>
     <message>
         <source>My masternodes only</source>
         <translation>Vain omat masternodet</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>Palvelu</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1109,8 +1208,24 @@
         <translation>Seuraava Maksu</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>Maksu osoite</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>Operaattorin Palkkio</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>Vakuus osoite</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>Omistaja osoite</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>Äänestys osoite</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1119,6 +1234,10 @@
     <message>
         <source>Copy Collateral Outpoint</source>
         <translation>Kopioi Vakuus Lähtöpiste</translation>
+    </message>
+    <message>
+        <source>Updating...</source>
+        <translation>Päivitetään...</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1149,6 +1268,14 @@
         <translation>EI MITÄÄN</translation>
     </message>
     <message>
+        <source>Filter by any property (e.g. address or protx hash)</source>
+        <translation>Suodata minkä tahansa ominaisuuden (esim. osoite tai protx tarkiste) mukaan</translation>
+    </message>
+    <message>
+        <source>Please wait...</source>
+        <translation>Odota...</translation>
+    </message>
+    <message>
         <source>Additional information for DIP3 Masternode %1</source>
         <translation>Masternode DIP3 lisätietoja %1</translation>
     </message>
@@ -1160,12 +1287,12 @@
         <translation>Lomake</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Biblepay network, as detailed below.</source>
-        <translation>Viimeisimmät siirtotapahtumat eivät välttämättä ole vielä näkyvissä, ja siksi lompakon saldo voi olla väärin. Saldo korjaantuu oikeaksi kun lompakon synkronointi Biblepay verkkoon on valmis.</translation>
+        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the BiblePay network, as detailed below.</source>
+        <translation>Viimeisimmät siirtotapahtumat eivät välttämättä ole vielä näkyvissä, ja siksi lompakon saldo voi olla väärin. Saldo korjaantuu oikeaksi kun lompakon synkronointi BiblePay verkkoon on valmis.</translation>
     </message>
     <message>
-        <source>Attempting to spend Biblepay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>Yritys käyttää Biblepay:eja joihin vaikuttaa ei näkyvissä olevat siirtotapahtumat, tulevat hylätyksi Biblepay verkossa.</translation>
+        <source>Attempting to spend BiblePay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <translation>Yritys käyttää BiblePay:eja joihin vaikuttaa ei näkyvissä olevat siirtotapahtumat, tulevat hylätyksi BiblePay verkossa.</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
@@ -1254,12 +1381,12 @@
         <translation>(0 = auto, &lt;0 = jätä näin monta prosessorin ydintä vapaaksi)</translation>
     </message>
     <message>
-        <source>Amount of Biblepay to keep anonymized</source>
-        <translation>Biblepay määrä joka pidetään anonymisoituna</translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>&amp;Lompakko</translation>
+    </message>
+    <message>
+        <source>&amp;Appearance</source>
+        <translation>&amp;Ulkoasu</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
@@ -1306,24 +1433,44 @@
         <translation>Tämä määrä toimii rajana sekoituksen keskeytykselle kun PrivateSend sen saavuttaa.</translation>
     </message>
     <message>
-        <source>Automatically open the Biblepay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Avaa automaattisesti Biblepay Core asiakasohjelmalle portti reitittimeen. Tämä toimii vain jos reitittimesi tukee UPnP:tä ja se on käytössä.</translation>
+        <source>Target PrivateSend balance</source>
+        <translation>Haluttu PrivateSend saldo</translation>
     </message>
     <message>
-        <source>Accept connections from outside</source>
-        <translation>Hyväksy yhteydet ulkopuolelta</translation>
+        <source>Automatically open the BiblePay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Avaa automaattisesti BiblePay Core asiakasohjelmalle portti reitittimeen. Tämä toimii vain jos reitittimesi tukee UPnP:tä ja se on käytössä.</translation>
     </message>
     <message>
-        <source>Allow incoming connections</source>
-        <translation>Salli sisään tulevat yhteydet</translation>
+        <source>Accept connections from outside.</source>
+        <translation>Hyväksy yhteydet ulkopuolelta.</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a SOCKS5 proxy.</source>
-        <translation>Kytkeydy Biblepay verkkoon käyttäen SOCKS5 proxy:a.</translation>
+        <source>Allow incomin&amp;g connections</source>
+        <translation>Salli sisää&amp;n tulevat yhteydet</translation>
+    </message>
+    <message>
+        <source>Connect to the BiblePay network through a SOCKS5 proxy.</source>
+        <translation>Kytkeydy BiblePay verkkoon käyttäen SOCKS5 proxy:a.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>&amp;Yhdistä SOCKS5 proxyn kautta (oletus: proxy):</translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>Näyttää onko oletus SOCKS5 proxy käytössä peers:ien tavoittamiseen tämän verkkotyypin kautta.</translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
+        <translation>Käytä erillistä SOCKS&amp;5 proxy:a tavoittaaksesi peers:it Tor piilopalvelun kautta:</translation>
+    </message>
+    <message>
+        <source>Hide the icon from the system tray.</source>
+        <translation>Piilota kuvake tehtäväpalkista.</translation>
+    </message>
+    <message>
+        <source>&amp;Hide tray icon</source>
+        <translation>Piilota tehtäväpalkin kuvake</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1334,12 +1481,8 @@
         <translation>Ulkopuoliset URL-osoitteet (esim. lohkoselain) jotka esiintyvät tapahtumat-välilehdellä valikossa.&lt;br/&gt;%s URL osoitteessa korvataan siirtotunnuksen tarkisteella. Useampi URL osoite on eroteltu pystyviivalla |.</translation>
     </message>
     <message>
-        <source>Expert</source>
-        <translation>Expertti</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Tämä asetus määrittää kuinka monen erillisen masternoden kautta syötteen anonymisointi tehdään.&lt;br/&gt;Mitä enemmän anonymisoinnin kierroksia, sen parempi yksityisyys, mutta se myös maksaa enemmän siirtomaksuina.</translation>
+        <source>&amp;Third party transaction URLs</source>
+        <translation>&amp;Kolmannen osapuolen siirtotapahtuma URL:t</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1370,6 +1513,10 @@
         <translation>&amp;Käytä vahvistamattomia vaihtorahoja</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Tämä asetus määrittää kuinka monen erillisen masternoden kautta syötteen sekoittaminen tehdään.&lt;br/&gt;Mitä enemmän sekoituksen kierroksia, sen parempi yksityisyys, mutta se myös maksaa enemmän siirtomaksuina.</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>&amp;Verkko</translation>
     </message>
@@ -1398,10 +1545,6 @@
         <translation>Käytetään peers tavoittamiseen:</translation>
     </message>
     <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Näyttää onko oletus SOCKS5 proxy käytössä peers:ien tavoittamiseen tämän verkkotyypin kautta.</translation>
-    </message>
-    <message>
         <source>IPv4</source>
         <translation>IPv4</translation>
     </message>
@@ -1414,24 +1557,8 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Kytkeydy Biblepay verkkoon käyttäen erillistä SOCKS5 proxy:a Tor piilopalveluihin.</translation>
-    </message>
-    <message>
-        <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Käytä erillistä SOCKS5 proxy:a tavoittaaksesi peers:it Tor piilopalvelun kautta:</translation>
-    </message>
-    <message>
-        <source>&amp;Window</source>
-        <translation>&amp;Ikkuna</translation>
-    </message>
-    <message>
-        <source>&amp;Hide the icon from the system tray.</source>
-        <translation>&amp;Piilota kuvake ilmaisinalueelta.</translation>
-    </message>
-    <message>
-        <source>Hide tray icon</source>
-        <translation>Piilota ilmaisinalueen kuvake</translation>
+        <source>Connect to the BiblePay network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <translation>Kytkeydy BiblePay verkkoon käyttäen erillistä SOCKS5 proxy:a Tor piilopalveluihin.</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1464,10 +1591,6 @@ https://www.transifex.com/projects/p/biblepay/</source>
 https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
-        <source>User Interface Theme:</source>
-        <translation>Käyttöliittymän Teema:</translation>
-    </message>
-    <message>
         <source>&amp;Unit to show amounts in:</source>
         <translation>Yksikkö joina määrät näytetään</translation>
     </message>
@@ -1478,10 +1601,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Decimal digits</source>
         <translation>Desimaalit</translation>
-    </message>
-    <message>
-        <source>Third party transaction URLs</source>
-        <translation>Kolmannen osapuolen siirtotapahtuma URL:t</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1506,10 +1625,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>default</source>
         <translation>oletus</translation>
-    </message>
-    <message>
-        <source>none</source>
-        <translation>ei mitään</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
@@ -1539,8 +1654,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Lomake</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Biblepay network after a connection is established, but this process has not completed yet.</source>
-        <translation>Näytetyt tiedot eivät välttämättä ole ajan tasalla.&lt;br&gt;Lompakkosi synkronoituu automaattisesti Biblepay verkkoon kun&lt;br&gt;yhteys on muodostettu, mutta tämä prosessi ei vielä ole valmis.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the BiblePay network after a connection is established, but this process has not completed yet.</source>
+        <translation>Näytetyt tiedot eivät välttämättä ole ajan tasalla.&lt;br&gt;Lompakkosi synkronoituu automaattisesti BiblePay verkkoon kun&lt;br&gt;yhteys on muodostettu, mutta tämä prosessi ei vielä ole valmis.</translation>
     </message>
     <message>
         <source>Available:</source>
@@ -1556,7 +1671,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Total of transactions that have yet to be confirmed, and do not yet count toward the spendable balance</source>
-        <translation>Vahvistamattomien siirtotapahtumien summa,&lt;br&gt;jota ei vielä lasketa käytettävissä olevaan saldoon</translation>
+        <translation>Vahvistamattomien siirtotapahtumien määrä,&lt;br&gt;jota ei vielä lasketa käytettävissä olevaan saldoon</translation>
     </message>
     <message>
         <source>Immature:</source>
@@ -1619,22 +1734,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Valmiina:</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Yritä manuaalisesti lähettää PrivateSend sekoituspyyntö.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Nollaa nykyinen PrivateSend tila (voi keskeyttää PrivateSend sekoituksen, joka voi maksaa ylimääräisiä kuluja)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>Lisätietoja PrivateSend:istä ja Sekoittamisesta</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>Info</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>Määrä ja Kierrokset:</translation>
     </message>
@@ -1667,18 +1766,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Masternodelle lähetetyt denominoinnit.&lt;br&gt;Jotta sekoitus onnistuisi, täytyy muiden käyttäjien käyttää saman arvoisia denominointeja.</translation>
     </message>
     <message>
-        <source>(Last Message)</source>
-        <translation>(Viimeisin Viesti)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Yritä Sekoittaa</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Nollaus</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>Ei ajan tasalla</translation>
     </message>
@@ -1703,12 +1790,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>%n Kierros</numerusform><numerusform>%n Kierrosta</numerusform></translation>
     </message>
     <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Löytyi tarpeeksi yhteensopivia syötteitä anonymisointiin %1</translation>
+        <source>Found enough compatible inputs to mix %1</source>
+        <translation>Löytyi tarpeeksi yhteensopivia syötteitä sekoitettavaksi %1</translation>
     </message>
     <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>Ei tarpeeksi yhteensopivia syötteitä anonymisointiin &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;anonymisoidaan &lt;span style='color:red;'&gt;%2&lt;/span&gt; sen sijaan</translation>
+        <source>Not enough compatible inputs to mix &lt;span style='%1'&gt;%2&lt;/span&gt;,&lt;br&gt;will mix &lt;span style='%1'&gt;%3&lt;/span&gt; instead</source>
+        <translation>Ei tarpeeksi yhteensopivia syötteitä sekoitukseen &lt;span style='%1'&gt;%2&lt;/span&gt;,&lt;br&gt;sekoitetaan &lt;span style='%1'&gt;%3&lt;/span&gt; sen sijaan</translation>
     </message>
     <message>
         <source>Overall progress</source>
@@ -1719,12 +1806,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Denominoitu</translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>Sekoitettu</translation>
+        <source>Partially mixed</source>
+        <translation>Osittain sekoitettu</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>Anonymisoitu</translation>
+        <source>Mixed</source>
+        <translation>Sekoitettu</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1743,8 +1830,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Osoitteita vähän jäljellä viimeisimmän automaattisen varmistuksen jälkeen!</translation>
     </message>
     <message>
-        <source>We are about to create a new automatic backup for you, however &lt;span style='color:red;'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
-        <translation>Olemme tekemässä uutta automaattista varmistusta, mutta&lt;span style='color:red;'&gt; varmista aina että olet tallentanut varmistuksen turvalliseen paikkaan&lt;/span&gt;!</translation>
+        <source>We are about to create a new automatic backup for you, however &lt;span style='%1'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
+        <translation>Olemme tekemässä uutta automaattista varmistusta, mutta&lt;span style='%1'&gt; varmista aina että olet tallentanut varmistuksen turvalliseen paikkaan&lt;/span&gt;!</translation>
     </message>
     <message>
         <source>Note: You can turn this message off in options.</source>
@@ -1775,16 +1862,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>VAROITUS! Osoitevarannon täydentäminen epäonnistui, avaa lompakon lukitus.</translation>
     </message>
     <message>
-        <source>Last PrivateSend message:
-</source>
-        <translation>Viimeisin PrivateSend viesti:
-</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>PrivateSend nollattu onnistuneesti.</translation>
-    </message>
-    <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
         <translation>Jos et halua nähdä sisäisiä PrivateSend sekoituksen kuluja/tapahtumia, valitse "Yleiset" tyypiksi siirtotapahtumissa.</translation>
     </message>
@@ -1805,7 +1882,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Cannot start biblepay: click-to-pay handler</source>
-        <translation>Ei voi käynnistää Biblepayia: click-to-pay handler</translation>
+        <translation>Ei voi käynnistää BiblePayia: click-to-pay handler</translation>
     </message>
     <message>
         <source>URI handling</source>
@@ -1820,8 +1897,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Virheellinen maksuosoite %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Biblepay address or malformed URI parameters.</source>
-        <translation>URI:a ei voida jäsentää! Tämä voi johtua virheellisestä Biblepay osoitteesta tai virheellisestä URI:n muuttujasta. </translation>
+        <source>URI cannot be parsed! This can be caused by an invalid BiblePay address or malformed URI parameters.</source>
+        <translation>URI:a ei voida jäsentää! Tämä voi johtua virheellisestä BiblePay osoitteesta tai virheellisestä URI:n muuttujasta. </translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1906,6 +1983,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Ping</source>
         <translation>Ping</translation>
     </message>
+    <message>
+        <source>Sent</source>
+        <translation>Lähetetty</translation>
+    </message>
+    <message>
+        <source>Received</source>
+        <translation>Vastaanotettu</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -1918,8 +2003,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Määrä</translation>
     </message>
     <message>
-        <source>Enter a Biblepay address (e.g. %1)</source>
-        <translation>Syötä Biblepay osoite (esim. %1)</translation>
+        <source>Enter a BiblePay address (e.g. %1)</source>
+        <translation>Anna BiblePay osoite (esim. %1)</translation>
+    </message>
+    <message>
+        <source>Appearance Setup</source>
+        <translation>Ulkoasun Asetus</translation>
+    </message>
+    <message>
+        <source>Please choose your preferred settings for the appearance of %1</source>
+        <translation>Valitse haluamasi asetukset ulkoasulle %1</translation>
+    </message>
+    <message>
+        <source>This can also be adjusted later in the "Appearance" tab of the preferences.</source>
+        <translation>Tätä voidaan säätää myös myöhemmin asetusten "Ulkoasu" välilehdellä.</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1978,6 +2075,22 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 ja %2</translation>
     </message>
     <message>
+        <source>%1 B</source>
+        <translation>%1 B</translation>
+    </message>
+    <message>
+        <source>%1 KB</source>
+        <translation>%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation>%1 GB</translation>
+    </message>
+    <message>
         <source>unknown</source>
         <translation>tuntematon</translation>
     </message>
@@ -1995,6 +2108,34 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Error: %1</source>
         <translation>Virhe: %1</translation>
+    </message>
+    <message>
+        <source>Error: Failed to load application fonts.</source>
+        <translation>Virhe: Fonttien lataus ei onnistunut.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-family invalid. Valid values: %1.</source>
+        <translation>Virhe: Määritetty fonttiperhe virheellinen. Sallittu arvoalue: %1.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
+        <translation>Virhe: Määritetty fontin normaali painoarvo virheellinen. Sallittu arvoalue %1 - %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
+        <translation>Virhe: Määritetty fontin paksu painoarvo virheellinen. Sallittu arvoalue %1 - %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
+        <translation>Virhe: Määritetty fontin arvoalue virheellinen. Sallittu arvoalue %1 - %2.</translation>
+    </message>
+    <message>
+        <source>Error: Invalid -custom-css-dir path.</source>
+        <translation>Virhe: Virheellinen -custom-css-dir polku.</translation>
+    </message>
+    <message>
+        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
+        <translation>Virhe: %1 CSS tiedosto(t)  puuttuu custom-css-dir polusta.</translation>
     </message>
 </context>
 <context>
@@ -2145,14 +2286,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&amp;Verkkoliikenne</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>&amp;Tyhjennä</translation>
-    </message>
-    <message>
-        <source>Totals</source>
-        <translation>Yhteensä</translation>
-    </message>
-    <message>
         <source>Received</source>
         <translation>Vastaanotettu</translation>
     </message>
@@ -2209,8 +2342,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Datahakemisto</translation>
     </message>
     <message>
+        <source>Last block hash</source>
+        <translation>Viimeisin lohkon tarkiste</translation>
+    </message>
+    <message>
         <source>Open the %1 debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation>Avaa %1 -debug-loki tämänhetkisestä datahakemistosta. Tämä voi viedä muutaman sekunnin suurille lokitiedostoille.</translation>
+    </message>
+    <message>
+        <source>InstantSend locks</source>
+        <translation>InstantSend lukitukset</translation>
     </message>
     <message>
         <source>Decrease font size</source>
@@ -2219,6 +2360,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Increase font size</source>
         <translation>Suurenna fontin kokoa</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>&amp;Nollaa</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2357,15 +2502,19 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Tervetuloa %1 RPC konsoliin.</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Ylös- ja alas-nuolet selaavat historiaa ja &lt;b&gt;Ctrl-L&lt;/b&gt; tyhjentää ruudun.</translation>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>Ylös- ja alas-nuolet selaavat historiaa ja %1 tyhjentää ruudun.</translation>
     </message>
     <message>
-        <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>Kirjoita &lt;b&gt;help&lt;/b&gt; nähdäksesi käytettävissä olevat komennot.</translation>
+        <source>Type %1 for an overview of available commands.</source>
+        <translation>Kirjoita %1 saadaksesi yleiskuvan käytettävissä olevista komennoista.</translation>
     </message>
     <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
+        <source>For more information on using this console type %1.</source>
+        <translation>Saadaksesi lisätietoja konsolin käytöstä kirjoita %1.</translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
         <translation>VAROITUS: Huijarit ovat olleet aktiivisia, kertoen käyttäjille komentoja tänne varastaen lompakon sisällön. Älä käytä tätä konsolia ymmärtämättä täysin komennon vaikutuksia.</translation>
     </message>
     <message>
@@ -2383,22 +2532,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>Total: %1 (Enabled: %2)</source>
         <translation>Yhteensä: %1 (Käytössä: %2)</translation>
-    </message>
-    <message>
-        <source>%1 B</source>
-        <translation>%1 B</translation>
-    </message>
-    <message>
-        <source>%1 KB</source>
-        <translation>%1 KB</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB</translation>
     </message>
     <message>
         <source>(node id: %1)</source>
@@ -2436,16 +2569,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
-        <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Uudelleen käytä yksi vanhoista vastaanottavista osoitteista.&lt;br&gt;Uudelleen käytössä on turvallisuus ja yksityisyysongelmia.&lt;br&gt;Älä käytä tätä ellet ole uudelleen luomassa aikaisempaa maksupyyntöä.</translation>
-    </message>
-    <message>
-        <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>&amp;Uudelleen käytä vastaanottavaa osoitetta (ei suositella)</translation>
-    </message>
-    <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Valinnainen viesti liitettäväksi maksupyyntöön, joka näytetään kun pyyntö on avattu.&lt;br&gt;Huomio: Viestiä ei lähetetä maksun mukana Biblepay verkkoon.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Valinnainen viesti liitettäväksi maksupyyntöön, joka näytetään kun pyyntö on avattu.&lt;br&gt;Huomio: Viestiä ei lähetetä maksun mukana BiblePay verkkoon.</translation>
     </message>
     <message>
         <source>&amp;Message:</source>
@@ -2456,8 +2581,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Valinnainen nimi liitetään uuteen vastaanottavaan osoitteeseen.</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Valinnainen viesti liitettäväksi maksupyyntöön, joka näytetään kun pyyntö on avattu.&lt;br&gt;Huomio: Viestiä ei lähetetä maksun mukana Biblepay verkkoon.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Valinnainen viesti liitettäväksi maksupyyntöön, joka näytetään kun pyyntö on avattu.&lt;br&gt;Huomio: Viestiä ei lähetetä maksun mukana BiblePay verkkoon.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2488,10 +2613,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Tyhjennä</translation>
     </message>
     <message>
-        <source>Request InstantSend</source>
-        <translation>Pyydä InstantSend</translation>
-    </message>
-    <message>
         <source>Requested payments history</source>
         <translation>Pyydettyjen maksujen historia</translation>
     </message>
@@ -2510,6 +2631,14 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>Remove</source>
         <translation>Poista</translation>
+    </message>
+    <message>
+        <source>Enter a label to associate with the new receiving address</source>
+        <translation>Anna nimi tälle uudelle osoitteelle</translation>
+    </message>
+    <message>
+        <source>Enter a message to attach to the payment request</source>
+        <translation>Kirjoita viesti jonka haluat liittää maksupyyntöön</translation>
     </message>
     <message>
         <source>Copy URI</source>
@@ -2573,18 +2702,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>Message</source>
         <translation>Viesti</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Kyllä</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Ei</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2693,14 +2810,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Valitse...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>Fallbackfee:n käyttö saattaa aiheuttaa että maksutapahtuman vahvistus kestää useita tunteja tai päiviä (tai ei koskaan). Harkitse että valitset siirtomaksun manuaalisesti tai odota että lohkoketju on täysin vahvistettu.</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Varoitus: Kulujen arviointi ei ole juuri nyt mahdollista.</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>pienennä siirtomaksu asetukset</translation>
     </message>
@@ -2709,20 +2818,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Vahvistusajan tavoite:</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>Jos mukautettu siirtomaksu on asetettu 1000 duff ja siirtotapahtuma on vain 250 tavua,&lt;br /&gt;tällöin "per kilotavu" maksaa vain 250 duffs siirtomaksun, kun taas "vähintään" maksaa 1000 duffs.&lt;br /&gt;Siirtotapahtumat jotka ovat isompia kuin kilotavu, molemmat maksaa "per kilotavu".</translation>
-    </message>
-    <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Jos mukautettu siirtomaksu on asetettu 1000 duff ja siirtotapahtuma on vain 250 tavua,&lt;br /&gt;tällöin "per kilotavu" maksaa vain 250 duffs siirtomaksun, kun taas "yhteensä vähintään" maksaa 1000 duffs.&lt;br /&gt;Siirtotapahtumat jotka ovat isompia kuin kilotavu, molemmat maksaa "per kilotavu".</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for biblepay transactions than the network can process.</source>
@@ -2733,12 +2830,16 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>per kilotavu</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Piilota</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>Fallbackfee:n käyttö saattaa aiheuttaa että maksutapahtuman vahvistus kestää useita tunteja tai päiviä (tai ei koskaan). Harkitse että valitset siirtomaksun manuaalisesti tai odota että lohkoketju on täysin vahvistettu.</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>yhteensä vähintään</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>Huomio: Ei tarpeeksi tietoja siirtomaksun määrän arviointiin, käytetään oletus siirtomaksua.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Piilota</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2755,14 +2856,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(Älykästä siirtomaksua ei ole alustettu vielä. Tämä kestää yleensä muutaman lohkon...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>normaali</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>nopea</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2821,24 +2914,12 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Kopioi vaihtoraha</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 lohkoa)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>käyttäen</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>anonymisoituja varoja</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(privatesend pyöristää tämän lähimpään %1).</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>kaikkia käytössä olevia varoja (ei anonymisoituja)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>ja InstantSend</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2861,6 +2942,38 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>&lt;b&gt;(Näytetään %1 / %2 merkintää)&lt;/b&gt;</translation>
     </message>
     <message>
+        <source>Confirm the PrivateSend action</source>
+        <translation>Vahvista PrivateSend toiminto</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>Vain PrivateSend varat</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>kaikkia käytössä olevia varoja</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(PrivateSend siirtotapahtumissa on korkeampi siirtomaksu yleensä koska vaihtolähtöjä ei sallita)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>Siirtotapahtuman koko: %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>Siirtomaksun taso: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>Tämä siirtotapahtuma kuluttaa %n syötteen</numerusform><numerusform>Tämä siirtotapahtuma kuluttaa %n syötettä</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>Varoitus: Käyttämällä PrivateSend:iä %1 tai useammalla syötettä voi heikentää yksityisyyttäsi ja ei ole suositeltavaa</translation>
+    </message>
+    <message>
         <source>Confirm send coins</source>
         <translation>Hyväksy lähettäminen</translation>
     </message>
@@ -2870,7 +2983,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>The amount to pay must be larger than 0.</source>
-        <translation>Maksettavan summan tulee olla suurempi kuin 0.</translation>
+        <translation>Maksettavan määrä tulee olla suurempi kuin 0.</translation>
     </message>
     <message>
         <source>The amount exceeds your balance.</source>
@@ -2878,7 +2991,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>The total exceeds your balance when the %1 transaction fee is included.</source>
-        <translation>Summa yhteensä ylittää saldosi kun siihen lisätään siirtomaksu %1.</translation>
+        <translation>Määrä yhteensä ylittää saldosi kun siihen lisätään siirtomaksu %1.</translation>
     </message>
     <message>
         <source>Duplicate address found: addresses should only be used once each.</source>
@@ -2900,10 +3013,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <source>Payment request expired.</source>
         <translation>Maksupyyntö vanhentunut.</translation>
     </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n lohko</numerusform><numerusform>%n lohkot</numerusform></translation>
-    </message>
     <message>
         <source>Pay only the required fee of %1</source>
         <translation>Maksa vain tarpeellinen siirtomaksu %1</translation>
@@ -2913,8 +3022,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation><numerusform>Arvioitu vahvistuksen aloitus %n lohkon kuluessa.</numerusform><numerusform>Arvioitu vahvistuksen aloitus %n lohkon kuluessa.</numerusform></translation>
     </message>
     <message>
-        <source>Warning: Invalid Biblepay address</source>
-        <translation>Varoitus: Virheellinen Biblepay osoite</translation>
+        <source>Warning: Invalid BiblePay address</source>
+        <translation>Varoitus: Virheellinen BiblePay osoite</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
@@ -2944,8 +3053,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Maksun &amp;saaja:</translation>
     </message>
     <message>
-        <source>The Biblepay address to send the payment to</source>
-        <translation>Biblepay osoite johon maksu lähetetään</translation>
+        <source>The BiblePay address to send the payment to</source>
+        <translation>BiblePay osoite johon maksu lähetetään</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2973,27 +3082,31 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Enter a label for this address to add it to the list of used addresses</source>
-        <translation>Aseta nimi tälle osoitteelle lisätäksesi sen käytettyjen osoitteiden listaan</translation>
+        <translation>Anna nimi tälle osoitteelle lisätäksesi sen käytettyjen osoitteiden listaan</translation>
     </message>
     <message>
         <source>A&amp;mount:</source>
         <translation>&amp;Määrä:</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of Biblepay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>Siirtomaksu vähennetään lähetettävästä summasta. Vastaanottaja saa pienemmän summan kuin mitä laitoit määrä kenttään. Jos useampia vastaanottajia on valittu, siirtomaksu jaetaan tasan.</translation>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation>Siirtomaksu vähennetään lähetettävästä määrästä. Vastaanottaja saa pienemmän määrän kuin mitä laitoit määrä kenttään. Jos useampia vastaanottajia on valittu, siirtomaksu jaetaan tasan.</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
         <translation>Vähennä siirtomaksu lähetettävästä määrästä</translation>
     </message>
     <message>
+        <source>Use available balance</source>
+        <translation>Käytä käytettävissä olevaa saldoa</translation>
+    </message>
+    <message>
         <source>Message:</source>
         <translation>Viesti:</translation>
     </message>
     <message>
-        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Biblepay network.</source>
-        <translation>Viesti joka liitettiin Biblepay: URI joka tallenetaan siirtotapahtuman kanssa viitteeksi sinulle. Huomio: Tätä viestiä ei lähetetä Biblepay verkkoon.</translation>
+        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</source>
+        <translation>Viesti joka liitettiin BiblePay: URI joka tallenetaan siirtotapahtuman kanssa viitteeksi sinulle. Huomio: Tätä viestiä ei lähetetä BiblePay verkkoon.</translation>
     </message>
     <message>
         <source>This is an unauthenticated payment request.</source>
@@ -3045,12 +3158,12 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>&amp;Allekirjoita viesti</translation>
     </message>
     <message>
-        <source>You can sign messages/agreements with your addresses to prove you can receive Biblepay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <source>You can sign messages/agreements with your addresses to prove you can receive BiblePay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
         <translation>Voit allekirjoittaa viestit/sopimukset omilla osoitteillasi todistaaksesi että omistat ne. Ole huolellinen että et allekirjoita mitään epämääräistä, satunnaista, phishing hyökkääjä voi huijata sinua allekirjoittamaan henkilöllisyytesi omasta puolestaan. Allekirjoita vain yksityiskohtaisesti täytetty selvitys johon sitoudut.</translation>
     </message>
     <message>
-        <source>The Biblepay address to sign the message with</source>
-        <translation>Biblepay osoite jolla viesti allekirjoitetaan</translation>
+        <source>The BiblePay address to sign the message with</source>
+        <translation>BiblePay osoite jolla viesti allekirjoitetaan</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -3081,8 +3194,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Kopioi tämän hetkinen allekirjoitus leikepöydälle</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Biblepay address</source>
-        <translation>Allekirjoita viesti todistaaksesi että omistat tämän Biblepay osoitteen</translation>
+        <source>Sign the message to prove you own this BiblePay address</source>
+        <translation>Allekirjoita viesti todistaaksesi että omistat tämän BiblePay osoitteen</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -3102,15 +3215,15 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Enter the receiver's address, message (ensure you copy line breaks, spaces, tabs, etc. exactly) and signature below to verify the message. Be careful not to read more into the signature than what is in the signed message itself, to avoid being tricked by a man-in-the-middle attack. Note that this only proves the signing party receives with the address, it cannot prove sendership of any transaction!</source>
-        <translation>Syötä allekirjoittava osoite, viesti (varmista että kopioit rivinvaihdot, välilyönnit, tabulaattorit, jne täsmälleen oikein) ja allekirjoitus alla oleviin kenttiin varmistaaksesi allekirjoituksen aitouden. Varo lukemasta enempää allekirjoitukseen kuin kuin mitä itse viestissä on, välttääksesi man-in-the-middle hyökkäyksen. Huom. tämä todistaa vain että allekirjoittava osapuoli vastaanottaa osoitteella, se ei voi todistaa lähettäjää.</translation>
+        <translation>Anna allekirjoittava osoite, viesti (varmista että kopioit rivinvaihdot, välilyönnit, tabulaattorit, jne täsmälleen oikein) ja allekirjoitus alla oleviin kenttiin varmistaaksesi allekirjoituksen aitouden. Varo lukemasta enempää allekirjoitukseen kuin kuin mitä itse viestissä on, välttääksesi man-in-the-middle hyökkäyksen. Huom. tämä todistaa vain että allekirjoittava osapuoli vastaanottaa osoitteella, se ei voi todistaa lähettäjää.</translation>
     </message>
     <message>
-        <source>The Biblepay address the message was signed with</source>
-        <translation>Biblepay osoite jolla viesti on allekirjoitettu</translation>
+        <source>The BiblePay address the message was signed with</source>
+        <translation>BiblePay osoite jolla viesti on allekirjoitettu</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Biblepay address</source>
-        <translation>Tarkista että viesti on allekirjoitettu määritetyllä Biblepay osoitteella</translation>
+        <source>Verify the message to ensure it was signed with the specified BiblePay address</source>
+        <translation>Tarkista että viesti on allekirjoitettu määritetyllä BiblePay osoitteella</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -3121,12 +3234,24 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Tyhjennä kaikki kentät</translation>
     </message>
     <message>
+        <source>Enter a message to be signed</source>
+        <translation>Kirjoita viesti jonka haluat allekirjoittaa</translation>
+    </message>
+    <message>
         <source>Click "Sign Message" to generate signature</source>
         <translation>Klikkaa "Allekirjoita Viesti" luodaksesi allekirjoituksen</translation>
     </message>
     <message>
+        <source>Enter a message to be verified</source>
+        <translation>Kirjoita viesti jonka haluat vahvistaa</translation>
+    </message>
+    <message>
+        <source>Enter a signature for the message to be verified</source>
+        <translation>Anna allekirjoitus viestille jonka haluat vahvistaa</translation>
+    </message>
+    <message>
         <source>The entered address is invalid.</source>
-        <translation>Syötetty osoite on virheellinen.</translation>
+        <translation>Annettu osoite on virheellinen.</translation>
     </message>
     <message>
         <source>Please check the address and try again.</source>
@@ -3134,7 +3259,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>The entered address does not refer to a key.</source>
-        <translation>Syötetyn osoitteen avainta ei löydy.</translation>
+        <translation>Annetun osoitteen avainta ei löydy.</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
@@ -3142,7 +3267,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Private key for the entered address is not available.</source>
-        <translation>Yksityistä avainta syötetylle osoitteelle ei ole saatavilla.</translation>
+        <translation>Yksityistä avainta annetulle osoitteelle ei ole saatavilla.</translation>
     </message>
     <message>
         <source>Message signing failed.</source>
@@ -3179,16 +3304,24 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <source>[testnet]</source>
         <translation>[testiverkko]</translation>
     </message>
-    <message>
-        <source>Version %1</source>
-        <translation>Versio %1</translation>
-    </message>
 </context>
 <context>
     <name>TrafficGraphWidget</name>
     <message>
         <source>KB/s</source>
         <translation>KB/s</translation>
+    </message>
+    <message>
+        <source>Totals</source>
+        <translation>Yhteensä</translation>
+    </message>
+    <message>
+        <source>Received</source>
+        <translation>Vastaanotettu</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Lähetetty</translation>
     </message>
 </context>
 <context>
@@ -3204,10 +3337,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>conflicted</source>
         <translation>ristiriitainen</translation>
-    </message>
-    <message>
-        <source>%1/offline</source>
-        <translation>%1/ei yhteyttä</translation>
     </message>
     <message>
         <source>0/unconfirmed, %1</source>
@@ -3234,36 +3363,16 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>%1 vahvistusta</translation>
     </message>
     <message>
-        <source>locked via LLMQ based ChainLocks</source>
-        <translation>lukittu LLMQ-pohjaisella ChainLocks:illa</translation>
-    </message>
-    <message>
-        <source>verified via LLMQ based InstantSend</source>
-        <translation>vahvistettu LLMQ-pohjaisella InstantSend:illä</translation>
+        <source>locked via ChainLocks</source>
+        <translation>lukittu ChainLocks:illa</translation>
     </message>
     <message>
         <source>verified via InstantSend</source>
-        <translation>vahvistettu InstanSend:illä</translation>
-    </message>
-    <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>InstantSend vahvistus käynnissä - %1 / %2 allekirjoitusta</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>InstantSend vahvistus epäonnistui</translation>
+        <translation>vahvistettu InstantSend:illä</translation>
     </message>
     <message>
         <source>Status</source>
         <translation>Tila</translation>
-    </message>
-    <message>
-        <source>, has not been successfully broadcast yet</source>
-        <translation>, lähetys ei ole vielä onnistunut</translation>
-    </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, lähetys %n solmun läpi</numerusform><numerusform>, lähetys %n solmun läpi</numerusform></translation>
     </message>
     <message>
         <source>Date</source>
@@ -3331,7 +3440,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Net amount</source>
-        <translation>Nettosumma</translation>
+        <translation>Nettomäärä</translation>
     </message>
     <message>
         <source>Message</source>
@@ -3420,10 +3529,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Lukitsematta %1 asti</translation>
     </message>
     <message>
-        <source>Offline</source>
-        <translation>Ei yhteyttä</translation>
-    </message>
-    <message>
         <source>Unconfirmed</source>
         <translation>Vahvistamaton</translation>
     </message>
@@ -3448,12 +3553,16 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Epäkypsä (%1 vahvistusta, saatavilla %2 jälkeen)</translation>
     </message>
     <message>
-        <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>Tätä lohkoa ei vastaanotettu mistään muusta solmusta ja sitä ei mahdollisesti hyväksytä!</translation>
-    </message>
-    <message>
         <source>Generated but not accepted</source>
         <translation>Luotu mutta ei hyväksytty</translation>
+    </message>
+    <message>
+        <source>verified via InstantSend</source>
+        <translation>vahvistettu InstantSend:illä</translation>
+    </message>
+    <message>
+        <source>locked via ChainLocks</source>
+        <translation>lukittu ChainLocks:illa</translation>
     </message>
     <message>
         <source>Received with</source>
@@ -3496,10 +3605,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>PrivateSend denominointien luonti</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
         <source>watch-only</source>
         <translation>vain-luku</translation>
     </message>
@@ -3528,10 +3633,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Käytetäänkö vai ei lue-vain osoitetta tässä tapahtumassa.</translation>
     </message>
     <message>
-        <source>Whether or not this transaction was locked by InstantSend.</source>
-        <translation>Onko vai ei tämä siirtotapahtuma InstantSend lukittu.</translation>
-    </message>
-    <message>
         <source>User-defined intent/purpose of the transaction.</source>
         <translation>Käyttäjän määrittämä siirtotapahtuman käyttötarkoitus.</translation>
     </message>
@@ -3545,14 +3646,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>All</source>
         <translation>Kaikki</translation>
-    </message>
-    <message>
-        <source>Locked by InstantSend</source>
-        <translation>InstantSend lukittu</translation>
-    </message>
-    <message>
-        <source>Not locked by InstantSend</source>
-        <translation>Ei ole InstantSend lukittu</translation>
     </message>
     <message>
         <source>Today</source>
@@ -3576,7 +3669,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Range...</source>
-        <translation>Alue...</translation>
+        <translation>Arvoalue...</translation>
     </message>
     <message>
         <source>Most Common</source>
@@ -3589,10 +3682,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>Sent to</source>
         <translation>Lähetetty</translation>
-    </message>
-    <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
     </message>
     <message>
         <source>PrivateSend Make Collateral Inputs</source>
@@ -3623,8 +3712,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Muu</translation>
     </message>
     <message>
-        <source>Enter address or label to search</source>
-        <translation>Anna etsittävä osoite tai tunniste</translation>
+        <source>Enter address, transaction id, or label to search</source>
+        <translation>Anna haettava osoite, siirtotunnus tai nimi</translation>
     </message>
     <message>
         <source>Min amount</source>
@@ -3728,7 +3817,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Range:</source>
-        <translation>Alue:</translation>
+        <translation>Arvoalue:</translation>
     </message>
     <message>
         <source>to</source>
@@ -3739,7 +3828,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <name>UnitDisplayStatusBarControl</name>
     <message>
         <source>Unit to show amounts in. Click to select another unit.</source>
-        <translation>Yksikkö jona summat näytetään. Klikkaa valitaksesi yksikön.</translation>
+        <translation>Yksikkö jona määrät näytetään. Klikkaa valitaksesi yksikön.</translation>
     </message>
 </context>
 <context>
@@ -3753,15 +3842,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <name>WalletModel</name>
     <message>
         <source>Send Coins</source>
-        <translation>Lähetä Biblepayeja</translation>
-    </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>InstantSend ei tue näin korkeaa lähetysmäärää vielä. Siirtotapahtumat on tällä hetkellä rajoitettu %1 BIBLEPAY.</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Käytetty liian monia syötteitä (&gt;%1) tähän InstantSend siirtotapahtumaan, siirtokulut voivat olla todella isot.</translation>
+        <translation>Lähetä</translation>
     </message>
 </context>
 <context>
@@ -3830,10 +3911,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Rakenne url nimi KeePass merkinnälle joka tallentaa lompakon salasanan</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Aseta maksimikoko korkea prioriteetti/pienen siirtomaksun siirtotapahtumiin tavuissa (oletus: %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>Aseta script vahvistuksen säikeiden määrä (%u - %d, 0= auto, &lt;0 = jätä näin monta prosessorin ydintä vapaaksi, oletus: %d)</translation>
     </message>
@@ -3843,7 +3920,7 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Varoitus: Biblepay verkossa on ristiriitoja! Louhijat näyttävät kokevan virhetilanteita.</translation>
+        <translation>Varoitus: BiblePay verkossa on ristiriitoja! Louhijat näyttävät kokevan virhetilanteita.</translation>
     </message>
     <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
@@ -3852,10 +3929,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>Accept command line and JSON-RPC commands</source>
         <translation>Hyväksy merkkipohjaiset ja JSON-RPC käskyt</translation>
-    </message>
-    <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Lisää solmu mihin liittyä pitääksesi yhteyden auki</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
@@ -3874,16 +3947,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Et voi päivittää lompakkoasi vanhempaan versioon</translation>
     </message>
     <message>
-        <source>Cannot write default address</source>
-        <translation>Oletusosoitetta ei voi kirjoittaa</translation>
-    </message>
-    <message>
         <source>Collateral not valid.</source>
         <translation>Vakuus ei ole pätevä.</translation>
-    </message>
-    <message>
-        <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Yhdistä solmuun hakeaksesi peers osoitteet ja katkaise yhteys</translation>
     </message>
     <message>
         <source>Connection options:</source>
@@ -3962,12 +4027,32 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Hyväksy välitetyt siirtopahtumat jotka on vastaanotettu luotettavilta solmuilta, vaikka ei välitetä siirtopahtumia (oletus: %d)</translation>
     </message>
     <message>
+        <source>Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info). This option can be specified multiple times to add multiple nodes.</source>
+        <translation>Lisää solmu mihin liittyä pitääksesi yhteyden auki (katso `addnode` RPC komennon ohjeesta lisätietoja).  Tämä asetus voidaan määrittää useita kertoja lisätäksesi useita solmuja.</translation>
+    </message>
+    <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
         <translation>Salli JSON-RPC yhteydet määritetystä lähteestä. Pätee &lt;ip&gt; yksittäiseen IP:n (esim. 1.2.3.4), verkko/verkkomaski (esim. 1.2.3.4/255.255.255.0) tai verkko/CIDR (esim. 1.2.3.4/24). Tämä asetus voidaan määrittää useita kertoja.</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
         <translation>Kytkeydy annettuun osoitteeseen ja merkitse siihen kytkeytyvät peers:it luotettaviksi. Käytä [host]:port merkintätapaa IPv6:lle.</translation>
+    </message>
+    <message>
+        <source>Bind to given address to listen for JSON-RPC connections. Do not expose the RPC server to untrusted networks such as the public internet! This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
+        <translation>Kytkeydy annettuun osoitteeseen kuunnellaksesi JSON-RPC yhteyksiä. Älä paljasta RPC palvelinta ei luotetuille verkoille kuten internet! Tämä optio ohitetaan ellei -rpcallowip optiota myös anneta. Portti on valinnainen ja syrjäyttää -rpcport. Käytä [host]:port merkintätapaa IPv6:lle. Tämä asetus voidaan määrittää useita kertoja (oletus: 127.0.0.1 ja ::1 esim., localhost, tai jos -rpcallowip on määritetty, 0.0.0.0 ja :: esim., kaikki osoitteet)</translation>
+    </message>
+    <message>
+        <source>Cannot provide specific connections and have addrman find outgoing connections at the same.</source>
+        <translation>Ei voida tarjota tiettyjä yhteyksiä ja addrman voi löytää lähteviä yhteyksiä samaan aikaan.</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node; -connect=0 disables automatic connections (the rules for this peer are the same as for -addnode). This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>Kytkeydy vain määriteltyyn solmuun; -connect=0 poistaaksesi automaattiset kytkeytymiset käytöstä (tähän pätevät -addnode säännöt). Tämä asetus voidaan määrittää useita kertoja kytkeytyäksesi useisiin solmuihin.</translation>
+    </message>
+    <message>
+        <source>Connect to a node to retrieve peer addresses, and disconnect. This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>Kytkeydy solmuun saadaksesi peer osoitteet, ja katkaise yhteys. Tämä asetus voidaan määrittää useita kertoja kytkeytyäksesi useisiin solmuihin.</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3986,10 +4071,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Ota käyttöön julkaise siirtotapahtuman tarkisteet kaksoiskäytön yrityksessä InstantSend osoitteessa &lt;address&gt;</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>Virhe latauksessa %s: Et voi ottaa käyttöön HD:tä jo olemassa olevassa ei-HD lompakossa</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Löytyi vahvistamattomia denominoituja lähtöjä, odotetaan että ne vahvistetaan.</translation>
     </message>
@@ -4006,16 +4087,24 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Jos tämä lohko on ketjussa, oletetaan että se ja esivanhemmat ovat validit ja mahdollisesti ohita niiden koodivahvistus (0 vahvista kaikki, oletus: %s, testiverkko: %s)</translation>
     </message>
     <message>
+        <source>Invalid -socketevents ('%s') specified. Only these modes are supported: %s</source>
+        <translation>Virheellinen -socketevents ('%s') määritelty. Vain nämä tilat ovat tuettuja: %s</translation>
+    </message>
+    <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
         <translation>Virheellinen määrä -maxtxfee=&lt;amount&gt;: '%s' (oltava vähintään minimi välitysmaksun verran %s:sta välttääksesi jumissa olevia siirtotapahtumia)</translation>
+    </message>
+    <message>
+        <source>Location of the auth cookie. Relative paths will be prefixed by a net-specific datadir location. (default: data dir)</source>
+        <translation>Todentamis keksin sijainti. Suhteelliset polut johdetaan verkkokohtaisesta datahakemiston sijainnista. (oletus: data dir)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
         <translation>Ylläpidä täyttä siirtotapahtumien indeksiä, jota käyttää getrawtransaction rpc kutsu (oletus: %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Muista salata lompakkosi ja poistaa kaikki salaamattomat varmistukset sen jälkeen kun olet todennut että lompakko toimii!</translation>
+        <source>Make outgoing connections only through network &lt;net&gt; (ipv4, ipv6 or onion). Incoming connections are not affected by this option. This option can be specified multiple times to allow multiple networks.</source>
+        <translation>Tee ulos menevät yhteydet vain verkon &lt;net&gt; (ipv4, ipv6 tai onion) kautta. Tämä asetus ei vaikuta sisään tuleviin yhteyksiin. Tämä asetus voidaan määrittää useita kertoja salliaksesi useita verkkoja.</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -4032,6 +4121,42 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
         <translation>Ohittaa vähimmäis spork allekirjoittajat jotka vaihtavat spork arvoja. Käyttökelpoinen vain regtest tai devnet. Jos käytät tätä pääverkossa tai testiverkossa, joudut estolistalle, eli bannataan.</translation>
+    </message>
+    <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>PrivateSend käyttää tarkalleen denominoituja määriä lähettäessään varoja, saatat tarvita sekoittaa lisää kolikoita.</translation>
+    </message>
+    <message>
+        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex, -rescan and -disablegovernance=false. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;=%u = automatically prune block files to stay under the specified target size in MiB)</source>
+        <translation>Pienennä tilan tarvetta karsimalla (poistamalla) vanhoja lohkoja. Tämä mahdollistaa pruneblockchain RPC kutsun joka poistaa tietyt lohkot ja ottaa käyttöön automaattisen vanhojen lohkojen poistamisen jos tavoitekoko on annettu MiB yksikkönä. Tämä tila on epäyhteensopiva -txindex, -rescan ja -disablegovernance=false kanssa. Varoitus: Tämän asetuksen peruminen vaatii koko lohkoketjun uudelleen lataamisen. (oletus: 0 = lohkojen karsinta ei käytössä, 1 = salli manuaalinen puhdistus RPC:tä käyttäen, &gt;=%u = automaattisesti puhdista lohkotiedostot että pysytään alle MiB tavoitetilan)</translation>
+    </message>
+    <message>
+        <source>Send trace/debug info to console (default: 1 when no -daemon. To disable logging to file, set debuglogfile=0)</source>
+        <translation>Lähetä jäljitys/debug-tieto konsoliin (oletus: 1 jos ei -daemon. Poistaaksesi käytöstä kirjoituksen lokitiedostoon, aseta debuglogfile=0)</translation>
+    </message>
+    <message>
+        <source>Specify configuration file. Relative paths will be prefixed by datadir location. (default: %s)</source>
+        <translation>Määritä asetustiedosto. Suhteelliset polut johdetaan datahakemiston sijainnista. (default: %s)</translation>
+    </message>
+    <message>
+        <source>Specify directory to hold wallets (default: &lt;datadir&gt;/wallets if it exists, otherwise &lt;datadir&gt;)</source>
+        <translation>Määritä lompakon hakemisto (oletus: &lt;datadir&gt;/wallets jos olemassa, muuten &lt;datadir&gt;)</translation>
+    </message>
+    <message>
+        <source>Specify location of debug log file. Relative paths will be prefixed by a net-specific datadir location. (0 to disable; default: %s)</source>
+        <translation>Määritä debuglokin sijainti. Suhteelliset polut johdetaan verkkokohtaisesta datahakemiston sijainnista. (0 pois käytöstä; oletus: %s)</translation>
+    </message>
+    <message>
+        <source>Specify pid file. Relative paths will be prefixed by a net-specific datadir location. (default: %s)</source>
+        <translation>Määritä pid tiedoston sijainti. Suhteelliset polut johdetaan verkkokohtaisesta datahakemiston sijainnista. (oletus: %s)</translation>
+    </message>
+    <message>
+        <source>Specify wallet database path. Can be specified multiple times to load multiple wallets. Path is interpreted relative to &lt;walletdir&gt; if it is not absolute, and will be created if it does not exist (as a directory containing a wallet.dat file and log files). For backwards compatibility this will also accept names of existing data files in &lt;walletdir&gt;.)</source>
+        <translation>Määritä lompakon tietokannan polku. Voi olla määritetty useita kertoja ladataksesi useita lompakoita. Polku tulkitaan suhteelliseksi &lt;walletdir&gt; jos se ei ole absoluuttinen, ja luodaan jos sitä ei ole olemassa (hakemistona joka sisältää wallet.dat tiedoston ja lokitiedostot). Taaksepäin yhteensopivuuden vuoksi tämä hyväksyy myös nykyisten tiedostojen nimet &lt;walletdir&gt;.)</translation>
+    </message>
+    <message>
+        <source>Transaction index can't be disabled with governance validation enabled. Either start with -disablegovernance command line switch or enable transaction index.</source>
+        <translation>Siirtotapahtumaindeksiä ei voi poistaa käytöstä jos hallinnon vahvistus on käytössä. Joko käynnistä -disablegovernance komentorivin valinnalla tai ota käyttöön siirtotapahtumaindeksi.</translation>
     </message>
     <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
@@ -4052,22 +4177,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
         <translation>Luotettaviksi merkittyjä peers:jä ei voida DoS estää, ja niiden siirtotapahtumat välitetään aina, vaikka ne olisvatkin jo muistivarannossa, käyttökelpoinen esim. yhdyskäytävään</translation>
-    </message>
-    <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>Sinun tulee uudelleen rakentaa tietokanta käyttäen -reindex-chainstate vaihtaen -txindex</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Sinun täytyy määritellä masternodeblsprivkey asetustiedostoon. Katso lisätietoja dokumentaatiosta.</translation>
-    </message>
-    <message>
-        <source>(default: %s)</source>
-        <translation>(oletus: %s)</translation>
-    </message>
-    <message>
-        <source>-wallet parameter must only specify a filename (not a path)</source>
-        <translation>-wallet parametrin täytyy määrittää vain tiedostonimi (ei polkua)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4094,16 +4203,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Yhdistä KeePassHttp porttiin &lt;port&gt; (oletus: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Aktivoi asiakasohjelman käyttö masternode:na (0-1, oletus: %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>Merkintä ylittää maksimin.</translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>Virhe latauksessa %s: Et voi poistaa käytöstä HD:tä jo olemassa olevassa HD lompakossa</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4162,12 +4263,12 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Saldo ei riitä.</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>Virheellinen määrä -maxtxfee=&lt;amount&gt;: '%s' (oltava vähintään %s)</translation>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>Virheellinen määrä -discardfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>Virheellinen masternodeblsprivkey. Katso lisätietoja dokumentaatiosta.</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
+        <translation>Virheellinen määrä -paytxfee=&lt;amount&gt;: '%s' (oltava vähintään %s)</translation>
     </message>
     <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
@@ -4230,12 +4331,12 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Yhteensopivaa Masternodea ei löytynyt.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Ei ole Masternodet listassa.</translation>
+        <source>Not enough funds to mix.</source>
+        <translation>Ei tarpeeksi varoja sekoitettavaksi.</translation>
     </message>
     <message>
-        <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Kytkeydy verkon solmuihin vain &lt;net&gt; (ipv4, ipv6 tai onion)</translation>
+        <source>Not in the Masternode list.</source>
+        <translation>Ei ole Masternodet listassa.</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
@@ -4254,32 +4355,16 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Lähetä jäljitys/debug tiedot debug.log tiedostoon (default: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>Lähetä siirtotapahtumat nolla siirtomaksulla jos mahdollista (oletus: %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Aseta avainvarannon koko &lt;n&gt; (oletus: %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>Aseta masternoden BLS yksityisavain</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
         <translation>Aseta säikeiden lukumäärä RPC kutsuille (oletus: %d)</translation>
     </message>
     <message>
-        <source>Specify configuration file (default: %s)</source>
-        <translation>Määritä asetustiedosto (oletus: %s)</translation>
-    </message>
-    <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
         <translation>Määritä yhteyden aikakatkaisu millisekunneissa (minimi: 1, oletus: %d)</translation>
-    </message>
-    <message>
-        <source>Specify pid file (default: %s)</source>
-        <translation>Määritä pid tiedosto (oletus: %s)</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
@@ -4290,28 +4375,12 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Lähetetty masternodelle, odotetaan jonossa %s</translation>
     </message>
     <message>
-        <source>Synchronization failed</source>
-        <translation>Synkronointi epäonnistui</translation>
-    </message>
-    <message>
         <source>Synchronization finished</source>
         <translation>Synkronointi valmis</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Tämä ei ole Masternode.</translation>
-    </message>
-    <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
         <translation>Yhteyden kynnysaika huonosti käyttäytyville peers:lle (oletus: %u)</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, removing.</source>
-        <translation>Liian monta %f denominointia, poistetaan.</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, skipping.</source>
-        <translation>Liian monta %f denominointia, ohitetaan.</translation>
     </message>
     <message>
         <source>Tor control port password (default: empty)</source>
@@ -4362,6 +4431,10 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Käyttäjä toimijan kommentti (%s) sisältää ei suositeltuja merkkejä.</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>Tarkistetaan lompakko(ja)...</translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>Yritetään uudelleen...</translation>
     </message>
@@ -4390,20 +4463,12 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>KeePassHttp avain AES salattuun viestintään</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Pidä enintään &lt;n&gt; ei yhdistettyä siirtotapahtumaa muistissa (oletus: %u)</translation>
-    </message>
-    <message>
-        <source>Disable all Biblepay specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
-        <translation>Kytke pois käytöstä kaikki Biblepay:in erityistoiminnot (Masternodet, PrivateSend, InstantSend, Hallinto) (0-1, oletus: %u)</translation>
-    </message>
-    <message>
         <source>%s file contains all private keys from this wallet. Do not share it with anyone!</source>
         <translation>%s tiedosto sisältää kaikki yksityisavaimet tähän lompakkoon. Älä luovuta sitä kenellekkän!</translation>
     </message>
     <message>
-        <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
-        <translation>Kytkeydy annettuun osoitteeseen kuunnellaksesi JSON-RPC yhteyksiä. Tämä optio ohitetaan ellei -rpcallowip optiota myös anneta. Portti on valinnainen ja syrjäyttää -rpcport. Käytä [host]:port merkintätapaa IPv6:lle. Tämä asetus voidaan määrittää useita kertoja (oletus: 127.0.0.1 ja ::1 esim., localhost, tai jos -rpcallowip on määritetty, 0.0.0.0 ja :: esim., kaikki osoitteet)</translation>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>-masternode asetus ei ole enää käytössä, käyttämällä -masternodeblsprivkey riittää käynnistämään masternoden. </translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4414,16 +4479,8 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Älä pidä siirtotapahtumia muistivarannossa pidempään kuin &lt;n&gt; tuntia (oletus: %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Ota InstantSend käyttöön, näytä lukittujen siirtojen vahvistukset (0-1, oletus: %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
         <translation>Käytä useita PrivateSend sekoitus sessioita per lohko, kokeellinen (0-1, oletus: %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Ota käyttöön automaattinen PrivateSend rahavaroille tässä lompakossa  (0-1, oletus: %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4450,14 +4507,6 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Jos &lt;category&gt; ei ole toimitettu, tai &lt;category&gt; = 1, tulosta kaikki debug tiedot.</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>InstantSend ei tue näin korkeaa lähetysmäärää vielä. Siirtotapahtumat on tällä hetkellä rajoitettu %1 BIBLEPAY.</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>InstantSend vaatii syötteille vähintään %d vahvistusta, odota muutama minuutti ja yritä uudelleen.</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>Ylläpidä täyttä osoiteindeksiä, jota käyttää saldokysely, siirtotapahtuma tunnus ja käyttämättömät lähdöt osoitteille (oletus: %u)</translation>
     </message>
@@ -4467,15 +4516,19 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
     </message>
     <message>
         <source>Maintain a timestamp index for block hashes, used to query blocks hashes by a range of timestamps (default: %u)</source>
-        <translation>Ylläpidä aikamerkinnän indeksiä lohkojen tarkisteille, jota käyttää lohkotarkisteiden haku aikamerkintöjen haarukassa (oletus: %u)</translation>
+        <translation>Ylläpidä aikamerkinnän indeksiä lohkojen tarkisteille, jota käyttää lohkotarkisteiden haku aikamerkintöjen rajoissa (oletus: %u)</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (temporary service connections excluded) (default: %u)</source>
         <translation>Ylläpidä enintään &lt;n&gt; solmu yhteyttä (poislukien väliaikaiset huoltoyhteydet) (oletus: %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>PrivateSend käyttää tarkalleen denominoituja syötteitä lähettäessään varoja, saatat tarvita anonymisoida lisää kolikoita.</translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>Muista salata lompakkosi ja poistaa kaikki salaamattomat varmistukset sen jälkeen kun olet todennut että lompakko toimii!</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>Aseta maksimikoko kaikille orvoille siirtotapahtumille megatavuissa (oletus: %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4486,12 +4539,20 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
         <translation>Karsinta: viimeinen lompakon synkronointi menee yli karsitun datan. Sinun täytyy tehdä -reindex (lataa koko lohkoketju uudelleen)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>Tiedustele vertaisverkon osoitteita DNS hakua käyttäen, jos osoitteita ei ole riittävästi (oletus: 1 paitsi jos -connect on käytössä)</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>Satunnaista käyttäjätiedot jokaiselle proxy yhteydelle. Tämä ottaa käyttöön Tor virran eristämisen (oletus: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>Uudelleen skannaus ei ole mahdollista karsintatilassa. Sinun on käytettävä -reindex joka lataa koko lohkoketjun uudelleen.</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>Aseta masternoden BLS yksityisavain ja tämä asiakasohjelma toimii sitten masternodena</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4515,12 +4576,12 @@ Näillä toiminnoilla voit korjata korruptoituneen lohkoketjun tai puuttuvat/van
 Vähennä uakommenttien määrää tai kokoa.</translation>
     </message>
     <message>
-        <source>Transaction index can't be disabled in full mode. Either start with -litemode command line switch or enable transaction index.</source>
-        <translation>Siirtotapahtumaindeksiä ei voi poistaa käytöstä normaalitilassa. Joko käynnistä -litemode komentorivin valinnalla tai ota käyttöön siirtotapahtumaindeksi.</translation>
-    </message>
-    <message>
         <source>Tries to keep outbound traffic under the given target (in MiB per 24h), 0 = no limit (default: %d)</source>
         <translation>Yrittää pitää ulos menevän liikenteen alle annetun tavoitteen (MiB per 24h), 0 = ei rajaa (oletus: %d)</translation>
+    </message>
+    <message>
+        <source>Try to create at least N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Yritä luoda vähintään N syötettä jokaiseen denominoituun määrään (%u-%u, oletus: %u)</translation>
     </message>
     <message>
         <source>Unable to locate enough PrivateSend denominated funds for this transaction.</source>
@@ -4539,6 +4600,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Käytä UPnP:tä kuunneltavan portin kartoitukseen (oletus: 1 kun kuunellaan ja ei käytetä -proxy)</translation>
     </message>
     <message>
+        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcauth. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
+        <translation>Käyttäjänimi ja salattu salasana JSON-RPC yhteyksille. Kenttä &lt;userpw&gt; tulee olla formaatissa: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Sääntöjen mukainen python scripti on sisällytetty share/rpcuser:ään. Sitten asiakasohjelma kytkeytyy normaalisti kayttäen rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; paria perusteena. Tämä optio voidaan määritellä useita kertoja</translation>
+    </message>
+    <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
         <translation>VAROITUS! Osoitevarannon täydentäminen epäonnistui, avaa lompakon lukitus.</translation>
     </message>
@@ -4551,8 +4616,8 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Varoitus: Tuntemattomia lohkoversioita louhitaan! On mahdollista että tuntemattomia sääntöjä on käytössä</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Biblepay-specific functionality is disabled.</source>
-        <translation>Olet käynnistämässä lite tilassa, kaikki Biblepay-toiminnot ovat pois käytöstä.</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>Sinun tulee uudelleen rakentaa tietokanta käyttäen -reindex vaihtaen -timestampindex</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4561,6 +4626,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     <message>
         <source>(default: %u)</source>
         <translation>(oletus: %u)</translation>
+    </message>
+    <message>
+        <source>-litemode is deprecated.</source>
+        <translation>-litemode on poistettu käytöstä.</translation>
     </message>
     <message>
         <source>-maxmempool must be at least %d MB</source>
@@ -4581,6 +4650,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     <message>
         <source>Automatically create Tor hidden service (default: %d)</source>
         <translation>Luo automaattisesti Tor piilopalvelu (oletus: %d)</translation>
+    </message>
+    <message>
+        <source>Disable governance validation (0-1, default: %u)</source>
+        <translation>Kytke hallinnon vahvistus pois käytöstä (0-1, oletus: %u)</translation>
     </message>
     <message>
         <source>ERROR! Failed to create automatic backup</source>
@@ -4619,8 +4692,36 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Ota käyttöön julkaise raaka siirtotapahtuma osoitteessa &lt;address&gt;</translation>
     </message>
     <message>
+        <source>Error upgrading evo database</source>
+        <translation>Virhe evo tietokannan päivityksessä</translation>
+    </message>
+    <message>
         <source>Error: A fatal internal error occurred, see debug.log for details</source>
         <translation>Virhe: Vakava sisäinen virhe, katso debug.log lisätietoja</translation>
+    </message>
+    <message>
+        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
+        <translation>Virhe: socket lisäys epollfd:ään epäonnistui (epoll_ctl palautti virheen %s)</translation>
+    </message>
+    <message>
+        <source>Exceeded max tries.</source>
+        <translation>Maksimi yritykset ylitetty.</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at</source>
+        <translation>Täytettyjen pyyntöjen välimuistin tyhjennys epäonnistui</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at</source>
+        <translation>Hallinnon välimuistin tyhjennys epäonnistui</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at</source>
+        <translation>Masternode välimuistin tyhjennys epäonnistui</translation>
+    </message>
+    <message>
+        <source>Failed to commit EvoDB</source>
+        <translation>EvoDB liitäntä epäonnistui</translation>
     </message>
     <message>
         <source>Failed to create backup %s!</source>
@@ -4635,12 +4736,12 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Varmistuksen poisto epäonnistui, virhe: %s</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>InstantSend välimuistin lataaminen epäonnistui</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>Spork välimuistin lataaminen epäonnistui</translation>
+    </message>
+    <message>
+        <source>Failed to rescan the wallet during initialization</source>
+        <translation>Lompakon uudelleen skannaaminen epäonnistui alustuksen aikana</translation>
     </message>
     <message>
         <source>Fee (in %s/kB) to add to transactions you send (default: %s)</source>
@@ -4659,6 +4760,18 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Virheellinen määrä -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>Virheellinen masternodeblsprivkey. Katso lisätietoja dokumentaatiosta.</translation>
+    </message>
+    <message>
+        <source>It has been replaced by -disablegovernance.</source>
+        <translation>Se on korvattu -disablegovernance.</translation>
+    </message>
+    <message>
+        <source>Its replacement -disablegovernance has been forced instead.</source>
+        <translation>Korvaava -disablegovernance on pakotettu sen sijaan.</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>Pidä siirtotapahtuma muistivaranto alle &lt;n&gt; megatavun (oletus: %u)</translation>
     </message>
@@ -4669,10 +4782,6 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>Viimeisin onnistunut PrivateSend tapahtuma oli liian äskettäin.</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>Ladataan InstantSend välimuistia...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4693,10 +4802,6 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     <message>
         <source>Loading wallet...</source>
         <translation>Ladataan lompakkoa...</translation>
-    </message>
-    <message>
-        <source>Location of the auth cookie (default: data dir)</source>
-        <translation>Vahvistuskeksin sijainti (oletus: datahakemisto)</translation>
     </message>
     <message>
         <source>Make the wallet broadcast transactions</source>
@@ -4735,20 +4840,12 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Solmun välitysasetukset:</translation>
     </message>
     <message>
-        <source>Non-standard public key detected.</source>
-        <translation>Epästandardi yleinen avain havaittu.</translation>
-    </message>
-    <message>
         <source>Not compatible with existing transactions.</source>
         <translation>Ei yhteensopiva olemassa olevien siirtotapahtumien kanssa.</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
         <translation>Ei tarpeeksi tiedostomerkintöjä saatavilla.</translation>
-    </message>
-    <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>Ei tarpeeksi varoja anonymisointiin.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: %u)</source>
@@ -4775,16 +4872,16 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>PrivateSend asetukset:</translation>
     </message>
     <message>
-        <source>PrivateSend request complete:</source>
-        <translation>PrivateSend pyyntö valmis:</translation>
-    </message>
-    <message>
         <source>PrivateSend request incomplete:</source>
         <translation>PrivateSend pyyntö kesken:</translation>
     </message>
     <message>
         <source>Prune cannot be configured with a negative value.</source>
         <translation>Karsinta ei voi olla asetettu negatiiviseksi arvoksi.</translation>
+    </message>
+    <message>
+        <source>Prune mode is incompatible with -disablegovernance=false.</source>
+        <translation>Karsintatila on epäyhteensopiva -disablegovernance=false kanssa.</translation>
     </message>
     <message>
         <source>Prune mode is incompatible with -txindex.</source>
@@ -4799,20 +4896,44 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Skannaa lohkoketju uudelleen lompakon puuttuvien siirtotapahtumien vuoksi käynnistyksessä</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u</source>
-        <translation>Lähetettiin seuraavia merkintöjä masternodelle: %u</translation>
+        <source>Send reject messages per BIP61 (default: %u)</source>
+        <translation>Lähetä hylkäysviestit BIP61:n mukaan (oletus: %u)</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u ) %s</source>
-        <translation>Lähetetty masternodelle, odotetaan lisää merkintöjä ( %u ) %s</translation>
+        <source>Socket events mode, which must be one of: %s (default: %s)</source>
+        <translation>Socket tapahtuma tila, jonka täytyy olla yksi seuraavista: %s (oletus: %s)</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" does not exist</source>
+        <translation>Määriteltyä -walletdir "%s" ei ole olemassa</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is a relative path</source>
+        <translation>Määritelty -walletdir "%s" on suhteellinen polku</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is not a directory</source>
+        <translation>Määritelty -walletdir "%s" ei ole hakemisto</translation>
+    </message>
+    <message>
+        <source>Sync mempool from other nodes on start (default: %u)</source>
+        <translation>Synkronisoi muistivaranto toisista solmuista käynnistyksessä (oletus: %u)</translation>
     </message>
     <message>
         <source>Synchronizing blockchain...</source>
         <translation>Synkronoidaan lohkoketju...</translation>
     </message>
     <message>
+        <source>Target PrivateSend balance (%u-%u, default: %u)</source>
+        <translation>Haluttu PrivateSend saldo (%u-%u, oletus: %u)</translation>
+    </message>
+    <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
         <translation>Lompakko välttää maksamasta vähemän kuin vähimmäisvälitysmaksun.</translation>
+    </message>
+    <message>
+        <source>This is expected because you are running a pruned node.</source>
+        <translation>Tämä on odotettavissa koska käytät karsintatilaa.</translation>
     </message>
     <message>
         <source>This is the minimum transaction fee you pay on every transaction.</source>
@@ -4824,7 +4945,7 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     </message>
     <message>
         <source>Transaction amounts must not be negative</source>
-        <translation>Lähetyksen siirtosumman tulee olla positiivinen</translation>
+        <translation>Lähetyksen määrä tulee olla positiivinen</translation>
     </message>
     <message>
         <source>Transaction has too long of a mempool chain</source>
@@ -4847,6 +4968,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Kytkeytyminen kohteeseen %s ei onnistu tällä tietokoneella. %s on luultavasti jo käynnissä.</translation>
     </message>
     <message>
+        <source>Unable to generate initial keys</source>
+        <translation>Aloitusavaimia ei voitu luoda</translation>
+    </message>
+    <message>
         <source>Upgrading UTXO database</source>
         <translation>Päivitetään UTXO tietokantaa</translation>
     </message>
@@ -4855,12 +4980,12 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Käytä devnet ketjua tarjotulla nimellä</translation>
     </message>
     <message>
-        <source>Wallet debugging/testing options:</source>
-        <translation>Lompakon debug ja testausvalinnat:</translation>
+        <source>Wallet %s resides outside wallet directory %s</source>
+        <translation>Lompakko %s sijaitsee lompakkohakemiston ulkopuolella %s</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>Lompakko ei ole alustettu</translation>
+        <source>Wallet debugging/testing options:</source>
+        <translation>Lompakon debug ja testausvalinnat:</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -4879,8 +5004,20 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Käytä vain lohkoja moodia (default: %u)</translation>
     </message>
     <message>
-        <source>You can not start a masternode in lite mode.</source>
-        <translation>Et voi käynnistää masternodea lite tilassa.</translation>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>Et voi käynnistää masternodea kun lompakko on käytössä.</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>Sinun tulee uudelleen rakentaa tietokanta käyttäen -reindex vaihtaen -addressindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>Sinun tulee uudelleen rakentaa tietokanta käyttäen -reindex vaihtaen -spentindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>Sinun tulee uudelleen rakentaa tietokanta käyttäen -reindex vaihtaen -txindex</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
@@ -4899,32 +5036,36 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>RPC palvelimen valinnat:</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>The %s developers</source>
         <translation>%s kehittäjät</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Hyväksy yhteyksiä ulkopuolelta (oletus: 1 jos ei -proxy tai -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>Ei voida lukita datahakemistoa %s. %s on luultavasti jo käynnissä.</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Kytkeydy vain määriteltyyn solmu(un); -noconnect tai connect=0 yksin poistaaksesi automaattiset yhteydet</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>Jaettu MIT ohjelmistolisenssin alaisuudessa, katso mukana tuleva %s tiedosto tai %s</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Ota käyttöön PrivateSend varoille tässä lompakossa (0-1, oletus: %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>Virhe ladatessa %s: Et voi ottaa käyttöön HD:tä jo olemassa olevassa ei-HD lompakossa</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>Virhe luettaessa %s! Avaimet luetttiin oikein, mutta rahansiirtotiedot tai osoitekirjan sisältö saattavat olla puutteellisia tai vääriä.</translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>Sulje luokan virheenkorjaustiedot pois. Voidaan käyttää yhdessä -debug=1 kanssa vikalokien talletukseen kaikkiin kategoriohin paitsi yhteen tai enempiin määriteltyihin kategorioihin.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
@@ -4955,20 +5096,16 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Ole hyvä ja avusta, jos %s on mielestäsi hyödyllinen. Vieraile %s saadaksesi lisää tietoa ohjelmistosta.</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Tarjoa PrivateSend:ille likviditeettiä jatkuvaa kolikoiden sekoitusta varten (%u-%u, oletus: %u, 1=usein, isot maksukulut, %u=harvoin, pienet maksukulut)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Tiedustele vertaisverkon osoitteita DNS hakua käyttäen jos osoitteita ei ole riittävästi (oletus: 1 paitsi jos -connect/-noconnect)</translation>
-    </message>
-    <message>
-        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
-        <translation>Pienennä tilan tarvetta karsimalla (poistamalla) vanhoja lohkoja. Tämä mahdollistaa pruneblockchain RPC kutsun joka poistaa tietyt lohkot ja ottaa käyttöön automaattisen vanhojen lohkojen puhdistuksen jos tavoitekoko on annettu yksikkö MiB. Tämä tila on epäyhteensopiva -txindex ja -rescan kanssa. Varoitus: Tämän asetuksen peruminen vaatii koko lohkoketjun uudelleen lataamisen. (oletus: 0 = lohkojen karsinta ei käytössä, 1 =  salli manuaalinen puhdistus RPC:tä käyttäen, &gt;%u = automaattisesti puhdista lohkotiedostot että pysytään alle tavoitetilan MiB)</translation>
-    </message>
-    <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>Aseta lohkon luonnissa lisättävien siirtojen vähimmäispalkkion suhde (%s/kt) (oletus: %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>Maksutaso (%s/kB) joka ilmaisee toleranssisi vaihtorahan hylkäämisessä lisäämällä se siirtomaksuun (default: %s). Huomio: Lähtö hylätään jos se on tomua tällä maksutasolla, mutta hylkäämme aina tomun välitysmaksun ja korkeamman välitysmaksun joka on rajoitettu välitysmaksun arvion pisimpään kohteeseen</translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>Tämä on siirtomaksun määrä jonka saatat hylätä jos vaihtoraha on pienempi kuin tomu tällä tasolla</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4983,6 +5120,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Ei tarpeeksi PrivateSend ei-denominoituja varoja tälle siirtotapahtumalle.</translation>
     </message>
     <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>Ei voitu toistaa lohkoja. Sinun tulee uudelleen rakentaa tietokanta käyttäen -reindex-chainstate.</translation>
+    </message>
+    <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
         <translation>Käytä N erillistä masternodea jokaiseen denominoituun syötteeseen sekoittaaksesi varoja (%u-%u, oletus: %u)</translation>
     </message>
@@ -4995,10 +5136,6 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Käyttäjän määrittelemä mnemonic salasana HD lompakolle (BIP39). Vaikuttaa vain uuden lompakon luomisessa/ensimmäisessä käynnistyksessä (oletus: tyhjä)</translation>
     </message>
     <message>
-        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcuser. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
-        <translation>Käyttäjänimi ja salattu salasana JSON-RPC yhteyksille. Kenttä &lt;userpw&gt; tulee olla formaatissa: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Sääntöjen mukainen python scripti on sisällytetty share/rpcuser:ään. Sitten asiakasohjelma kytkeytyy normaalisti kayttäen rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; paria perusteena. Tämä optio voidaan määritellä useita kertoja</translation>
-    </message>
-    <message>
         <source>Wallet will not create transactions that violate mempool chain limits (default: %u)</source>
         <translation>Lompakko ei luo siirtotapahtumia jotka rikkovat muistivarannon ketjun rajoja (oletus: %u)</translation>
     </message>
@@ -5007,8 +5144,16 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Varoitus: Lompakkotiedosto on vioittunut, tiedot pelastettu. Alkuperäinen %s on tallennettu nimellä %s tänne %s, jos saldosi tai siirtohistoria on virheellinen, sinun tulisi palauttaa lompakkotiedosto varmuuskopiosta.</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>Tallenetaanko muistivaranto suljettaessa ja ladataaan käynnistyksessä (oletus: %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
         <translation>Merkitse solmut luotettaviksi jotka kytkeytyvät annetusta verkkomaskista tai IP osoitteesta (esim. 1.2.3.4) tai CIDR merkitty verkosta (esim. 1.2.3.4/24). Voidaan määrittää useita kertoja.</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>%d viimeisintä lohkoa 100:sta sisältää odottamattoman version</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -5023,10 +5168,6 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>%s on asetettu todella korkeaksi!</translation>
     </message>
     <message>
-        <source>(press q to shutdown and continue later)</source>
-        <translation>(paina q sammuttaaksesi ja jatkaaksesi myöhemmin)</translation>
-    </message>
-    <message>
         <source>-devnet can only be specified once</source>
         <translation>-devnet voidaan määrittää vain kerran</translation>
     </message>
@@ -5037,6 +5178,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     <message>
         <source>-rpcport must be specified when -devnet and -server are specified</source>
         <translation>-rpcport täytyy määritellä kun -devnet ja -server on määritelty</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Hyväksy yhteyksiä ulkopuolelta (oletus: 1 jos ei -proxy tai -connect)</translation>
     </message>
     <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
@@ -5052,11 +5197,15 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     </message>
     <message>
         <source>Change index out of range</source>
-        <translation>Vaihtoindeksi rajarvojen ulkopuolella</translation>
+        <translation>Vaihtoindeksi on rajojen ulkopuolella</translation>
     </message>
     <message>
         <source>Copyright (C)</source>
         <translation>Tekijänoikeus (C)</translation>
+    </message>
+    <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Luo maksimissaan N syötettä jokaiseen denominoituun määrään (%u-%u, oletus: %u)</translation>
     </message>
     <message>
         <source>Error loading %s</source>
@@ -5069,6 +5218,14 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
         <translation>Virhe ladattaessa %s: Tarvitset uudemman %s version</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>Virhe ladatessa %s: Et voi poistaa käytöstä HD:tä jo olemassa olevassa HD lompakossa</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>Virhe ladatessa lompakkoa %s. -wallet tiedostonimi on jo olemassa.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -5087,6 +5244,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Alustava järkevyyden tarkistus epäonnistui. %s sulkeutuu.</translation>
     </message>
     <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>Syötteet vs lähdöt koko ei täsmää.</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>Virheellinen -onion osoite tai isäntänimi: '%s'</translation>
     </message>
@@ -5099,16 +5260,8 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Virheellinen määrä -%s=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid characters in -wallet filename</source>
-        <translation>Virheellisiä merkkejä -wallet tiedostonimessä</translation>
-    </message>
-    <message>
         <source>Invalid spork address specified with -sporkaddr</source>
         <translation>Virheellinen spork osoite määritelty -sporkaddr</translation>
-    </message>
-    <message>
-        <source>Keep N BIBLEPAY anonymized (%u-%u, default: %u)</source>
-        <translation>Pidä N BIBLEPAY anonymisoituna (%u-%u, oletus: %u)</translation>
     </message>
     <message>
         <source>Loading P2P addresses...</source>
@@ -5117,10 +5270,6 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     <message>
         <source>Print this help message and exit</source>
         <translation>Näytä tämä ohjeviesti ja poistu</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Vastaanota ja näytä P2P verkon hälytykset (oletus: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5135,16 +5284,16 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Välitä non-P2SH multisig (oletus: %u)</translation>
     </message>
     <message>
+        <source>Replaying blocks...</source>
+        <translation>Toistetaan lohkoja...</translation>
+    </message>
+    <message>
         <source>Rescanning...</source>
         <translation>Skannataan uudelleen...</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
         <translation>Aja taustalla palveluprosessina ja hyväksy komennot</translation>
-    </message>
-    <message>
-        <source>Send trace/debug info to console instead of debug.log file</source>
-        <translation>Lähetä jäljitys/debug tieto konsoliin, debug.log tiedoston sijaan</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -5179,20 +5328,16 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Määritä datahakemisto</translation>
     </message>
     <message>
-        <source>Specify wallet file (within data directory)</source>
-        <translation>Määritä lompakkotiedosto (datahakemiston sisällä)</translation>
-    </message>
-    <message>
         <source>Specify your own public address</source>
         <translation>Määritä julkinen osoitteesi</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>Käynnistetään verkkoa...</translation>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>Käynnistä PrivateSend automaattisesti (0-1, oletus: %u)</translation>
     </message>
     <message>
-        <source>Synchronization pending...</source>
-        <translation>Synkronointi odottaa...</translation>
+        <source>Starting network threads...</source>
+        <translation>Käynnistetään verkkoa...</translation>
     </message>
     <message>
         <source>Synchronizing governance objects...</source>
@@ -5212,7 +5357,7 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
     </message>
     <message>
         <source>Transaction amount too small</source>
-        <translation>Siirtosumma on liian pieni</translation>
+        <translation>Siirtomäärä on liian pieni</translation>
     </message>
     <message>
         <source>Transaction created successfully.</source>
@@ -5247,6 +5392,10 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Tuntematon tila: id = %u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>Ei tuettu lokikategoria %s=%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>Käyttäjätunnus JSON-RPC yhteyksille</translation>
     </message>
@@ -5255,16 +5404,8 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Tarkistetaan lohkoja...</translation>
     </message>
     <message>
-        <source>Verifying wallet...</source>
-        <translation>Tarkistetaan lompakko...</translation>
-    </message>
-    <message>
         <source>Very low number of keys left: %d</source>
         <translation>Osoitteita vähän jäljellä: %d</translation>
-    </message>
-    <message>
-        <source>Wallet %s resides outside data directory %s</source>
-        <translation>Lompakko %s sijaitsee datahakemiston ulkopuolella %s</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
@@ -5275,20 +5416,20 @@ Vähennä uakommenttien määrää tai kokoa.</translation>
         <translation>Lompakon valinnat:</translation>
     </message>
     <message>
-        <source>Wallet window title</source>
-        <translation>Lompakon ikkunaotsikko</translation>
-    </message>
-    <message>
         <source>Warning</source>
         <translation>Varoitus</translation>
     </message>
     <message>
-        <source>Your entries added successfully.</source>
-        <translation>Merkinnnät lisätty onnistuneesti.</translation>
+        <source>You are starting with governance validation disabled.</source>
+        <translation>Olet käynnistämässä hallinnon vahvistus pois päältä.</translation>
     </message>
     <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>Siirtotapahtuma hyväksytty varantoon!</translation>
+        <source>You can not disable governance validation on a masternode.</source>
+        <translation>Et voi poistaa käytöstä hallinnon vahvistusta masternodesta.</translation>
+    </message>
+    <message>
+        <source>Your entries added successfully.</source>
+        <translation>Merkinnnät lisätty onnistuneesti.</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

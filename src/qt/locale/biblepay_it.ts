@@ -70,12 +70,12 @@
         <translation>Indirizzi di ricezione</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Questi sono i tuoi indirizzi Biblepay per inviare i pagamenti. Controlla sempre l'ammontare e l'indirizzo di destinazione prima di inviare i biblepay.</translation>
+        <source>These are your BiblePay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Questi sono i tuoi indirizzi BiblePay per inviare i pagamenti. Controlla sempre l'ammontare e l'indirizzo di destinazione prima di inviare i biblepay.</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Questi sono i tuoi indirizzi di Biblepay per ricevere i pagamenti. Si raccomanda di usare un nuovo indirizzo di ricezione per ogni operazione.</translation>
+        <source>These are your BiblePay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Questi sono i tuoi indirizzi di BiblePay per ricevere i pagamenti. Si raccomanda di usare un nuovo indirizzo di ricezione per ogni operazione.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -130,6 +130,45 @@
     </message>
 </context>
 <context>
+    <name>AppearanceWidget</name>
+    <message>
+        <source>Lighter</source>
+        <translation>Lighter</translation>
+    </message>
+    <message>
+        <source>Bolder</source>
+        <translation>Bolder</translation>
+    </message>
+    <message>
+        <source>Font Weight Normal:</source>
+        <translation>Peso carattere normale:</translation>
+    </message>
+    <message>
+        <source>Smaller</source>
+        <translation>Più piccolo</translation>
+    </message>
+    <message>
+        <source>Bigger</source>
+        <translation>Più grande</translation>
+    </message>
+    <message>
+        <source>Font Scale:</source>
+        <translation>Scala carattere:</translation>
+    </message>
+    <message>
+        <source>Font Family:</source>
+        <translation>Font Family:</translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation>Tema:</translation>
+    </message>
+    <message>
+        <source>Font Weight Bold:</source>
+        <translation>Peso carattere grassetto:</translation>
+    </message>
+</context>
+<context>
     <name>AskPassphraseDialog</name>
     <message>
         <source>Passphrase Dialog</source>
@@ -146,6 +185,10 @@
     <message>
         <source>Repeat new passphrase</source>
         <translation>Ripeti la nuova passphrase</translation>
+    </message>
+    <message>
+        <source>Show password</source>
+        <translation>Mostra password</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
@@ -256,14 +299,21 @@
     </message>
 </context>
 <context>
+    <name>BitcoinAmountField</name>
+    <message>
+        <source>Amount in %1</source>
+        <translation>Importo in %1</translation>
+    </message>
+</context>
+<context>
     <name>BitcoinGUI</name>
     <message>
-        <source>A fatal error occurred. Biblepay Core can no longer continue safely and will quit.</source>
-        <translation>Si è verificato un errore irreversibile. Biblepay Core non può più continuare in sicurezza e terminerà le operazioni.</translation>
+        <source>A fatal error occurred. BiblePay Core can no longer continue safely and will quit.</source>
+        <translation>Si è verificato un errore irreversibile. BiblePay Core non può più continuare in sicurezza e terminerà le operazioni.</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -286,8 +336,8 @@
         <translation>&amp;Invia</translation>
     </message>
     <message>
-        <source>Send coins to a Biblepay address</source>
-        <translation>Spedire biblepay ad un indirizzo Biblepay</translation>
+        <source>Send coins to a BiblePay address</source>
+        <translation>Spedire biblepay ad un indirizzo BiblePay</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
@@ -322,8 +372,8 @@
         <translation>Chiudi applicazione</translation>
     </message>
     <message>
-        <source>Show information about Biblepay Core</source>
-        <translation>Mostra le informazioni su Biblepay Core</translation>
+        <source>Show information about BiblePay Core</source>
+        <translation>Mostra le informazioni su BiblePay Core</translation>
     </message>
     <message>
         <source>About &amp;Qt</source>
@@ -340,6 +390,10 @@
     <message>
         <source>&amp;About %1</source>
         <translation>&amp;Informazioni su %1</translation>
+    </message>
+    <message>
+        <source>PrivateSend coins to a BiblePay address</source>
+        <translation>PrivateSend monete a un indirizzo BiblePay</translation>
     </message>
     <message>
         <source>Modify configuration options for %1</source>
@@ -391,19 +445,19 @@
     </message>
     <message>
         <source>Sign &amp;message...</source>
-        <translation>Firma il &amp;messaggio...</translation>
+        <translation>Firma &amp;messaggio...</translation>
     </message>
     <message>
-        <source>Sign messages with your Biblepay addresses to prove you own them</source>
-        <translation>Firma i messaggi con il tuo indirizzo Biblepay per dimostrare che li possiedi</translation>
+        <source>Sign messages with your BiblePay addresses to prove you own them</source>
+        <translation>Firma i messaggi con il tuo indirizzo BiblePay per dimostrare che li possiedi</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
         <translation>&amp;Verifica messaggio...</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Biblepay addresses</source>
-        <translation>Verificare i messaggi per assicurarsi che sono firmati con gli indirizzi specificati di Biblepay</translation>
+        <source>Verify messages to ensure they were signed with specified BiblePay addresses</source>
+        <translation>Verificare i messaggi per assicurarsi che sono firmati con gli indirizzi specificati di BiblePay</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -490,12 +544,16 @@
         <translation>Opzioni riga di &amp;comando</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible Biblepay command-line options</source>
-        <translation>Mostra il messaggio di aiuto di %1 per ottenere una lista di opzioni di comando per Biblepay </translation>
+        <source>Show the %1 help message to get a list with possible BiblePay command-line options</source>
+        <translation>Mostra il messaggio di aiuto di %1 per ottenere una lista di opzioni di comando per BiblePay </translation>
     </message>
     <message>
         <source>%1 client</source>
         <translation>%1 client</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;unencrypted&lt;/b&gt;</source>
+        <translation>Il wallet non è &lt;b&gt;crittografato&lt;/b&gt;</translation>
     </message>
     <message>
         <source>&amp;PrivateSend information</source>
@@ -526,8 +584,8 @@
         <translation>Barra degli strumenti "Tabs"</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Biblepay network</source>
-        <translation><numerusform>%n connessione attiva alla rete Biblepay</numerusform><numerusform>%n connessioni attive alla rete Biblepay</numerusform></translation>
+        <source>%n active connection(s) to BiblePay network</source>
+        <translation><numerusform>%n connessione attiva alla rete BiblePay</numerusform><numerusform>%n connessioni attive alla rete BiblePay</numerusform></translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -598,6 +656,30 @@
         <translation>Informazioni</translation>
     </message>
     <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>Ricevute ed inviate transazioni multiple</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>Inviate transazioni multiple</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>Ricevute transazioni multiple</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>Importo inviato: %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>Importo Ricevuto: %1
+</translation>
+    </message>
+    <message>
         <source>Date: %1
 </source>
         <translation>Data: %1
@@ -640,10 +722,6 @@
         <translation>La creazione della chiave HD è &lt;b&gt;abilitata&lt;/b&gt;</translation>
     </message>
     <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>La creazione della chiave HD è &lt;b&gt;disabilitata&lt;/b&gt;</translation>
-    </message>
-    <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
         <translation>Il portafoglio è &lt;b&gt;cifrato&lt;/b&gt; ed attualmente &lt;b&gt;sbloccato&lt;/b&gt;</translation>
     </message>
@@ -654,13 +732,6 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Il portafoglio è &lt;b&gt;cifrato&lt;/b&gt; ed attualmente &lt;b&gt;bloccato&lt;/b&gt;</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>Avviso di rete</translation>
     </message>
 </context>
 <context>
@@ -687,7 +758,7 @@
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Trascurabile:</translation>
+        <translation>Infinitesimale:</translation>
     </message>
     <message>
         <source>After Fee:</source>
@@ -728,10 +799,6 @@
     <message>
         <source>Received with address</source>
         <translation>Ricevuto con indirizzo</translation>
-    </message>
-    <message>
-        <source>PS Rounds</source>
-        <translation>Round di PS</translation>
     </message>
     <message>
         <source>Date</source>
@@ -787,7 +854,7 @@
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Copia trascurabile</translation>
+        <translation>Copia infinitesimale</translation>
     </message>
     <message>
         <source>Copy change</source>
@@ -796,10 +863,6 @@
     <message>
         <source>Please switch to "List mode" to use this function.</source>
         <translation>Passare a "Modalità elenco" per utilizzare questa funzione.</translation>
-    </message>
-    <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>Selezionato input non anonimo. &lt;b&gt;PrivateSend sarà disabilitato.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Se vuoi ancora utilizzare PrivateSend, deseleziona prima tutti gli input non anonimi e poi controlla nuovamente la checkbox di PrivateSend.</translation>
     </message>
     <message>
         <source>(%1 locked)</source>
@@ -820,6 +883,14 @@
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>Può variare di +/- %1 duff per input.</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they were spent.</source>
+        <translation>Alcune monete sono state deselezionate perché erano esaurite.</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
+        <translation>Alcune monete sono state deselezionate perché non hanno abbastanza mixing round.</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -861,10 +932,6 @@
         <translation>L'indirizzo associato a questa voce della rubrica. Può essere modificato solo per gli indirizzi d'invio.</translation>
     </message>
     <message>
-        <source>New receiving address</source>
-        <translation>Nuovo indirizzo di ricezione</translation>
-    </message>
-    <message>
         <source>New sending address</source>
         <translation>Nuovo indirizzo d'invio</translation>
     </message>
@@ -877,8 +944,8 @@
         <translation>Modifica indirizzo d'invio</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Biblepay address.</source>
-        <translation>L'indirizzo inserito "%1" non é un indirizzo Biblepay valido</translation>
+        <source>The entered address "%1" is not a valid BiblePay address.</source>
+        <translation>L'indirizzo inserito "%1" non é un indirizzo BiblePay valido</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
@@ -951,6 +1018,22 @@
         <translation>Seleziona la directory dei dati all'avvio (default: %u)</translation>
     </message>
     <message>
+        <source>Set the font family. Possible values: %1. (default: %2)</source>
+        <translation>Imposta la famiglia di caratteri. Possibili valori: %1. (default: %2)</translation>
+    </message>
+    <message>
+        <source>Set a scale factor which gets applied to the base font size. Possible range %1 (smallest fonts) to %2 (largest fonts). (default: %3)</source>
+        <translation>Imposta un fattore di scala che viene applicato alla dimensione del carattere di base. Possibile intervallo da %1 (caratteri più piccoli) a %2 (caratteri più grandi). (default: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for bold texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>Imposta lo spessore del carattere per i testi in grassetto. Possibile intervallo da %1 a %2 (default: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for normal texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>Imposta lo spessore del carattere per i testi normali. Possibile intervallo da %1 a %2 (default: %3)</translation>
+    </message>
+    <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
         <translation>Imposta lingua, ad esempio "it_IT" (default: lingua di sistema)</translation>
     </message>
@@ -975,8 +1058,8 @@
         <translation>Informazioni di Private Send</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Biblepay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;Nozioni di base di PrivateSend&lt;/h3&gt; PrivateSend ti offre una vera privacy finanziaria oscurando le origini dei tuoi fondi. Tutti i Biblepay nel tuo portafoglio sono costituiti da diversi "input" che puoi pensare come monete separate e discrete. &lt;br&gt;PrivateSend utilizza un processo innovativo per mescolare i tuoi input con gli input di due altre persone, senza che le tue monete lascino mai il tuo portafoglio. Si mantiene il controllo del proprio denaro in ogni momento. &lt;hr&gt;&lt;b&gt;Il processo di PrivateSend funziona in questo modo: &lt;/b&gt;&lt;ol type="1"&gt;&lt;li&gt;PrivateSend inizia dividendo gli input della transazioni in denominazioni standard. Queste denominazioni sono 0,001 BIBLEPAY, 0,01 BIBLEPAY, 0,1 BIBLEPAY, 1 BIBLEPAY e 10 BIBLEPAY: una specie di carta moneta che utilizzi ogni giorno.&lt;/li&gt;&lt;li&gt; Il tuo portafoglio quindi invia richieste ai nodi software appositamente configurati sulla rete, chiamati "masternode". Questi masternode vengono informati che sei interessato a mescolare una certa denominazione. Nessuna informazione identificabile viene inviata ai masternodes, quindi non sanno mai "chi" tu sia. &lt;/li&gt;&lt;li&gt;Quando altre due persone inviano messaggi simili, indicando che desiderano mescolare la stessa denominazione, inizia una sessione di mixaggio. Il masternode mescola gli input e incarica i portafogli di tutti e tre gli utenti di pagare a loro stessi l'input trasformato. Il tuo portafoglio paga quella denominazione direttamente a se stessa, ma in un indirizzo diverso (chiamato indirizzo di modifica). &lt;/li&gt;&lt;li&gt;Per oscurare completamente i tuoi fondi, il tuo portafoglio deve ripetere questo processo un certo numero di volte con ogni denominazione. Ogni  processo completato, è chiamato "round". Ogni ciclo di PrivateSend rende esponenzialmente più difficile determinare la provenienza dei fondi. &lt;/li&gt;&lt;li&gt;Questo processo di miscelazione avviene in background senza alcun intervento da parte dell'utente. Quando desideri effettuare una transazione, i tuoi fondi saranno già resi anonimi. Non è richiesta alcuna attesa aggiuntiva.&lt;/li&gt;&lt;/ol&gt;&lt;hr&gt;&lt;b&gt; IMPORTANTE: &lt;/b&gt;il tuo portafoglio contiene solo 1000 di questi "indirizzi di modifica". Ogni volta che si verifica un evento di mixaggio, vengono usati fino a 9 dei tuoi indirizzi. Ciò significa che i 1000 indirizzi durano per circa 100 eventi di mixaggio. Quando vengono utilizzati 900 di questi, il tuo portafoglio deve creare altri indirizzi. Può farlo solo se si dispone dei backup automatici abilitati. &lt;br&gt;Di conseguenza, gli utenti che hanno disabilitato i backup avranno anche PrivateSend disabilitato. &lt;hr&gt;Per maggiori informazioni consulta la &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;documentazione di PrivateSend&lt;/a&gt;.</translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the BiblePay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two or more other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two or more other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;PrivateSend Nozioni di base&lt;/h3&gt; PrivateSend ti offre una vera privacy oscurando le origini dei tuoi fondi. Il totale dei BiblePay nel tuo portafoglio è composto da diversi "input" che puoi immaginare come monete separate e discrete.&lt;br&gt; PrivateSend utilizza un processo innovativo per mescolare i tuoi input con quelli di altre due persone, senza che le tue monete lascino mai il tuo portafoglio. Mantenete il controllo dei vostri fondi in ogni momento.&lt;hr&gt; &lt;b&gt;Il processo PrivateSend funziona in questo modo:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend inizia suddividendo gli input della tua transazione in tagli standard. Queste denominazioni sono 0,001 BIBLEPAY, 0,01 BIBLEPAY, 0,1 BIBLEPAY, 1 BIBLEPAY e 10 BIBLEPAY - un po 'come la carta moneta che usi ogni giorno.&lt;/li&gt; &lt;li&gt;Il tuo portafoglio invia quindi richieste a nodi software appositamente configurati sulla rete, chiamati "masternodes". Questi masternode vengono informati che sei interessato a mescolare una determinata denominazione. Nessuna informazione identificabile viene inviata ai masternodes, quindi non sanno mai "chi" sei.&lt;/li&gt; &lt;li&gt;Quando altre due persone inviano messaggi simili, indicando che desiderano mescolare la stessa denominazione, inizia una sessione di miscelazione. Il masternode mescola gli input e indica ai portafogli di tutti e tre gli utenti di restituire gli input ora trasformati a se stessi. Il tuo portafoglio paga quella denominazione direttamente a se stesso, ma in un indirizzo diverso (chiamato cambia indirizzo).&lt;/li&gt; &lt;li&gt;Al fine di oscurare completamente i tuoi fondi, il tuo portafoglio deve ripetere questo processo più volte con ciascuna denominazione. Ogni volta che il processo è completato, viene chiamato "round". Ogni round di PrivateSend rende esponenzialmente più difficile determinare da dove provengono i tuoi fondi.&lt;/li&gt; &lt;li&gt;Questo processo di miscelazione avviene in background senza alcun intervento da parte tua. Quando desideri effettuare una transazione, i tuoi fondi saranno già mescolati. Non è richiesta alcuna ulteriore attesa.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANTE:&lt;/b&gt; Il tuo portafoglio contiene solo 1000 di questi "indirizzi di modifica". Ogni volta che si verifica un evento di missaggio, vengono utilizzati fino a 9 indirizzi. Ciò significa che quei 1000 indirizzi durano per circa 100 eventi di missaggio. Quando ne vengono utilizzati 900, il tuo portafoglio deve creare più indirizzi. Può farlo, tuttavia, solo se sono abilitati i backup automatici.&lt;br&gt; Di conseguenza, gli utenti che hanno disattivato i backup avranno anche PrivateSend disabilitato. &lt;hr&gt;Per ulteriori informazioni, consultare il &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;documentazione PrivateSend &lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
@@ -1022,8 +1105,8 @@
         <translation>Verranno salvati circa %1 GB di dati in questa cartella.</translation>
     </message>
     <message>
-        <source>%1 will download and store a copy of the Biblepay block chain.</source>
-        <translation>%1 scaricherà e salverà una copia della block chain di Biblepay.</translation>
+        <source>%1 will download and store a copy of the BiblePay block chain.</source>
+        <translation>%1 scaricherà e salverà una copia della block chain di BiblePay.</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
@@ -1053,16 +1136,8 @@
         <translation>Modulo</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>Indirizzo</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Stato</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>Beneficiario</translation>
     </message>
     <message>
         <source>0</source>
@@ -1081,16 +1156,16 @@
         <translation>Numero dei nodi:</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>DIP3 Masternodes</translation>
-    </message>
-    <message>
         <source>Show only masternodes this wallet has keys for.</source>
         <translation>Mostra solo i masternodes per cui questo portafoglio ha le chiavi.</translation>
     </message>
     <message>
         <source>My masternodes only</source>
         <translation>Solo i miei masternodes</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>Assistenza</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1109,8 +1184,24 @@
         <translation>Pagamento successivo</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>Indirizzo di pagamento</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>Ricompensa dell'Operatore</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>Indirizzo collaterale</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>Indirizzo del proprietario</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>Indirizzo di voto</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1119,6 +1210,10 @@
     <message>
         <source>Copy Collateral Outpoint</source>
         <translation>Copia Collateral Outpoint</translation>
+    </message>
+    <message>
+        <source>Updating...</source>
+        <translation>In aggiornamento...</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1149,6 +1244,14 @@
         <translation>nessuna</translation>
     </message>
     <message>
+        <source>Filter by any property (e.g. address or protx hash)</source>
+        <translation>Filtra per qualsiasi proprietà (es. indirizzo o hash protx)</translation>
+    </message>
+    <message>
+        <source>Please wait...</source>
+        <translation>attendere prego...</translation>
+    </message>
+    <message>
         <source>Additional information for DIP3 Masternode %1</source>
         <translation>Ulteriori informazioni per DIP3 Masternode %1</translation>
     </message>
@@ -1160,12 +1263,12 @@
         <translation>Modulo</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Biblepay network, as detailed below.</source>
-        <translation>Le transazioni recenti potrebbero non essere ancora visibili, perciò il saldo del tuo portafoglio potrebbe non essere corretto. Questa informazione risulterà corretta quando il tuo portafoglio avrà terminato la sincronizzazione con la rete Biblepay, come indicato in dettaglio più sotto.</translation>
+        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the BiblePay network, as detailed below.</source>
+        <translation>Le transazioni recenti potrebbero non essere ancora visibili, perciò il saldo del tuo portafoglio potrebbe non essere corretto. Questa informazione risulterà corretta quando il tuo portafoglio avrà terminato la sincronizzazione con la rete BiblePay, come indicato in dettaglio più sotto.</translation>
     </message>
     <message>
-        <source>Attempting to spend Biblepay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>Il tentativo di spendere i Biblepay interessati da transazioni non ancora visualizzate non sarà accettato dalla rete.</translation>
+        <source>Attempting to spend BiblePay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <translation>Il tentativo di spendere i BiblePay interessati da transazioni non ancora visualizzate non sarà accettato dalla rete.</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
@@ -1254,12 +1357,12 @@
         <translation>(0 = automatico, &lt;0 = lascia questo numero di core liberi)</translation>
     </message>
     <message>
-        <source>Amount of Biblepay to keep anonymized</source>
-        <translation>Quantitá di Biblepay da mantenere anonima.</translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>Port&amp;afoglio</translation>
+    </message>
+    <message>
+        <source>&amp;Appearance</source>
+        <translation>&amp;Aspetto</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
@@ -1306,24 +1409,44 @@
         <translation>Tale importo si comporta come una soglia, per spegnere PrivateSend, una volta raggiunta.</translation>
     </message>
     <message>
-        <source>Automatically open the Biblepay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Apri automaticamente la porta utilizzata dal client Biblepay Core nel router. Funziona solo se il router supporta UPnP ed è attivato.</translation>
+        <source>Target PrivateSend balance</source>
+        <translation>Saldo target PrivateSend</translation>
     </message>
     <message>
-        <source>Accept connections from outside</source>
-        <translation>Accetta connessioni dall'esterno</translation>
+        <source>Automatically open the BiblePay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Apri automaticamente la porta utilizzata dal client BiblePay Core nel router. Funziona solo se il router supporta UPnP ed è attivato.</translation>
     </message>
     <message>
-        <source>Allow incoming connections</source>
-        <translation>Permetti connessioni in entrata</translation>
+        <source>Accept connections from outside.</source>
+        <translation>Accetta connessioni dall'esterno.</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a SOCKS5 proxy.</source>
-        <translation>Connetti alla rete Biblepay attraverso un SOCKS5 proxy</translation>
+        <source>Allow incomin&amp;g connections</source>
+        <translation>Consenti connessioni in entrata</translation>
+    </message>
+    <message>
+        <source>Connect to the BiblePay network through a SOCKS5 proxy.</source>
+        <translation>Connetti alla rete BiblePay attraverso un SOCKS5 proxy</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>&amp;Connessione attraverso proxy SOCKS5 (proxy predefinito):</translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>Mostra se il proxy SOCKS5 di default è utilizzato per raggiungere i peer tramite questo tipo di network.</translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
+        <translation>Usa SOCKS separati e 5 proxy per raggiungere i peer tramite i servizi nascosti di Tor:</translation>
+    </message>
+    <message>
+        <source>Hide the icon from the system tray.</source>
+        <translation>Nascondi l'icona dalla barra delle applicazioni.</translation>
+    </message>
+    <message>
+        <source>&amp;Hide tray icon</source>
+        <translation>&amp;Nascondi l'icona tray</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1334,12 +1457,8 @@
         <translation>URL di terze parti (es: un block explorer) che appaiono nella tabella delle transazioni come voci nel menu contestuale. &lt;br/&gt;%s nell'URL è sostituito dall'hash della transazione. Più URL vengono separati da una barra verticale |.</translation>
     </message>
     <message>
-        <source>Expert</source>
-        <translation>Esperti</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Questo settaggio determina attraverso quanti Masternode l'input verrà anonimizzato. &lt;br/&gt;Più round di anonimizzazione garantiscono un grado più alto di privacy, ma anche un costo maggiore in termini di commissioni.</translation>
+        <source>&amp;Third party transaction URLs</source>
+        <translation>&amp;URL transazioni di terze parti</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1370,6 +1489,10 @@
         <translation>&amp;Spendere resti non confermati</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Questa impostazione determina la quantità di singoli nodi master attraverso i quali verrà inserito un input.&lt;br/&gt;Più round di missaggio offrono un livello più elevato di privacy, ma pagano più commissioni.</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>Rete</translation>
     </message>
@@ -1398,10 +1521,6 @@
         <translation>Utilizzata per connettersi attraverso:</translation>
     </message>
     <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Mostra, se il proxy SOCKS5 di default è utilizzato per raggiungere i peer tramite questo tipo di network.</translation>
-    </message>
-    <message>
         <source>IPv4</source>
         <translation>IPv4</translation>
     </message>
@@ -1414,24 +1533,8 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Connetti alla rete Biblepay attraverso un proxy SOCKS5 separato per Tor.</translation>
-    </message>
-    <message>
-        <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Utilizza un distinto proxy SOCKS5  per raggiungere i peer tramite i servizi nascosti di Tor:</translation>
-    </message>
-    <message>
-        <source>&amp;Window</source>
-        <translation>&amp;Finestra</translation>
-    </message>
-    <message>
-        <source>&amp;Hide the icon from the system tray.</source>
-        <translation>&amp;Nascondi l'icona dalla barra delle applicazioni.</translation>
-    </message>
-    <message>
-        <source>Hide tray icon</source>
-        <translation>Nascondi l'icona delle applicazioni</translation>
+        <source>Connect to the BiblePay network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <translation>Connetti alla rete BiblePay attraverso un proxy SOCKS5 separato per Tor.</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1464,10 +1567,6 @@ https://www.transifex.com/projects/p/biblepay/</source>
 https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
-        <source>User Interface Theme:</source>
-        <translation>Tema dell'interfaccia utente.</translation>
-    </message>
-    <message>
         <source>&amp;Unit to show amounts in:</source>
         <translation>&amp;Unità di misura con cui visualizzare gli importi:</translation>
     </message>
@@ -1478,10 +1577,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Decimal digits</source>
         <translation>Cifre decimali</translation>
-    </message>
-    <message>
-        <source>Third party transaction URLs</source>
-        <translation>URL di transazione di terze parti</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1506,10 +1601,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>default</source>
         <translation>default</translation>
-    </message>
-    <message>
-        <source>none</source>
-        <translation>nessuno</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
@@ -1539,8 +1630,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Modulo</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Biblepay network after a connection is established, but this process has not completed yet.</source>
-        <translation>Le informazioni visualizzate potrebbero essere vecchie. Il portafoglio si sincronizza automaticamente con la rete Biblepay dopo che una connessione viene stabilita, ma questo processo non è stato ancora completato.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the BiblePay network after a connection is established, but this process has not completed yet.</source>
+        <translation>Le informazioni visualizzate potrebbero essere vecchie. Il portafoglio si sincronizza automaticamente con la rete BiblePay dopo che una connessione viene stabilita, ma questo processo non è stato ancora completato.</translation>
     </message>
     <message>
         <source>Available:</source>
@@ -1619,22 +1710,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Completamento:</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Prova a inviare manualmente una richiesta di PrivateSend.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Resetta lo stato corrente di PrivateSend (potrebbe interrompere PrivateSend, che se  in fase di mixaggio, potrebbe comportare la perdita dei soldi!)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>Informazioni su PrivateSend e Mixing</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>Informazioni</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>Ammontare e Round:</translation>
     </message>
@@ -1667,18 +1742,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Le denominazioni che hai richiesto al Mastermode. &lt;br&gt; Per mixare, gli altri utenti devono richiedere esattamente le stesse denominazioni.</translation>
     </message>
     <message>
-        <source>(Last Message)</source>
-        <translation>(Ultimo messaggio)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Prova il Mix</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Reset</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>non sincronizzato</translation>
     </message>
@@ -1703,12 +1766,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>%n Round</numerusform><numerusform>%n Rounds</numerusform></translation>
     </message>
     <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Trovati sufficienti input compatibili per anonimizzare %1</translation>
+        <source>Found enough compatible inputs to mix %1</source>
+        <translation>Trovati abbastanza ingressi compatibili da mixare %1</translation>
     </message>
     <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>Numero di input non sufficienti per l'anonimizzazione&lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;perciò verranno anonimizzati&lt;span style='color:red;'&gt;%2&lt;/span&gt;</translation>
+        <source>Not enough compatible inputs to mix &lt;span style='%1'&gt;%2&lt;/span&gt;,&lt;br&gt;will mix &lt;span style='%1'&gt;%3&lt;/span&gt; instead</source>
+        <translation>Insufficienti entrate compatibili da mixare &lt;span style='%1'&gt;%2&lt;/span&gt;,&lt;br&gt;mixerà invece &lt;span style='%1'&gt;%3&lt;/span&gt;</translation>
     </message>
     <message>
         <source>Overall progress</source>
@@ -1719,12 +1782,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Denominati</translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>Mixati</translation>
+        <source>Partially mixed</source>
+        <translation>Parzialmente mixato</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>Anonimizzati</translation>
+        <source>Mixed</source>
+        <translation>Mixati</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1743,8 +1806,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Sono rimaste pochissime chiavi dall'ultimo backup automatico!</translation>
     </message>
     <message>
-        <source>We are about to create a new automatic backup for you, however &lt;span style='color:red;'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
-        <translation>Stiamo per creare un nuovo backup automatico per te, tuttavia &lt;span style='color:red;'&gt;devi sempre assicurarti di avere dei backup salvati in un posto sicuro&lt;/span&gt;!</translation>
+        <source>We are about to create a new automatic backup for you, however &lt;span style='%1'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
+        <translation>Stiamo per creare un nuovo backup automatico per te, tuttavia &lt;span style='%1'&gt;devi sempre assicurarti di avere dei backup salvati in un posto sicuro&lt;/span&gt;!</translation>
     </message>
     <message>
         <source>Note: You can turn this message off in options.</source>
@@ -1773,16 +1836,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
         <translation>ATTENZIONE! Impossibile riempire il keypool, sblocca il tuo portafoglio per farlo.</translation>
-    </message>
-    <message>
-        <source>Last PrivateSend message:
-</source>
-        <translation>Ultimo messaggio di PrivateSend:
-</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>PrivateSend è stato reimpostato correttamente.</translation>
     </message>
     <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
@@ -1820,8 +1873,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Indirizzo di pagamento non valido: %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Biblepay address or malformed URI parameters.</source>
-        <translation>Impossibile interpretare l'URI! La causa puó essere un indirizzo Biblepay non valido o parametri URI non corretti.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid BiblePay address or malformed URI parameters.</source>
+        <translation>Impossibile interpretare l'URI! La causa puó essere un indirizzo BiblePay non valido o parametri URI non corretti.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1857,7 +1910,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Requested payment amount of %1 is too small (considered dust).</source>
-        <translation>L'importo di pagamento richiesto di %1 è troppo basso (considerato come trascurabile).</translation>
+        <translation>L'importo di pagamento richiesto di %1 è troppo basso (considerato come infinitesimale).</translation>
     </message>
     <message>
         <source>Refund from %1</source>
@@ -1906,6 +1959,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Ping</source>
         <translation>Ping</translation>
     </message>
+    <message>
+        <source>Sent</source>
+        <translation>Inviato</translation>
+    </message>
+    <message>
+        <source>Received</source>
+        <translation>Ricevuto</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -1918,8 +1979,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Importo</translation>
     </message>
     <message>
-        <source>Enter a Biblepay address (e.g. %1)</source>
-        <translation>Inserire un indirizzo Biblepay (e.g. %1)</translation>
+        <source>Enter a BiblePay address (e.g. %1)</source>
+        <translation>Inserire un indirizzo BiblePay (es. %1)</translation>
+    </message>
+    <message>
+        <source>Appearance Setup</source>
+        <translation>Configurazione aspetto</translation>
+    </message>
+    <message>
+        <source>This can also be adjusted later in the "Appearance" tab of the preferences.</source>
+        <translation>Questo può anche essere regolato in seguito nella scheda "Aspetto" delle preferenze.</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1978,6 +2047,22 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 e %2</translation>
     </message>
     <message>
+        <source>%1 B</source>
+        <translation>%1 B</translation>
+    </message>
+    <message>
+        <source>%1 KB</source>
+        <translation>%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation>%1 GB</translation>
+    </message>
+    <message>
         <source>unknown</source>
         <translation>sconosciuto</translation>
     </message>
@@ -1995,6 +2080,34 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Error: %1</source>
         <translation>Errore: %1</translation>
+    </message>
+    <message>
+        <source>Error: Failed to load application fonts.</source>
+        <translation>Errore: impossibile caricare i caratteri dell'applicazione.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-family invalid. Valid values: %1.</source>
+        <translation>Errore: famiglia di caratteri specificata non valida. Valori validi: %1.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
+        <translation>Errore: carattere normale di peso specificato non valido. Intervallo valido da %1 a %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
+        <translation>Errore: caratteri specificati in grassetto non validi. Intervallo valido da %1 a %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
+        <translation>Errore: scala del carattere specificata non valida. Intervallo valido da %1 a %2.</translation>
+    </message>
+    <message>
+        <source>Error: Invalid -custom-css-dir path.</source>
+        <translation>Errore: percorso -custom-css-dir non valido.</translation>
+    </message>
+    <message>
+        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
+        <translation>Errore: %1 file CSS mancante nel percorso -custom-css-dir.</translation>
     </message>
 </context>
 <context>
@@ -2145,14 +2258,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&amp;Traffico di Rete</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>&amp;Cancella</translation>
-    </message>
-    <message>
-        <source>Totals</source>
-        <translation>Totali</translation>
-    </message>
-    <message>
         <source>Received</source>
         <translation>Ricevuto</translation>
     </message>
@@ -2209,8 +2314,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Datadir</translation>
     </message>
     <message>
+        <source>Last block hash</source>
+        <translation>Ultimo blocco hash</translation>
+    </message>
+    <message>
         <source>Open the %1 debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation>Apri il file log del debug di %1 dalla cartella dati attuale. Può richiedere alcuni secondi per file di log di grandi dimensioni.</translation>
+    </message>
+    <message>
+        <source>InstantSend locks</source>
+        <translation>Blocca IstantSend</translation>
     </message>
     <message>
         <source>Decrease font size</source>
@@ -2219,6 +2332,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Increase font size</source>
         <translation>Aumenta dimensioni font</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>&amp;Reset</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2353,15 +2470,19 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Benvenuto nella console RPC di %1.</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Usa le frecce direzionali per navigare nella cronologia, e &lt;b&gt;Ctrl-L&lt;/b&gt; per cancellarla.</translation>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>Usa le frecce direzionali per navigare nella cronologia, e %1 per cancellarla.</translation>
     </message>
     <message>
-        <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>Scrivi &lt;b&gt;help&lt;/b&gt; per un riassunto dei comandi disponibili</translation>
+        <source>Type %1 for an overview of available commands.</source>
+        <translation>Digita %1 per una panoramica dei comandi disponibili.</translation>
     </message>
     <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
+        <source>For more information on using this console type %1.</source>
+        <translation>Per ulteriori informazioni sull'utilizzo di questo tipo di console %1.</translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
         <translation>ATTENZIONE: truffatori sono stati attivi, chiedendo agli utenti di digitare comandi qui, rubando il contenuto del loro portafoglio. Non utilizzare questa console senza comprendere appieno la diramazione di un comando.</translation>
     </message>
     <message>
@@ -2379,22 +2500,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Total: %1 (Enabled: %2)</source>
         <translation>Totale: %1 (Abilitato: %2)</translation>
-    </message>
-    <message>
-        <source>%1 B</source>
-        <translation>%1 B</translation>
-    </message>
-    <message>
-        <source>%1 KB</source>
-        <translation>%1 KB</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB</translation>
     </message>
     <message>
         <source>(node id: %1)</source>
@@ -2432,16 +2537,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
-        <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Riutilizzare uno degli indirizzi di ricezione utilizzati in precedenza.&lt;br&gt; Gli indirizzi riutilizzati hanno problemi di sicurezza e di privacy. &lt;br&gt;Non ri-usarli a meno che non si generi nuovamente una richiesta di pagamento effettuata in precedenza.</translation>
-    </message>
-    <message>
-        <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>R&amp;iusa un indirizzo di ricezione (non raccomandato)</translation>
-    </message>
-    <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Messaggio opzionale da allegare alla richiesta di pagamento, che verrà visualizzato quando la richiesta verrà aperta. Nota: il messaggio non sarà inviato insieme al pagamento nel network Biblepay.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Messaggio opzionale da allegare alla richiesta di pagamento, che verrà visualizzato quando la richiesta verrà aperta. Nota: il messaggio non sarà inviato insieme al pagamento nel network BiblePay.</translation>
     </message>
     <message>
         <source>&amp;Message:</source>
@@ -2452,8 +2549,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Un'etichetta facoltativa da associare al nuovo indirizzo di ricezione</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Messaggio facoltativo da allegare alla richiesta di pagamento, che verrà visualizzato all'apertura della richiesta.&lt;br&gt; Nota: il messaggio non verrà inviato con il pagamento sulla rete di Biblepay.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Messaggio facoltativo da allegare alla richiesta di pagamento, che verrà visualizzato all'apertura della richiesta.&lt;br&gt; Nota: il messaggio non verrà inviato con il pagamento sulla rete di BiblePay.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2484,10 +2581,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Cancella</translation>
     </message>
     <message>
-        <source>Request InstantSend</source>
-        <translation>Richiedi l'IstantSend</translation>
-    </message>
-    <message>
         <source>Requested payments history</source>
         <translation>Cronologia pagamenti ricevuti</translation>
     </message>
@@ -2506,6 +2599,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Remove</source>
         <translation>Rimuovi</translation>
+    </message>
+    <message>
+        <source>Enter a label to associate with the new receiving address</source>
+        <translation>Immettere un'etichetta da associare al nuovo indirizzo di ricezione</translation>
+    </message>
+    <message>
+        <source>Enter a message to attach to the payment request</source>
+        <translation>Inserisci un messaggio da allegare alla richiesta di pagamento</translation>
     </message>
     <message>
         <source>Copy URI</source>
@@ -2569,18 +2670,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Message</source>
         <translation>Messaggio</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Si</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>No</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2662,7 +2751,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Dust:</source>
-        <translation>Trascurabile:</translation>
+        <translation>Infinitesimale:</translation>
     </message>
     <message>
         <source>After Fee:</source>
@@ -2689,14 +2778,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Scegli...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>L'utilizzo del fallbackfee può comportare che una transazione richiederà diverse ore o giorni (o molto di  più) per essere confermata. Prendi in considerazione la possibilità di scegliere la tariffa manualmente o attendi fino a quando non avrai convalidato la catena completa.</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Attenzione: il calcolo delle commissioni non è attualmente disponibile.</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>Abbassare la finestra delle opzioni delle commissioni</translation>
     </message>
@@ -2705,36 +2786,28 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Obiettivo del tempo di conferma:</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>Se la tariffa personalizzata è impostata su 1000 duff e la transazione è di soli 250 byte, paga solo 250 duff "per kilobyte" di Fee, &lt;br /&gt;mentre paga "almeno"  1000 duff. Per le transazioni più grandi di un kilobyte pagate entrambi per kilobyte.</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Se la tariffa personalizzata è impostata su 1000 duff e la transazione è di soli 250 byte, paga solo 250 duff "per kilobyte" di Fee, &lt;br /&gt;mentre paga "in totale almeno" 1000 duff. Per le transazioni più grandi di un kilobyte pagate entrambi per kilobyte.</translation>
-    </message>
-    <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for biblepay transactions than the network can process.</source>
-        <translation>Pagare solo la commissione minima va bene finché il volume di transazioni è minore rispetto allo spazio nei blocchi. &lt;br /&gt;Ma sii consapevole che questo potrebbe risultare in una transazione non confermata, una volta che ci fosse più richiesta di transazioni di Biblepay di quanto la rete possa elaborare.</translation>
+        <translation>Pagare solo la commissione minima va bene finché il volume di transazioni è minore rispetto allo spazio nei blocchi. &lt;br /&gt;Ma sii consapevole che questo potrebbe risultare in una transazione non confermata, una volta che ci fosse più richiesta di transazioni di BiblePay di quanto la rete possa elaborare.</translation>
     </message>
     <message>
         <source>per kilobyte</source>
         <translation>per kilobyte</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Nascondi</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>L'utilizzo del fallbackfee può comportare che una transazione richiederà diverse ore o giorni (o molto di  più) per essere confermata. Prendi in considerazione la possibilità di scegliere la tariffa manualmente o attendi fino a quando non avrai convalidato la catena completa.</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>totale come minimo</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>Nota: dati insufficienti per la stima della commissione, utilizzando altrimenti la commissione di fallback.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Nascondi</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2751,14 +2824,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(Commissione intelligente non ancora inizializzata. Normalmente richiede un'attesa di alcuni blocchi...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>normale</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>rapido</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2810,31 +2875,19 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Copy dust</source>
-        <translation>Copia trascurabile</translation>
+        <translation>Copia infinitesimale</translation>
     </message>
     <message>
         <source>Copy change</source>
         <translation>Copia resto</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 bloccare)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>utilizzando</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>fondi anonimi</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(il privatesend richiede che questo importo venga arrotondato al più vicino %1).</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>eventuali fondi disponibili (non anonimi)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>e InstantSend</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2855,6 +2908,38 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
         <translation>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Confirm the PrivateSend action</source>
+        <translation>Conferma l'azione PrivateSend</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>Solo fondi PrivateSend</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>eventuali fondi disponibili</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(Le transazioni PrivateSend di solito hanno commissioni più elevate a causa della mancanza di output di modifica)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>Dimensione della transazione: %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>Tariffa di commissione: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>Questa transazione consumerà %n input</numerusform><numerusform>Questa transazione consumerà %n input</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>Avviso: l'utilizzo di PrivateSend con %1 o più input può danneggiare la tua privacy e non è raccomandato</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -2896,10 +2981,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Payment request expired.</source>
         <translation>Richiesta di pagamento scaduta.</translation>
     </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n blocco</numerusform><numerusform>%n blocchi</numerusform></translation>
-    </message>
     <message>
         <source>Pay only the required fee of %1</source>
         <translation> Paga solo la commissione richiesta di %1</translation>
@@ -2909,8 +2990,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>Inizio della confirmazione stimato in %n blocco</numerusform><numerusform>Inizio del processo di conferma stimato in %n blocchi</numerusform></translation>
     </message>
     <message>
-        <source>Warning: Invalid Biblepay address</source>
-        <translation>ATTENZIONE: Indirizzo Biblepay non valido</translation>
+        <source>Warning: Invalid BiblePay address</source>
+        <translation>ATTENZIONE: Indirizzo BiblePay non valido</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
@@ -2940,8 +3021,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Paga &amp;a:</translation>
     </message>
     <message>
-        <source>The Biblepay address to send the payment to</source>
-        <translation>L'indirizzo Biblepay per inviare il pagamento a </translation>
+        <source>The BiblePay address to send the payment to</source>
+        <translation>L'indirizzo BiblePay per inviare il pagamento a </translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2976,20 +3057,24 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>I&amp;mporto:</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of Biblepay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>La commissione verrà detratta dall'importo inviato. Il destinatario riceverà un importo inferiore di Biblepay rispetto a quello inserito nel campo dell'importo. Se sono selezionati più destinatari, la commissione verrà divisa in parti uguali.</translation>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation>La commissione verrà detratta dall'importo inviato. Il destinatario riceverà un importo inferiore di BiblePay rispetto a quello inserito nel campo dell'importo. Se sono selezionati più destinatari, la commissione verrà divisa in parti uguali.</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
         <translation>S&amp;ottrae la commissione dall'importo</translation>
     </message>
     <message>
+        <source>Use available balance</source>
+        <translation>Usa il saldo disponibile</translation>
+    </message>
+    <message>
         <source>Message:</source>
         <translation>Messaggio:</translation>
     </message>
     <message>
-        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Biblepay network.</source>
-        <translation>Un messaggio allegato con l'URI biblepay che verrà memorizzato nella transazione per il tuo referente. Nota: questo messaggio non verrà inviato attraverso il network Biblepay.</translation>
+        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</source>
+        <translation>Un messaggio allegato con l'URI biblepay che verrà memorizzato nella transazione per il tuo referente. Nota: questo messaggio non verrà inviato attraverso il network BiblePay.</translation>
     </message>
     <message>
         <source>This is an unauthenticated payment request.</source>
@@ -3041,12 +3126,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&amp;Firma il messaggio</translation>
     </message>
     <message>
-        <source>You can sign messages/agreements with your addresses to prove you can receive Biblepay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>Puoi firmare messaggi /accordi con i tuoi indirizzi per dimostrare che puoi ricevere Biblepay inviati loro. Fai attenzione a non firmare nulla di vago o casuale, in quanto gli attacchi di phishing potrebbero cercare di ingannarti a firmare la tua identità. Firma solo le dichiarazioni dettagliate che ritieni di poter accettare.</translation>
+        <source>You can sign messages/agreements with your addresses to prove you can receive BiblePay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <translation>Puoi firmare messaggi /accordi con i tuoi indirizzi per dimostrare che puoi ricevere BiblePay inviati loro. Fai attenzione a non firmare nulla di vago o casuale, in quanto gli attacchi di phishing potrebbero cercare di ingannarti a firmare la tua identità. Firma solo le dichiarazioni dettagliate che ritieni di poter accettare.</translation>
     </message>
     <message>
-        <source>The Biblepay address to sign the message with</source>
-        <translation>L'indirizzo Biblepay con cui firmare il messaggio</translation>
+        <source>The BiblePay address to sign the message with</source>
+        <translation>L'indirizzo BiblePay con cui firmare il messaggio</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -3077,8 +3162,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Copia la firma corrente nella clipboard</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Biblepay address</source>
-        <translation>Firma il messaggio per dimostrare il possesso di questo indirizzo Biblepay</translation>
+        <source>Sign the message to prove you own this BiblePay address</source>
+        <translation>Firma il messaggio per dimostrare il possesso di questo indirizzo BiblePay</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -3101,12 +3186,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Per verificare il messaggio inserire l'indirizzo del firmatario, il messaggio e la firma nei campi sottostanti, assicurandosi di copiare esattamente anche ritorni a capo, spazi, tabulazioni, etc.. Si raccomanda di non lasciarsi fuorviare dalla firma a leggere più di quanto non sia riportato nel testo del messaggio stesso, in modo da evitare di cadere vittima di attacchi di tipo man-in-the-middle. Si ricorda che la verifica della firma dimostra soltanto che il firmatario può ricevere pagamenti con l'indirizzo corrispondente, non prova l'invio di alcuna transazione.</translation>
     </message>
     <message>
-        <source>The Biblepay address the message was signed with</source>
-        <translation>L'indirizzo Biblepay con cui era firmato il messaggio</translation>
+        <source>The BiblePay address the message was signed with</source>
+        <translation>L'indirizzo BiblePay con cui era firmato il messaggio</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Biblepay address</source>
-        <translation>Verifica il messaggio per assicurarti sia stato firmato con l'indirizzo Biblepay specificato</translation>
+        <source>Verify the message to ensure it was signed with the specified BiblePay address</source>
+        <translation>Verifica il messaggio per assicurarti sia stato firmato con l'indirizzo BiblePay specificato</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -3117,8 +3202,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Reimposta tutti i campi della verifica messaggio</translation>
     </message>
     <message>
+        <source>Enter a message to be signed</source>
+        <translation>Inserisci un messaggio da firmare</translation>
+    </message>
+    <message>
         <source>Click "Sign Message" to generate signature</source>
         <translation>Clicca "Firma il messaggio" per ottenere la firma</translation>
+    </message>
+    <message>
+        <source>Enter a message to be verified</source>
+        <translation>Inserisci un messaggio da verificare</translation>
+    </message>
+    <message>
+        <source>Enter a signature for the message to be verified</source>
+        <translation>Immettere una firma per la verifica del messaggio</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
@@ -3175,10 +3272,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>[testnet]</source>
         <translation>[testnet]</translation>
     </message>
-    <message>
-        <source>Version %1</source>
-        <translation>Versione %1</translation>
-    </message>
 </context>
 <context>
     <name>TrafficGraphWidget</name>
@@ -3186,7 +3279,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>KB/s</source>
         <translation>KB/s</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>TransactionDesc</name>
     <message numerus="yes">
@@ -3200,10 +3293,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>conflicted</source>
         <translation>in conflitto</translation>
-    </message>
-    <message>
-        <source>%1/offline</source>
-        <translation>%1/offline</translation>
     </message>
     <message>
         <source>0/unconfirmed, %1</source>
@@ -3230,36 +3319,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 conferme</translation>
     </message>
     <message>
-        <source>locked via LLMQ based ChainLocks</source>
-        <translation>bloccato tramite ChainLock basati su LLMQ</translation>
-    </message>
-    <message>
-        <source>verified via LLMQ based InstantSend</source>
-        <translation>verificato tramite InstantSend basato su LLMQ</translation>
-    </message>
-    <message>
-        <source>verified via InstantSend</source>
-        <translation>verificato via InstantSend</translation>
-    </message>
-    <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>Verifica IstantSend in corso - %1 of %2 firme</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>Verifica InstantSend fallita</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Stato</translation>
-    </message>
-    <message>
-        <source>, has not been successfully broadcast yet</source>
-        <translation>, non è stato ancora trasmesso con successo</translation>
-    </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, trasmettere attraverso %n nodo</numerusform><numerusform>, trasmettere attraverso %n nodi</numerusform></translation>
     </message>
     <message>
         <source>Date</source>
@@ -3416,10 +3477,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Aperto fino a %1</translation>
     </message>
     <message>
-        <source>Offline</source>
-        <translation>Offline</translation>
-    </message>
-    <message>
         <source>Unconfirmed</source>
         <translation>Non confermato</translation>
     </message>
@@ -3442,10 +3499,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Immature (%1 confirmations, will be available after %2)</source>
         <translation>Immaturo (%1 conferme, sarà disponibile fra %2)</translation>
-    </message>
-    <message>
-        <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>Questo blocco non è stato ricevuto dagli altri nodi e probabilmente non sarà accettato!</translation>
     </message>
     <message>
         <source>Generated but not accepted</source>
@@ -3492,10 +3545,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>PrivateSend Crea Denominazioni</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
         <source>watch-only</source>
         <translation>Solo per consultare</translation>
     </message>
@@ -3524,10 +3573,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Anche se in questa transazione è coinvolto un indirizzo di sola lettura</translation>
     </message>
     <message>
-        <source>Whether or not this transaction was locked by InstantSend.</source>
-        <translation>Indipendentemente dal fatto che questa transazione sia stata bloccata da InstantSend.</translation>
-    </message>
-    <message>
         <source>User-defined intent/purpose of the transaction.</source>
         <translation>Intento/scopo della transazione definito dall'utente.</translation>
     </message>
@@ -3541,14 +3586,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>All</source>
         <translation>Tutti</translation>
-    </message>
-    <message>
-        <source>Locked by InstantSend</source>
-        <translation>Bloccato da InstantSend</translation>
-    </message>
-    <message>
-        <source>Not locked by InstantSend</source>
-        <translation>Non bloccato da InstantSend</translation>
     </message>
     <message>
         <source>Today</source>
@@ -3587,10 +3624,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Inviato a</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
         <source>PrivateSend Make Collateral Inputs</source>
         <translation>PrivateSend Effettua Ingressi Collaterali</translation>
     </message>
@@ -3619,8 +3652,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Altro</translation>
     </message>
     <message>
-        <source>Enter address or label to search</source>
-        <translation>Inserisci un indirizzo o un'etichetta da cercare</translation>
+        <source>Enter address, transaction id, or label to search</source>
+        <translation>Inserisci indirizzo, ID transazione o etichetta da cercare</translation>
     </message>
     <message>
         <source>Min amount</source>
@@ -3751,14 +3784,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Send Coins</source>
         <translation>Invia Monete</translation>
     </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>InstantSend non supporta ancora l'invio di transazioni a così alto valore. Le transazioni sono attualmente limitate a %1 BIBLEPAY.</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Utilizzati troppi input (&gt;%1) per questa transazione di InstantSend, le commissioni potrebbero essere elevatissime. </translation>
-    </message>
 </context>
 <context>
     <name>WalletView</name>
@@ -3826,10 +3851,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Nome per costruire l'url per l'accesso con KeePass che memorizza la passphrase del portafoglio</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Imposta la dimensione massima in byte delle transazioni ad alta-priorità/basse-commissioni (default: %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>Imposta il numero di thread per la verifica degli script (da %u a %d, 0 = automatico, &lt;0 = lascia questo numero di core liberi, default: %d)</translation>
     </message>
@@ -3850,10 +3871,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Accetta comandi da riga di comando e JSON-RPC</translation>
     </message>
     <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Aggiunge un nodo a cui connettersi e tenta di tenere aperta la connessione</translation>
-    </message>
-    <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
         <translation>Consenti ricerche DNS per -addnode, -seednode e -connect</translation>
     </message>
@@ -3870,16 +3887,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Non è possibile effettuare il downgrade del portafoglio</translation>
     </message>
     <message>
-        <source>Cannot write default address</source>
-        <translation>Non è possibile scrivere l'indirizzo predefinito</translation>
-    </message>
-    <message>
         <source>Collateral not valid.</source>
         <translation>Collaterale non valido.</translation>
-    </message>
-    <message>
-        <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Connettiti ad un nodo per recuperare gli indirizzi dei peer e scollegati</translation>
     </message>
     <message>
         <source>Connection options:</source>
@@ -3958,12 +3967,32 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Accetta le transazioni ricevute dai peer in whitelist anche se non si stanno trasmettendo transazioni (default: %d)</translation>
     </message>
     <message>
+        <source>Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info). This option can be specified multiple times to add multiple nodes.</source>
+        <translation>Aggiungi un nodo a cui connetterti e prova a mantenere la connessione aperta (vedi la guida del comando RPC `addnode` per maggiori informazioni). Questa opzione può essere specificata più volte per aggiungere più nodi.</translation>
+    </message>
+    <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
         <translation>Permettere la connessione JSON-RPC dalla sorgente specificata. Validi come &lt;ip&gt; sono un singolo IP (p.es. 1.2.3.4), una network/netmask (p.es. 1.2.3.4/255.255.255.0) o una network/CIDR (p.es. 1.2.3.4/24). Questa opzione puó essere specificata molteplici volte</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
         <translation>Resta in ascolto sull'indirizzo indicato ed inserisce in whitelist i peer che vi si collegano. Usa la notazione [host]:porta per l'IPv6</translation>
+    </message>
+    <message>
+        <source>Bind to given address to listen for JSON-RPC connections. Do not expose the RPC server to untrusted networks such as the public internet! This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
+        <translation>Associati ad un indirizzo specificato per ascoltare le connessioni JSON-RPC. Non esporre il server RPC a reti non affidabili come l'internet pubblico! Questa opzione viene ignorata a meno che non venga passato anche -rpcallowip. La porta è facoltativa e sostituisce -rpcport. Usa [host]: notazione porta per IPv6. Questa opzione può essere specificata più volte (default: 127.0.0.1 e :: 1 cioè, localhost, o se è stato specificato -rpcallowip, 0.0.0.0 e :: cioè, tutti gli indirizzi)</translation>
+    </message>
+    <message>
+        <source>Cannot provide specific connections and have addrman find outgoing connections at the same.</source>
+        <translation>Non è possibile fornire connessioni specifiche e allo stesso tempo fare in modo che addrman trovi le connessioni in uscita.</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node; -connect=0 disables automatic connections (the rules for this peer are the same as for -addnode). This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>Connetti solo al nodo specificato; -connect = 0 disabilita le connessioni automatiche (le regole per questo peer sono le stesse di -addnode). Questa opzione può essere specificata più volte per connettersi a più nodi.</translation>
+    </message>
+    <message>
+        <source>Connect to a node to retrieve peer addresses, and disconnect. This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>Connettiti a un nodo per recuperare gli indirizzi peer, e disconnettiti. Questa opzione può essere specificata più volte per connettersi a più nodi.</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3982,10 +4011,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Abilita gli hash delle transazioni di pubblicazione del tentativo di doppia spesa di InstantSend in &lt;address&gt;</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>Errore durante il caricamento di %s: non è possibile abilitare l'HD su un portafoglio non-HD già esistente.</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Trovati output denominati non confermati, in attesa delle conferme per continuare.</translation>
     </message>
@@ -4002,16 +4027,24 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Se questo blocco è nella catena, assume che esso e i suoi predecessori siano validi e potenzialmente salta la verifica dei loro script (0 per verificarli tutti, predefinito: %s, testnet: %s)</translation>
     </message>
     <message>
+        <source>Invalid -socketevents ('%s') specified. Only these modes are supported: %s</source>
+        <translation>Specificato -socketevents ('%s') non valido. Sono supportate solo queste modalità: %s</translation>
+    </message>
+    <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
         <translation>Importo non valido per -maxtxfee=&lt;amount&gt;: '%s' (deve essere almeno pari alla commissione 'minrelay fee' di %s per prevenire transazioni bloccate)</translation>
+    </message>
+    <message>
+        <source>Location of the auth cookie. Relative paths will be prefixed by a net-specific datadir location. (default: data dir)</source>
+        <translation>Posizione del cookie di autenticazione. I percorsi relativi saranno preceduti da una posizione del datadir specifica della rete. (predefinito: data dir)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
         <translation>Mantiene l'indice completo delle transazioni usato dalla chiamata rpc getrawtransaction (default: %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Assicurati di crittografare il tuo portafoglio ed eliminare tutti i backup non crittografati dopo aver verificato che il portafoglio funzioni!</translation>
+        <source>Make outgoing connections only through network &lt;net&gt; (ipv4, ipv6 or onion). Incoming connections are not affected by this option. This option can be specified multiple times to allow multiple networks.</source>
+        <translation>Effettua connessioni in uscita solo tramite la rete &lt;net&gt; (ipv4, ipv6 o onion). Le connessioni in entrata non sono influenzate da questa opzione. Questa opzione può essere specificata più volte per consentire più reti.</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -4028,6 +4061,42 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
         <translation>Sovrascrive i segnaposti di spork minimi per modificare il valore di spork. Utile solo per regtest e devnet. Se lo usi su mainnet o testnet  sarai bannato .</translation>
+    </message>
+    <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>PrivateSend utilizza importi espressi per inviare fondi, potresti semplicemente dover mixare altre monete.</translation>
+    </message>
+    <message>
+        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex, -rescan and -disablegovernance=false. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;=%u = automatically prune block files to stay under the specified target size in MiB)</source>
+        <translation>Riduce i requisiti di spazio di archiviazione abilitando la cancellazione dei vecchi blocchi ("pruning" o potatura). Questo consente di richiedere alla pruneblockchain RPC di cancellare specifici blocchi e abilita il pruning automatico dei vecchi blocchi se viene fornita una dimensione specifica in MiB. Questa modalità è incompatibile con -txindex, -rescan e -disablegovernance=false. Attenzione: Per ripristinare questa impostazione è necessario riscaricare l'intera blockchain. (predefinito: 0 = disabilita il pruning dei blocchi, 1 = permetti il pruning manuale tramite RPC, &gt;=%u = pota automaticamente i file di blocco per stare sotto una dimensione specifica in MiB)</translation>
+    </message>
+    <message>
+        <source>Send trace/debug info to console (default: 1 when no -daemon. To disable logging to file, set debuglogfile=0)</source>
+        <translation>Invia informazioni di traccia / debug alla console (impostazione predefinita: 1 quando non è presente -daemon. Per disabilitare la registrazione su file, impostare debuglogfile = 0)</translation>
+    </message>
+    <message>
+        <source>Specify configuration file. Relative paths will be prefixed by datadir location. (default: %s)</source>
+        <translation>Specifica il file di configurazione. I percorsi relativi saranno preceduti dalla posizione del datadir. (predefinito: %s)</translation>
+    </message>
+    <message>
+        <source>Specify directory to hold wallets (default: &lt;datadir&gt;/wallets if it exists, otherwise &lt;datadir&gt;)</source>
+        <translation>Specifica la directory in cui conservare i portafogli (default: &lt;datadir&gt;/wallet se esiste, altrimenti &lt;datadir&gt;)</translation>
+    </message>
+    <message>
+        <source>Specify location of debug log file. Relative paths will be prefixed by a net-specific datadir location. (0 to disable; default: %s)</source>
+        <translation>Specifica la posizione del file di registro di debug. I percorsi relativi saranno preceduti da una posizione del datadir specifica della rete. (0 per disabilitare; predefinito: %s)</translation>
+    </message>
+    <message>
+        <source>Specify pid file. Relative paths will be prefixed by a net-specific datadir location. (default: %s)</source>
+        <translation>Specifica il file pid. I percorsi relativi saranno preceduti da una posizione del datadir specifica della rete. (default: %s)</translation>
+    </message>
+    <message>
+        <source>Specify wallet database path. Can be specified multiple times to load multiple wallets. Path is interpreted relative to &lt;walletdir&gt; if it is not absolute, and will be created if it does not exist (as a directory containing a wallet.dat file and log files). For backwards compatibility this will also accept names of existing data files in &lt;walletdir&gt;.)</source>
+        <translation>Specifica il percorso del database del portafoglio. Può essere specificato più volte per caricare più portafogli. Il percorso viene interpretato rispetto a &lt;walletdir&gt; se non è assoluto e verrà creato se non esiste (come directory contenente un file wallet.dat e file di log). Per compatibilità con le versioni precedenti, questo accetterà anche nomi di file di dati esistenti in &lt;walletdir&gt;.)</translation>
+    </message>
+    <message>
+        <source>Transaction index can't be disabled with governance validation enabled. Either start with -disablegovernance command line switch or enable transaction index.</source>
+        <translation>L'indice di transazione non può essere disabilitato con la convalida della governance abilitata. Inizia con l'opzione della riga di comando -disablegovernance o abilita l'indice delle transazioni.</translation>
     </message>
     <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
@@ -4048,22 +4117,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
         <translation>I peer inclusi in whitelist non possono subire ban per DoS e le loro transazioni saranno sempre trasmesse, anche nel caso in cui si trovino già nel mempool. Ciò è utile ad es. per i gateway</translation>
-    </message>
-    <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>È necessario ricostruire il database usando -reindex-chainstate per cambiare -txindex</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>È necessario specificare un masternodeblsprivkey nella configurazione. Si prega di consultare la documentazione per aiuto.</translation>
-    </message>
-    <message>
-        <source>(default: %s)</source>
-        <translation>(default: %s)</translation>
-    </message>
-    <message>
-        <source>-wallet parameter must only specify a filename (not a path)</source>
-        <translation>-il parametro wallet deve specificare solo un nome file (non un percorso)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4090,16 +4143,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Collegare al KeePassHttp sulla porta &lt;port&gt;(default: %u) </translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Abilita il client ad agire come un masternode (0-1, default: %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>L'ingresso supera la dimensione massima.</translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>Errore durante il caricamento di %s: non è possibile disabilitare l'HD su un portafoglio HD già esistente</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4158,12 +4203,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Fondi insufficienti.</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>Importo non valido per -paytxfee=&lt;amount&gt;: '%s' (deve essere almeno %s)</translation>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>Importo non valido per -discardfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>Invalid masternodeblsprivkey. Per favore vedi documentazione.</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
+        <translation>Importo non valido per -paytxfee=&lt;amount&gt;: '%s' (deve essere almeno %s)</translation>
     </message>
     <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
@@ -4226,12 +4271,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Nessun Masternode compatibile trovato.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Non si trova nella  lista dei Masternode.</translation>
+        <source>Not enough funds to mix.</source>
+        <translation>Non ci sono abbastanza fondi per effettuare il mixaggio.</translation>
     </message>
     <message>
-        <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Connessione ai soli nodi appartenenti alla rete &lt;net&gt; (ipv4, ipv6 o Tor)</translation>
+        <source>Not in the Masternode list.</source>
+        <translation>Non si trova nella  lista dei Masternode.</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
@@ -4250,32 +4295,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Invia informazioni trace/debug al file debug.log (default: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>Se possibile Invia transazioni come transazioni a zero-fee (default: %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Imposta la dimensione del pool di chiavi a &lt;n&gt; (default: %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>Imposta la chiave privata BLS masternode</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
         <translation>Imposta il numero di thread destinati a rispondere alle chiamate RPC (default: %d)</translation>
     </message>
     <message>
-        <source>Specify configuration file (default: %s)</source>
-        <translation>Specifica il file di configurazione (default: %s)</translation>
-    </message>
-    <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
         <translation>Specifica il timeout di connessione in millisecondi (minimo: 1, default: %d)</translation>
-    </message>
-    <message>
-        <source>Specify pid file (default: %s)</source>
-        <translation>Specifica il file pid (default: %s)</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
@@ -4286,28 +4315,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Inviato al masternode, attendendo in coda %s</translation>
     </message>
     <message>
-        <source>Synchronization failed</source>
-        <translation>Sincronizzazione fallita</translation>
-    </message>
-    <message>
         <source>Synchronization finished</source>
         <translation>Sincronizzazione finita</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Questo non è un Masternode.</translation>
-    </message>
-    <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
         <translation>Soglia di disconnessione per i peer che si comportano in maniera anomala (default: %u)</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, removing.</source>
-        <translation>Troppe denominazioni %f, rimuovendo.</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, skipping.</source>
-        <translation>Troppe denominazioni %f, saltando.</translation>
     </message>
     <message>
         <source>Tor control port password (default: empty)</source>
@@ -4358,6 +4371,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Il commento del User Agent (%s) contiene caratteri non sicuri.</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>Derifica wallet(s)...</translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>Ritenterà ...</translation>
     </message>
@@ -4386,20 +4403,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Chiave KeePassHttp per AES, comunicazione criptata con KeePass</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Mantenere al massimo &lt;n&gt;  operazioni non collegabili in memoria (default: %u)</translation>
-    </message>
-    <message>
-        <source>Disable all Biblepay specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
-        <translation>Disabilitare tutte le funzionalità specifiche di Biblepay (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</translation>
-    </message>
-    <message>
         <source>%s file contains all private keys from this wallet. Do not share it with anyone!</source>
         <translation>%s il file contiene tutte le chiavi private di questo portafoglio. Non condividerlo con nessuno!</translation>
     </message>
     <message>
-        <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
-        <translation>Associare a un dato indirizzo per ascoltare le connessioni JSON-RPC. Questa opzione viene ignorata a meno che venga passato anche -rpcallowip. La porta è facoltativa e sovrascrive -rpcport. Usa [host]: notazione della porta per IPv6. Questa opzione può essere specificata più volte (default: 127.0.0.1 e :: 1 vale a dire, localhost, o se è stato specificato -rpcallowip, 0.0.0.0 e :: i.e., tutti gli indirizzi)</translation>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>-L'opzione masternode è deprecata e ignorata, specificare -masternodeblsprivkey è sufficiente per avviare questo nodo come masternode.</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4410,16 +4419,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Non mantenere le transazioni nella mempool più a lungo di &lt;n&gt; ore (default: %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Abilita l'InstantSend, mostra le conferme per le transazioni bloccate (0-1, default: %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
         <translation>Abilita più sessioni di mixaggio PrivateSend per blocco, sperimentale (0-1, predefinito: %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Abilita l'uso di PrivateSend automatizzato per i fondi memorizzati in questo portafoglio (0-1, predefinito: %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4446,14 +4447,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Se &lt;category&gt; non è specificato oppure se &lt;category&gt; = 1, mostra tutte le informazioni di debug.</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>InstantSend non supporta ancora l'invio un valore così elevato. Le transazioni sono attualmente limitate a %1 BIBLEPAY.</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>InstantSend richiede input con almeno %d conferme, potrebbe essere necessario attendere alcuni minuti e riprovare.</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>Mantenere un indice dell'indirizzo completo, utilizzato per richiedere il saldo, i txid e gli output non spesi per gli indirizzi (default: %u)</translation>
     </message>
@@ -4470,8 +4463,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Mantenere la maggior parte delle connessioni ai peer (connessioni di servizi temporanei escluse) (default: %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>PrivateSend utilizza gli importi esatti denominati per inviare fondi, potrebbe essere necessario che anonimizziate alcune monete in più.</translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>Assicurati di crittografare il tuo portafoglio ed eliminare tutti i backup non crittografati dopo aver verificato che il portafoglio funzioni!</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>Dimensione totale massima di tutte le transazioni orfane in megabyte (impostazione predefinita: %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4482,12 +4479,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Prune: l'ultima sincronizzazione del portafoglio risulta essere oltre la riduzione dei dati. È necessario eseguire un -reindex (scaricare nuovamente la blockchain in caso di nodo pruned)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>Richiesta di indirizzi peer tramite la ricerca DNS, se gli indirizzi sono bassi (impostazione predefinita: 1 a meno che non venga utilizzato -connect)</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>Randomizza le credenziali per ogni connessione proxy. Permette la Tor stream isolation (default: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>Non è possibile un Rescan in modalità pruned. Sarà necessario utilizzare -reindex che farà scaricare nuovamente tutta la blockchain.</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>Impostare la chiave privata BLS del nodo principale e abilitare il client a fungere da nodo principale</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4510,12 +4515,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>La lunghezza totale della stringa di network version (%i) eccede la lunghezza massima (%i). Ridurre il numero o la dimensione di uacomments.</translation>
     </message>
     <message>
-        <source>Transaction index can't be disabled in full mode. Either start with -litemode command line switch or enable transaction index.</source>
-        <translation>L'indice di transazione non può essere disabilitato in modalità completa. Iniziare con l'opzione della riga di comando -litemode o abilitare l'indice delle transazioni.</translation>
-    </message>
-    <message>
         <source>Tries to keep outbound traffic under the given target (in MiB per 24h), 0 = no limit (default: %d)</source>
         <translation>Cerca di mantenere il traffico in uscita al di sotto della soglia scelta (in MiB ogni 24h), 0 = nessun limite (default: %d)</translation>
+    </message>
+    <message>
+        <source>Try to create at least N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Prova a creare almeno N input di ogni importo denominato (%u-%u, default: %u)</translation>
     </message>
     <message>
         <source>Unable to locate enough PrivateSend denominated funds for this transaction.</source>
@@ -4534,6 +4539,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Utilizza UPnP per mappare la porta in ascolto (default: 1 quando in ascolto e -proxy non è specificato)</translation>
     </message>
     <message>
+        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcauth. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
+        <translation>Username e hashed password per connessioni JSON-RPC. Il campo &lt;userpw&gt; utilizza il formato: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Uno script python standard è incluso in share/rpcauth. Il cliente quindi si connette normalmente utilizzando la coppia di argomenti rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt;. Questa opzione può essere specificata più volte</translation>
+    </message>
+    <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
         <translation>ATTENZIONE! Impossibile riempire il keypool, per favore sblocca il tuo portafoglio per farlo ..</translation>
     </message>
@@ -4546,8 +4555,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Attenzione: si stanno minando versioni sconocsiute di blocchi! E' possibile che siano attive regole sconosciute</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Biblepay-specific functionality is disabled.</source>
-        <translation>Stai iniziando in modalità lite, tutte le funzionalità specifiche di Biblepay sono disabilitate.</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>È necessario ricostruire il database usando -reindex per cambiare -timestampindex</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4556,6 +4565,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>(default: %u)</source>
         <translation>(default: %u)</translation>
+    </message>
+    <message>
+        <source>-litemode is deprecated.</source>
+        <translation>-litemode è deprecato.</translation>
     </message>
     <message>
         <source>-maxmempool must be at least %d MB</source>
@@ -4576,6 +4589,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Automatically create Tor hidden service (default: %d)</source>
         <translation>Crea automaticamente il servizio Tor (default: %d)</translation>
+    </message>
+    <message>
+        <source>Disable governance validation (0-1, default: %u)</source>
+        <translation>Disabilita la convalida della governance (0-1, default: %u)</translation>
     </message>
     <message>
         <source>ERROR! Failed to create automatic backup</source>
@@ -4614,8 +4631,36 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Abilita la pubblicazione delle transazione raw in &lt;address&gt;</translation>
     </message>
     <message>
+        <source>Error upgrading evo database</source>
+        <translation>Errore durante l'aggiornamento del database evo</translation>
+    </message>
+    <message>
         <source>Error: A fatal internal error occurred, see debug.log for details</source>
         <translation>Errore: si è presentato un errore interno fatale, consulta il file debug.log per maggiori dettagli</translation>
+    </message>
+    <message>
+        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
+        <translation>Errore: impossibile aggiungere il socket a epollfd (epoll_ctl ha restituito l'errore %s)</translation>
+    </message>
+    <message>
+        <source>Exceeded max tries.</source>
+        <translation>Numero massimo di tentativi superato.</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at</source>
+        <translation>Impossibile cancellare la cache delle richieste soddisfatte a</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at</source>
+        <translation>Impossibile svuotare la cache della governance in</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at</source>
+        <translation>Impossibile cancellare la cache del masternode in</translation>
+    </message>
+    <message>
+        <source>Failed to commit EvoDB</source>
+        <translation>Impossibile eseguire il commit di EvoDB</translation>
     </message>
     <message>
         <source>Failed to create backup %s!</source>
@@ -4630,12 +4675,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Impossibile eliminare il backup, errore: %s</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>Impossibile caricare la cache di dati di InstantSend da</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>Impossibile caricare la cache degli sporks da</translation>
+    </message>
+    <message>
+        <source>Failed to rescan the wallet during initialization</source>
+        <translation>Impossibile eseguire nuovamente la scansione del portafoglio durante l'inizializzazione</translation>
     </message>
     <message>
         <source>Fee (in %s/kB) to add to transactions you send (default: %s)</source>
@@ -4654,6 +4699,18 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Importo non valido per -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>Invalid masternodeblsprivkey. Per favore vedi documentazione.</translation>
+    </message>
+    <message>
+        <source>It has been replaced by -disablegovernance.</source>
+        <translation>È stato sostituito da -disablegovernance.</translation>
+    </message>
+    <message>
+        <source>Its replacement -disablegovernance has been forced instead.</source>
+        <translation>La sua sostituzione -disablegovernance è stata invece forzata.</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>Mantieni la memory pool delle transazioni al di sotto di &lt;n&gt; megabyte (default: %u)</translation>
     </message>
@@ -4664,10 +4721,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>L'ultimo uso con successo di PrivateSend è troppo recente</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>Caricamento della cache di dati InstantSend ...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4688,10 +4741,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Loading wallet...</source>
         <translation>Caricamento portafoglio...</translation>
-    </message>
-    <message>
-        <source>Location of the auth cookie (default: data dir)</source>
-        <translation>Posizione del cookie di autorizzazione (default: data dir)</translation>
     </message>
     <message>
         <source>Make the wallet broadcast transactions</source>
@@ -4730,20 +4779,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Opzioni di trasmissione del nodo:</translation>
     </message>
     <message>
-        <source>Non-standard public key detected.</source>
-        <translation>Rilevata chiave pubblica non-standard.</translation>
-    </message>
-    <message>
         <source>Not compatible with existing transactions.</source>
         <translation>Non compatibile con le transazioni esistenti.</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
         <translation>Non ci sono abbastanza descrittori di file disponibili.</translation>
-    </message>
-    <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>Non ci sono abbastanza fondi per anonimizzare.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: %u)</source>
@@ -4771,16 +4812,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Opzioni del PrivateSend </translation>
     </message>
     <message>
-        <source>PrivateSend request complete:</source>
-        <translation>Richiesta di utilizzo PrivateSend completata:</translation>
-    </message>
-    <message>
         <source>PrivateSend request incomplete:</source>
         <translation>Richiesta di utilizzo PrivateSend incompleta:</translation>
     </message>
     <message>
         <source>Prune cannot be configured with a negative value.</source>
         <translation>La modalità prune non può essere configurata con un valore negativo.</translation>
+    </message>
+    <message>
+        <source>Prune mode is incompatible with -disablegovernance=false.</source>
+        <translation>La modalità di sfoltimento non è compatibile con -disablegovernance = false.</translation>
     </message>
     <message>
         <source>Prune mode is incompatible with -txindex.</source>
@@ -4795,20 +4836,44 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>All'avvio ripete la scansione della blockchain per individuare le transazioni che mancano dal portafoglio</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u</source>
-        <translation>Inviate le seguenti voci su masternode: %u</translation>
+        <source>Send reject messages per BIP61 (default: %u)</source>
+        <translation>Invia messaggi di rifiuto per BIP61 (predefinito: %u)</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u ) %s</source>
-        <translation>inserito in masternode, in attesa di altre voci ( %u ) %s</translation>
+        <source>Socket events mode, which must be one of: %s (default: %s)</source>
+        <translation>Modalità eventi socket, che deve essere una di: %s (impostazione predefinita: %s)</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" does not exist</source>
+        <translation>-Walletdir "%s" specificato non esiste</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is a relative path</source>
+        <translation>-Walletdir "%s" specificato è un percorso relativo</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is not a directory</source>
+        <translation>-Walletdir "%s" specificato non è una directory</translation>
+    </message>
+    <message>
+        <source>Sync mempool from other nodes on start (default: %u)</source>
+        <translation>Sincronizza mempool da altri nodi all'avvio (default: %u)</translation>
     </message>
     <message>
         <source>Synchronizing blockchain...</source>
         <translation>Sincronizzazione blockchain...</translation>
     </message>
     <message>
+        <source>Target PrivateSend balance (%u-%u, default: %u)</source>
+        <translation>Target PrivateSend saldo (%u-%u, default: %u)</translation>
+    </message>
+    <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
         <translation>Il portafoglio eviterà di pagare meno della tariffa minima di trasmissione.</translation>
+    </message>
+    <message>
+        <source>This is expected because you are running a pruned node.</source>
+        <translation>Ciò è previsto perché stai eseguendo un nodo ridotto.</translation>
     </message>
     <message>
         <source>This is the minimum transaction fee you pay on every transaction.</source>
@@ -4843,6 +4908,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Impossibile collegarsi a %s su questo computer. Probabilmente %s è già in esecuzione.</translation>
     </message>
     <message>
+        <source>Unable to generate initial keys</source>
+        <translation>Impossibile generare le chiavi iniziali</translation>
+    </message>
+    <message>
         <source>Upgrading UTXO database</source>
         <translation>Aggiornamento del database UTXO</translation>
     </message>
@@ -4851,12 +4920,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Utilizzare la catena di devnet con il nome fornito</translation>
     </message>
     <message>
-        <source>Wallet debugging/testing options:</source>
-        <translation>Opzioni di Debug/Test del portafoglio:</translation>
+        <source>Wallet %s resides outside wallet directory %s</source>
+        <translation>Il portafoglio %s risiede fuori dalla directory del portafoglio %s</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>Wallet non è stato inizializzato</translation>
+        <source>Wallet debugging/testing options:</source>
+        <translation>Opzioni di Debug/Test del portafoglio:</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -4875,9 +4944,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Imposta se operare in modalità solo blocchi (default: %u)</translation>
     </message>
     <message>
-        <source>You can not start a masternode in lite mode.</source>
-        <translation>
-Non è possibile avviare un masternode in modalità lite</translation>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>Non è possibile avviare un nodo principale con il wallet abilitato.</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>È necessario ricostruire il database usando -reindex per cambiare -addressindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>È necessario ricostruire il database usando -reindex per cambiare -spentindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>È necessario ricostruire il database usando -reindex per cambiare -txindex</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
@@ -4896,32 +4976,36 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Opzioni server RPC:</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>The %s developers</source>
         <translation>Sviluppatori di %s</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Accetta connessioni dall'esterno (default: 1 se non -proxy o -connect /-noconnect)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>Non è possibile ottenere i dati sulla cartella %s. Probabilmente %s è già in esecuzione.</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Connetti solo ai nodi(o) specificati; -noconnect o -connect = 0 da solo per disabilitare le connessioni automatiche</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>Distribuito sotto licenza MIT del software, si veda il file %s o %s incluso</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Abilita l'uso di PrivateSend per i fondi memorizzati in questo portafoglio (0-1, valore predefinito: %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>Errore durante il caricamento di %s: non è possibile abilitare l'HD su un portafoglio non-HD già esistente.</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>Errore lettura %s! Tutte le chiavi sono state lette correttamente, ma i dati delle transazioni o della rubrica potrebbero essere mancanti o non corretti.</translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>Escludere le informazioni di debug per una categoria. Può essere usato insieme a -debug=1 per generare log di debug per tutte le categorie tranne una o più categorie specificate.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
@@ -4952,20 +5036,16 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Per favore contribuite se ritenete %s utile. Visitate %s per maggiori informazioni riguardo il software.</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Fornire liquidità a PrivateSend mescolando ogni tanto le monete su base continua (%u-%u, default: %u, 1 = molto frequenti, commissioni elevate, %u = molto poco frequenti, commissioni basse)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Query per gli indirizzi peer tramite ricerca DNS, se bassa sugli indirizzi (default: 1 a meno che -connect / -noconnect)</translation>
-    </message>
-    <message>
-        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
-        <translation>Riduce i requisiti di spazio di archiviazione abilitando la cancellazione dei vecchi blocchi ("pruning" o potatura). Questo consente di richiedere alla pruneblockchain RPC di cancellare specifici blocchi e abilita il pruning automatico dei vecchi blocchi se viene fornita una dimensione specifica in MiB. Questa modalità è incompatibile con -txindex e -rescan. Attenzione: Per ripristinare questa impostazione è necessario riscaricare l'intera blockchain. (predefinito: 0 = disabilita il pruning dei blocchi, 1 = permetti il pruning manuale tramite RPC, &gt;%u = pota automaticamente i file di blocco per stare sotto una dimensione specifica in MiB)</translation>
-    </message>
-    <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>Imposta la tariffa di commissione più bassa (in %s/kB) per transazioni da includere nella creazione del blocco. (default:  %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>La tariffa (in %s/kB) che indica la tua tolleranza per scartare la modifica aggiungendola alla tariffa (impostazione predefinita: %s). Nota: un'uscita viene scartata se è estremamente piccola , ma scarteremo sempre fino a quando la tariffa di scarto non è superiore a quella limitata dalla stima della tariffa per l'obiettivo maggiore</translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>Questa è la commissione di transazione che puoi scartare se il cambio è inferiore alla piccolissima parte del livello</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4980,6 +5060,10 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Impossibile trovare abbastanza fondi PrivateSend non denominati per questa transazione.</translation>
     </message>
     <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>Impossibile riprodurre i blocchi. Dovrai ricostruire il database usando -reindex-chainstate.</translation>
+    </message>
+    <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
         <translation>Usa N masternodes separati per ogni input denominato per mixare fondi (%u-%u, default: %u)</translation>
     </message>
@@ -4992,10 +5076,6 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Passphrase mnemonica definita dall'utente per portafoglio HD (BIP39). Ha effetto solo durante la creazione del wallet/primo avvio (default: stringa vuota)</translation>
     </message>
     <message>
-        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcuser. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
-        <translation>Username e hashed password per connessioni JSON-RPC. Il campo &lt;userpw&gt; utilizza il formato: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Uno script python standard è incluso in share/rpcuser. Il cliente quindi si connette normalmente utilizzando la coppia di argomenti rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt;. Questa opzione può essere specificata più volte</translation>
-    </message>
-    <message>
         <source>Wallet will not create transactions that violate mempool chain limits (default: %u)</source>
         <translation>Il portafoglio non creerà transazioni che violino i limiti della mempool chain (default: %u)</translation>
     </message>
@@ -5004,8 +5084,16 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Attenzione: file del Portafoglio corrotto, dati recuperati! %s originale salvato come %s in %s; se il saldo o le transazioni non sono corrette effettua un ripristino da un backup.</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>Se salvare il mempool allo spegnimento e caricare al riavvio (impostazione predefinita: %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
         <translation>I peer in whitelist che si connettono dal dato indirizzo IP (es. 1.2.3.4) o dalla rete annotata CIDR (es. 1.2.3.0/24). Può essere specificato più volte.</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>%d degli ultimi 100 blocchi ha una versione inattesa</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -5020,10 +5108,6 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>%s ha un'impostazione molto alta!</translation>
     </message>
     <message>
-        <source>(press q to shutdown and continue later)</source>
-        <translation>(premi q per spegnere e continuare più tardi)</translation>
-    </message>
-    <message>
         <source>-devnet can only be specified once</source>
         <translation>-devnet può essere specificato solo una volta</translation>
     </message>
@@ -5034,6 +5118,10 @@ Non è possibile avviare un masternode in modalità lite</translation>
     <message>
         <source>-rpcport must be specified when -devnet and -server are specified</source>
         <translation>-rpcport deve essere specificato quando -devnet e -server sono specificati</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Accetta connessioni dall'esterno (predefinito: 1 se no -proxy o -connect)</translation>
     </message>
     <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
@@ -5056,6 +5144,10 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Copyright (C)</translation>
     </message>
     <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Crea  fino a  N inputs per ciascun importo denominato (%u-%u, default: %u)</translation>
+    </message>
+    <message>
         <source>Error loading %s</source>
         <translation>Errore caricamento %s</translation>
     </message>
@@ -5066,6 +5158,14 @@ Non è possibile avviare un masternode in modalità lite</translation>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
         <translation>Errore caricamento %s: il Portafoglio richiede una versione aggiornata di %s</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>Errore durante il caricamento di %s: non è possibile disabilitare l'HD su un portafoglio HD già esistente</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>Errore durante il caricamento del portafoglio%s. Il Nome -wallet filename  specificato è duplicato </translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -5084,6 +5184,10 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Test di integrità iniziale fallito. %s si arresterà.</translation>
     </message>
     <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>Mancata corrispondenza della dimensione degli ingressi e delle uscite.</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>Indirizzo -onion o hostname non valido: '%s'</translation>
     </message>
@@ -5096,16 +5200,8 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Importo non valido per -%s=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid characters in -wallet filename</source>
-        <translation>Caratteri non validi in -wallet filename</translation>
-    </message>
-    <message>
         <source>Invalid spork address specified with -sporkaddr</source>
         <translation>Indirizzo di spork non valido specificato con -sporkaddr</translation>
-    </message>
-    <message>
-        <source>Keep N BIBLEPAY anonymized (%u-%u, default: %u)</source>
-        <translation>Mantieni N BIBLEPAY anonimizzati (%u-%u, default: %u)</translation>
     </message>
     <message>
         <source>Loading P2P addresses...</source>
@@ -5114,10 +5210,6 @@ Non è possibile avviare un masternode in modalità lite</translation>
     <message>
         <source>Print this help message and exit</source>
         <translation>Mostra questo messaggio di aiuto ed esci</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Ricevi e visualizza avvisi di rete P2P (default: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5132,16 +5224,16 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Trasmetti transazioni non-P2SH multisig (predefinito: %u)</translation>
     </message>
     <message>
+        <source>Replaying blocks...</source>
+        <translation>Riproduzione di blocchi ...</translation>
+    </message>
+    <message>
         <source>Rescanning...</source>
         <translation>Ripetizione scansione...</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
         <translation>Esegui in background come daemon ed accetta i comandi</translation>
-    </message>
-    <message>
-        <source>Send trace/debug info to console instead of debug.log file</source>
-        <translation>Invia le informazioni di trace/debug alla console invece che al file debug.log</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -5176,20 +5268,16 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Specifica la cartella dati </translation>
     </message>
     <message>
-        <source>Specify wallet file (within data directory)</source>
-        <translation>Specifica il file portafoglio (all'interno della cartella dati)</translation>
-    </message>
-    <message>
         <source>Specify your own public address</source>
         <translation>Specifica il tuo indirizzo pubblico</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>Inizializzazione dei thread di rete...</translation>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>Avvia PrivateSend automaticamente (0-1, predefinita: %u)</translation>
     </message>
     <message>
-        <source>Synchronization pending...</source>
-        <translation>Sincronizzazione in attesa ...</translation>
+        <source>Starting network threads...</source>
+        <translation>Inizializzazione dei thread di rete...</translation>
     </message>
     <message>
         <source>Synchronizing governance objects...</source>
@@ -5244,6 +5332,10 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Stato sconosciuto: id =%u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>Categoria di registrazione non supportata %s=%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>Nome utente per connessioni JSON-RP</translation>
     </message>
@@ -5252,16 +5344,8 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Verifica blocchi...</translation>
     </message>
     <message>
-        <source>Verifying wallet...</source>
-        <translation>Verifica portafoglio...</translation>
-    </message>
-    <message>
         <source>Very low number of keys left: %d</source>
         <translation>Il numero di chiavi rimaste è molto basso: %d</translation>
-    </message>
-    <message>
-        <source>Wallet %s resides outside data directory %s</source>
-        <translation>Il portafoglio %s si trova al di fuori dalla cartella dati %s</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
@@ -5272,20 +5356,20 @@ Non è possibile avviare un masternode in modalità lite</translation>
         <translation>Opzioni portafoglio:</translation>
     </message>
     <message>
-        <source>Wallet window title</source>
-        <translation>Titolo della window del Portafoglio</translation>
-    </message>
-    <message>
         <source>Warning</source>
         <translation>Attenzione</translation>
     </message>
     <message>
-        <source>Your entries added successfully.</source>
-        <translation>Le tue voci sono state aggiunte con successo.</translation>
+        <source>You are starting with governance validation disabled.</source>
+        <translation>Stai iniziando con la convalida della governance disabilitata.</translation>
     </message>
     <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>La tua transazione è stata accettata nella pool!</translation>
+        <source>You can not disable governance validation on a masternode.</source>
+        <translation>Non è possibile disabilitare la convalida della governance su un masternode.</translation>
+    </message>
+    <message>
+        <source>Your entries added successfully.</source>
+        <translation>Le tue voci sono state aggiunte con successo.</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

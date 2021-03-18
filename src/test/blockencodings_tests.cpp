@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "blockencodings.h"
-#include "consensus/merkle.h"
-#include "chainparams.h"
-#include "random.h"
+#include <blockencodings.h>
+#include <consensus/merkle.h>
+#include <chainparams.h>
+#include <random.h>
 
-#include "test/test_coin.h"
+#include <test/test_biblepay.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -21,10 +21,38 @@ BOOST_FIXTURE_TEST_SUITE(blockencodings_tests, RegtestingSetup)
 
 static CBlock BuildBlockTestCase() {
     CBlock block;
+    CMutableTransaction tx;
+    tx.vin.resize(1);
+    tx.vin[0].scriptSig.resize(10);
+    tx.vout.resize(1);
+    tx.vout[0].nValue = 42;
+
+    block.vtx.resize(3);
+    block.vtx[0] = MakeTransactionRef(tx);
+    block.nVersion = 42;
+    block.hashPrevBlock = InsecureRand256();
+    block.nBits = 0x207fffff;
+
+    tx.vin[0].prevout.hash = InsecureRand256();
+    tx.vin[0].prevout.n = 0;
+    block.vtx[1] = MakeTransactionRef(tx);
+
+    tx.vin.resize(10);
+    for (size_t i = 0; i < tx.vin.size(); i++) {
+        tx.vin[i].prevout.hash = InsecureRand256();
+        tx.vin[i].prevout.n = 0;
+    }
+    block.vtx[2] = MakeTransactionRef(tx);
+
+    bool mutated;
+    block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
+    assert(!mutated);
+	//    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus())) ++block.nNonce;
+
     return block;
 }
 
-// Number of shared use_counts we expect for a tx we havent touched
+// Number of shared use_counts we expect for a tx we haven't touched
 // == 2 (mempool + our copy from the GetSharedTx call)
 #define SHARED_TX_OFFSET 2
 
@@ -35,6 +63,7 @@ BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
     CBlock block(BuildBlockTestCase());
 
     pool.addUnchecked(block.vtx[2]->GetHash(), entry.FromTx(*block.vtx[2]));
+    LOCK(pool.cs);
     BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
 
     // Do a simple ShortTxIDs RT
@@ -91,12 +120,12 @@ public:
     std::vector<uint64_t> shorttxids;
     std::vector<PrefilledTransaction> prefilledtxn;
 
-    TestHeaderAndShortIDs(const CBlockHeaderAndShortTxIDs& orig) {
+    explicit TestHeaderAndShortIDs(const CBlockHeaderAndShortTxIDs& orig) {
         CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
         stream << orig;
         stream >> *this;
     }
-    TestHeaderAndShortIDs(const CBlock& block) :
+    explicit TestHeaderAndShortIDs(const CBlock& block) :
         TestHeaderAndShortIDs(CBlockHeaderAndShortTxIDs(block)) {}
 
     uint64_t GetShortID(const uint256& txhash) const {
@@ -134,6 +163,7 @@ BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
     CBlock block(BuildBlockTestCase());
 
     pool.addUnchecked(block.vtx[2]->GetHash(), entry.FromTx(*block.vtx[2]));
+    LOCK(pool.cs);
     BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[2]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
 
     uint256 txhash;
@@ -200,6 +230,7 @@ BOOST_AUTO_TEST_CASE(SufficientPreforwardRTTest)
     CBlock block(BuildBlockTestCase());
 
     pool.addUnchecked(block.vtx[1]->GetHash(), entry.FromTx(*block.vtx[1]));
+    LOCK(pool.cs);
     BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[1]->GetHash())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 0);
 
     uint256 txhash;
@@ -256,13 +287,14 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
     block.vtx.resize(1);
     block.vtx[0] = MakeTransactionRef(std::move(coinbase));
     block.nVersion = 42;
-    block.hashPrevBlock = GetRandHash();
+    block.hashPrevBlock = InsecureRand256();
     block.nBits = 0x207fffff;
 
     bool mutated;
     block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
     assert(!mutated);
-    
+    //while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus())) ++block.nNonce;
+
     // Test simple header round-trip with only coinbase
     {
         CBlockHeaderAndShortTxIDs shortIDs(block);
@@ -288,7 +320,7 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
 
 BOOST_AUTO_TEST_CASE(TransactionsRequestSerializationTest) {
     BlockTransactionsRequest req1;
-    req1.blockhash = GetRandHash();
+    req1.blockhash = InsecureRand256();
     req1.indexes.resize(4);
     req1.indexes[0] = 0;
     req1.indexes[1] = 1;

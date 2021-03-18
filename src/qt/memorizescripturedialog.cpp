@@ -3,18 +3,16 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "memorizescripturedialog.h"
-#include "ui_memorizescripturedialog.h"
+#include "forms/ui_memorizescripturedialog.h"
 #include "kjv.h"
 
 #include "guiutil.h"
 #include "util.h"
 #include "optionsmodel.h"
 #include "timedata.h"
-#include "platformstyle.h"
 
 #include "walletmodel.h"
 #include "validation.h"
-#include "rpcpodc.h"
 #include "rpcpog.h"
 #include <QAction>
 #include <QCursor>
@@ -36,7 +34,6 @@ MemorizeScriptureDialog::MemorizeScriptureDialog(const PlatformStyle *platformSt
     platformStyle(platformStyle)
 {
     ui->setupUi(this);
-    QString theme = GUIUtil::getThemeName();
 }
 
 // In scripture memorizer, there are two modes:  Learn, and Quiz.  In learn mode, the user freely types in and recites the verse and clicks next.
@@ -195,12 +192,10 @@ void MemorizeScriptureDialog::clear()
 
 void MemorizeScriptureDialog::on_btnDone_clicked()
 {
-    if(!model || !model->getOptionsModel())
-        return;
+  //  if(!model || !model->getOptionsModel())        return;
 	Score();
 	ShowResults();
 	// go to the wallet overview page here
-
 }
 
 double MemorizeScriptureDialog::Grade()
@@ -240,16 +235,14 @@ void MemorizeScriptureDialog::Score()
 
 void MemorizeScriptureDialog::on_btnNextScripture_clicked()
 {
-    if(!model || !model->getOptionsModel())
-        return;
+//    if(!model || !model->getOptionsModel())        return;
 	Score();
 	PopulateNewVerse();
 }
 
 void MemorizeScriptureDialog::on_btnMode_clicked()
 {
-   if(!model || !model->getOptionsModel())
-        return;
+//   if(!model || !model->getOptionsModel())        return;
    fMode = !fMode;
    UpdateDisplay();
 }

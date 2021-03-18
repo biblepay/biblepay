@@ -1,12 +1,12 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DAC_CRYPTO_BLS_IES_H
-#define DAC_CRYPTO_BLS_IES_H
+#ifndef BIBLEPAY_CRYPTO_BLS_IES_H
+#define BIBLEPAY_CRYPTO_BLS_IES_H
 
-#include "bls.h"
-#include "streams.h"
+#include <bls/bls.h>
+#include <streams.h>
 
 class CBLSIESEncryptedBlob
 {
@@ -161,4 +161,4 @@ public:
     }
 };
 
-#endif // DAC_CRYPTO_BLS_IES_H
+#endif // BIBLEPAY_CRYPTO_BLS_IES_H

@@ -1,21 +1,23 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "paymentserver.h"
+#include <qt/paymentserver.h>
 
-#include "bitcoinunits.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
+#include <qt/bitcoinunits.h>
+#include <qt/guiutil.h>
+#include <qt/optionsmodel.h>
 
-#include "base58.h"
-#include "chainparams.h"
-#include "policy/policy.h"
-#include "ui_interface.h"
-#include "util.h"
-#include "wallet/wallet.h"
+#include <base58.h>
+#include <chainparams.h>
+#include <policy/policy.h>
+#include <ui_interface.h>
+#include <util.h>
+#include <wallet/wallet.h>
 
 #include <cstdlib>
+#include <memory>
 
 #include <openssl/x509_vfy.h>
 
@@ -47,14 +49,14 @@
 #endif
 
 const int BITCOIN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
-const QString BITCOIN_IPC_PREFIX("dac:");
+const QString BITCOIN_IPC_PREFIX("biblepay:");
 // BIP70 payment protocol messages
 const char* BIP70_MESSAGE_PAYMENTACK = "PaymentACK";
 const char* BIP70_MESSAGE_PAYMENTREQUEST = "PaymentRequest";
 // BIP71 payment protocol media types
-const char* BIP71_MIMETYPE_PAYMENT = "application/dac-payment";
-const char* BIP71_MIMETYPE_PAYMENTACK = "application/dac-paymentack";
-const char* BIP71_MIMETYPE_PAYMENTREQUEST = "application/dac-paymentrequest";
+const char* BIP71_MIMETYPE_PAYMENT = "application/biblepay-payment";
+const char* BIP71_MIMETYPE_PAYMENTACK = "application/biblepay-paymentack";
+const char* BIP71_MIMETYPE_PAYMENTREQUEST = "application/biblepay-paymentrequest";
 
 struct X509StoreDeleter {
       void operator()(X509_STORE* b) {
@@ -78,7 +80,7 @@ namespace // Anon namespace
 //
 static QString ipcServerName()
 {
-    QString name("DAC-QT");
+    QString name("BiblePayQt");
 
     // Append a simple hash of the datadir
     // Note that GetDataDir(true) returns a different path
@@ -98,14 +100,11 @@ static QList<QString> savedPaymentRequests;
 
 static void ReportInvalidCertificate(const QSslCertificate& cert)
 {
-	if (fDebugSpam)
-	{
 #if QT_VERSION < 0x050000
     qDebug() << QString("%1: Payment server found an invalid certificate: ").arg(__func__) << cert.serialNumber() << cert.subjectInfo(QSslCertificate::CommonName) << cert.subjectInfo(QSslCertificate::OrganizationalUnitName);
 #else
     qDebug() << QString("%1: Payment server found an invalid certificate: ").arg(__func__) << cert.serialNumber() << cert.subjectInfo(QSslCertificate::CommonName) << cert.subjectInfo(QSslCertificate::DistinguishedNameQualifier) << cert.subjectInfo(QSslCertificate::OrganizationalUnitName);
 #endif
-	}
 }
 
 //
@@ -125,7 +124,7 @@ void PaymentServer::LoadRootCAs(X509_STORE* _store)
 
     // Note: use "-system-" default here so that users can pass -rootcertificates=""
     // and get 'I don't like X.509 certificates, don't trust anybody' behavior:
-    QString certFile = QString::fromStdString(GetArg("-rootcertificates", "-system-"));
+    QString certFile = QString::fromStdString(gArgs.GetArg("-rootcertificates", "-system-"));
 
     // Empty store
     if (certFile.isEmpty()) {
@@ -147,7 +146,7 @@ void PaymentServer::LoadRootCAs(X509_STORE* _store)
     int nRootCerts = 0;
     const QDateTime currentTime = QDateTime::currentDateTime();
 
-    Q_FOREACH (const QSslCertificate& cert, certList) {
+    for (const QSslCertificate& cert : certList) {
         // Don't log NULL certificates
         if (cert.isNull())
             continue;
@@ -210,26 +209,26 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
         if (arg.startsWith("-"))
             continue;
 
-        // If the URI contains a payment request, we are not able to detect the
+        // If the biblepay: URI contains a payment request, we are not able to detect the
         // network as that would require fetching and parsing the payment request.
         // That means clicking such an URI which contains a testnet payment request
         // will start a mainnet instance and throw a "wrong network" error.
-        if (arg.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // URI
+        if (arg.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // biblepay: URI
         {
             savedPaymentRequests.append(arg);
 
             SendCoinsRecipient r;
             if (GUIUtil::parseBitcoinURI(arg, &r) && !r.address.isEmpty())
             {
-                CBitcoinAddress address(r.address.toStdString());
+                auto tempChainParams = CreateChainParams(CBaseChainParams::MAIN);
 
-                if (address.IsValid(Params(CBaseChainParams::MAIN)))
-                {
+                if (IsValidDestinationString(r.address.toStdString())) {
                     SelectParams(CBaseChainParams::MAIN);
-                }
-                else if (address.IsValid(Params(CBaseChainParams::TESTNET)))
-                {
-                    SelectParams(CBaseChainParams::TESTNET);
+                } else {
+                    tempChainParams = CreateChainParams(CBaseChainParams::TESTNET);
+                    if (IsValidDestinationString(r.address.toStdString())) {
+                        SelectParams(CBaseChainParams::TESTNET);
+                    }
                 }
             }
         }
@@ -268,14 +267,14 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
 bool PaymentServer::ipcSendCommandLine()
 {
     bool fResult = false;
-    Q_FOREACH (const QString& r, savedPaymentRequests)
+    for (const QString& r : savedPaymentRequests)
     {
         QLocalSocket* socket = new QLocalSocket();
         socket->connectToServer(ipcServerName(), QIODevice::WriteOnly);
         if (!socket->waitForConnected(BITCOIN_IPC_CONNECT_TIMEOUT))
         {
             delete socket;
-            socket = NULL;
+            socket = nullptr;
             return false;
         }
 
@@ -291,7 +290,7 @@ bool PaymentServer::ipcSendCommandLine()
         socket->disconnectFromServer();
 
         delete socket;
-        socket = NULL;
+        socket = nullptr;
         fResult = true;
     }
 
@@ -310,7 +309,7 @@ PaymentServer::PaymentServer(QObject* parent, bool startLocalServer) :
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     // Install global event filter to catch QFileOpenEvents
-    // on Mac: sent when you click URI links
+    // on Mac: sent when you click biblepay: links
     // other OSes: helpful when dealing with payment request files
     if (parent)
         parent->installEventFilter(this);
@@ -327,7 +326,7 @@ PaymentServer::PaymentServer(QObject* parent, bool startLocalServer) :
         if (!uriServer->listen(name)) {
             // constructor is called early in init, so don't use "Q_EMIT message()" here
             QMessageBox::critical(0, tr("Payment request error"),
-                tr("Cannot start wallet: click-to-pay handler"));
+                tr("Cannot start biblepay: click-to-pay handler"));
         }
         else {
             connect(uriServer, SIGNAL(newConnection()), this, SLOT(handleURIConnection()));
@@ -342,7 +341,7 @@ PaymentServer::~PaymentServer()
 }
 
 //
-// OSX-specific way of handling URIs and PaymentRequest mime types.
+// OSX-specific way of handling biblepay: URIs and PaymentRequest mime types.
 // Also used by paymentservertests.cpp and when opening a payment request file
 // via "Open URI..." menu entry.
 //
@@ -365,10 +364,9 @@ void PaymentServer::initNetManager()
 {
     if (!optionsModel)
         return;
-    if (netManager != NULL)
-        delete netManager;
+    delete netManager;
 
-    // netManager is used to fetch paymentrequests given in URIs
+    // netManager is used to fetch paymentrequests given in biblepay: URIs
     netManager = new QNetworkAccessManager(this);
 
     QNetworkProxy proxy;
@@ -376,12 +374,11 @@ void PaymentServer::initNetManager()
     // Query active SOCKS5 proxy
     if (optionsModel->getProxySettings(proxy)) {
         netManager->setProxy(proxy);
-		if (fDebugSpam)
-			qDebug() << "PaymentServer::initNetManager: Using SOCKS5 proxy" << proxy.hostName() << ":" << proxy.port();
+
+        qDebug() << "PaymentServer::initNetManager: Using SOCKS5 proxy" << proxy.hostName() << ":" << proxy.port();
     }
     else
-		if (fDebugSpam)
-			qDebug() << "PaymentServer::initNetManager: No active proxy server found.";
+        qDebug() << "PaymentServer::initNetManager: No active proxy server found.";
 
     connect(netManager, SIGNAL(finished(QNetworkReply*)),
             this, SLOT(netRequestFinished(QNetworkReply*)));
@@ -394,7 +391,7 @@ void PaymentServer::uiReady()
     initNetManager();
 
     saveURIs = false;
-    Q_FOREACH (const QString& s, savedPaymentRequests)
+    for (const QString& s : savedPaymentRequests)
     {
         handleURIOrFile(s);
     }
@@ -409,7 +406,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
         return;
     }
 
-    if (s.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // URI
+    if (s.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // biblepay: URI
     {
 #if QT_VERSION < 0x050000
         QUrl uri(s);
@@ -443,8 +440,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
             SendCoinsRecipient recipient;
             if (GUIUtil::parseBitcoinURI(s, &recipient))
             {
-                CBitcoinAddress address(recipient.address.toStdString());
-                if (!address.IsValid()) {
+                if (!IsValidDestinationString(recipient.address.toStdString())) {
                     Q_EMIT message(tr("URI handling"), tr("Invalid payment address %1").arg(recipient.address),
                         CClientUIInterface::MSG_ERROR);
                 }
@@ -453,7 +449,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
             }
             else
                 Q_EMIT message(tr("URI handling"),
-                    tr("URI cannot be parsed! This can be caused by an invalid address or malformed URI parameters."),
+                    tr("URI cannot be parsed! This can be caused by an invalid BiblePay address or malformed URI parameters."),
                     CClientUIInterface::ICON_WARNING);
 
             return;
@@ -557,15 +553,15 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus& request, Sen
     QList<std::pair<CScript, CAmount> > sendingTos = request.getPayTo();
     QStringList addresses;
 
-    Q_FOREACH(const PAIRTYPE(CScript, CAmount)& sendingTo, sendingTos) {
+    for (const std::pair<CScript, CAmount>& sendingTo : sendingTos) {
         // Extract and check destination addresses
         CTxDestination dest;
         if (ExtractDestination(sendingTo.first, dest)) {
             // Append destination address
-            addresses.append(QString::fromStdString(CBitcoinAddress(dest).ToString()));
+            addresses.append(QString::fromStdString(EncodeDestination(dest)));
         }
         else if (!recipient.authenticatedMerchant.isEmpty()) {
-            // Unauthenticated payment requests to custom addresses are not supported
+            // Unauthenticated payment requests to custom biblepay addresses are not supported
             // (there is no good way to tell the user where they are paying in a way they'd
             // have a chance of understanding).
             Q_EMIT message(tr("Payment request rejected"),
@@ -574,7 +570,7 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus& request, Sen
             return false;
         }
 
-        // Amounts are stored as (optional) uint64 in the protobuf messages (see paymentrequest.proto),
+        // BiblePay amounts are stored as (optional) uint64 in the protobuf messages (see paymentrequest.proto),
         // but CAmount is defined as int64_t. Because of that we need to verify that amounts are in a valid range
         // and no overflow has happened.
         if (!verifyAmount(sendingTo.second)) {
@@ -584,7 +580,7 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus& request, Sen
 
         // Extract and check amounts
         CTxOut txOut(sendingTo.second, sendingTo.first);
-        if (txOut.IsDust(dustRelayFee)) {
+        if (IsDust(txOut, ::dustRelayFee)) {
             Q_EMIT message(tr("Payment request error"), tr("Requested payment amount of %1 is too small (considered dust).")
                 .arg(BitcoinUnits::formatWithUnit(optionsModel->getDisplayUnit(), sendingTo.second)),
                 CClientUIInterface::MSG_ERROR);
@@ -622,7 +618,7 @@ void PaymentServer::fetchRequest(const QUrl& url)
     netManager->get(netRequest);
 }
 
-void PaymentServer::fetchPaymentACK(CWallet* wallet, SendCoinsRecipient recipient, QByteArray transaction)
+void PaymentServer::fetchPaymentACK(CWallet* wallet, const SendCoinsRecipient& recipient, QByteArray transaction)
 {
     const payments::PaymentDetails& details = recipient.paymentRequest.getDetails();
     if (!details.has_payment_url())
@@ -744,7 +740,7 @@ void PaymentServer::reportSslErrors(QNetworkReply* reply, const QList<QSslError>
     Q_UNUSED(reply);
 
     QString errString;
-    Q_FOREACH (const QSslError& err, errs) {
+    for (const QSslError& err : errs) {
         qWarning() << "PaymentServer::reportSslErrors: " << err;
         errString += err.errorString() + "\n";
     }

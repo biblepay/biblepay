@@ -1,19 +1,20 @@
 // Copyright (c) 2016 The Bitcoin Core developers
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018-2020 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <iostream>
 
-#include "bench.h"
-#include "bloom.h"
-#include "hash.h"
-#include "uint256.h"
-#include "utiltime.h"
-#include "crypto/ripemd160.h"
-#include "crypto/sha1.h"
-#include "crypto/sha256.h"
-#include "crypto/sha512.h"
+#include <bench/bench.h>
+#include <bloom.h>
+#include <hash.h>
+#include <random.h>
+#include <uint256.h>
+#include <utiltime.h>
+#include <crypto/ripemd160.h>
+#include <crypto/sha1.h>
+#include <crypto/sha256.h>
+#include <crypto/sha512.h>
 
 /* Number of bytes to hash per iteration */
 static const uint64_t BUFFER_SIZE = 1000*1000;
@@ -47,7 +48,7 @@ static void HASH_SHA256_0032b(benchmark::State& state)
     std::vector<uint8_t> in(32,0);
     while (state.KeepRunning()) {
         for (int i = 0; i < 1000000; i++) {
-            CSHA256().Write(in.data(), in.size()).Finalize(&in[0]);
+            CSHA256().Write(in.data(), in.size()).Finalize(in.data());
         }
     }
 }
@@ -65,8 +66,16 @@ static void HASH_DSHA256_0032b(benchmark::State& state)
     std::vector<uint8_t> in(32,0);
     while (state.KeepRunning()) {
         for (int i = 0; i < 1000000; i++) {
-            CHash256().Write(in.data(), in.size()).Finalize(&in[0]);
+            CHash256().Write(in.data(), in.size()).Finalize(in.data());
         }
+    }
+}
+
+static void HASH_SHA256D64_1024(benchmark::State& state)
+{
+    std::vector<uint8_t> in(64 * 1024, 0);
+    while (state.KeepRunning()) {
+        SHA256D64(in.data(), in.data(), 1024);
     }
 }
 
@@ -88,46 +97,68 @@ static void HASH_SipHash_0032b(benchmark::State& state)
     }
 }
 
+static void FastRandom_32bit(benchmark::State& state)
+{
+    FastRandomContext rng(true);
+    uint32_t x = 0;
+    while (state.KeepRunning()) {
+        for (int i = 0; i < 1000000; i++) {
+            x += rng.rand32();
+        }
+    }
+}
+
+static void FastRandom_1bit(benchmark::State& state)
+{
+    FastRandomContext rng(true);
+    uint32_t x = 0;
+    while (state.KeepRunning()) {
+        for (int i = 0; i < 1000000; i++) {
+            x += rng.randbool();
+        }
+    }
+}
+
 static void HASH_DSHA256_0032b_single(benchmark::State& state)
 {
     std::vector<uint8_t> in(32,0);
     while (state.KeepRunning())
-        CHash256().Write(in.data(), in.size()).Finalize(&in[0]);
+        CHash256().Write(in.data(), in.size()).Finalize(in.data());
 }
 
 static void HASH_DSHA256_0080b_single(benchmark::State& state)
 {
     std::vector<uint8_t> in(80,0);
     while (state.KeepRunning())
-        CHash256().Write(in.data(), in.size()).Finalize(&in[0]);
+        CHash256().Write(in.data(), in.size()).Finalize(in.data());
 }
 
 static void HASH_DSHA256_0128b_single(benchmark::State& state)
 {
     std::vector<uint8_t> in(128,0);
     while (state.KeepRunning())
-        CHash256().Write(in.data(), in.size()).Finalize(&in[0]);
+        CHash256().Write(in.data(), in.size()).Finalize(in.data());
 }
 
 static void HASH_DSHA256_0512b_single(benchmark::State& state)
 {
     std::vector<uint8_t> in(512,0);
     while (state.KeepRunning())
-        CHash256().Write(in.data(), in.size()).Finalize(&in[0]);
+        CHash256().Write(in.data(), in.size()).Finalize(in.data());
 }
 
 static void HASH_DSHA256_1024b_single(benchmark::State& state)
 {
     std::vector<uint8_t> in(1024,0);
     while (state.KeepRunning())
-        CHash256().Write(in.data(), in.size()).Finalize(&in[0]);
+        CHash256().Write(in.data(), in.size()).Finalize(in.data());
 }
 
 static void HASH_DSHA256_2048b_single(benchmark::State& state)
 {
     std::vector<uint8_t> in(2048,0);
     while (state.KeepRunning())
-        CHash256().Write(in.data(), in.size()).Finalize(&in[0]);
+        CHash256().Write(in.data(), in.size()).Finalize(in.data());
 }
 
 static void HASH_X11(benchmark::State& state)
@@ -196,6 +227,7 @@ BENCHMARK(HASH_X11);
 BENCHMARK(HASH_SHA256_0032b);
 BENCHMARK(HASH_DSHA256_0032b);
 BENCHMARK(HASH_SipHash_0032b);
+BENCHMARK(HASH_SHA256D64_1024/*, 7400*/);
 
 BENCHMARK(HASH_DSHA256_0032b_single);
 BENCHMARK(HASH_DSHA256_0080b_single);
@@ -209,3 +241,5 @@ BENCHMARK(HASH_X11_0128b_single);
 BENCHMARK(HASH_X11_0512b_single);
 BENCHMARK(HASH_X11_1024b_single);
 BENCHMARK(HASH_X11_2048b_single);
+BENCHMARK(FastRandom_32bit);
+BENCHMARK(FastRandom_1bit);

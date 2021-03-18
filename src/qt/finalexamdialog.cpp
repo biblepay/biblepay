@@ -3,18 +3,16 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "finalexamdialog.h"
-#include "ui_finalexamdialog.h"
+#include "forms/ui_finalexamdialog.h"
 #include "kjv.h"
 
 #include "guiutil.h"
 #include "util.h"
 #include "optionsmodel.h"
 #include "timedata.h"
-#include "platformstyle.h"
 
 #include "walletmodel.h"
 #include "validation.h"
-#include "rpcpodc.h"
 #include "rpcpog.h"
 #include <QAction>
 #include <QCursor>
@@ -34,7 +32,6 @@ FinalExamDialog::FinalExamDialog(QWidget *parent, std::string sFinalExam) :
     ui->setupUi(this);
 	if (sFinalExam.empty())
 		return;
-    QString theme = GUIUtil::getThemeName();
 	// Pull in the final exam
 	DACResult b = DSQL_ReadOnlyQuery("Univ/" + sFinalExam);
 	
@@ -140,6 +137,22 @@ void FinalExamDialog::StripNumber()
 	ui->txtQuestion->setPlainText(GUIUtil::TOQS(sMyQ));
 }
 
+std::string ScanAnswerForPopUpVerses(std::string sRefText)
+{
+	std::vector<std::string> vSourceScripture = Split(sRefText.c_str(), " ");
+	std::string sExpandedAnswer;
+	for (int i = 0; i < (int)vSourceScripture.size()-1; i++)
+	{
+		std::string sScrip = vSourceScripture[i] + " " + vSourceScripture[i + 1];
+		std::string sExpandedVerses = GetPopUpVerses(sScrip);
+		if (!sExpandedVerses.empty())
+		{
+			sExpandedAnswer += sExpandedVerses + "\r\n\r\n";
+		}
+	}
+	return sExpandedAnswer;
+}
+
 void FinalExamDialog::PopulateQuestion()
 {
 	if (nCurrentQuestion > vecA.size())
@@ -151,19 +164,19 @@ void FinalExamDialog::PopulateQuestion()
 	std::vector<std::string> vAnswers = Split(vecA[nCurrentQuestion].c_str(), "|");
     if (vAnswers.size() > 3)
     {
-   		ui->radioA->setText(GUIUtil::TOQS(vAnswers[0]));
-    	ui->radioB->setText(GUIUtil::TOQS(vAnswers[1]));
-	    ui->radioC->setText(GUIUtil::TOQS(vAnswers[2]));
-        ui->radioD->setText(GUIUtil::TOQS(vAnswers[3]));
+		ui->radioA->setText(GUIUtil::TOQS(vAnswers[0]));
+		ui->radioB->setText(GUIUtil::TOQS(vAnswers[1]));
+		ui->radioC->setText(GUIUtil::TOQS(vAnswers[2]));
+		ui->radioD->setText(GUIUtil::TOQS(vAnswers[3]));
 		ui->radioC->setVisible(true);
 		ui->radioD->setVisible(true);
     }
 	else if (vAnswers.size() > 1)
 	{
 		ui->radioA->setText(GUIUtil::TOQS(vAnswers[0]));
-    	ui->radioB->setText(GUIUtil::TOQS(vAnswers[1]));
-	    ui->radioC->setText(GUIUtil::TOQS(""));
-        ui->radioD->setText(GUIUtil::TOQS(""));
+		ui->radioB->setText(GUIUtil::TOQS(vAnswers[1]));
+		ui->radioC->setText(GUIUtil::TOQS(""));
+		ui->radioD->setText(GUIUtil::TOQS(""));
 		ui->radioC->setVisible(false);
 		ui->radioD->setVisible(false);
 	}
@@ -200,27 +213,9 @@ void FinalExamDialog::PopulateQuestion()
 		// Training Mode
 		// In Training Mode, if we have any bible verses in the answer, lets include the actual scripture to help the student:
 		std::string sExpandedAnswer = ExtractAnswer(vecAnswerKey[nCurrentQuestion]);
-
-		std::vector<std::string> vSourceScripture = Split(sExpandedAnswer.c_str(), " ");
-		std::string sExpandedVerses;
-		for (int i = 0; i < (int)vSourceScripture.size()-1; i++)
-		{
-			std::string sScrip = vSourceScripture[i] + " " + vSourceScripture[i + 1];
-			sExpandedVerses = GetPopUpVerses(sScrip);
-			double nEV = cdbl(sExpandedVerses, 0);
-			if (nEV == 0 && !sExpandedVerses.empty())
-			{
-				break;
-			}
-			else
-			{
-				sExpandedVerses = std::string();
-			}
-		}
-		if (!sExpandedVerses.empty())
-		{
-			sExpandedAnswer += "\r\n\r\n" + sExpandedVerses;
-		}
+		std::string sRefText = sExpandedAnswer + " " + vecQ[nCurrentQuestion];
+		std::string sBiblicalRefs = ScanAnswerForPopUpVerses(sRefText);
+		sExpandedAnswer += "\r\n\r\n" + sBiblicalRefs;
 		ui->txtAnswer->setPlainText(GUIUtil::TOQS(sExpandedAnswer));
 	}
 

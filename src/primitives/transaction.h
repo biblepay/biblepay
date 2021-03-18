@@ -6,11 +6,12 @@
 #ifndef BITCOIN_PRIMITIVES_TRANSACTION_H
 #define BITCOIN_PRIMITIVES_TRANSACTION_H
 
-#include "amount.h"
-#include "script/script.h"
-#include "serialize.h"
-#include "uint256.h"
-#include <math.h>   // For floor
+#include <amount.h>
+#include <script/script.h>
+#include <serialize.h>
+#include <uint256.h>
+#include <vector>
+#include <cmath>
 
 /** Transaction types */
 enum {
@@ -21,7 +22,6 @@ enum {
     TRANSACTION_PROVIDER_UPDATE_REVOKE = 4,
     TRANSACTION_COINBASE = 5,
     TRANSACTION_QUORUM_COMMITMENT = 6,
-    TRANSACTION_NON_FINANCIAL = 7,
 };
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
@@ -31,8 +31,8 @@ public:
     uint256 hash;
     uint32_t n;
 
-    COutPoint() { SetNull(); }
-    COutPoint(uint256 hashIn, uint32_t nIn) { hash = hashIn; n = nIn; }
+    COutPoint(): n((uint32_t) -1) { }
+    COutPoint(const uint256& hashIn, uint32_t nIn): hash(hashIn), n(nIn) { }
 
     ADD_SERIALIZE_METHODS;
 
@@ -116,7 +116,7 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(prevout);
-        READWRITE(*(CScriptBase*)(&scriptSig));
+        READWRITE(scriptSig);
         READWRITE(nSequence);
     }
 
@@ -150,7 +150,6 @@ public:
     CScript scriptPubKey;
     int nRounds;
 	std::string sTxOutMessage;
-
     CTxOut()
     {
         SetNull();
@@ -164,7 +163,7 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(nValue);
         READWRITE(*(CScriptBase*)(&scriptPubKey));
-		// DAC - Reserve space for Prayers and IPFS TxID pointers
+		// BiblePay Data
 		READWRITE(LIMITED_STRING(sTxOutMessage, 3000));
     }
 
@@ -178,27 +177,6 @@ public:
     bool IsNull() const
     {
         return (nValue == -1);
-    }
-
-    CAmount GetDustThreshold(const CFeeRate &minRelayTxFee) const
-    {
-        // "Dust" is defined in terms of CTransaction::minRelayTxFee, which has units duffs-per-kilobyte.
-        // If you'd pay more than 1/3 in fees to spend something, then we consider it dust.
-        // A typical spendable txout is 34 bytes big, and will need a CTxIn of at least 148 bytes to spend
-        // i.e. total is 148 + 34 = 182 bytes. Default -minrelaytxfee is 1000 duffs per kB
-        // and that means that fee per spendable txout is 182 * 1000 / 1000 = 182 duffs.
-        // So dust is a spendable txout less than 546 * minRelayTxFee / 1000 (in duffs)
-        // i.e. 182 * 3 = 546 duffs with default -minrelaytxfee = minRelayTxFee = 1000 duffs per kB.
-        if (scriptPubKey.IsUnspendable())
-            return 0;
-
-        size_t nSize = GetSerializeSize(*this, SER_DISK, 0)+148u;
-        return 3*minRelayTxFee.GetFee(nSize);
-    }
-
-    bool IsDust(const CFeeRate &minRelayTxFee) const
-    {
-        return (nValue < GetDustThreshold(minRelayTxFee));
     }
 
     friend bool operator==(const CTxOut& a, const CTxOut& b)
@@ -223,14 +201,12 @@ struct CMutableTransaction;
  */
 class CTransaction
 {
-
-
 public:
     // Default transaction version.
-    static const int32_t CURRENT_VERSION=1;
+    static const int32_t CURRENT_VERSION=2;
 	static const int SUPERBLOCK_PAYMENT_THRESHHOLD = 2000000;
 	static const int SUPERBLOCK_VOUT_MIN = 3;
-    
+
     // Changing the default transaction version requires a two step process: first
     // adapting relay policy by bumping MAX_STANDARD_VERSION, and then later date
     // bumping the default CURRENT_VERSION at which point both CURRENT_VERSION and
@@ -242,16 +218,17 @@ public:
     // actually immutable; deserialization and assignment are implemented,
     // and bypass the constness. This is safe, as they update the entire
     // structure, including the hash.
-    const int16_t nVersion;
-    const int16_t nType;
     const std::vector<CTxIn> vin;
     const std::vector<CTxOut> vout;
+    const int16_t nVersion;
+    const int16_t nType;
     const uint32_t nLockTime;
     const std::vector<uint8_t> vExtraPayload; // only available for special transaction types
 
 private:
-	/** Memory only. */
+    /** Memory only. */
     const uint256 hash;
+
     uint256 ComputeHash() const;
 
 public:
@@ -362,10 +339,11 @@ public:
 		return (sMyData.find("<MT>GSCTransmission") != std::string::npos);
 	}
 
-	std::string GetCampaignName() const
+	std::string GetCampaignName86() const
 	{
 		std::string sData = GetTxMessage();
-		std::string sCampaign = ExtractXMLValue(sData, "<gsccampaign>", "</gsccampaign>");
+		std::string sCampaign = "";
+		//ExtractXMLValue(sData, "<gsccampaign>", "</gsccampaign>");
 		if (sCampaign.empty()) 
 			sCampaign = "Unknown";
 		return sCampaign;
@@ -378,23 +356,10 @@ public:
 		return (sMyData.find("<MT>CPK") != std::string::npos);
 	}
 
-	bool IsWhaleStake() const
+	bool IsUTXOStake() const
 	{
 		std::string sMyData = GetTxMessage();
-		return (sMyData.find("<MT>DWS") != std::string::npos);
-	}
-
-	bool IsDashStake() const
-	{
-		std::string sMyData = GetTxMessage();
-		return (sMyData.find("<MT>DASHSTAKE") != std::string::npos);
-	}
-
-	bool IsABN() const
-	{
-		// Is this an Anti-Bot-Net Transaction?
-		std::string sMyData = GetTxMessage();
-		return (sMyData.find("<MT>ABN</MT>") != std::string::npos);
+		return (sMyData.find("<MT>UTXO") != std::string::npos);
 	}
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)
@@ -413,10 +378,10 @@ public:
 /** A mutable version of CTransaction. */
 struct CMutableTransaction
 {
-    int16_t nVersion;
-    int16_t nType;
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
+    int16_t nVersion;
+    int16_t nType;
     uint32_t nLockTime;
 	std::string sTxMessage;
     std::vector<uint8_t> vExtraPayload; // only available for special transaction types
@@ -437,8 +402,6 @@ struct CMutableTransaction
         READWRITE(vin);
         READWRITE(vout);
         READWRITE(nLockTime);
-		// R ANDREWS - We are retiring this field as it is now on each vout.sTxOutMessage and the change is backwards compatible 
-		// READWRITE(LIMITED_STRING(sTxMessage,1000));
         if (this->nVersion == 3 && this->nType != TRANSACTION_NORMAL) {
             READWRITE(vExtraPayload);
         }

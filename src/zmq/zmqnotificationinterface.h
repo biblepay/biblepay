@@ -5,14 +5,15 @@
 #ifndef BITCOIN_ZMQ_ZMQNOTIFICATIONINTERFACE_H
 #define BITCOIN_ZMQ_ZMQNOTIFICATIONINTERFACE_H
 
-#include "validationinterface.h"
+#include <validationinterface.h>
 #include <string>
 #include <map>
+#include <list>
 
 class CBlockIndex;
 class CZMQAbstractNotifier;
 
-class CZMQNotificationInterface : public CValidationInterface
+class CZMQNotificationInterface final : public CValidationInterface
 {
 public:
     virtual ~CZMQNotificationInterface();
@@ -24,10 +25,12 @@ protected:
     void Shutdown();
 
     // CValidationInterface
-    void SyncTransaction(const CTransaction& tx, const CBlockIndex *pindex, int posInBlock) override;
+    void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime) override;
+    void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexConnected, const std::vector<CTransactionRef>& vtxConflicted) override;
+    void BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected) override;
     void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
-    void NotifyChainLock(const CBlockIndex *pindex) override;
-    void NotifyTransactionLock(const CTransaction &tx) override;
+    void NotifyChainLock(const CBlockIndex *pindex, const llmq::CChainLockSig& clsig) override;
+    void NotifyTransactionLock(const CTransaction &tx, const llmq::CInstantSendLock& islock) override;
     void NotifyGovernanceVote(const CGovernanceVote& vote) override;
     void NotifyGovernanceObject(const CGovernanceObject& object) override;
     void NotifyInstantSendDoubleSpendAttempt(const CTransaction &currentTx, const CTransaction &previousTx) override;

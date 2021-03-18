@@ -5,8 +5,9 @@
 #ifndef BITCOIN_QT_TRANSACTIONRECORD_H
 #define BITCOIN_QT_TRANSACTIONRECORD_H
 
-#include "amount.h"
-#include "uint256.h"
+#include <amount.h>
+#include <uint256.h>
+#include <base58.h>
 
 #include <QList>
 #include <QString>
@@ -20,9 +21,9 @@ class TransactionStatus
 {
 public:
     TransactionStatus():
-        countsForBalance(false), lockedByInstantSend(false), sortKey(""),
-        matures_in(0), status(Offline), depth(0), open_for(0), cur_num_blocks(-1),
-        cachedNumISLocks(-1), cachedChainLockHeight(-1)
+        countsForBalance(false), lockedByInstantSend(false), lockedByChainLocks(false), sortKey(""),
+        matures_in(0), status(Unconfirmed), depth(0), open_for(0), cur_num_blocks(-1),
+        cachedChainLockHeight(-1), needsUpdate(false)
     { }
 
     enum Status {
@@ -30,14 +31,12 @@ public:
         /// Normal (sent/received) transactions
         OpenUntilDate,      /**< Transaction not yet final, waiting for date */
         OpenUntilBlock,     /**< Transaction not yet final, waiting for block */
-        Offline,            /**< Not sent to any other nodes **/
         Unconfirmed,        /**< Not yet mined into a block **/
         Confirming,         /**< Confirmed, but waiting for the recommended number of confirmations **/
         Conflicted,         /**< Conflicts with other transaction or mempool **/
         Abandoned,          /**< Abandoned from the wallet **/
         /// Generated (mined) transactions
         Immature,           /**< Mined but waiting for maturity */
-        MaturesWarning,     /**< Transaction will likely not mature because no nodes have confirmed */
         NotAccepted         /**< Mined but not accepted */
     };
 
@@ -45,8 +44,12 @@ public:
     bool countsForBalance;
     /// Transaction was locked via InstantSend
     bool lockedByInstantSend;
+    /// Transaction was locked via ChainLocks
+    bool lockedByChainLocks;
     /// Sorting key based on status
     std::string sortKey;
+    /// Label
+    QString label;
 
     /** @name Generated (mined) transactions
        @{*/
@@ -65,10 +68,10 @@ public:
     /** Current number of blocks (to know whether cached status is still valid) */
     int cur_num_blocks;
 
-    //** Know when to update transaction for IS-locks **/
-    int cachedNumISLocks;
     //** Know when to update transaction for chainlocks **/
     int cachedChainLockHeight;
+
+    bool needsUpdate;
 };
 
 /** UI model for a transaction. A core transaction can be represented by multiple UI transactions if it has
@@ -98,30 +101,33 @@ public:
 		GSCTransmission,
 		WhaleStake,
 		WhaleReward,
-		DashStake,
-		DashReward
+		BiblePayStake,
+		BiblePayReward
     };
 
     /** Number of confirmation recommended for accepting a transaction */
     static const int RecommendedNumConfirmations = 6;
 
     TransactionRecord():
-            hash(), time(0), type(Other), address(""), debit(0), credit(0), idx(0)
+            hash(), time(0), type(Other), strAddress(""), debit(0), credit(0), idx(0)
     {
+        txDest = DecodeDestination(strAddress);
     }
 
     TransactionRecord(uint256 _hash, qint64 _time):
-            hash(_hash), time(_time), type(Other), address(""), debit(0),
+            hash(_hash), time(_time), type(Other), strAddress(""), debit(0),
             credit(0), idx(0)
     {
+        txDest = DecodeDestination(strAddress);
     }
 
     TransactionRecord(uint256 _hash, qint64 _time,
-                Type _type, const std::string &_address,
+                Type _type, const std::string &_strAddress,
                 const CAmount& _debit, const CAmount& _credit):
-            hash(_hash), time(_time), type(_type), address(_address), debit(_debit), credit(_credit),
+            hash(_hash), time(_time), type(_type), strAddress(_strAddress), debit(_debit), credit(_credit),
             idx(0)
     {
+        txDest = DecodeDestination(strAddress);
     }
 
     /** Decompose CWallet transaction to model transaction records.
@@ -134,7 +140,9 @@ public:
     uint256 hash;
     qint64 time;
     Type type;
-    std::string address;
+    std::string strAddress;
+    CTxDestination txDest;
+
     CAmount debit;
     CAmount credit;
     /**@}*/
@@ -150,20 +158,15 @@ public:
 
 	/** If this is a Dynamic Whale Reward */
 	bool IsWhaleReward;
-	bool IsDashReward;
-
-	/** If this is a Dynamic Whale Stake */
-	bool IsWhaleStake;
-	bool IsDashStake;
+	
+	/** If this is a UTXO Stake */
+	bool IsUTXOStake;
 
 	/** If this is a PODC Research Payment */
 	bool IsGSCPayment;
 
 	/** If this is a Superblock Payment */
 	bool IsSuperblockPayment;
-
-	/** If this is an Anti-Bot-Net Tx */
-	bool IsABN;
 
 	/** If this is a GSC Transmission Tx */
 	bool IsGSCTransmission;
@@ -176,11 +179,11 @@ public:
 
     /** Update status from core wallet tx.
      */
-    void updateStatus(const CWalletTx &wtx, int numISLocks, int chainLockHeight);
+    void updateStatus(const CWalletTx &wtx, int chainLockHeight);
 
     /** Return whether a status update is needed.
      */
-    bool statusUpdateNeeded(int numISLocks, int chainLockHeight);
+    bool statusUpdateNeeded(int chainLockHeight) const;
 };
 
 #endif // BITCOIN_QT_TRANSACTIONRECORD_H

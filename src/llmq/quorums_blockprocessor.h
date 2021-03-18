@@ -1,17 +1,17 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018-2020 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef COIN_QUORUMS_BLOCKPROCESSOR_H
-#define COIN_QUORUMS_BLOCKPROCESSOR_H
+#ifndef BIBLEPAY_QUORUMS_BLOCKPROCESSOR_H
+#define BIBLEPAY_QUORUMS_BLOCKPROCESSOR_H
 
-#include "llmq/quorums_commitment.h"
-#include "llmq/quorums_utils.h"
+#include <llmq/quorums_commitment.h>
+#include <llmq/quorums_utils.h>
 
-#include "consensus/params.h"
-#include "primitives/transaction.h"
-#include "saltedhasher.h"
-#include "sync.h"
+#include <consensus/params.h>
+#include <primitives/transaction.h>
+#include <saltedhasher.h>
+#include <sync.h>
 
 #include <map>
 #include <unordered_map>
@@ -35,7 +35,7 @@ private:
     std::unordered_map<std::pair<Consensus::LLMQType, uint256>, bool, StaticSaltedHasher> hasMinedCommitmentCache;
 
 public:
-    CQuorumBlockProcessor(CEvoDB& _evoDb) : evoDb(_evoDb) {}
+    explicit CQuorumBlockProcessor(CEvoDB& _evoDb) : evoDb(_evoDb) {}
 
     void UpgradeDB();
 
@@ -66,6 +66,6 @@ private:
 
 extern CQuorumBlockProcessor* quorumBlockProcessor;
 
-}
+} // namespace llmq
 
-#endif//COIN_QUORUMS_BLOCKPROCESSOR_H
+#endif//BIBLEPAY_QUORUMS_BLOCKPROCESSOR_H

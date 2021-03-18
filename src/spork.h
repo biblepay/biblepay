@@ -1,15 +1,14 @@
-// Copyright (c) 2014-2019 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef SPORK_H
 #define SPORK_H
 
-#include "hash.h"
-#include "net.h"
-#include "utilstrencodings.h"
-#include "key.h"
+#include <hash.h>
+#include <net.h>
+#include <utilstrencodings.h>
+#include <key.h>
 
 #include <unordered_map>
 #include <unordered_set>
@@ -21,26 +20,38 @@ class CSporkManager;
     Don't ever reuse these IDs for other sporks
     - This would result in old clients getting confused about which spork is for what
 */
-static const int SPORK_2_INSTANTSEND_ENABLED                            = 10001;
-static const int SPORK_3_INSTANTSEND_BLOCK_FILTERING                    = 10002;
-static const int SPORK_5_INSTANTSEND_MAX_VALUE                          = 10004;
-static const int SPORK_6_NEW_SIGS                                       = 10005;
-static const int SPORK_9_SUPERBLOCKS_ENABLED                            = 10008;
-static const int SPORK_12_RECONSIDER_BLOCKS                             = 10011;
-static const int SPORK_15_DETERMINISTIC_MNS_ENABLED                     = 10014;
-static const int SPORK_16_INSTANTSEND_AUTOLOCKS                         = 10015;
-static const int SPORK_17_QUORUM_DKG_ENABLED                            = 10016;
-static const int SPORK_19_CHAINLOCKS_ENABLED                            = 10018;
-static const int SPORK_20_INSTANTSEND_LLMQ_BASED                        = 10019;
+enum SporkId : int32_t {
+    SPORK_2_INSTANTSEND_ENABLED                            = 10001,
+    SPORK_3_INSTANTSEND_BLOCK_FILTERING                    = 10002,
+    SPORK_9_SUPERBLOCKS_ENABLED                            = 10008,
+    SPORK_17_QUORUM_DKG_ENABLED                            = 10016,
+    SPORK_19_CHAINLOCKS_ENABLED                            = 10018,
+    SPORK_21_QUORUM_ALL_CONNECTED                          = 10020,
+    SPORK_22_PS_MORE_PARTICIPANTS                          = 10021,
 
-// DAC - Start at 10090 to leave room for future Dash Sporks
-static const int SPORK_30_QUANTITATIVE_TIGHTENING_ENABLED               = 10090;
-static const int SPORK_31_GSC_BUFFER                                    = 10091;
+    SPORK_INVALID                                          = -1,
+};
+template<> struct is_serializable_enum<SporkId> : std::true_type {};
 
-static const int SPORK_START                                            = SPORK_2_INSTANTSEND_ENABLED;
-static const int SPORK_END                                              = SPORK_31_GSC_BUFFER;
+namespace std
+{
+    template<> struct hash<SporkId>
+    {
+        std::size_t operator()(SporkId const& id) const noexcept
+        {
+            return std::hash<int>{}(id);
+        }
+    };
+}
 
-extern std::map<int, int64_t> mapSporkDefaults;
+struct CSporkDef
+{
+    SporkId sporkId{SPORK_INVALID};
+    int64_t defaultValue{0};
+    std::string name;
+};
+
+extern std::vector<CSporkDef> sporkDefs;
 extern CSporkManager sporkManager;
 
 /**
@@ -67,18 +78,18 @@ private:
     std::vector<unsigned char> vchSig;
 
 public:
-    int nSporkID;
+    SporkId nSporkID;
     int64_t nValue;
     int64_t nTimeSigned;
 
-    CSporkMessage(int nSporkID, int64_t nValue, int64_t nTimeSigned) :
+    CSporkMessage(SporkId nSporkID, int64_t nValue, int64_t nTimeSigned) :
         nSporkID(nSporkID),
         nValue(nValue),
         nTimeSigned(nTimeSigned)
         {}
 
     CSporkMessage() :
-        nSporkID(0),
+        nSporkID((SporkId)0),
         nValue(0),
         nTimeSigned(0)
         {}
@@ -109,13 +120,13 @@ public:
     /**
      * Sign will sign the spork message with the given key.
      */
-    bool Sign(const CKey& key, bool fSporkSixActive);
+    bool Sign(const CKey& key);
 
     /**
      * CheckSignature will ensure the spork signature matches the provided public
      * key hash.
      */
-    bool CheckSignature(const CKeyID& pubKeyId, bool fSporkSixActive) const;
+    bool CheckSignature(const CKeyID& pubKeyId) const;
 
     /**
      * GetSignerKeyID is used to recover the spork address of the key used to
@@ -124,7 +135,7 @@ public:
      * This method was introduced along with the multi-signer sporks feature,
      * in order to identify which spork key signed this message.
      */
-    bool GetSignerKeyID(CKeyID& retKeyidSporkSigner, bool fSporkSixActive);
+    bool GetSignerKeyID(CKeyID& retKeyidSporkSigner);
 
     /**
      * Relay is used to send this spork message to other peers.
@@ -142,9 +153,12 @@ class CSporkManager
 private:
     static const std::string SERIALIZATION_VERSION_STRING;
 
+    std::unordered_map<SporkId, CSporkDef*> sporkDefsById;
+    std::unordered_map<std::string, CSporkDef*> sporkDefsByName;
+
     mutable CCriticalSection cs;
     std::unordered_map<uint256, CSporkMessage> mapSporksByHash;
-    std::unordered_map<int, std::map<CKeyID, CSporkMessage> > mapSporksActive;
+    std::unordered_map<SporkId, std::map<CKeyID, CSporkMessage> > mapSporksActive;
 
     std::set<CKeyID> setSporkPubKeyIDs;
     int nMinSporkKeys;
@@ -154,11 +168,11 @@ private:
      * SporkValueIsActive is used to get the value agreed upon by the majority
      * of signed spork messages for a given Spork ID.
      */
-    bool SporkValueIsActive(int nSporkID, int64_t& nActiveValueRet) const;
+    bool SporkValueIsActive(SporkId nSporkID, int64_t& nActiveValueRet) const;
 
 public:
 
-    CSporkManager() {}
+    CSporkManager();
 
     ADD_SERIALIZE_METHODS;
 
@@ -176,7 +190,7 @@ public:
         }
         // we don't serialize pubkey ids because pubkeys should be
         // hardcoded or be setted with cmdline or options, should
-        // not reuse pubkeys from previous dacd run
+        // not reuse pubkeys from previous biblepayd run
         READWRITE(mapSporksByHash);
         READWRITE(mapSporksActive);
         // we don't serialize private key to prevent its leakage
@@ -210,17 +224,10 @@ public:
     void ProcessSpork(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 
     /**
-     * ExecuteSpork is used to perform certain actions based on the spork value.
-     *
-     * Currently only used with Spork 12.
-     */
-    void ExecuteSpork(int nSporkID, int nValue);
-
-    /**
      * UpdateSpork is used by the spork RPC command to set a new spork value, sign
      * and broadcast the spork message.
      */
-    bool UpdateSpork(int nSporkID, int64_t nValue, CConnman& connman);
+    bool UpdateSpork(SporkId nSporkID, int64_t nValue, CConnman& connman);
 
     /**
      * IsSporkActive returns a bool for time-based sporks, and should be used
@@ -231,23 +238,23 @@ public:
      * instead, and therefore this method doesn't make sense and should not be
      * used.
      */
-    bool IsSporkActive(int nSporkID);
+    bool IsSporkActive(SporkId nSporkID);
 
     /**
      * GetSporkValue returns the spork value given a Spork ID. If no active spork
      * message has yet been received by the node, it returns the default value.
      */
-    int64_t GetSporkValue(int nSporkID);
+    int64_t GetSporkValue(SporkId nSporkID);
 
     /**
      * GetSporkIDByName returns the internal Spork ID given the spork name.
      */
-    int GetSporkIDByName(const std::string& strName);
+    SporkId GetSporkIDByName(const std::string& strName);
 
     /**
      * GetSporkNameByID returns the spork name as a string, given a Spork ID.
      */
-    std::string GetSporkNameByID(int nSporkID);
+    std::string GetSporkNameByID(SporkId nSporkID);
 
     /**
      * GetSporkByHash returns a spork message given a hash of the spork message.

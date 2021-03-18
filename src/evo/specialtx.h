@@ -1,13 +1,13 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DAC_SPECIALTX_H
-#define DAC_SPECIALTX_H
+#ifndef BIBLEPAY_SPECIALTX_H
+#define BIBLEPAY_SPECIALTX_H
 
-#include "primitives/transaction.h"
-#include "streams.h"
-#include "version.h"
+#include <primitives/transaction.h>
+#include <streams.h>
+#include <version.h>
 
 class CBlock;
 class CBlockIndex;
@@ -49,4 +49,4 @@ void SetTxPayload(CMutableTransaction& tx, const T& payload)
 
 uint256 CalcTxInputsHash(const CTransaction& tx);
 
-#endif //DAC_SPECIALTX_H
+#endif //BIBLEPAY_SPECIALTX_H

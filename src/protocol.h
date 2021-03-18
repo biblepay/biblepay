@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The DAC Core developers
+// Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,11 +10,12 @@
 #ifndef BITCOIN_PROTOCOL_H
 #define BITCOIN_PROTOCOL_H
 
-#include "netaddress.h"
-#include "serialize.h"
-#include "uint256.h"
-#include "version.h"
+#include <netaddress.h>
+#include <serialize.h>
+#include <uint256.h>
+#include <version.h>
 
+#include <atomic>
 #include <stdint.h>
 #include <string>
 
@@ -27,19 +28,16 @@
 class CMessageHeader
 {
 public:
-    enum {
-        MESSAGE_START_SIZE = 4,
-        COMMAND_SIZE = 12,
-        MESSAGE_SIZE_SIZE = 4,
-        CHECKSUM_SIZE = 4,
-
-        MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE,
-        CHECKSUM_OFFSET = MESSAGE_SIZE_OFFSET + MESSAGE_SIZE_SIZE,
-        HEADER_SIZE = MESSAGE_START_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE
-    };
+    static constexpr size_t MESSAGE_START_SIZE = 4;
+    static constexpr size_t COMMAND_SIZE = 12;
+    static constexpr size_t MESSAGE_SIZE_SIZE = 4;
+    static constexpr size_t CHECKSUM_SIZE = 4;
+    static constexpr size_t MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE;
+    static constexpr size_t CHECKSUM_OFFSET = MESSAGE_SIZE_OFFSET + MESSAGE_SIZE_SIZE;
+    static constexpr size_t HEADER_SIZE = MESSAGE_START_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE;
     typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
 
-    CMessageHeader(const MessageStartChars& pchMessageStartIn);
+    explicit CMessageHeader(const MessageStartChars& pchMessageStartIn);
     CMessageHeader(const MessageStartChars& pchMessageStartIn, const char* pszCommand, unsigned int nMessageSizeIn);
 
     std::string GetCommand() const;
@@ -161,16 +159,9 @@ extern const char *PING;
  */
 extern const char *PONG;
 /**
- * The alert message warns nodes of problems that may affect them or the rest
- * of the network.
- * @since protocol version 311.
- * @see https://bitcoin.org/en/developer-reference#alert
- */
-extern const char *ALERT;
-/**
  * The notfound message is a reply to a getdata message which requested an
  * object the receiving node does not have available for relay.
- * @ince protocol version 70001.
+ * @since protocol version 70001.
  * @see https://bitcoin.org/en/developer-reference#notfound
  */
 extern const char *NOTFOUND;
@@ -243,11 +234,10 @@ extern const char *GETBLOCKTXN;
  */
 extern const char *BLOCKTXN;
 
-// Message types
+// BiblePay message types
 // NOTE: do NOT declare non-implmented here, we don't want them to be exposed to the outside
 // TODO: add description
-extern const char *TXLOCKREQUEST;
-extern const char *TXLOCKVOTE;
+extern const char *LEGACYTXLOCKREQUEST; // only present for backwards compatibility
 extern const char *SPORK;
 extern const char *GETSPORKS;
 extern const char *DSACCEPT;
@@ -277,12 +267,14 @@ extern const char *QSIGSHARESINV;
 extern const char *QGETSIGSHARES;
 extern const char *QBSIGSHARES;
 extern const char *QSIGREC;
+extern const char *QSIGSHARE;
 extern const char *CLSIG;
 extern const char *ISLOCK;
 extern const char *MNAUTH;
 extern const char *CHAT;
 extern const char *EMAIL;
 extern const char *EMAILREQUEST;
+extern const char *ALERT;
 };
 
 /* Get a vector of all valid message types (see above) */
@@ -292,21 +284,24 @@ const std::vector<std::string> &getAllNetMessageTypes();
 enum ServiceFlags : uint64_t {
     // Nothing
     NODE_NONE = 0,
-    // NODE_NETWORK means that the node is capable of serving the block chain. It is currently
-    // set by all Core nodes, and is unset by SPV clients or other peers that just want
-    // network services but don't provide them.
+    // NODE_NETWORK means that the node is capable of serving the complete block chain. It is currently
+    // set by all BiblePay Core non pruned nodes, and is unset by SPV clients or other light clients.
     NODE_NETWORK = (1 << 0),
     // NODE_GETUTXO means the node is capable of responding to the getutxo protocol request.
-    // Core does not support this but a patch set called Bitcoin XT does.
+    // BiblePay Core does not support this but a patch set called Bitcoin XT does.
     // See BIP 64 for details on how this is implemented.
     NODE_GETUTXO = (1 << 1),
     // NODE_BLOOM means the node is capable and willing to handle bloom-filtered connections.
-    // Core nodes used to support this by default, without advertising this bit,
+    // BiblePay Core nodes used to support this by default, without advertising this bit,
     // but no longer do as of protocol version 70201 (= NO_BLOOM_VERSION)
     NODE_BLOOM = (1 << 2),
     // NODE_XTHIN means the node supports Xtreme Thinblocks
     // If this is turned off then the node will not service nor make xthin requests
     NODE_XTHIN = (1 << 4),
+    // NODE_NETWORK_LIMITED means the same as NODE_NETWORK with the limitation of only
+    // serving the last 288 blocks
+    // See BIP159 for details on how this is implemented.
+    NODE_NETWORK_LIMITED = (1 << 10),
 
     // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
     // isn't getting used, or one not being used much, and notify the
@@ -316,6 +311,52 @@ enum ServiceFlags : uint64_t {
     // do not actually support. Other service bits should be allocated via the
     // BIP process.
 };
+
+/**
+ * Gets the set of service flags which are "desirable" for a given peer.
+ *
+ * These are the flags which are required for a peer to support for them
+ * to be "interesting" to us, ie for us to wish to use one of our few
+ * outbound connection slots for or for us to wish to prioritize keeping
+ * their connection around.
+ *
+ * Relevant service flags may be peer- and state-specific in that the
+ * version of the peer may determine which flags are required (eg in the
+ * case of NODE_NETWORK_LIMITED where we seek out NODE_NETWORK peers
+ * unless they set NODE_NETWORK_LIMITED and we are out of IBD, in which
+ * case NODE_NETWORK_LIMITED suffices).
+ *
+ * Thus, generally, avoid calling with peerServices == NODE_NONE, unless
+ * state-specific flags must absolutely be avoided. When called with
+ * peerServices == NODE_NONE, the returned desirable service flags are
+ * guaranteed to not change dependant on state - ie they are suitable for
+ * use when describing peers which we know to be desirable, but for which
+ * we do not have a confirmed set of service flags.
+ *
+ * If the NODE_NONE return value is changed, contrib/seeds/makeseeds.py
+ * should be updated appropriately to filter for the same nodes.
+ */
+ServiceFlags GetDesirableServiceFlags(ServiceFlags services);
+
+/** Set the current IBD status in order to figure out the desirable service flags */
+void SetServiceFlagsIBDCache(bool status);
+
+/**
+ * A shortcut for (services & GetDesirableServiceFlags(services))
+ * == GetDesirableServiceFlags(services), ie determines whether the given
+ * set of service flags are sufficient for a peer to be "relevant".
+ */
+static inline bool HasAllDesirableServiceFlags(ServiceFlags services) {
+    return !(GetDesirableServiceFlags(services) & (~services));
+}
+
+/**
+ * Checks if a peer with the given service flags may be capable of having a
+ * robust address-storage DB.
+ */
+static inline bool MayHaveUsefulAddressDB(ServiceFlags services) {
+    return (services & NODE_NETWORK) || (services & NODE_NETWORK_LIMITED);
+}
 
 /** A CService with information about it as peer */
 class CAddress : public CService
@@ -363,12 +404,12 @@ enum GetDataMsg {
     MSG_BLOCK = 2,
     // The following can only occur in getdata. Invs always use TX or BLOCK.
     MSG_FILTERED_BLOCK = 3,  //!< Defined in BIP37
-    // Message types
+    // BiblePay message types
     // NOTE: declare non-implmented here, we must keep this enum consistent and backwards compatible
-    MSG_TXLOCK_REQUEST = 4,
-    MSG_TXLOCK_VOTE = 5,
+    MSG_LEGACY_TXLOCK_REQUEST = 4,
+    /* MSG_TXLOCK_VOTE = 5, Legacy InstantSend and not used anymore  */
     MSG_SPORK = 6,
-    /* 7 - 15 were used in old Dash versions and were mainly budget and MN broadcast/ping related*/
+    /* 7 - 15 were used in old BiblePay versions and were mainly budget and MN broadcast/ping related*/
     MSG_DSTX = 16,
     MSG_GOVERNANCE_OBJECT = 17,
     MSG_GOVERNANCE_OBJECT_VOTE = 18,
@@ -389,6 +430,7 @@ enum GetDataMsg {
 	MSG_CHAT=70,
 	MSG_EMAIL=71,
 	MSG_EMAILREQUEST=72,
+	MSG_ALERT=99,
 };
 
 /** inv message data */
@@ -397,7 +439,6 @@ class CInv
 public:
     CInv();
     CInv(int typeIn, const uint256& hashIn);
-    CInv(const std::string& strType, const uint256& hashIn);
 
     ADD_SERIALIZE_METHODS;
 
@@ -411,8 +452,11 @@ public:
     friend bool operator<(const CInv& a, const CInv& b);
 
     bool IsKnownType() const;
-    const char* GetCommand() const;
+    std::string GetCommand() const;
     std::string ToString() const;
+
+private:
+    const char* GetCommandInternal() const;
 
     // TODO: make private (improves encapsulation)
 public:

@@ -16,8 +16,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "Biblepay"
-            VALUE "FileDescription",    "biblepay-tx (CLI Biblepay transaction editor utility)"
+            VALUE "CompanyName",        "BiblePay"
+            VALUE "FileDescription",    "biblepay-tx (CLI BiblePay transaction editor utility)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "biblepay-tx"
             VALUE "LegalCopyright",     COPYRIGHT_STR

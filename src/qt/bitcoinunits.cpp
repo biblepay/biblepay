@@ -1,13 +1,11 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2016 The Dash Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bitcoinunits.h"
-#include "chainparams.h"
-#include "primitives/transaction.h"
-#include "validation.h"
-#include "guiutil.h"
+#include <qt/bitcoinunits.h>
+#include <chainparams.h>
+#include <primitives/transaction.h>
 
 #include <QSettings>
 #include <QStringList>
@@ -21,9 +19,9 @@ BitcoinUnits::BitcoinUnits(QObject *parent):
 QList<BitcoinUnits::Unit> BitcoinUnits::availableUnits()
 {
     QList<BitcoinUnits::Unit> unitlist;
-    unitlist.append(COIN_UNIT);
-    unitlist.append(mCOIN_UNIT);
-    unitlist.append(uCOIN_UNIT);
+    unitlist.append(BBP);
+    unitlist.append(mBBP);
+    unitlist.append(uBBP);
     unitlist.append(duffs);
     return unitlist;
 }
@@ -32,9 +30,9 @@ bool BitcoinUnits::valid(int unit)
 {
     switch(unit)
     {
-    case COIN_UNIT:
-    case mCOIN_UNIT:
-    case uCOIN_UNIT:
+    case BBP:
+    case mBBP:
+    case uBBP:
     case duffs:
         return true;
     default:
@@ -48,9 +46,9 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-            case COIN_UNIT: return GUIUtil::TOQS(CURRENCY_TICKER);
-            case mCOIN_UNIT: return GUIUtil::TOQS("m" + CURRENCY_TICKER);
-            case uCOIN_UNIT: return GUIUtil::TOQS("μ" + CURRENCY_TICKER);
+            case BBP: return QString("BBP");
+            case mBBP: return QString("mBBP");
+            case uBBP: return QString::fromUtf8("μBBP");
             case duffs: return QString("duffs");
             default: return QString("???");
         }
@@ -59,9 +57,9 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-			case COIN_UNIT: return GUIUtil::TOQS("t" + CURRENCY_TICKER);
-            case mCOIN_UNIT: return GUIUtil::TOQS("mt" + CURRENCY_TICKER);
-            case uCOIN_UNIT: return GUIUtil::TOQS("μt" + CURRENCY_TICKER);
+            case BBP: return QString("tBBP");
+            case mBBP: return QString("mtBBP");
+            case uBBP: return QString::fromUtf8("μtBBP");
             case duffs: return QString("tduffs");
             default: return QString("???");
         }
@@ -74,10 +72,10 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case COIN_UNIT: return GUIUtil::TOQS(CURRENCY_NAME);
-            case mCOIN_UNIT: return GUIUtil::TOQS("Milli-" + CURRENCY_NAME + " (1 / 1" THIN_SP_UTF8 "000)");
-            case uCOIN_UNIT: return GUIUtil::TOQS("Micro-" + CURRENCY_NAME + " (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case duffs: return GUIUtil::TOQS("Ten Nano-" + CURRENCY_NAME + " (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case BBP: return QString("BBP");
+            case mBBP: return QString("Milli-BBP (1 / 1" THIN_SP_UTF8 "000)");
+            case uBBP: return QString("Micro-BBP (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case duffs: return QString("Ten Nano-BBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -85,10 +83,10 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case COIN_UNIT: return GUIUtil::TOQS("Test" + CURRENCY_NAME);
-            case mCOIN_UNIT: return GUIUtil::TOQS("Milli-Test" + CURRENCY_NAME + " (1 / 1" THIN_SP_UTF8 "000)");
-            case uCOIN_UNIT: return GUIUtil::TOQS("Micro-Test" + CURRENCY_NAME + " (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case duffs: return GUIUtil::TOQS("Ten Nano-Test" + CURRENCY_NAME + " (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case BBP: return QString("TestBBP");
+            case mBBP: return QString("Milli-TestBBP (1 / 1" THIN_SP_UTF8 "000)");
+            case uBBP: return QString("Micro-TestBBP (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case duffs: return QString("Ten Nano-TestBBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -98,9 +96,9 @@ qint64 BitcoinUnits::factor(int unit)
 {
     switch(unit)
     {
-    case COIN_UNIT:  return 100000000;
-    case mCOIN_UNIT: return 100000;
-    case uCOIN_UNIT: return 100;
+    case BBP:  return 100000000;
+    case mBBP: return 100000;
+    case uBBP: return 100;
     case duffs: return 1;
     default:   return 100000000;
     }
@@ -110,9 +108,9 @@ int BitcoinUnits::decimals(int unit)
 {
     switch(unit)
     {
-    case COIN_UNIT: return 8;
-    case mCOIN_UNIT: return 5;
-    case uCOIN_UNIT: return 2;
+    case BBP: return 8;
+    case mBBP: return 5;
+    case uBBP: return 2;
     case duffs: return 0;
     default: return 0;
     }
@@ -235,7 +233,7 @@ QString BitcoinUnits::getAmountColumnTitle(int unit)
     QString amountTitle = QObject::tr("Amount");
     if (BitcoinUnits::valid(unit))
     {
-        amountTitle += " (" + BitcoinUnits::name(unit) + ")";
+        amountTitle += " ("+BitcoinUnits::name(unit) + ")";
     }
     return amountTitle;
 }
@@ -248,7 +246,11 @@ int BitcoinUnits::rowCount(const QModelIndex &parent) const
 
 QVariant BitcoinUnits::data(const QModelIndex &index, int role) const
 {
-    int row = index.row();
+    return data(index.row(), role);
+}
+
+QVariant BitcoinUnits::data(const int &row, int role) const
+{
     if(row >= 0 && row < unitlist.size())
     {
         Unit unit = unitlist.at(row);

@@ -6,11 +6,12 @@
 #ifndef BITCOIN_RPCPROTOCOL_H
 #define BITCOIN_RPCPROTOCOL_H
 
+#include <fs.h>
+
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-#include <boost/filesystem.hpp>
 
 #include <univalue.h>
 
@@ -27,7 +28,7 @@ enum HTTPStatusCode
     HTTP_SERVICE_UNAVAILABLE   = 503,
 };
 
-//! Core RPC error codes
+//! BiblePay Core RPC error codes
 enum RPCErrorCode
 {
     //! Standard JSON-RPC 2.0 errors
@@ -38,7 +39,7 @@ enum RPCErrorCode
     // It should not be used for application-layer errors.
     RPC_METHOD_NOT_FOUND = -32601,
     RPC_INVALID_PARAMS   = -32602,
-    // RPC_INTERNAL_ERROR should only be used for genuine errors in bitcoind
+    // RPC_INTERNAL_ERROR should only be used for genuine errors in biblepayd
     // (for example datadir corruption).
     RPC_INTERNAL_ERROR   = -32603,
     RPC_PARSE_ERROR      = -32700,
@@ -56,6 +57,7 @@ enum RPCErrorCode
     RPC_VERIFY_REJECTED             = -26, //!< Transaction or block was rejected by network rules
     RPC_VERIFY_ALREADY_IN_CHAIN     = -27, //!< Transaction already in chain
     RPC_IN_WARMUP                   = -28, //!< Client still warming up
+    RPC_METHOD_DEPRECATED           = -32, //!< RPC method is deprecated
 
     //! Aliases for backward compatibility
     RPC_TRANSACTION_ERROR           = RPC_VERIFY_ERROR,
@@ -63,7 +65,7 @@ enum RPCErrorCode
     RPC_TRANSACTION_ALREADY_IN_CHAIN= RPC_VERIFY_ALREADY_IN_CHAIN,
 
     //! P2P client errors
-    RPC_CLIENT_NOT_CONNECTED        = -9,  //!< is not connected
+    RPC_CLIENT_NOT_CONNECTED        = -9,  //!< BiblePay is not connected
     RPC_CLIENT_IN_INITIAL_DOWNLOAD  = -10, //!< Still downloading initial blocks
     RPC_CLIENT_NODE_ALREADY_ADDED   = -23, //!< Node is already added
     RPC_CLIENT_NODE_NOT_ADDED       = -24, //!< Node has not been added before
@@ -81,6 +83,8 @@ enum RPCErrorCode
     RPC_WALLET_WRONG_ENC_STATE      = -15, //!< Command given in wrong wallet encryption state (encrypting an encrypted wallet etc.)
     RPC_WALLET_ENCRYPTION_FAILED    = -16, //!< Failed to encrypt the wallet
     RPC_WALLET_ALREADY_UNLOCKED     = -17, //!< Wallet is already unlocked
+    RPC_WALLET_NOT_FOUND            = -18, //!< Invalid wallet specified
+    RPC_WALLET_NOT_SPECIFIED        = -19, //!< No wallet specified (error when there are multiple wallets loaded)
 };
 
 UniValue JSONRPCRequestObj(const std::string& strMethod, const UniValue& params, const UniValue& id);
@@ -88,13 +92,13 @@ UniValue JSONRPCReplyObj(const UniValue& result, const UniValue& error, const Un
 std::string JSONRPCReply(const UniValue& result, const UniValue& error, const UniValue& id);
 UniValue JSONRPCError(int code, const std::string& message);
 
-/** Get name of RPC authentication cookie file */
-boost::filesystem::path GetAuthCookieFile();
 /** Generate a new RPC authentication cookie and write it to disk */
 bool GenerateAuthCookie(std::string *cookie_out);
 /** Read the RPC authentication cookie from disk */
 bool GetAuthCookie(std::string *cookie_out);
 /** Delete RPC authentication cookie from disk */
 void DeleteAuthCookie();
+/** Parse JSON-RPC batch reply into a vector */
+std::vector<UniValue> JSONRPCProcessBatchReply(const UniValue &in, size_t num);
 
 #endif // BITCOIN_RPCPROTOCOL_H

@@ -6,15 +6,8 @@
 #include "smartcontract-server.h"
 #include "util.h"
 #include "utilmoneystr.h"
-#include "rpcpodc.h"
 #include "rpcpog.h"
 #include "init.h"
-#include "activemasternode.h"
-#include "governance-classes.h"
-#include "governance.h"
-#include "masternode-sync.h"
-#include "masternode-payments.h"
-#include "masternodeconfig.h"
 #include "messagesigner.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
@@ -30,9 +23,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
-#ifdef ENABLE_WALLET
-extern CWallet* pwalletMain;
-#endif // ENABLE_WALLET
 
 //////////////////////////////////////////////////////////////////// DAC - SMART CONTRACTS - CLIENT SIDE ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -159,198 +149,19 @@ UniValue SentGSCCReport(int nHeight, std::string sMyCPK)
 						results.push_back(Pair(block.vtx[n]->GetHash().GetHex(), sReport));
 					}
 				}
-				else if (block.vtx[n]->IsABN() && CheckAntiBotNetSignature(block.vtx[n], "abn", ""))
-				{
-					std::string sCPK = GetTxCPK(block.vtx[n], sCampaignName);
-					double nWeight = GetAntiBotNetWeight(pindex->GetBlockTime(), block.vtx[n], true, "");
-					if (!sCPK.empty() && sMyCPK == sCPK)
-					{
-						std::string sReport = "ABN Weight: " + RoundToString(nWeight, 2) + ", Height: "+ RoundToString(pindex->nHeight, 0) + ", Date: " + sDate;
-						results.push_back(Pair(block.vtx[n]->GetHash().GetHex(), sReport));
-					}
-				}
 			}
 		}
 	}
 	results.push_back(Pair("Total", nTotalPoints));
 	return results;
 }
-
-double GetNecessaryCoinAgePercentageForPODC()
-{
-	std::string sCPID = GetResearcherCPID(std::string());
-	if (sCPID.empty())
-	{
-		LogPrintf("GetNecessaryCoinAgePercentage::Researcher Not Linked.%f\n", 801);
-		return 0;
-	}
-
-	Researcher r = mvResearchers[sCPID];
-	if (!r.found)
-	{
-		LogPrintf("GetNecessaryCoinAgePercentage::Researcher not participating with RAC in WCG.%f\n", 802);
-		return 0;
-	}
-	if (r.rac < 1)
-	{
-		LogPrintf("Researchers RAC < 1.%f\n", 803);
-		return 0;
-	}
-	CAmount nReqCoins = 0;
-	double nTotalCoinAge = pwalletMain->GetAntiBotNetWalletWeight(0, nReqCoins);
-	if (nTotalCoinAge < 1)
-	{
-		LogPrintf("Sorry, wallet coin age is below 1.%f\n", 804);
-		return 0;
-	}
-	double nReqForRAC = GetRequiredCoinAgeForPODC(r.rac, r.teamid);
-	if (nReqForRAC < 1)
-	{
-		LogPrintf("Sorry, accumulated coin-age is below 1.%f\n", 805);
-		return 0;
-	}
-	if (nReqForRAC > nTotalCoinAge)
-		nReqForRAC = nTotalCoinAge;
-
-	double nPerc = (nReqForRAC / nTotalCoinAge) + .01;
-	if (nPerc > .99) 
-		nPerc = .99;  // Leave a little room for the tx fee
-	return nPerc;
-}
 	
 
-CWalletTx CreateGSCClientTransmission(std::string sGobjectID, std::string sOutcome, std::string sCampaign, std::string sDiary, CBlockIndex* pindexLast, double nCoinAgePercentage, CAmount nFoundationDonation, 
-	CReserveKey& reservekey, std::string& sXML, std::string& sError, std::string& sWarning)
-{
-	CWalletTx wtx;
-
-	if (sCampaign == "HEALING" && sDiary.empty())
-	{
-		sError = "Sorry, Diary entry must be populated to create a Healing transmission.";
-		return wtx;
-	}
-
-	CAmount nReqCoins = 0;
-	double nCoinAge = pwalletMain->GetAntiBotNetWalletWeight(0, nReqCoins);
-	if (sCampaign == "WCG")
-	{
-		nCoinAgePercentage = GetNecessaryCoinAgePercentageForPODC();
-		LogPrintf("\nCreateGSCClientTransmission::Attempting to use %f in coinagepercentage.", nCoinAgePercentage);
-		if (nCoinAgePercentage > .95)
-		{
-			sWarning = "WARNING!  PODC is using " + RoundToString(nCoinAgePercentage, 2) + "% of your coin age.  This means your RAC will be reduced, resulting in a lower PODC reward. ";
-			// Side by side comparison - by Sun K. 
-			std::string sCPID = GetResearcherCPID(std::string());
-			if (!sCPID.empty())
-			{
-				Researcher r = mvResearchers[sCPID];
-				if (r.found && r.rac > 1)
-				{
-					double nReqForNonDac = GetRequiredCoinAgeForPODC(r.rac, r.teamid);
-					double nReqForDac = GetRequiredCoinAgeForPODC(r.rac, 35006);
-					sWarning += " (PODC Team Bible Pay requires " + RoundToString(nReqForDac, 0) + " in coin-age, while Non-Bible Pay teams require " + RoundToString(nReqForNonDac, 0) + ".) ";
-				}
-			}
-		}
-	}
-
-	CAmount nPayment1 = (nReqCoins * nCoinAgePercentage) + (1*COIN);
-	CAmount nTargetSpend = nPayment1 + nFoundationDonation;
-	double nTargetCoinAge = nCoinAge * nCoinAgePercentage;
-	
-	CAmount nBalance = pwalletMain->GetBalance();
-	LogPrintf("\nCreateGSCClientTransmission - Total Bal %f, Needed %f, Coin-Age %f, Target-Spend-Pct %f, FoundationDonationAmount %f ",
-		(double)nBalance/COIN, (double)nTargetSpend/COIN, nCoinAge, nCoinAgePercentage, (double)nFoundationDonation/COIN);
-
-	if (nTargetSpend > nBalance)
-	{
-		sError = "Sorry, your balance is lower than the required GSC Transmission amount.";
-		return wtx;
-	}
-
-	if (nTargetSpend < (.01 * COIN))
-	{
-		sError = "Sorry, GSC transmission amount is less than .01 coins.";
-		return wtx;
-	}
-
-	std::string sPubPurseKey = GetEPArg(true);
-	if (sPubPurseKey.empty())
-	{
-		sError = "Sorry, you must set up an external purse to send GSC transmissions.  Please type 'exec createpurse help'.";
-		return wtx;
-	}
-
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	CBitcoinAddress baCPKAddress(sCPK);
-	CScript spkCPKScript = GetScriptForDestination(baCPKAddress.Get());
-
-	CAmount nFeeRequired;
-	std::vector<CRecipient> vecSend;
-	int nChangePosRet = -1;
-	// R ANDREWS - Split change into 10 Bankroll Denominations - this makes smaller amounts available for ABNs
-	double nMinRequiredABNWeight = GetSporkDouble("requiredabnweight", 0);
-	bool fSubtractFeeFromAmount = true;
-	double dChangeQty = cdbl(GetArg("-changequantity", "10"), 2);
-	if (dChangeQty < 01) dChangeQty = 1;
-	if (dChangeQty > 50) dChangeQty = 50;
-
-	double iQty = (nPayment1/COIN) > nMinRequiredABNWeight ? dChangeQty : 1;
-	double nEach = (double)1 / iQty;
-	for (int i = 0; i < iQty; i++)
-	{
-		CAmount nIndividualAmount = nPayment1 * nEach;
-		CRecipient recipient = {spkCPKScript, nIndividualAmount, false, fSubtractFeeFromAmount};
-		vecSend.push_back(recipient); // This transmission is to Me
-	}
-	CBitcoinAddress baFoundation(consensusParams.FoundationAddress);
-    CScript spkFoundation = GetScriptForDestination(baFoundation.Get());
-	
-	if (nFoundationDonation > 0)
-	{
-		CRecipient recipientFoundation = {spkFoundation, nFoundationDonation, false, fSubtractFeeFromAmount};
-		vecSend.push_back(recipientFoundation);
-		LogPrintf(" Donating %f to the foundation. ", (double)nFoundationDonation/COIN);
-	}
-
-	std::string sMessage = GetRandHash().GetHex();
-	sXML += "<MT>GSCTransmission</MT><abnmsg>" + sMessage + "</abnmsg>";
-	std::string sSignature;
-	bool bSigned = SignStake(sCPK, sMessage, sError, sSignature);
-	if (!bSigned) 
-	{
-		sError = "SmartContractClient::CreateGSCTransmission::Failed to sign.";
-		return wtx;
-	}
-
-	sXML += "<gscsig>" + sSignature + "</gscsig><gobject>" + sGobjectID + "</gobject><outcome>" + sOutcome + "</outcome><abncpk>" + sCPK + "</abncpk><gsccampaign>" + sCampaign + "</gsccampaign><abnwgt>" 
-		+ RoundToString(nTargetCoinAge, 0) + "</abnwgt><diary>" + sDiary + "</diary>";
-	std::string strError;
-	
-	bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, strError, NULL, true, 
-		ALL_COINS, false, 0, sXML, nTargetCoinAge, nTargetSpend, .01, sPubPurseKey);
-
-	if (!fCreated)    
-	{
-		sError = "CreateGSCTransmission::Fail::" + strError;
-		return wtx;
-	}
-	bool fChecked = CheckAntiBotNetSignature(wtx.tx, "gsc", "");
-	if (!fChecked)
-	{
-		sError = "CreateGSCTransmission::Fail::Signing Failed.";
-		return wtx;
-	}
-
-	return wtx;
-}
 
 double UserSetting(std::string sName, double dDefault)
 {
 	boost::to_lower(sName);
-	double dConfigSetting = cdbl(GetArg("-" + sName, "0"), 4);
+	double dConfigSetting = cdbl(gArgs.GetArg("-" + sName, "0"), 4);
 	if (dConfigSetting == 0) 
 		dConfigSetting = dDefault;
 	return dConfigSetting;
@@ -438,13 +249,9 @@ bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fF
 
 	LogPrintf("\nSmartContract-Client::Creating Client side transaction for campaign %s ", sSpecificCampaignName);
 	std::string sXML;
-	CReserveKey reservekey(pwalletMain);
-	double nCoinAgePercentage = UserSetting(sSpecificCampaignName + "_coinagepercentage", nDefaultCoinAgePercentage);
+	CReserveKey reservekey(pwalletpog);
+	double nCoinAgePercentage = 0;
 	std::string sError2;
-	if (sSpecificCampaignName == "CAMEROON-ONE" || sSpecificCampaignName == "KAIROS")
-	{
-		nCoinAgePercentage = 0.0001;
-	}
 	CAmount nFoundationDonation = 0;
 	CWalletTx wtx = CreateGSCClientTransmission(sGobjectID, sOutcome, sSpecificCampaignName, sDiary, chainActive.Tip(), nCoinAgePercentage, nFoundationDonation, reservekey, sXML, sError, sWarning);
 	LogPrintf("\nCreated client side transmission - %s [%s] with txid %s ", sXML, sError, wtx.tx->GetHash().GetHex());
@@ -454,7 +261,7 @@ bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fF
 		return false;
 	}
 	CValidationState state;
-	if (!pwalletMain->CommitTransaction(wtx, reservekey, g_connman.get(), state,  NetMsgType::TX))
+	if (!pwalletpog->CommitTransaction(wtx, reservekey, g_connman.get(), state))
 	{
 			LogPrintf("\nCreateGSCTransmission::Unable to Commit transaction for campaign %s - %s", sSpecificCampaignName, wtx.tx->GetHash().GetHex());
 			sError = "GSC Commit failed " + sSpecificCampaignName;

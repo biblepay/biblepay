@@ -1,13 +1,15 @@
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "crypter.h"
-#include "crypto/aes.h"
-#include "crypto/sha512.h"
 
-#include "script/script.h"
-#include "script/standard.h"
-#include "util.h"
+#include <wallet/crypter.h>
+
+#include <crypto/aes.h>
+#include <crypto/sha512.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <util.h>
+
 #include <string>
 #include <vector>
 #include <boost/foreach.hpp>
@@ -21,6 +23,7 @@
 #include <openssl/pem.h> // For RSA Key Export
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include "utilstrencodings.h"
 
 
 bool fKeySetDAC;
@@ -36,8 +39,6 @@ const unsigned int KEY_AES        = 3;
 const unsigned int KEY_AES_IV     = 4;
 const unsigned int KEY_CLIENT_PRI = 5;
 // END RSA
-
-
 int CCrypter::BytesToKeySHA512AES(const std::vector<unsigned char>& chSalt, const SecureString& strKeyData, int count, unsigned char *key,unsigned char *iv) const
 {
     // This mimics the behavior of openssl's EVP_BytesToKey with an aes256cbc
@@ -52,8 +53,7 @@ int CCrypter::BytesToKeySHA512AES(const std::vector<unsigned char>& chSalt, cons
     CSHA512 di;
 
     di.Write((const unsigned char*)strKeyData.c_str(), strKeyData.size());
-    if(chSalt.size())
-        di.Write(&chSalt[0], chSalt.size());
+    di.Write(chSalt.data(), chSalt.size());
     di.Finalize(buf);
 
     for(int i = 0; i != count - 1; i++)
@@ -107,7 +107,7 @@ bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned
     vchCiphertext.resize(vchPlaintext.size() + AES_BLOCKSIZE);
 
     AES256CBCEncrypt enc(vchKey.data(), vchIV.data(), true);
-    size_t nLen = enc.Encrypt(&vchPlaintext[0], vchPlaintext.size(), &vchCiphertext[0]);
+    size_t nLen = enc.Encrypt(&vchPlaintext[0], vchPlaintext.size(), vchCiphertext.data());
     if(nLen < vchPlaintext.size())
         return false;
     vchCiphertext.resize(nLen);
@@ -126,7 +126,7 @@ bool CCrypter::Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingM
     vchPlaintext.resize(nLen);
 
     AES256CBCDecrypt dec(vchKey.data(), vchIV.data(), true);
-    nLen = dec.Decrypt(&vchCiphertext[0], vchCiphertext.size(), &vchPlaintext[0]);
+    nLen = dec.Decrypt(vchCiphertext.data(), vchCiphertext.size(), &vchPlaintext[0]);
     if(nLen == 0)
         return false;
     vchPlaintext.resize(nLen);
@@ -138,18 +138,13 @@ static bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMateri
 {
     CCrypter cKeyCrypter;
     std::vector<unsigned char> chIV(WALLET_CRYPTO_IV_SIZE);
-    memcpy(&chIV[0], &nIV, WALLET_CRYPTO_IV_SIZE);
+    memcpy(chIV.data(), &nIV, WALLET_CRYPTO_IV_SIZE);
     if(!cKeyCrypter.SetKey(vMasterKey, chIV))
         return false;
     return cKeyCrypter.Encrypt(*((const CKeyingMaterial*)&vchPlaintext), vchCiphertext);
 }
 
-std::string RPAD(std::string sUnpadded, int nLength)
-{
-	sUnpadded += "0000000000000000000000000000000000000000000000000000000000000000";
-	sUnpadded = sUnpadded.substr(0, nLength);
-	return sUnpadded;
-}
+
 
 std::string DecryptAES256WithIV(std::string s64, std::string sKey, std::string sIV)
 {
@@ -309,7 +304,7 @@ static bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<u
 {
     CCrypter cKeyCrypter;
     std::vector<unsigned char> chIV(WALLET_CRYPTO_IV_SIZE);
-    memcpy(&chIV[0], &nIV, WALLET_CRYPTO_IV_SIZE);
+    memcpy(chIV.data(), &nIV, WALLET_CRYPTO_IV_SIZE);
     if(!cKeyCrypter.SetKey(vMasterKey, chIV))
         return false;
     return cKeyCrypter.Decrypt(vchCiphertext, *((CKeyingMaterial*)&vchPlaintext));
@@ -511,7 +506,7 @@ int64_t GETFILESIZE2(std::string sPath)
 
 std::string GetSANDirectory3()
 {
-	 boost::filesystem::path pathConfigFile(GetArg("-conf", GetConfFileName()));
+	 boost::filesystem::path pathConfigFile(gArgs.GetArg("-conf", GetConfFileName()));
      if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
 	 boost::filesystem::path dir = pathConfigFile.parent_path();
 	 std::string sDir = dir.string() + "/SAN/";
@@ -636,8 +631,6 @@ unsigned char *RSA_DECRYPT_CHAR(std::string sPriKeyPath, unsigned char *cipherte
 	// Now we have our encrypted_key and the iv we can decrypt the remaining
 	if (!EVP_OpenInit(ctx, EVP_des_ede_cbc(), encrypted_key, encrypted_key_length, iv, pkey))
 	{
-		LogPrintf("Key file loc %s", sPriKeyPath.c_str());
-		fprintf(stderr, "RSADecrypt::EVP_OpenInit: failed. \n");
 		sError = "EVP_OpenInit Failed.";
 		return plaintext;
 	}
@@ -809,6 +802,35 @@ bool CCryptoKeyStore::SetCrypted()
     return true;
 }
 
+// This function should be used in a different combinations to determine
+// if CCryptoKeyStore is fully locked so that no operations requiring access
+// to private keys are possible:
+//      IsLocked(true)
+// or if CCryptoKeyStore's private keys are available for mixing only:
+//      !IsLocked(true) && IsLocked()
+// or if they are available for everything:
+//      !IsLocked()
+bool CCryptoKeyStore::IsLocked(bool fForMixing) const
+{
+    if (!IsCrypted())
+        return false;
+    bool result;
+    {
+        LOCK(cs_KeyStore);
+        result = vMasterKey.empty();
+    }
+    // fForMixing   fOnlyMixingAllowed  return
+    // ---------------------------------------
+    // true         true                result
+    // true         false               result
+    // false        true                true
+    // false        false               result
+
+    if(!fForMixing && fOnlyMixingAllowed) return true;
+
+    return result;
+}
+
 bool CCryptoKeyStore::Lock(bool fAllowMixing)
 {
     if (!SetCrypted())
@@ -880,96 +902,113 @@ bool CCryptoKeyStore::Unlock(const CKeyingMaterial& vMasterKeyIn, bool fForMixin
 
 bool CCryptoKeyStore::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
 {
-    {
-        LOCK(cs_KeyStore);
-        if (!IsCrypted())
-            return CBasicKeyStore::AddKeyPubKey(key, pubkey);
+    LOCK(cs_KeyStore);
+    if (!IsCrypted()) {
+        return CBasicKeyStore::AddKeyPubKey(key, pubkey);
+    }
 
-        if (IsLocked(true))
-            return false;
+    if (IsLocked(true)) {
+        return false;
+    }
 
-        std::vector<unsigned char> vchCryptedSecret;
-        CKeyingMaterial vchSecret(key.begin(), key.end());
-        if (!EncryptSecret(vMasterKey, vchSecret, pubkey.GetHash(), vchCryptedSecret))
-            return false;
+    std::vector<unsigned char> vchCryptedSecret;
+    CKeyingMaterial vchSecret(key.begin(), key.end());
+    if (!EncryptSecret(vMasterKey, vchSecret, pubkey.GetHash(), vchCryptedSecret)) {
+        return false;
+    }
 
-        if (!AddCryptedKey(pubkey, vchCryptedSecret))
-            return false;
+    if (!AddCryptedKey(pubkey, vchCryptedSecret)) {
+        return false;
     }
     return true;
 }
 
+
 bool CCryptoKeyStore::AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret)
 {
-    {
-        LOCK(cs_KeyStore);
-        if (!SetCrypted())
-            return false;
-
-        mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
+    LOCK(cs_KeyStore);
+    if (!SetCrypted()) {
+        return false;
     }
+
+    mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
     return true;
+}
+
+bool CCryptoKeyStore::HaveKey(const CKeyID &address) const
+{
+    LOCK(cs_KeyStore);
+    if (!IsCrypted()) {
+        return CBasicKeyStore::HaveKey(address);
+    }
+    return mapCryptedKeys.count(address) > 0;
 }
 
 bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey& keyOut) const
 {
-    {
-        LOCK(cs_KeyStore);
-        if (!IsCrypted())
-            return CBasicKeyStore::GetKey(address, keyOut);
-
-        CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-        if (mi != mapCryptedKeys.end())
-        {
-            const CPubKey &vchPubKey = (*mi).second.first;
-            const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
-            return DecryptKey(vMasterKey, vchCryptedSecret, vchPubKey, keyOut);
-        }
+    LOCK(cs_KeyStore);
+    if (!IsCrypted()) {
+        return CBasicKeyStore::GetKey(address, keyOut);
     }
-	
+
+    CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
+    if (mi != mapCryptedKeys.end())
+    {
+        const CPubKey &vchPubKey = (*mi).second.first;
+        const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
+        return DecryptKey(vMasterKey, vchCryptedSecret, vchPubKey, keyOut);
+    }
     return false;
 }
 
 bool CCryptoKeyStore::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const
 {
-    {
-        LOCK(cs_KeyStore);
-        if (!IsCrypted())
-            return CBasicKeyStore::GetPubKey(address, vchPubKeyOut);
-
-        CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-        if (mi != mapCryptedKeys.end())
-        {
-            vchPubKeyOut = (*mi).second.first;
-            return true;
-        }
-        // Check for watch-only pubkeys
+    LOCK(cs_KeyStore);
+    if (!IsCrypted())
         return CBasicKeyStore::GetPubKey(address, vchPubKeyOut);
+
+    CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
+    if (mi != mapCryptedKeys.end())
+    {
+        vchPubKeyOut = (*mi).second.first;
+        return true;
     }
-    return false;
+    // Check for watch-only pubkeys
+    return CBasicKeyStore::GetPubKey(address, vchPubKeyOut);
+}
+
+std::set<CKeyID> CCryptoKeyStore::GetKeys() const
+{
+    LOCK(cs_KeyStore);
+    if (!IsCrypted()) {
+        return CBasicKeyStore::GetKeys();
+    }
+    std::set<CKeyID> set_address;
+    for (const auto& mi : mapCryptedKeys) {
+        set_address.insert(mi.first);
+    }
+    return set_address;
 }
 
 bool CCryptoKeyStore::EncryptKeys(CKeyingMaterial& vMasterKeyIn)
 {
-    {
-        LOCK(cs_KeyStore);
-        if (!mapCryptedKeys.empty() || IsCrypted())
-            return false;
+    LOCK(cs_KeyStore);
+    if (!mapCryptedKeys.empty() || IsCrypted())
+        return false;
 
-        fUseCrypto = true;
-        BOOST_FOREACH(KeyMap::value_type& mKey, mapKeys)
-        {
-            const CKey &key = mKey.second;
-            CPubKey vchPubKey = key.GetPubKey();
-            CKeyingMaterial vchSecret(key.begin(), key.end());
-            std::vector<unsigned char> vchCryptedSecret;
-            if (!EncryptSecret(vMasterKeyIn, vchSecret, vchPubKey.GetHash(), vchCryptedSecret))
-                return false;
-            if (!AddCryptedKey(vchPubKey, vchCryptedSecret))
-                return false;
-        }
-        mapKeys.clear();
+    fUseCrypto = true;
+    for (KeyMap::value_type& mKey : mapKeys)
+    {
+        const CKey &key = mKey.second;
+        CPubKey vchPubKey = key.GetPubKey();
+        CKeyingMaterial vchSecret(key.begin(), key.end());
+        std::vector<unsigned char> vchCryptedSecret;
+        if (!EncryptSecret(vMasterKeyIn, vchSecret, vchPubKey.GetHash(), vchCryptedSecret))
+            return false;
+        if (!AddCryptedKey(vchPubKey, vchCryptedSecret))
+            return false;
     }
+    mapKeys.clear();
     return true;
 }
 
@@ -1110,4 +1149,11 @@ bool CCryptoKeyStore::GetHDChain(CHDChain& hdChainRet) const
 
     hdChainRet = hdChain;
     return !hdChain.IsNull();
+}
+
+std::string RPAD(std::string sUnpadded, int nLength)
+{
+	sUnpadded += "0000000000000000000000000000000000000000000000000000000000000000";
+	sUnpadded = sUnpadded.substr(0, nLength);
+	return sUnpadded;
 }

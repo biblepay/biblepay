@@ -5,15 +5,8 @@
 #include "smartcontract-server.h"
 #include "util.h"
 #include "utilmoneystr.h"
-#include "rpcpog.h"
-#include "rpcpodc.h"
 #include "smartcontract-client.h"
 #include "init.h"
-#include "activemasternode.h"
-#include "governance-classes.h"
-#include "governance.h"
-#include "masternode-sync.h"
-#include "masternode-payments.h"
 #include "messagesigner.h"
 #include "spork.h"
 #include <boost/lexical_cast.hpp>
@@ -27,12 +20,13 @@
 #include <stdint.h>
 #include <univalue.h>
 #include <fstream>
+#include <masternode/masternode-sync.h>
+#include <masternode/activemasternode.h>
+#include "rpcutxo.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <cmath>
-#ifdef ENABLE_WALLET
-extern CWallet* pwalletMain;
-#endif // ENABLE_WALLET
+
 
 void GetTransactionPoints(CBlockIndex* pindex, CTransactionRef tx, double& nCoinAge, CAmount& nDonation)
 {
@@ -179,7 +173,7 @@ double GetProminenceCap(std::string sCampaignName, double nPoints, double nPromi
 	}
 	int nNextSuperblock = 0;
 	int nLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, nNextSuperblock);
-	CAmount nBudget = CSuperblock::GetPaymentsLimit(nNextSuperblock, GetAdjustedTime(), false);
+	CAmount nBudget = CSuperblock::GetPaymentsLimit(nNextSuperblock);
 	if (nBudget < 1)
 		return 0;
 	double nPaymentsLimit = (nBudget / COIN);
@@ -190,12 +184,8 @@ double GetProminenceCap(std::string sCampaignName, double nPoints, double nPromi
 		// Cap is in effect, so reverse engineer the payment to the actual market value
 		double nProjectedAmount = nUSDSpent / nPrice;
 		double nProjectedProminence = nProjectedAmount / nPaymentsLimit;
-		if (fDebugSpam)
-			LogPrintf(" GetProminenceCap Exceeded - new prominence %f ", nProjectedProminence);
 		nProminence = nProjectedProminence;
 	}
-	if (fDebugSpam)
-		LogPrintf("\n GetProminenceCap Points %f, Prominence %f, USD Price %f, UserReward %f  ", nPoints, nProminence, nPrice, nRewardUSD);
 	return nProminence;
 }
 
@@ -336,7 +326,7 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	std::vector<std::pair<double, uint256> > vProposalsInBudget;
 	vProposalsInBudget.reserve(objs.size() + 1);
     
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nNextSuperblock, 0, false);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nNextSuperblock);
 	CAmount nSpent = 0;
 	for (auto item : vProposalsSortedByVote)
     {
@@ -357,8 +347,7 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	for (auto item : vProposalsInBudget)
     {
 		DACProposal p = GetProposalByHash(item.second, nLastSuperblock);
-		CBitcoinAddress cbaAddress(p.sAddress);
-		if (cbaAddress.IsValid() && p.nAmount > .01)
+		if (ValidateAddress2(p.sAddress) && p.nAmount > .01)
 		{
 			sAddresses += p.sAddress + "|";
 			sPayments += RoundToString(p.nAmount, 2) + "|";
@@ -501,8 +490,9 @@ std::map<std::string, double> DACEngine(std::map<std::string, Orphan>& mapOrphan
 		// If address is valid, and amount is > 0:
 		if (!sAddress.empty() && npct > 0)
 		{
-			CBitcoinAddress cbaAddress(sAddress);
-			if (cbaAddress.IsValid())
+			CTxDestination dest = DecodeDestination(sAddress);
+		    bool isValid = IsValidDestination(dest);
+			if (isValid)
 			{
 				mapDAC[sAddress] = npct;
 			}
@@ -522,57 +512,6 @@ std::string GetGSCContract(int nHeight, bool fCreating)
 	return sContract;
 }
 
-static int LEGACY_WHALE_STAKE_AMOUNT = 10000000;
-static int NEW_WHALE_STAKE_AMOUNT = 2000000;
-
-double GetDACDonationTotals(int nHeight, int nTime)
-{
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-
-	// The plan is to use this function until all the legacy whale stakes (RPC: dws, dwsquote) are paid back to the stakers (IE until around September 2021).
-	// Then we can remove this and go back to standard exact block totals as is done in bitcoin and dash.
-	// This is possible because as of Feb 2021, we moved away from the Burn->CoinbaseReward model, over to the Stake->DailyGSCReward model.
-
-	double n1 = 0;
-	double n2 = 0;
-	if (nHeight < consensusParams.TRIBULATION_HEIGHT || nTime < (GetAdjustedTime() - (86400*2)))
-	{
-		return LEGACY_WHALE_STAKE_AMOUNT;
-	}
-	else
-	{
-		// Go by strict rules until function is removed
-		n1 += NEW_WHALE_STAKE_AMOUNT;
-	}
-
-	std::string sContract = AssessBlocks(nHeight, true);
-	
-	n1 += cdbl(ExtractXML(sContract, "<DWSTOTAL>", "</DWSTOTAL>"), 2);
-	n2 += cdbl(ExtractXML(sContract, "<DSTOTAL>", "</DSTOTAL>"), 2);
-
-	if (n1 > MAX_DAILY_WHALE_COMMITMENTS)
-	{
-		LogPrintf("MAX_DAILY_WHALE_COMMITMENTS EXCEEDED; LIMITING %f", n1);
-		n1 = MAX_DAILY_WHALE_COMMITMENTS;
-	}
-
-	if (n2 > MAX_DAILY_DASH_STAKE_COMMITMENTS)
-	{
-		LogPrintf("MAX_DAILY_DASH_STAKE_COMMITMENTS EXCEEDED; LIMITING %f", n2);
-		n2 = MAX_DAILY_DASH_STAKE_COMMITMENTS;
-	}
-
-	double n3 = cdbl(ExtractXML(sContract, "<DACTOTAL>", "</DACTOTAL>"), 2);
-
-	if (n3 > MAX_DAILY_DAC_DONATIONS)
-	{
-		LogPrintf("MAX_DAILY_DAC_DONATIONS_EXCEEDED; LIMITING %f", n3);
-		n3 = MAX_DAILY_DAC_DONATIONS;
-	}
-	LogPrintf(" DWS %f, Dash %f, Donations %f ", n1, n2, n3);
-	return n1 + n2 + n3;
-}
-
 
 double CalculatePoints(std::string sCampaign, std::string sDiary, double nCoinAge, CAmount nDonation, std::string sCPK)
 {
@@ -580,20 +519,9 @@ double CalculatePoints(std::string sCampaign, std::string sDiary, double nCoinAg
 	double nPoints = 0;
 
 	if (sCampaign == "WCG")
-	{
-		return nCoinAge;
-	}
+		return 0;
 	else if (sCampaign == "POG")
-	{
-		// This project is being retired
-		double nComponent1 = nCoinAge;
-		double nTithed = (double)nDonation / COIN;
-		if (nTithed < .25) nTithed = 0;
-		double nTitheFactor = GetSporkDouble("pogtithefactor", 1);
-		double nComponent2 = cbrt(nTithed) * nTitheFactor;
-		nPoints = (nComponent1 * nComponent2) / 1000;
-		return nPoints;
-	}
+		return 0;
 	else if (sCampaign == "HEALING")
 	{
 		double nMultiplier = sDiary.empty() ? 0 : 1;
@@ -640,7 +568,7 @@ bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOu
 		return false;
     }
 
-    CGovernanceVote vote(dmn->collateralOutpoint, govobj, eVoteSignal, eVoteOutcome, "10");
+    CGovernanceVote vote(dmn->collateralOutpoint, govobj, eVoteSignal, eVoteOutcome);
 
     bool signSuccess = false;
     if (govObjType == GOVERNANCE_OBJECT_PROPOSAL && eVoteSignal == VOTE_SIGNAL_FUNDING)
@@ -809,11 +737,9 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 
 	LogPrintf("\nAssessBlocks Height %f ", nHeight);
 
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, 0, false);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight);
 
 	nPaymentsLimit -= MAX_BLOCK_SUBSIDY * COIN;
-
-	std::map<std::string, Researcher> Researchers = GetPayableResearchers();
 
 	if (!chainActive.Tip()) 
 		return std::string();
@@ -830,11 +756,10 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	std::map<std::string, double> mCampaignPoints;
 	std::map<std::string, CPK> mCPKCampaignPoints;
 	std::map<std::string, double> mCampaigns;
-	double dDebugLevel = cdbl(GetArg("-debuglevel", "0"), 0);
+	double dDebugLevel = cdbl(gArgs.GetArg("-debuglevel", "0"), 0);
 	std::string sDiaries;
 	std::string sAnalyzeUser = ReadCache("analysis", "user");
 	std::string sAnalysisData1;
-	//double nTotalDonations = 0;
 	while (pindex && pindex->nHeight < nMaxDepth)
 	{
 		if (pindex->nHeight < chainActive.Tip()->nHeight) 
@@ -844,30 +769,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		{
 			for (unsigned int n = 0; n < block.vtx.size(); n++)
 			{
-				/*
-				// R Andrews - Biblepay DAC - 11-7-2020 - Memorize burns sent as either Orphan Donations, or Whale Matches:
-				
-				for (unsigned int i = 0; i < block.vtx[n]->vout.size(); i++)
-				{
-					std::string sCharityMessage = block.vtx[n]->vout[i].sTxOutMessage;
-					double dBurnAmount = block.vtx[n]->vout[i].nValue / COIN;
-					std::string sPK = PubKeyToAddress(block.vtx[n]->vout[i].scriptPubKey);
-
-					if (sPK == consensusParams.BurnAddressOrphanDonations || sPK == consensusParams.BurnAddressWhaleMatches)
-					{
-						if (nTotalDonations + dBurnAmount < MAX_DAILY_DAC_DONATIONS)
-						{
-							std::string DataRow = "<BURN><RECIPIENT>" + sPK + "</RECIPIENT><AMOUNT>" + RoundToString(dBurnAmount, 2) + "</AMOUNT><CHARITYMESSAGE>" + sCharityMessage + "</CHARITYMESSAGE></BURN>";
-							nTotalDonations += dBurnAmount;
-						}
-						
-					}
-				}
-				// End of DAC
-				// NOTE:  We are moving this to rpc::donation, and QT-UI SendMoney checkbox "Donate to Foundation"... Once tested, we can remove this in prod
-				*/
-
-
 				if (block.vtx[n]->IsGSCTransmission() && CheckAntiBotNetSignature(block.vtx[n], "gsc", ""))
 				{
 					std::string sCampaignName;
@@ -881,25 +782,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 						std::string sDiary = ExtractXML(block.vtx[n]->GetTxMessage(), "<diary>", "</diary>");
 						double nPoints = CalculatePoints(sCampaignName, sDiary, nCoinAge, nDonation, sCPK);
 
-						if (sCampaignName == "WCG" && nPoints > 0)
-						{
-							std::string sCPID = GetCPIDByCPK(sCPK);
-
-							Researcher r = Researchers[sCPID];
-							if (r.found)
-							{
-								r.CoinAge += nPoints;
-								r.CPK = sCPK;
-								Researchers[sCPID] = r;
-							}
-							else
-							{
-								LogPrintf("\nAssessBlocks::Unable to find researcher for CPK %s with CPID %s", sCPK, sCPID);
-							}
-							nPoints = 0;
-						}
-
-						
 						if (nPoints > 0)
 						{
 							// CPK 
@@ -919,9 +801,9 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 							mCPKCampaignPoints[sCPK + sCampaignName] = cCPKCampaignPoints;
 							if (dDebugLevel == 1)
 								LogPrintf("\nUser %s , NN %s, Diary %s, height %f, TXID %s, nn %s, Points %f, Campaign %s, coinage %f, donation %f, usertotal %f ",
-								c.sAddress, localCPK.sNickName, sDiary, pindex->nHeight, block.vtx[n]->GetHash().GetHex(), localCPK.sNickName, 
-								(double)nPoints, c.sCampaign, (double)nCoinAge, 
-								(double)nDonation/COIN, (double)c.nPoints);
+									c.sAddress, localCPK.sNickName, sDiary, pindex->nHeight, block.vtx[n]->GetHash().GetHex(), localCPK.sNickName, 
+									(double)nPoints, c.sCampaign, (double)nCoinAge, 
+									(double)nDonation/COIN, (double)c.nPoints);
 							if (!sAnalyzeUser.empty() && sAnalyzeUser == c.sNickName)
 							{
 								std::string sInfo = "User: " + c.sAddress + ", Diary: " + sDiary + ", Height: " + RoundToString(pindex->nHeight, 2)
@@ -955,15 +837,11 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 			if (d.found && d.nValue > 0)
 			{
 				int nStatus = GetUTXOStatus(d.TXID);
-				LogPrintf("\nLeaderboard::UTXO1 nStatus %f", nStatus);
-
 				if (nStatus > 0)
 				{
 					// Entry into the UTXO campaign
 					UserRecord u = GetUserRecord(d.CPK);
 					{
-						LogPrintf("\nLeaderboard::UTXO1 cpk %s", d.CPK);
-
 						// Legacy code that adds a CPK reward, then a CPK-Campgin reward
 						CPK c = mPoints[d.CPK];
 						c.sCampaign = sThisCampaign;
@@ -973,7 +851,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 						c.nPoints += nPoints;
 						mCampaignPoints[sThisCampaign] += nPoints;
 						mPoints[d.CPK] = c;
-							
 						// CPK-Campaign
 						CPK cCPKCampaignPoints = mCPKCampaignPoints[d.CPK + sThisCampaign];
 						cCPKCampaignPoints.sAddress = d.CPK;
@@ -989,84 +866,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 
 	
 	
-	// PODC 2.0
-	// This dedicated area allows us to pay the unbanked each day *or* the researchers with collateral staked.
-	// (In contrast to paying the list of collateralized CPIDs).
-	std::string sCampaignName = "WCG";
-	BOOST_FOREACH(PAIRTYPE(std::string, Researcher) r, Researchers)
-	{
-		if (r.second.found && r.second.cpid.length() == 32)
-		{
-			double nCoinAgeRequired = GetRequiredCoinAgeForPODC(r.second.rac, r.second.teamid);
-			if (nCoinAgeRequired > r.second.CoinAge && nCoinAgeRequired != N_MAX)
-			{
-				// Reduce the researchers RAC to the applicable coinAge staked:
-				double nPODCConfig = GetSporkDouble("mandatory1485", 0);
-				if (nPODCConfig == 1)
-				{
-					// Maintain PODC consensus compatibility until 1.4.8.5 cutover height for sanctuaries is announced (TBD)
-					double nExponent = (r.second.teamid == 35006) ? 1.3 : 1.6;
-					r.second.rac = pow(r.second.CoinAge - 1, 1/nExponent);
-				}
-				else
-				{
-					r.second.rac = pow(r.second.rac - 1, 1/1.3);
-				}
-
-				nCoinAgeRequired = GetRequiredCoinAgeForPODC(r.second.rac, r.second.teamid);
-			}
-
-			bool fApplicable = r.second.CoinAge >= nCoinAgeRequired;
-			if (!fApplicable)
-			{
-				if (fDebug && nCoinAgeRequired != N_MAX)
-					LogPrintf("\nAssessBlocks::Researcher not applicable because CoinAge req %f is less than %f for CPID %s", nCoinAgeRequired, r.second.CoinAge, r.second.cpid);
-			}
-			else 
-			{
-				std::string sCPK = GetCPKByCPID(r.second.cpid);
-				if (!sCPK.empty())
-				{
-					double nPoints = r.second.rac * 1;
-					// CPK 
-					CPK c = mPoints[sCPK];
-					c.sCampaign = sCampaignName;
-					c.sAddress = sCPK;
-					CPK localCPK = GetCPKFromProject("cpk", sCPK);
-					c.sNickName = localCPK.sNickName;
-					c.nPoints += nPoints;
-					c.cpid = r.second.cpid;
-					mCampaignPoints[sCampaignName] += nPoints;
-					mPoints[sCPK] = c;
-					// CPK-Campaign
-					CPK cCPKCampaignPoints = mCPKCampaignPoints[sCPK + sCampaignName];
-					cCPKCampaignPoints.sAddress = sCPK;
-					cCPKCampaignPoints.sNickName = c.sNickName;
-					cCPKCampaignPoints.nPoints += nPoints;
-					cCPKCampaignPoints.cpid = r.second.cpid;
-					mCPKCampaignPoints[sCPK + sCampaignName] = cCPKCampaignPoints;
-					if (dDebugLevel == 1)
-					{
-						LogPrintf("\nCPK %s , NN %s, Points %f, Campaign %s, coinage %f, usertotal %f ",
-								sCPK, localCPK.sNickName, (double)nPoints, c.sCampaign, (double)r.second.CoinAge, (double)c.nPoints);
-					}
-					if (!sAnalyzeUser.empty() && sAnalyzeUser == c.sNickName)
-					{
-						std::string sInfo = "User: " + sCPK + ", NickName: " 
-										+ localCPK.sNickName + ", Points: " + RoundToString(nPoints, 2) 
-										+ ", Campaign: " + c.sCampaign + ", CoinAge: " + RoundToString(r.second.CoinAge, 4) 
-										+ ", CPID: " + r.second.cpid + ", RAC: " + RoundToString(r.second.rac, 4) 
-										+ ", UserTotal: " + RoundToString(c.nPoints, 2) + "\n";
-						sAnalysisData1 += sInfo;
-					}
-				}
-			}
-		}
-	}
-	
-	// End of PODC 2.0
-
-	
 	std::string sData;
 	std::string sGenData;
 	std::string sDetails;
@@ -1079,9 +878,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		double nCampaignPercentage = GetSporkDouble(sCampaignName + "campaignpercentage", 0);
 		if (nCampaignPercentage < 0) nCampaignPercentage = 0;
 		double nCampaignPoints = mCampaignPoints[sCampaignName];
-		if (fDebugSpam)
-			LogPrintf("\n SCS-AssessBlocks::Processing Campaign %s (%f), Payment Pctg [%f], TotalPoints %f ", 
-			myCampaign.first, myCampaign.second, nCampaignPercentage, nCampaignPoints);
 		nCampaignPoints += 1;
 		nTotalPoints += nCampaignPoints;
 		for (auto Members : mPoints)
@@ -1093,9 +889,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 			double nCap = GetProminenceCap(sCampaignName, mCPKCampaignPoints[sKey].nPoints, nPreProminence);
 			mCPKCampaignPoints[sKey].nProminence = nCap;
 
-			if (fDebugSpam)
-				LogPrintf("\nUser %s, Campaign %s, Points %f, Prominence %f ", mCPKCampaignPoints[sKey].sAddress, sCampaignName, 
-				mCPKCampaignPoints[sKey].nPoints, mCPKCampaignPoints[sKey].nProminence);
 			std::string sLCN = sCampaignName == "WCG" && !Members.second.cpid.empty() ? sCampaignName + "-" + Members.second.cpid : sCampaignName;
 			std::string sRow = sLCN + "|" + Members.second.sAddress + "|" + RoundToString(mCPKCampaignPoints[sKey].nPoints, 0) + "|" 
 				+ RoundToString(mCPKCampaignPoints[sKey].nProminence, 8) + "|" + Members.second.sNickName + "|" + 
@@ -1132,8 +925,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	for (auto Members : mPoints)
 	{
 		CAmount nPayment = Members.second.nProminence * nPaymentsLimit * nMaxContractPercentage;
-		CBitcoinAddress cbaAddress(Members.second.sAddress);
-		if (cbaAddress.IsValid() && nPayment > (GSC_MIN_PAYMENT * COIN))
+		if (ValidateAddress2(Members.second.sAddress) && nPayment > (GSC_MIN_PAYMENT * COIN))
 		{
 			sAddresses += Members.second.sAddress + "|";
 			if (nGSCContractType == 0)
@@ -1167,91 +959,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		QTData = "<QTDATA><QTPHASE>" + RoundToString(CalculateAPM(nHeight), 0) + "</QTPHASE><BBPPRICE>" + RoundToString(out_BBP, 12) + "</BBPPRICE><PRICE>" 
 			+ RoundToString(dPrice, 12) + "</PRICE><BTCPRICE>" + RoundToString(out_BTC, 2) + "</BTCPRICE></QTDATA>";
 
-		std::string DWSData;
-		// Dynamic Whale Staking - R Andrews - 11/11/2019
-		double dTotalWhalePayments = 0;
-		std::vector<WhaleStake> dws = GetPayableWhaleStakes(nHeight, dTotalWhalePayments);
-		for (int iWhale = 0; iWhale < dws.size(); iWhale++)
-		{
-			WhaleStake ws = dws[iWhale];
-			// We already verified:  Burn was made successfully to the burn address, DWU has been checked for accuracy, DWU bounds and owed bounds has been checked, and the daily limit has been enforced
-			// Note:  This vector only contains mature (owed) burns for this day.
-			if (ws.found && ws.TotalOwed > 0 && !ws.ReturnAddress.empty())
-			{
-				sAddresses += ws.ReturnAddress + "|";
-				sPayments += RoundToString(ws.TotalOwed, 4) + "|";
-				DWSData += "<DWSROW><DWSADDR>" + ws.ReturnAddress + "</DWSADDR><DWSAMT>" + RoundToString(ws.TotalOwed, 4) + "</DWSAMT></DWSROW>";
-			}
-		}
-		DWSData += "<DWSTOTAL>" + RoundToString(dTotalWhalePayments, 4) + "</DWSTOTAL>";
-		QTData += DWSData;
-		LogPrintf("\nCreating GSC Contract with Whale Payments=%f over %f recs.", dTotalWhalePayments, dws.size());
-		// End of Dynamic Whale Staking 
-		// Note that we need to leave Dynamic Whale Staking in until the last stake is paid 
-
-
-
-
-		// Dash Staking - R Andrews - 8/16/2020
-		std::string DSData;
-
-		if (nHeight < consensusParams.TRIBULATION_HEIGHT)
-		{
-			double dTotalDashPayments = 0;
-			std::vector<DashStake> dash = GetPayableDashStakes(nHeight, dTotalDashPayments);
-			for (int iDash = 0; iDash < dash.size(); iDash++)
-			{
-				DashStake ws1 = dash[iDash];
-				if (ws1.found && ws1.MonthlyEarnings > 0 && !ws1.ReturnAddress.empty())
-				{
-					sAddresses += ws1.ReturnAddress + "|";
-					sPayments += RoundToString(ws1.MonthlyEarnings, 4) + "|";
-					DSData += "<DSADDR>" + ws1.ReturnAddress + "</DSADDR><DSAMT>" + RoundToString(ws1.MonthlyEarnings, 4) + "</DSAMT>";
-				}
-			}
-			DSData += "<DSTOTAL>" + RoundToString(dTotalDashPayments, 4) + "</DSTOTAL>";
-			QTData += DSData;
-			LogPrintf("\nCreating GSC With Dash Payments=%f over %f recs", dTotalDashPayments, dash.size());
-			// End of Dash Staking
-		}
-
-
-
-
-		/*
-		// R Andrews - 11-7-2020 - DAC (Decentralized Automonous Charity - Pay our Charities in a decentralized way):
-		std::vector<std::string> vPayments = Split(Data.c_str(), "<BURN>");
-		std::map<std::string, double> mapDAC = ();
-		if (mapDAC.size() > 0)
-		{
-
-			for (int i = 0; i < vPayments.size(); i++)
-			{
-				std::string sDacPayment = vPayments[i];
-				std::string sRecipient = ExtractXML(sDacPayment, "<RECIPIENT>", "</RECIPIENT>");
-				double nAmount = cdbl(ExtractXML(sDacPayment, "<AMOUNT>", "</AMOUNT>"), 2);
-				if (!sRecipient.empty() && nAmount > 0)
-				{
-					if (sRecipient == consensusParams.BurnAddressOrphanDonations || sRecipient == consensusParams.BurnAddressWhaleMatches)
-					{
-						for (auto dacAllocation : mapDAC)
-						{
-							std::string sAllocatedCharity = dacAllocation.first;
-							double nPct = dacAllocation.second;
-							double nAllocationAmount = nAmount * nPct;
-							if (nPct <= 1 && nAllocationAmount > 0)
-							{
-									sAddresses += sAllocatedCharity + "|";
-									sPayments += RoundToString(nAllocationAmount, 4) + "|";
-							}
-
-						}
-					}
-				}
-			}
-		}
-		// End of DAC
-		*/
 
 		// Sanctuary Spork Voting
 		// For each winning Sanctuary Spork proposal
@@ -1363,7 +1070,7 @@ std::vector<std::pair<int64_t, uint256>> GetGSCSortedByGov(int nHeight, uint256 
 
 bool IsOverBudget(int nHeight, int64_t nTime, std::string sAmounts)
 {
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, nTime, true);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight);
 	if (sAmounts.empty()) return false;
 	std::vector<std::string> vPayments = Split(sAmounts.c_str(), "|");
 	double dTotalPaid = 0;
@@ -1384,6 +1091,7 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	std::string sAmounts;
 	std::string sQTData;
 	uint256 uPamHash = GetPAMHashByContract(sMyContract);
+	
 	GetGSCGovObjByHeight(nHeight, uPamHash, iPendingVotes, uGovObjHash, sPaymentAddresses, sAmounts, sQTData);
 	
 	bool fOverBudget = IsOverBudget(nHeight, GetAdjustedTime(), sAmounts);
@@ -1476,8 +1184,6 @@ bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& s
 	int64_t nLastGSCSubmitted = 0;
 	CGovernanceObject govobj(hashParent, nRevision, nTime, txidFee, strData);
 
-	if (fDebug)
-		LogPrintf("\nSubmitting GSC Trigger %s ", govobj.GetDataAsPlainString());
 
     DBG( std::cout << "gobject: submit "
          << " GetDataAsPlainString = " << govobj.GetDataAsPlainString()
@@ -1510,7 +1216,7 @@ bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& s
 	bool fMissingConfirmations;
     {
         LOCK(cs_main);
-        if (!govobj.IsValidLocally(strError, fMissingMasternode, fMissingConfirmations, true) && !fMissingConfirmations) 
+        if (!govobj.IsValidLocally(strError, true)) 
 		{
             sError = "gobject(submit) -- Object submission rejected because object is not valid - hash = " + strHash + ", strError = " + strError;
 		    return false;
@@ -1662,7 +1368,7 @@ void GetGovObjDataByPamHash(int nHeight, uint256 hPamHash, std::string& out_Data
 
 bool GetContractPaymentData(std::string sContract, int nBlockHeight, int nTime, std::string& sPaymentAddresses, std::string& sAmounts)
 {
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nBlockHeight, nTime, true);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nBlockHeight);
 	sPaymentAddresses = ExtractXML(sContract, "<ADDRESSES>", "</ADDRESSES>");
 	sAmounts = ExtractXML(sContract, "<PAYMENTS>", "</PAYMENTS>");
 	std::vector<std::string> vPayments = Split(sAmounts.c_str(), "|");
@@ -1673,7 +1379,7 @@ bool GetContractPaymentData(std::string sContract, int nBlockHeight, int nTime, 
 	}
 	if (dTotalPaid < 1 || (dTotalPaid * COIN) > nPaymentsLimit)
 	{
-		LogPrintf(" \n ** GetContractPaymentData::Superblock Payment Budget is out of bounds:  Limit %f,  Actual %f  ** \n", (double)nPaymentsLimit/COIN, (double)dTotalPaid);
+		LogPrintf("\n**GetContractPaymentData::Error::Superblock Payment Budget is out of bounds:  Limit %f,  Actual %f  ** \n", (double)nPaymentsLimit/COIN, (double)dTotalPaid);
 		return false;
 	}
 	return true;
@@ -1695,7 +1401,10 @@ std::string SerializeSanctuaryQuorumTrigger(int iContractAssessmentHeight, int n
 	std::string sHashes = ExtractXML(sContract, "<PROPOSALS>", "</PROPOSALS>");
 	bool bStatus = GetContractPaymentData(sContract, iContractAssessmentHeight, nTime, sPaymentAddresses, sPaymentAmounts);
 	if (!bStatus) 
+	{
+		LogPrintf("\nERROR::SerializeSanctuaryQuorumTrigger::Unable to Serialize %f", 1);
 		return std::string();
+	}
 	std::string sVoteData = ExtractXML(sContract, "<VOTEDATA>", "</VOTEDATA>");
 	std::string sSporkData = ExtractXML(sContract, "<SPORKS>", "</SPORKS>");
 	
@@ -1716,8 +1425,6 @@ std::string SerializeSanctuaryQuorumTrigger(int iContractAssessmentHeight, int n
 	if (!sSporkData.empty())
 		sJson += GJE("spork_data", sSporkData, true, true);
 	
-	//	if (!sDACData.empty())		sJson += GJE("dac_data", sDACData, true, true);
-
 	if (!sQTData.empty())
 	{
 		sJson += GJE("price", ExtractXML(sQTData, "<PRICE>", "</PRICE>"), true, true);
@@ -1755,7 +1462,7 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 	if (nHeight == 0) 
 		return NullUniValue;
       
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, GetAdjustedTime(), false);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight);
 	nPaymentsLimit -= MAX_BLOCK_SUBSIDY * COIN;
 
 	std::string sContract = GetGSCContract(nHeight, false);
@@ -1828,55 +1535,6 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 	return results;
 }
 
-void SendDistressSignal()
-{
-	static int64_t nLastReset = 0;
-	if (GetAdjustedTime() - nLastReset > (60 * 60 * 1))
-	{
-		// Node will try to pull the gobjects again
-		LogPrintf("\nSmartContract-Server::SendDistressSignal: Node is missing a gobject, pulling...%f\n", GetAdjustedTime());
-		masternodeSync.Reset();
-		masternodeSync.SwitchToNextAsset(*g_connman);
-		nLastReset = GetAdjustedTime();
-		ReassessAllChains();
-	}
-}
-
-static int64_t nLastQuorumHashCheckup = 0;
-std::string CheckGSCHealth()
-{
-	/*
-	double nCheckGSCOptionDisabled = GetSporkDouble("disablegschealthcheck", 0);
-	if (nCheckGSCOptionDisabled == 1)
-		return "DISABLED";
-	if (nLastQuorumHashCheckup == 0)
-		nLastQuorumHashCheckup = GetAdjustedTime();
-
-	int64_t nQHA = GetAdjustedTime() - nLastQuorumHashCheckup;
-	if (nQHA < (60 * 60 * 1))
-			return "WAITING";
-	nLastQuorumHashCheckup = GetAdjustedTime();
-
-	int iNextSuperblock = 0;
-	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
-	std::string sAddresses;
-	std::string sAmounts;
-	int iVotes = 0;
-	uint256 uGovObjHash = uint256S("0x0");
-	uint256 uPAMHash = uint256S("0x0");
-	ByHeight(iNextSuperblock, uPAMHash, iVotes, uGovObjHash, sAddresses, sAmounts);
-	uint256 hPam = GetPAMHash(sAddresses, sAmounts);
-	std::string sContract = GetGSCContract(iLastSuperblock, true);
-	uint256 hPAMHash2 = GetPAMHashByContract(sContract);
-	if (uGovObjHash == uint256S("0x0") || (hPAMHash2 != hPam))
-	{
-		SendDistressSignal();
-		return "DISTRESS";
-	}
-	*/
-	return "HEALTHY";
-}
-
 void SendOutGSCs()
 {
 	// In PODC 2.0, we send all of the GSCs out at the height shown in 'exec rac' from the main wallet thread.  (In contrast to sending them at a given time from the miner thread).
@@ -1898,21 +1556,11 @@ std::string ExecuteGenericSmartContractQuorumProcess()
 	if (!ChainSynced(chainActive.Tip()))
 		return "CHAIN_NOT_SYNCED";
 	
-	int nFreq = (int)cdbl(GetArg("-dailygscfrequency", RoundToString(BLOCKS_PER_DAY, 0)), 0);
+	int nFreq = (int)cdbl(gArgs.GetArg("-dailygscfrequency", RoundToString(BLOCKS_PER_DAY, 0)), 0);
 	if (nFreq < 50)
 		nFreq = 50; 
 	// Send out GSCs at midpoint of each day:
 	bool fGSCTime = (chainActive.Tip()->nHeight % nFreq == (BLOCKS_PER_DAY/2));
-
-	// UI Glitch in 1.4.8.5 fix (we normally have about 21,000 researchers in prod). 
-	bool fReload = false;
-	if (mvResearchers.size() < 500 && fProd && chainActive.Tip()->nHeight % 10 == 0)
-		fReload = true;
-
-	if (chainActive.Tip()->nHeight % 128 == 0 || fReload)
-	{
-		LoadResearchers();
-	}
 
 	if (fGSCTime)
 		SendOutGSCs();
@@ -1929,8 +1577,6 @@ std::string ExecuteGenericSmartContractQuorumProcess()
 	{
 		std::string sContr;
 		std::string sWatchman = WatchmanOnTheWall(false, sContr);
-		if (fDebugSpam)
-			LogPrintf("WatchmanOnTheWall::Status %s Contract %s", sWatchman, sContr);
 	}
 
 	// Goal 1: Be synchronized as a team after the warming period, but be cascading during the warming period
@@ -1969,8 +1615,6 @@ std::string ExecuteGenericSmartContractQuorumProcess()
 
 	if (bPending) 
 	{
-		if (fDebug)
-			LogPrintf("\n ExecuteGenericSmartContractQuorum::We have a pending superblock at height %f \n", (double)iNextSuperblock);
 		return "PENDING_SUPERBLOCK";
 	}
 	// If we are > halfway into daily GSC deadline, and have not received the gobject, emit a distress signal

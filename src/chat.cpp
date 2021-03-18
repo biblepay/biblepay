@@ -4,7 +4,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chat.h"
-#include "base58.h"
 #include "clientversion.h"
 #include "net.h"
 #include "pubkey.h"

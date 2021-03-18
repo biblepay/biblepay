@@ -1,8 +1,6 @@
 #include "proposals.h"
 #include "bitcoinunits.h"
-#include "ui_proposals.h"
-#include "secdialog.h"
-#include "ui_secdialog.h"
+#include "forms/ui_proposals.h"
 #include "walletmodel.h"
 #include "guiutil.h"
 #include "rpcpog.h"
@@ -10,6 +8,7 @@
 #include <QTableWidget>
 #include <QGridLayout>
 #include <QUrl>
+#include "secdialog.h"
 
 
 QStringList Proposals::GetHeaders()
@@ -39,8 +38,7 @@ Proposals::Proposals(const PlatformStyle *platformStyle, QWidget *parent) :
     ui->setupUi(this);
     
 	/* Reserved - Use when we add buttons to this page
-	QString theme = GUIUtil::getThemeName();
-    
+	
     if (!platformStyle->getImagesOnButtons()) 
 	{
         ui->btnSubmit->setIcon(QIcon());

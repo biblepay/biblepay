@@ -1,15 +1,15 @@
-// Copyright (c) 2018 The Dash Core developers
+// Copyright (c) 2018-2019 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_QUORUMS_DKGSESSIONMGR_H
-#define DASH_QUORUMS_DKGSESSIONMGR_H
+#ifndef BIBLEPAY_QUORUMS_DKGSESSIONMGR_H
+#define BIBLEPAY_QUORUMS_DKGSESSIONMGR_H
 
-#include "llmq/quorums_dkgsessionhandler.h"
+#include <llmq/quorums_dkgsessionhandler.h>
 
-#include "validation.h"
+#include <validation.h>
 
-#include "ctpl.h"
+#include <ctpl.h>
 
 class UniValue;
 
@@ -23,7 +23,6 @@ class CDKGSessionManager
 private:
     CDBWrapper& llmqDb;
     CBLSWorker& blsWorker;
-    ctpl::thread_pool messageHandlerPool;
 
     std::map<Consensus::LLMQType, CDKGSessionHandler> dkgSessionHandlers;
 
@@ -50,8 +49,8 @@ public:
     CDKGSessionManager(CDBWrapper& _llmqDb, CBLSWorker& _blsWorker);
     ~CDKGSessionManager();
 
-    void StartMessageHandlerPool();
-    void StopMessageHandlerPool();
+    void StartThreads();
+    void StopThreads();
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew, bool fInitialDownload);
 
@@ -74,6 +73,6 @@ private:
 
 extern CDKGSessionManager* quorumDKGSessionManager;
 
-}
+} // namespace llmq
 
-#endif //DASH_QUORUMS_DKGSESSIONMGR_H
+#endif //BIBLEPAY_QUORUMS_DKGSESSIONMGR_H

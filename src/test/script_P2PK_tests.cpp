@@ -1,9 +1,9 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "script/script.h"
-#include "test/test_coin.h"
+#include <script/script.h>
+#include <test/test_biblepay.h>
 
 #include <boost/test/unit_test.hpp>
 

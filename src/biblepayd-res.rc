@@ -16,8 +16,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "Biblepay"
-            VALUE "FileDescription",    "biblepayd (Biblepay node with a JSON-RPC server)"
+            VALUE "CompanyName",        "BiblePay"
+            VALUE "FileDescription",    "biblepayd (BiblePay node with a JSON-RPC server)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "biblepayd"
             VALUE "LegalCopyright",     COPYRIGHT_STR

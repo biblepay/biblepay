@@ -33,8 +33,9 @@ public:
     explicit BusinessObjectList(const PlatformStyle *platformStyle, QWidget *parent = 0);
     ~BusinessObjectList();
 	void setModel(WalletModel *model);
-	void UpdateObject(std::string objType);
-
+	void UpdateObject(int nType);
+	void initSummOnly();
+	
 
 private:
     Ui::BusinessObjectList *ui;
@@ -51,11 +52,10 @@ private Q_SLOTS:
     void slotNavigateTo();
 	void slotCustomMenuRequested(QPoint pos);
 	void slotList();
-	void RefreshPogLeaderboard();
-	void showSummary();
-	void showDetails();
 	void HandleIndicatorChanged(int logicalIndex);
 	void cellDoubleClicked(int X, int Y);
+	void showSummary();
+	void showDetails();
 
 };
 

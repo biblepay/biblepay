@@ -1,77 +1,67 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2017 The DAC Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "miner.h"
+#include <miner.h>
 
-#include "amount.h"
-#include "chain.h"
-#include "chainparams.h"
-#include "coins.h"
-#include "kjv.h"
-#include "consensus/consensus.h"
-#include "consensus/merkle.h"
-#include "consensus/validation.h"
+#include <amount.h>
+#include <chain.h>
+#include <chainparams.h>
+#include <coins.h>
+#include <consensus/consensus.h>
+#include <consensus/tx_verify.h>
+#include <consensus/merkle.h>
+#include <consensus/validation.h>
+#include <hash.h>
+#include <validation.h>
+#include <net.h>
+#include <policy/feerate.h>
+#include <policy/policy.h>
+#include <pow.h>
+#include <primitives/transaction.h>
+#include <script/standard.h>
+#include <timedata.h>
+#include <util.h>
+#include <utilmoneystr.h>
+#include <masternode/masternode-payments.h>
+#include <masternode/masternode-sync.h>
+#include <validationinterface.h>
+
+#include <evo/specialtx.h>
+#include <evo/cbtx.h>
+#include <evo/simplifiedmns.h>
+#include <evo/deterministicmns.h>
 #include "rpcpog.h"
+#include "kjv.h"
 #include "validation.h"
-#include "hash.h"
-#include "validation.h"
-#include "net.h"
-#include "policy/policy.h"
-#include "pow.h"
-#include "primitives/transaction.h"
-#include "script/standard.h"
-#include "timedata.h"
-#include "txmempool.h"
-#include "util.h"
-#include "utilmoneystr.h"
-#include "masternode-payments.h"
-#include "masternode-sync.h"
-#include "validationinterface.h"
-#include "smartcontract-client.h"
-#include "governance-classes.h" // For superblock Height
-#include "rpcpodc.h"
 
-#include "evo/specialtx.h"
-#include "evo/cbtx.h"
-#include "evo/simplifiedmns.h"
-#include "evo/deterministicmns.h"
-
-#include "llmq/quorums_blockprocessor.h"
-#include "llmq/quorums_chainlocks.h"
+#include <llmq/quorums_blockprocessor.h>
+#include <llmq/quorums_chainlocks.h>
 
 #include <algorithm>
+#include <memory>
+
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
+
 #include <queue>
 #include <utility>
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// Solo Miner (POBH)
+// BiblePayMiner
 //
 
 //
 // Unconfirmed transactions in the memory pool often depend on other
 // transactions in the memory pool. When we select transactions from the
-// pool, we select by highest priority or fee rate, so we might consider
-// transactions that depend on transactions that aren't yet in the block.
+// pool, we select by highest fee rate of a transaction combined with all
+// its ancestors.
 
 uint64_t nLastBlockTx = 0;
 uint64_t nLastBlockSize = 0;
-
-class ScoreCompare
-{
-public:
-    ScoreCompare() {}
-
-    bool operator()(const CTxMemPool::txiter a, const CTxMemPool::txiter b)
-    {
-        return CompareTxMemPoolEntryByScore()(*b,*a); // Convert to less than
-    }
-};
 
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
@@ -88,57 +78,68 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
     return nNewTime - nOldTime;
 }
 
-
-BlockAssembler::Options::Options() {	
-    blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);	    
-    nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;	
+BlockAssembler::Options::Options() {
+    blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
+    nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;
 }
 
-
-BlockAssembler::BlockAssembler(const CChainParams& params, const Options& options) : chainparams(params)	
+BlockAssembler::BlockAssembler(const CChainParams& params, const Options& options) : chainparams(params)
 {
-    blockMinFeeRate = options.blockMinFeeRate;	   
-    // Limit size to between 1K and MaxBlockSize()-1K for sanity:	 
-    nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MaxBlockSize(fDIP0001ActiveAtTip) - 1000), (unsigned int)options.nBlockMaxSize));	
+    blockMinFeeRate = options.blockMinFeeRate;
+    // Limit size to between 1K and MaxBlockSize()-1K for sanity:
+    nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MaxBlockSize(fDIP0001ActiveAtTip) - 1000), (unsigned int)options.nBlockMaxSize));
 }
 
-
-static BlockAssembler::Options DefaultOptions(const CChainParams& params)	
-{	
-    // Block resource limits	
-    BlockAssembler::Options options;	
-    options.nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;	
-    if (IsArgSet("-blockmaxsize")) 
-	{	
-        options.nBlockMaxSize = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);	
-    }
-
-    if (IsArgSet("-blockmintxfee")) 
+bool AcquireWallet4()
+{
+	std::vector<CWallet*> wallets = GetWallets();
+	if (wallets.size() > 0)
 	{
+		pwalletpog = wallets[0];
+		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
+		return true;
+	}
+	else
+	{
+		pwalletpog = NULL;
+		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
+	}
+	return false;
+}
+
+static BlockAssembler::Options DefaultOptions(const CChainParams& params)
+{
+    // Block resource limits
+    BlockAssembler::Options options;
+    options.nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;
+    if (gArgs.IsArgSet("-blockmaxsize")) {
+        options.nBlockMaxSize = gArgs.GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
+    }
+    if (gArgs.IsArgSet("-blockmintxfee")) {
         CAmount n = 0;
-        ParseMoney(GetArg("-blockmintxfee", ""), n);
-		options.blockMinFeeRate = CFeeRate(n);
-    }
-	else 
-	{
+        ParseMoney(gArgs.GetArg("-blockmintxfee", ""), n);
+        options.blockMinFeeRate = CFeeRate(n);
+    } else {
         options.blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
     }
-	return options;
+    return options;
 }
+
+BlockAssembler::BlockAssembler(const CChainParams& params) : BlockAssembler(params, DefaultOptions(params)) {}
 
 void BlockAssembler::resetBlock()
 {
     inBlock.clear();
+
     // Reserve space for coinbase tx
     nBlockSize = 1000;
     nBlockSigOps = 100;
+
     // These counters do not include coinbase tx
     nBlockTx = 0;
     nFees = 0;
 }
 
-BlockAssembler::BlockAssembler(const CChainParams& params) : BlockAssembler(params, DefaultOptions(params)) {}
-		
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, std::string sPoolMiningPublicKey, uint256 uRandomXKey, std::vector<unsigned char> vRandomXHeader)
 {
     int64_t nTimeStart = GetTimeMicros();
@@ -157,17 +158,19 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxSigOps.push_back(-1); // updated at end
 
     LOCK2(cs_main, mempool.cs);
-	    
+
     CBlockIndex* pindexPrev = chainActive.Tip();
+    assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
-	bool fDIP0003Active_context = nHeight >= chainparams.GetConsensus().DIP0003Height;	
-    bool fDIP0008Active_context = nHeight >= chainparams.GetConsensus().DIP0008Height;
+
+    bool fDIP0003Active_context = nHeight >= chainparams.GetConsensus().DIP0003Height;
+    bool fDIP0008Active_context = VersionBitsState(chainActive.Tip(), chainparams.GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
 
     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus(), chainparams.BIP9CheckMasternodesUpgraded());
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand())
-        pblock->nVersion = GetArg("-blockversion", pblock->nVersion);
+        pblock->nVersion = gArgs.GetArg("-blockversion", pblock->nVersion);
 
     pblock->nTime = GetAdjustedTime();
 	// RandomX Support
@@ -197,7 +200,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         }
     }
 
-	std::string sABNLocator;
     int nPackagesSelected = 0;
     int nDescendantsUpdated = 0;
     addPackageTxs(nPackagesSelected, nDescendantsUpdated);
@@ -206,8 +208,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     nLastBlockTx = nBlockTx;
     nLastBlockSize = nBlockSize;
-	if (fDebugSpam)
-		LogPrintf("CreateNewBlock(): total size %u txs: %u fees: %ld sigops %d\n", nBlockSize, nBlockTx, nFees, nBlockSigOps);
+    LogPrintf("CreateNewBlock(): total size %u txs: %u fees: %ld sigops %d\n", nBlockSize, nBlockTx, nFees, nBlockSigOps);
 
     // Create coinbase transaction.
     CMutableTransaction coinbaseTx;
@@ -219,17 +220,16 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 	// RandomX Pool Support
 	if (!sPoolMiningPublicKey.empty())
 	{
-		CBitcoinAddress cbaPoolAddress(sPoolMiningPublicKey);
-		CScript spkPoolScript = GetScriptForDestination(cbaPoolAddress.Get());
+		CScript spkPoolScript = GetScriptForDestination(DecodeDestination(sPoolMiningPublicKey));
 		coinbaseTx.vout[0].scriptPubKey = spkPoolScript;
 	}
 
     // NOTE: unlike in bitcoin, we need to pass PREVIOUS block height here
-    CAmount blockReward = nFees + GetBlockSubsidy(pindexPrev->nBits, pindexPrev->nHeight, Params().GetConsensus(), false);
+    CAmount blockReward = nFees + GetBlockSubsidy(pindexPrev->nBits, pindexPrev->nHeight, Params().GetConsensus());
 
     // Compute regular coinbase transaction.
     coinbaseTx.vout[0].nValue = blockReward;
-	
+
     if (!fDIP0003Active_context) {
         coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
     } else {
@@ -239,34 +239,34 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         coinbaseTx.nType = TRANSACTION_COINBASE;
 
         CCbTx cbTx;
-		if (fDIP0008Active_context) {	
-            cbTx.nVersion = 2;	
-        } else {	
-            cbTx.nVersion = 1;	
+
+        if (fDIP0008Active_context) {
+            cbTx.nVersion = 2;
+        } else {
+            cbTx.nVersion = 1;
         }
 
         cbTx.nHeight = nHeight;
 
         CValidationState state;
         if (!CalcCbTxMerkleRootMNList(*pblock, pindexPrev, cbTx.merkleRootMNList, state)) {
-			 throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootMNList failed: %s", __func__, FormatStateMessage(state)));
-	    }	
-        if (fDIP0008Active_context) {	
-            if (!CalcCbTxMerkleRootQuorums(*pblock, pindexPrev, cbTx.merkleRootQuorums, state)) {	
-                throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootQuorums failed: %s", __func__, FormatStateMessage(state)));        
-			}
-		}
+            throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootMNList failed: %s", __func__, FormatStateMessage(state)));
+        }
+        if (fDIP0008Active_context) {
+            if (!CalcCbTxMerkleRootQuorums(*pblock, pindexPrev, cbTx.merkleRootQuorums, state)) {
+                throw std::runtime_error(strprintf("%s: CalcCbTxMerkleRootQuorums failed: %s", __func__, FormatStateMessage(state)));
+            }
+        }
+
         SetTxPayload(coinbaseTx, cbTx);
     }
-
 	// Add core version to the subsidy tx message
 	std::string sVersion = FormatFullVersion();
-	coinbaseTx.vout[0].sTxOutMessage += "<VER>" + sVersion + "</VER>" + sABNLocator;
+	coinbaseTx.vout[0].sTxOutMessage += "<VER>" + sVersion + "</VER>";
 	
     // Update coinbase transaction with additional info about masternode and governance payments,
     // get some info back to pass to getblocktemplate
     FillBlockPayments(coinbaseTx, nHeight, blockReward, pblocktemplate->voutMasternodePayments, pblocktemplate->voutSuperblockPayments);
-    // LogPrintf("CreateNewBlock -- nBlockHeight %d blockReward %lld txoutMasternode %s coinbaseTx %s", nHeight, blockReward, pblocktemplate->txoutsMasternode.ToString(), coinbaseTx.ToString());
 
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vTxFees[0] = -nFees;
@@ -278,19 +278,14 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblock->nNonce         = 0;
     pblocktemplate->nPrevBits = pindexPrev->nBits;
     pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(*pblock->vtx[0]);
-	
-    CValidationState state;
-    if (!TestBlockValidityLite(state, chainparams, *pblock, pindexPrev, false, false, true, true)) 
-	{
-		if (true)
-			LogPrint("miner", "BiblePayMiner failed to create a valid new block\n");
-		MilliSleep(10000);
-    }
 
+    CValidationState state;
+    if (!TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
+        throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
+    }
     int64_t nTime2 = GetTimeMicros();
 
-	if (fDebugSpam)
-		LogPrint("bench", "CreateNewBlock() packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
+    LogPrint(BCLog::BENCHMARK, "CreateNewBlock() packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
 
     return std::move(pblocktemplate);
 }
@@ -308,7 +303,7 @@ void BlockAssembler::onlyUnconfirmed(CTxMemPool::setEntries& testSet)
     }
 }
 
-bool BlockAssembler::TestPackage(uint64_t packageSize, unsigned int packageSigOps)
+bool BlockAssembler::TestPackage(uint64_t packageSize, unsigned int packageSigOps) const
 {
     if (nBlockSize + packageSize >= nBlockMaxSize)
         return false;
@@ -322,11 +317,12 @@ bool BlockAssembler::TestPackage(uint64_t packageSize, unsigned int packageSigOp
 // - safe TXs in regard to ChainLocks
 bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& package)
 {
-    BOOST_FOREACH (const CTxMemPool::txiter it, package) {
+    for (const CTxMemPool::txiter it : package) {
         if (!IsFinalTx(it->GetTx(), nHeight, nLockTimeCutoff))
             return false;
-		 if (!llmq::chainLocksHandler->IsTxSafeForMining(it->GetTx().GetHash())) 
-			 return false;
+        if (!llmq::chainLocksHandler->IsTxSafeForMining(it->GetTx().GetHash())) {
+            return false;
+        }
     }
     return true;
 }
@@ -342,7 +338,7 @@ void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
     nFees += iter->GetFee();
     inBlock.insert(iter);
 
-    bool fPrintPriority = GetBoolArg("-printpriority", DEFAULT_PRINTPRIORITY);
+    bool fPrintPriority = gArgs.GetBoolArg("-printpriority", DEFAULT_PRINTPRIORITY);
     if (fPrintPriority) {
         LogPrintf("fee %s txid %s\n",
                   CFeeRate(iter->GetModifiedFee(), iter->GetTxSize()).ToString(),
@@ -354,11 +350,11 @@ int BlockAssembler::UpdatePackagesForAdded(const CTxMemPool::setEntries& already
         indexed_modified_transaction_set &mapModifiedTx)
 {
     int nDescendantsUpdated = 0;
-    BOOST_FOREACH(const CTxMemPool::txiter it, alreadyAdded) {
+    for (const CTxMemPool::txiter it : alreadyAdded) {
         CTxMemPool::setEntries descendants;
         mempool.CalculateDescendants(it, descendants);
         // Insert all descendants (not yet in block) into the modified set
-        BOOST_FOREACH(CTxMemPool::txiter desc, descendants) {
+        for (CTxMemPool::txiter desc : descendants) {
             if (alreadyAdded.count(desc))
                 continue;
             ++nDescendantsUpdated;
@@ -389,9 +385,7 @@ int BlockAssembler::UpdatePackagesForAdded(const CTxMemPool::setEntries& already
 bool BlockAssembler::SkipMapTxEntry(CTxMemPool::txiter it, indexed_modified_transaction_set &mapModifiedTx, CTxMemPool::setEntries &failedTx)
 {
     assert (it != mempool.mapTx.end());
-    if (mapModifiedTx.count(it) || inBlock.count(it) || failedTx.count(it))
-        return true;
-    return false;
+    return mapModifiedTx.count(it) || inBlock.count(it) || failedTx.count(it);
 }
 
 void BlockAssembler::SortForBlock(const CTxMemPool::setEntries& package, CTxMemPool::txiter entry, std::vector<CTxMemPool::txiter>& sortedEntries)
@@ -458,7 +452,7 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
             // Try to compare the mapTx entry to the mapModifiedTx entry
             iter = mempool.mapTx.project<0>(mi);
             if (modit != mapModifiedTx.get<ancestor_score>().end() &&
-                    CompareModifiedEntry()(*modit, CTxMemPoolModifiedEntry(iter))) {
+                    CompareTxMemPoolEntryByAncestorFee()(*modit, CTxMemPoolModifiedEntry(iter))) {
                 // The best entry in mapModifiedTx has higher score
                 // than the one from mapTx.
                 // Switch which transaction (package) to consider
@@ -564,6 +558,8 @@ void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned
 }
 
 
+
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //  Proof-of-Bible-Hash (POBH) Internal miner - March 12th, 2019            //
@@ -599,8 +595,11 @@ bool CreateBlockForStratum(std::string sAddress, uint256 uRandomXKey, std::vecto
 	// Create Evo block
 	std::string sMinerGuid;
 	int iThreadID = 0;
-	boost::shared_ptr<CReserveScript> coinbaseScript;
-    GetMainSignals().ScriptForMining(coinbaseScript);
+	//boost::shared_ptr<CReserveScript> coinbaseScript;
+	std::shared_ptr<CReserveScript> coinbaseScript;
+	AcquireWallet4();
+	pwalletpog->GetScriptForMining(coinbaseScript);
+	//    GetMainSignals().GetScriptForMining(coinbaseScript);
 	std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, sAddress, uRandomXKey, vRandomXHeader));
 	std::string sUTXO = ScanBlockForNewUTXO(pblocktemplate->block);
 	if (!sUTXO.empty())
@@ -610,7 +609,7 @@ bool CreateBlockForStratum(std::string sAddress, uint256 uRandomXKey, std::vecto
 	}
 	if (!pblocktemplate.get())
     {
-		LogPrint("miner", "CreateBlockForStratum::No block to mine %f", iThreadID);
+		LogPrint(BCLog::NET, "CreateBlockForStratum::No block to mine %f", iThreadID);
 		sError = "Wallet Locked/ABN Required";
 		return false;
     }
@@ -632,14 +631,17 @@ void static BibleMiner(const CChainParams& chainparams, int iThreadID, int iFeat
 	unsigned int nExtraNonce = 0;
 	double nHashesDone = 0;
 	
-	// This allows the miner to dictate how much sleep will occur when distributed computing is enabled.  This will let PODC use the maximum CPU time.  NOTE: The default is 200ms per 256 hashes.
-	double dMinerSleep = cdbl(GetArg("-minersleep", "325"), 0);
 	// The jackrabbit start option forces the miner to start regardless of rules (like not having peers, not being synced etc).
-	double dJackrabbitStart = cdbl(GetArg("-jackrabbitstart", "0"), 0);
-    RenameThread("dac-miner");
+	double dJackrabbitStart = cdbl(gArgs.GetArg("-jackrabbitstart", "0"), 0);
+    RenameThread("biblepay-miner");
 				
-    boost::shared_ptr<CReserveScript> coinbaseScript;
-    GetMainSignals().ScriptForMining(coinbaseScript);
+    //boost::shared_ptr<CReserveScript> coinbaseScript;
+	//    GetMainSignals().GetScriptForMining(coinbaseScript);
+	std::shared_ptr<CReserveScript> coinbaseScript;
+	AcquireWallet4();
+
+	pwalletpog->GetScriptForMining(coinbaseScript);
+
 	int iStart = rand() % 1000;
 	MilliSleep(iStart);
 
@@ -657,7 +659,7 @@ recover:
 		{
 			bool fChainEmpty = (chainActive.Tip() == NULL || chainActive.Tip()->nHeight < 100);
 
-            if (chainparams.MiningRequiresPeers() || fReindex || fChainEmpty)
+            if (fReindex || fChainEmpty)
 			{
                 // Busy-wait for the network to come online so we don't waste time mining
                 // on an obsolete chain. In regtest mode we expect to fly solo.
@@ -684,7 +686,7 @@ recover:
 			if (!fProd && mempool.size() == 0 && GetSporkDouble("SLEEP_DURING_EMPTY_BLOCKS", 0) == 1)
                 MilliSleep(1000 * 60 * 7);
            
-			// Create Evo block
+			// Create block
 			uint256 uRXKey = uint256S("0x01");
 			std::vector<unsigned char> vchRXHeader = ParseHex("00");
 			std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, "", uRXKey, vchRXHeader));
@@ -699,7 +701,7 @@ recover:
 			if (!pblocktemplate.get())
             {
 				MilliSleep(15000);
-				LogPrint("miner", "No block to mine %f", iThreadID);
+				LogPrint(BCLog::NET, "No block to mine %f", iThreadID);
 				goto recover;
             }
 
@@ -711,9 +713,6 @@ recover:
             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 			nHashesDone++;
 			UpdateHashesPerSec(nHashesDone);
-			if (fDebugSpam)
-				LogPrint("miner", "SoloMiner -- Running miner with %u transactions in block (%u bytes)\n", 
-				     pblock->vtx.size(), ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 		    //
             // Search
             //
@@ -746,7 +745,7 @@ recover:
 							bool bAccepted = !ProcessNewBlock(Params(), shared_pblock, true, NULL);
 							if (!bAccepted)
 							{
-								LogPrint("miner", "\nblock rejected.");
+								LogPrint(BCLog::NET, "\nblock rejected.");
 								MilliSleep(15000);
 							}
 							coinbaseScript->KeepScript();
@@ -769,19 +768,17 @@ recover:
 					if ((pblock->nNonce & 0xFF) == 0)
 					{
 						boost::this_thread::interruption_point();
-            			if (dMinerSleep > 0) 
-							MilliSleep(dMinerSleep);
-						int64_t nElapsed = GetAdjustedTime() - nLastGUI;
+            			int64_t nElapsed = GetAdjustedTime() - nLastGUI;
 						if (nElapsed > 5)
 						{
 							nLastGUI = GetAdjustedTime();
 							UpdateHashesPerSec(nHashesDone);
-							bool fNonce = CheckNonce(f9000, pblock->nNonce, pindexPrev->nHeight, pindexPrev->nTime, pblock->GetBlockTime(), consensusParams);
-							if (!fNonce)
-							{
+							//bool fNonce = CheckNonce(f9000, pblock->nNonce, pindexPrev->nHeight, pindexPrev->nTime, pblock->GetBlockTime(), consensusParams);
+							//i//f (!fNonce)
+							//{
 								// Make a new block
 								pblock->nNonce = 0x9FFF;
-							}
+							//}
 						}
 						int64_t nElapsedLastMiningBreak = GetAdjustedTime() - nLastMiningBreak;
 						if (nElapsedLastMiningBreak > 60)
@@ -795,9 +792,8 @@ recover:
 				UpdateHashesPerSec(nHashesDone);
 				// Check for stop or if block needs to be rebuilt
 				boost::this_thread::interruption_point();
-				// Regtest mode doesn't require peers
-               
-				if (!PeersExist() && chainparams.MiningRequiresPeers())
+			   
+				if (!PeersExist())
 					 break;
 
 				if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)
@@ -827,15 +823,14 @@ recover:
     }
     catch (const boost::thread_interrupted&)
     {
-        LogPrint("miner", "\r\nSoloMiner -- terminated\n %f", iThreadID);
+        LogPrint(BCLog::NET, "\r\nSoloMiner -- terminated\n %f", iThreadID);
 		dHashesPerSec = 0;
         throw;
     }
     catch (const std::runtime_error &e)
     {
-        LogPrint("miner", "\r\nSoloMiner -- runtime error: %s\n", e.what());
+        LogPrint(BCLog::NET, "\r\nSoloMiner -- runtime error: %s\n", e.what());
 		dHashesPerSec = 0;
-		// This happens occasionally when TestBlockValidity fails; I suppose the best thing to do for now is start the thread over.
 		nThreadStart = GetTimeMillis();
 		MilliSleep(1000);
 		goto recover;
@@ -887,5 +882,4 @@ void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams
 	nHashCounter = 0;
 	LogPrintf(" ** Started %f BibleMiner threads. ** \r\n",(double)nThreads);
 }
-
 

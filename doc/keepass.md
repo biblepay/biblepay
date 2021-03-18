@@ -31,22 +31,22 @@ The following rpc commands are available:
 
 ### How to setup
 
-Sample initialization flow from biblepay-qt_ console (this needs to be done only once to set up the association):
+Sample initialization flow from _biblepay-qt_ console (this needs to be done only once to set up the association):
 
  - Have KeePass running with an open database
- - Start biblepay-qt_
+ - Start _biblepay-qt_
  - Open console
  - Type "_keepass init_" in biblepay-qt console
  - Keepass pops up and asks for an association id, fill that in, for example, "_mydrkwallet_"
  - You should get a response like this "_Association successful. Id: mydrkwalletbiblepay - Key: AgQkcs6cI7v9tlSYKjG/+s8wJrGALHl3jLosJpPLzUE=_"
- - Edit biblepay.conf_ and fill in these values
+ - Edit _biblepay.conf_ and fill in these values
 ```
 keepass=1
 keepasskey=AgQkcs6cI7v9tlSYKjG/+s8wJrGALHl3jLosJpPLzUE=
 keepassid=mydrkwallet
 keepassname=testwallet
 ```
- - Restart biblepay-qt_
+ - Restart _biblepay-qt_
 
 At this point, the association is made. The next action depends on your particular situation:
 

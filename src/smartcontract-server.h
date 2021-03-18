@@ -9,8 +9,8 @@
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
-#include "rpcpog.h"
 #include <univalue.h>
+#include "rpcpog.h"
 
 class CWallet;
 

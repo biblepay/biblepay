@@ -5,13 +5,11 @@
 #ifndef BITCOIN_WALLET_CRYPTER_H
 #define BITCOIN_WALLET_CRYPTER_H
 
-#include "keystore.h"
-#include "serialize.h"
-#include "support/allocators/secure.h"
-#include "base58.h"
-#include "utilstrencodings.h"
+#include <keystore.h>
+#include <serialize.h>
+#include <support/allocators/secure.h>
 
-class uint256;
+#include <atomic>
 
 const unsigned int WALLET_CRYPTO_KEY_SIZE = 32;
 const unsigned int WALLET_CRYPTO_SALT_SIZE = 8;
@@ -20,13 +18,13 @@ const unsigned int WALLET_CRYPTO_IV_SIZE = 16;
 /**
  * Private key encryption is done based on a CMasterKey,
  * which holds a salt and random encryption key.
- * 
+ *
  * CMasterKeys are encrypted using AES-256-CBC using a key
  * derived using derivation method nDerivationMethod
  * (0 == EVP_sha512()) and derivation iterations nDeriveIterations.
  * vchOtherDerivationParameters is provided for alternative algorithms
  * which may require more parameters (such as scrypt).
- * 
+ *
  * Wallet Private Keys are then encrypted using AES-256-CBC
  * with the double-sha256 of the public key as the IV, and the
  * master key's key as the encryption key (see keystore.[ch]).
@@ -112,11 +110,11 @@ public:
 };
 
 bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, const std::string& sIV, std::string& sCiphertext);
+bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, const std::string& sIV, SecureString& sPlaintext);
 
 std::string EncryptAES256(std::string sPlaintext, std::string sKey);
 std::string EncryptAES256WithIV(std::string sPlaintext, std::string sKey, std::string sIV);
 
-bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, const std::string& sIV, SecureString& sPlaintext);
 std::string DecryptAES256(std::string s64, std::string sKey);
 std::string DecryptAES256WithIV(std::string s64, std::string sKey, std::string sIV);
 
@@ -124,6 +122,7 @@ bool BibleDecrypt(const std::vector<unsigned char>& vchCiphertext,std::vector<un
 bool BibleEncrypt(std::vector<unsigned char> vchPlaintext, std::vector<unsigned char> &vchCiphertext);
 std::vector<unsigned char> StringToVector(std::string sData);
 std::string VectorToString(std::vector<unsigned char> v);
+std::string RPAD(std::string sUnpadded, int nLength);
 
 
 int RSA_GENERATE_KEYPAIR(std::string sPublicKeyPath, std::string sPrivateKeyPath);
@@ -136,21 +135,19 @@ std::string RSA_Decrypt_String(std::string sPrivKeyPath, std::string sData, std:
 std::string RSA_Encrypt_String_With_Key(std::string sPubKey, std::string sData, std::string& sError);
 std::string RSA_Decrypt_String_With_Key(std::string sPrivKey, std::string sData, std::string& sError);
 
-
 /** Keystore which keeps the private keys encrypted.
  * It derives from the basic key store, which is used if no encryption is active.
  */
 class CCryptoKeyStore : public CBasicKeyStore
 {
 private:
-    CryptedKeyMap mapCryptedKeys;
     CHDChain cryptedHDChain;
 
     CKeyingMaterial vMasterKey;
 
     //! if fUseCrypto is true, mapKeys must be empty
     //! if fUseCrypto is false, vMasterKey must be empty
-    bool fUseCrypto;
+    std::atomic<bool> fUseCrypto;
 
     //! keeps track of whether Unlock has run a thorough check before
     bool fDecryptionThoroughlyChecked;
@@ -170,83 +167,25 @@ protected:
     bool SetCryptedHDChain(const CHDChain& chain);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn, bool fForMixingOnly = false);
+    CryptedKeyMap mapCryptedKeys;
 
 public:
-
+    CCryptoKeyStore() : fUseCrypto(false), fDecryptionThoroughlyChecked(false), fOnlyMixingAllowed(false)
+    {
+    }
 	std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
 	std::vector<char> ReadAllBytes(char const* filename);
 
-	
-	
-	CCryptoKeyStore() : fUseCrypto(false), fDecryptionThoroughlyChecked(false), fOnlyMixingAllowed(false)
-    {
-    }
-
-    bool IsCrypted() const
-    {
-        return fUseCrypto;
-    }
-
-    // This function should be used in a different combinations to determine
-    // if CCryptoKeyStore is fully locked so that no operations requiring access
-    // to private keys are possible:
-    //      IsLocked(true)
-    // or if CCryptoKeyStore's private keys are available for mixing only:
-    //      !IsLocked(true) && IsLocked()
-    // or if they are available for everything:
-    //      !IsLocked()
-    bool IsLocked(bool fForMixing = false) const
-    {
-        if (!IsCrypted())
-            return false;
-        bool result;
-        {
-            LOCK(cs_KeyStore);
-            result = vMasterKey.empty();
-        }
-        // fForMixing   fOnlyMixingAllowed  return
-        // ---------------------------------------
-        // true         true                result
-        // true         false               result
-        // false        true                true
-        // false        false               result
-
-        if(!fForMixing && fOnlyMixingAllowed) return true;
-
-        return result;
-    }
-
-    bool Lock(bool fAllowMixing = false);
+    bool IsCrypted() const { return fUseCrypto; }
+    bool IsLocked(bool fForMixing = false) const;
+    bool Lock(bool fForMixing = false);
 
     virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;
-    bool HaveKey(const CKeyID &address) const override
-    {
-        {
-            LOCK(cs_KeyStore);
-            if (!IsCrypted())
-                return CBasicKeyStore::HaveKey(address);
-            return mapCryptedKeys.count(address) > 0;
-        }
-        return false;
-    }
+    bool HaveKey(const CKeyID &address) const override;
     bool GetKey(const CKeyID &address, CKey& keyOut) const override;
     bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const override;
-    void GetKeys(std::set<CKeyID> &setAddress) const override
-    {
-        if (!IsCrypted())
-        {
-            CBasicKeyStore::GetKeys(setAddress);
-            return;
-        }
-        setAddress.clear();
-        CryptedKeyMap::const_iterator mi = mapCryptedKeys.begin();
-        while (mi != mapCryptedKeys.end())
-        {
-            setAddress.insert((*mi).first);
-            mi++;
-        }
-    }
+    std::set<CKeyID> GetKeys() const override;
 
     virtual bool GetHDChain(CHDChain& hdChainRet) const override;
 

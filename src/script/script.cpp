@@ -3,9 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "script.h"
-#include "tinyformat.h"
-#include "utilstrencodings.h"
+#include <script/script.h>
+#include <tinyformat.h>
+#include <utilstrencodings.h>
 
 const char* GetOpName(opcodetype opcode)
 {
@@ -253,19 +253,4 @@ bool CScript::IsPushOnly(const_iterator pc) const
 bool CScript::IsPushOnly() const
 {
     return this->IsPushOnly(begin());
-}
-
-std::string ExtractXMLValue(std::string XMLdata, std::string key, std::string key_end)
-{
-	std::string extraction = "";
-	std::string::size_type loc = XMLdata.find( key, 0 );
-	if( loc != std::string::npos )
-	{
-		std::string::size_type loc_end = XMLdata.find( key_end, loc+3);
-		if (loc_end != std::string::npos )
-		{
-			extraction = XMLdata.substr(loc+(key.length()),loc_end-loc-(key.length()));
-		}
-	}
-	return extraction;
 }

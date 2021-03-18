@@ -45,7 +45,7 @@ operation.
 
 By default, the ZeroMQ feature is automatically compiled in if the
 necessary prerequisites are found.  To disable, use --disable-zmq
-during the *configure* step of building bitcoind:
+during the *configure* step of building biblepayd:
 
     $ ./configure --disable-zmq (other options)
 
@@ -65,8 +65,10 @@ Currently, the following notifications are supported:
     -zmqpubhashinstantsenddoublespend=address
     -zmqpubrawblock=address
     -zmqpubrawchainlock=address
+    -zmqpubrawchainlocksig=address
     -zmqpubrawtx=address
     -zmqpubrawtxlock=address
+    -zmqpubrawtxlocksig=address
     -zmqpubrawgovernancevote=address
     -zmqpubrawgovernanceobject=address
     -zmqpubrawinstantsenddoublespend=address
@@ -82,7 +84,7 @@ For instance:
 Each PUB notification has a topic and body, where the header
 corresponds to the notification type. For instance, for the
 notification `-zmqpubhashtx` the topic is `hashtx` (no null
-terminator) and the body is the hexadecimal transaction hash (32
+terminator) and the body is the transaction hash (32
 bytes).
 
 These options can also be provided in biblepay.conf.
@@ -112,5 +114,5 @@ retrieve the chain from the last known block to the new tip.
 
 There are several possibilities that ZMQ notification can get lost
 during transmission depending on the communication type your are
-using. Biblepayd appends an up-counting sequence number to each
+using. BiblePayd appends an up-counting sequence number to each
 notification which allows listeners to detect lost notifications.

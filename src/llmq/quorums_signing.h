@@ -1,17 +1,17 @@
-// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2018-2020 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_QUORUMS_SIGNING_H
-#define DASH_QUORUMS_SIGNING_H
+#ifndef BIBLEPAY_QUORUMS_SIGNING_H
+#define BIBLEPAY_QUORUMS_SIGNING_H
 
-#include "llmq/quorums.h"
+#include <llmq/quorums.h>
 
-#include "net.h"
-#include "chainparams.h"
-#include "saltedhasher.h"
-#include "univalue.h"
-#include "unordered_lru_cache.h"
+#include <net.h>
+#include <chainparams.h>
+#include <saltedhasher.h>
+#include <univalue.h>
+#include <unordered_lru_cache.h>
 
 #include <unordered_map>
 
@@ -21,7 +21,7 @@ namespace llmq
 class CRecoveredSig
 {
 public:
-    uint8_t llmqType;
+    Consensus::LLMQType llmqType;
     uint256 quorumHash;
     uint256 id;
     uint256 msgHash;
@@ -72,7 +72,7 @@ private:
     unordered_lru_cache<uint256, bool, StaticSaltedHasher, 30000> hasSigForHashCache;
 
 public:
-    CRecoveredSigsDb(CDBWrapper& _db);
+    explicit CRecoveredSigsDb(CDBWrapper& _db);
 
     void ConvertInvalidTimeKeys();
     void AddVoteTimeKeys();
@@ -85,6 +85,7 @@ public:
     bool GetRecoveredSigById(Consensus::LLMQType llmqType, const uint256& id, CRecoveredSig& ret);
     void WriteRecoveredSig(const CRecoveredSig& recSig);
     void RemoveRecoveredSig(Consensus::LLMQType llmqType, const uint256& id);
+    void TruncateRecoveredSig(Consensus::LLMQType llmqType, const uint256& id);
 
     void CleanupOldRecoveredSigs(int64_t maxAge);
 
@@ -97,7 +98,7 @@ public:
 
 private:
     bool ReadRecoveredSig(Consensus::LLMQType llmqType, const uint256& id, CRecoveredSig& ret);
-    void RemoveRecoveredSig(CDBBatch& batch, Consensus::LLMQType llmqType, const uint256& id, bool deleteTimeKey);
+    void RemoveRecoveredSig(CDBBatch& batch, Consensus::LLMQType llmqType, const uint256& id, bool deleteHashKey, bool deleteTimeKey);
 };
 
 class CRecoveredSigsListener
@@ -125,7 +126,7 @@ private:
 
     // Incoming and not verified yet
     std::unordered_map<NodeId, std::list<CRecoveredSig>> pendingRecoveredSigs;
-    std::list<std::pair<CRecoveredSig, CQuorumCPtr>> pendingReconstructedRecoveredSigs;
+    std::unordered_map<uint256, std::pair<CRecoveredSig, CQuorumCPtr>, StaticSaltedHasher> pendingReconstructedRecoveredSigs;
 
     // must be protected by cs
     FastRandomContext rnd;
@@ -148,7 +149,9 @@ public:
 
     // This is called when a recovered signature can be safely removed from the DB. This is only safe when some other
     // mechanism prevents possible conflicts. As an example, ChainLocks prevent conflicts in confirmed TXs InstantSend votes
-    void RemoveRecoveredSig(Consensus::LLMQType llmqType, const uint256& id);
+    // This won't completely remove all traces of the recovered sig but instead leave the hash entry in the DB. This
+    // allows AlreadyHave to keep returning true. Cleanup will later remove the remains
+    void TruncateRecoveredSig(Consensus::LLMQType llmqType, const uint256& id);
 
 private:
     void ProcessMessageRecoveredSig(CNode* pfrom, const CRecoveredSig& recoveredSig, CConnman& connman);
@@ -178,7 +181,7 @@ public:
     bool GetVoteForId(Consensus::LLMQType llmqType, const uint256& id, uint256& msgHashRet);
 
     std::vector<CQuorumCPtr> GetActiveQuorumSet(Consensus::LLMQType llmqType, int signHeight);
-    CQuorumCPtr SelectQuorumForSigning(Consensus::LLMQType llmqType, int signHeight, const uint256& selectionHash);
+    CQuorumCPtr SelectQuorumForSigning(Consensus::LLMQType llmqType, const uint256& selectionHash, int signHeight = -1 /*chain tip*/, int signOffset = SIGN_HEIGHT_OFFSET);
 
     // Verifies a recovered sig that was signed while the chain tip was at signedAtTip
     bool VerifyRecoveredSig(Consensus::LLMQType llmqType, int signedAtHeight, const uint256& id, const uint256& msgHash, const CBLSSignature& sig);
@@ -186,6 +189,6 @@ public:
 
 extern CSigningManager* quorumSigningManager;
 
-}
+} // namespace llmq
 
-#endif //DASH_QUORUMS_SIGNING_H
+#endif //BIBLEPAY_QUORUMS_SIGNING_H

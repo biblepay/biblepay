@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Name=BiblePay Core
+Comment=BiblePay P2P Cryptocurrency
+Comment[de]=Verbinde mit dem BiblePay peer-to-peer Netzwerk
+Comment[fr]=BiblePay, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=BiblePay, eşten eşe kriptografik sanal para birimi
+Exec=biblepay-qt %u
+Terminal=false
+Type=Application
+Icon=biblepay128
+MimeType=x-scheme-handler/biblepay;
+Categories=Office;Finance;
+StartupWMClass=BiblePay-qt

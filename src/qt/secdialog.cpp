@@ -1,5 +1,5 @@
 #include "secdialog.h"
-#include "ui_secdialog.h"
+#include "forms/ui_secdialog.h"
 #include "rpcpog.h"
 #include "guiutil.h"
 

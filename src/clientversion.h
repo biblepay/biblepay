@@ -6,29 +6,13 @@
 #define BITCOIN_CLIENTVERSION_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/coin-config.h"
-#else
-
-/**
- * client versioning and copyright year
- */
-
-//! These need to be macros, as clientversion.cpp's and coin*-res.rc's voodoo requires it
-#define CLIENT_VERSION_MAJOR 1
-#define CLIENT_VERSION_MINOR 5
-#define CLIENT_VERSION_REVISION 4
-#define CLIENT_VERSION_BUILD 4
-
-//! Set to true for release, false for prerelease or test build
-#define CLIENT_VERSION_IS_RELEASE true
-
-/**
- * Copyright year (2009-this)
- * Todo: update this when changing our copyright comments in the source
- */
-#define COPYRIGHT_YEAR 2018
-
+#include <config/biblepay-config.h>
 #endif //HAVE_CONFIG_H
+
+// Check that required client information is defined
+#if !defined(CLIENT_VERSION_MAJOR) || !defined(CLIENT_VERSION_MINOR) || !defined(CLIENT_VERSION_REVISION) || !defined(CLIENT_VERSION_BUILD) || !defined(CLIENT_VERSION_IS_RELEASE) || !defined(COPYRIGHT_YEAR)
+#error Client version information missing: version is not defined by biblepay-config.h or in any other way
+#endif
 
 /**
  * Converts the parameter X to a string after macro replacement on X has been performed.
@@ -41,7 +25,7 @@
 #define COPYRIGHT_STR "2009-" STRINGIZE(COPYRIGHT_YEAR) " The Bitcoin Core Developers, 2014-" STRINGIZE(COPYRIGHT_YEAR) " " COPYRIGHT_HOLDERS_FINAL
 
 /**
- * coind-res.rc includes this file, but it cannot cope with real c++ code.
+ * biblepayd-res.rc includes this file, but it cannot cope with real c++ code.
  * WINDRES_PREPROC is defined to indicate that its pre-processor is running.
  * Anything other than a define should be guarded below.
  */
@@ -59,7 +43,6 @@ static const int CLIENT_VERSION =
 
 extern const std::string CLIENT_NAME;
 extern const std::string CLIENT_BUILD;
-extern const int BIBLE_VERSION;
 
 std::string FormatVersion(int nVersion);
 std::string FormatFullVersion();

@@ -70,11 +70,11 @@
         <translation>收款位址</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your BiblePay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>這些是你要付款過去的達世幣位址。在付錢之前，務必要檢查金額和收款位址是否正確。</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your BiblePay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>這些是你用來收款的達世幣位址。建議在每次交易時，都使用一個新的收款位址。</translation>
     </message>
     <message>
@@ -130,6 +130,45 @@
     </message>
 </context>
 <context>
+    <name>AppearanceWidget</name>
+    <message>
+        <source>Lighter</source>
+        <translation>幼一點</translation>
+    </message>
+    <message>
+        <source>Bolder</source>
+        <translation>粗一點</translation>
+    </message>
+    <message>
+        <source>Font Weight Normal:</source>
+        <translation>字體粗細正常:</translation>
+    </message>
+    <message>
+        <source>Smaller</source>
+        <translation>細一點</translation>
+    </message>
+    <message>
+        <source>Bigger</source>
+        <translation>大一點</translation>
+    </message>
+    <message>
+        <source>Font Scale:</source>
+        <translation>字體比例:</translation>
+    </message>
+    <message>
+        <source>Font Family:</source>
+        <translation>字體系列:</translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation>主題:</translation>
+    </message>
+    <message>
+        <source>Font Weight Bold:</source>
+        <translation>字體粗體:</translation>
+    </message>
+</context>
+<context>
     <name>AskPassphraseDialog</name>
     <message>
         <source>Passphrase Dialog</source>
@@ -146,6 +185,10 @@
     <message>
         <source>Repeat new passphrase</source>
         <translation>重複新密碼</translation>
+    </message>
+    <message>
+        <source>Show password</source>
+        <translation>顯示密碼</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
@@ -256,13 +299,20 @@
     </message>
 </context>
 <context>
+    <name>BitcoinAmountField</name>
+    <message>
+        <source>Amount in %1</source>
+        <translation>金額 %1</translation>
+    </message>
+</context>
+<context>
     <name>BitcoinGUI</name>
     <message>
-        <source>A fatal error occurred. Biblepay Core can no longer continue safely and will quit.</source>
+        <source>A fatal error occurred. BiblePay Core can no longer continue safely and will quit.</source>
         <translation>發生致命錯誤。達世幣核心軟體不再能安全地繼續運行下去，程式將會關閉。</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
+        <source>BiblePay Core</source>
         <translation>達世幣核心</translation>
     </message>
     <message>
@@ -286,7 +336,7 @@
         <translation>發送(&amp;S)</translation>
     </message>
     <message>
-        <source>Send coins to a Biblepay address</source>
+        <source>Send coins to a BiblePay address</source>
         <translation>付錢給一個達世幣位址</translation>
     </message>
     <message>
@@ -322,7 +372,7 @@
         <translation>結束應用程式</translation>
     </message>
     <message>
-        <source>Show information about Biblepay Core</source>
+        <source>Show information about BiblePay Core</source>
         <translation>顯示達世幣核心的相關資訊</translation>
     </message>
     <message>
@@ -340,6 +390,10 @@
     <message>
         <source>&amp;About %1</source>
         <translation>關於%1(&amp;A)</translation>
+    </message>
+    <message>
+        <source>PrivateSend coins to a BiblePay address</source>
+        <translation>用匿名發送的方式把資金發送到一個達世幣位址</translation>
     </message>
     <message>
         <source>Modify configuration options for %1</source>
@@ -394,7 +448,7 @@
         <translation>簽署訊息(&amp;M)...</translation>
     </message>
     <message>
-        <source>Sign messages with your Biblepay addresses to prove you own them</source>
+        <source>Sign messages with your BiblePay addresses to prove you own them</source>
         <translation>用達世幣位址簽署訊息來證明位址是你的</translation>
     </message>
     <message>
@@ -402,7 +456,7 @@
         <translation>驗證訊息(&amp;V)...</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Biblepay addresses</source>
+        <source>Verify messages to ensure they were signed with specified BiblePay addresses</source>
         <translation>驗證訊息是用來確定訊息是用指定的達世幣位址簽署的</translation>
     </message>
     <message>
@@ -431,11 +485,11 @@
     </message>
     <message>
         <source>&amp;Peers list</source>
-        <translation>節點列表(&amp;P)</translation>
+        <translation>對等用戶列表(&amp;P)</translation>
     </message>
     <message>
         <source>Show peers info</source>
-        <translation>節點列表資訊</translation>
+        <translation>對等用戶群列表資訊</translation>
     </message>
     <message>
         <source>Wallet &amp;Repair</source>
@@ -490,12 +544,16 @@
         <translation>命令列選項(&amp;C)</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible Biblepay command-line options</source>
+        <source>Show the %1 help message to get a list with possible BiblePay command-line options</source>
         <translation>顯示 %1 的說明訊息，來取得可用命令列選項的列表</translation>
     </message>
     <message>
         <source>%1 client</source>
         <translation>%1 客戶端軟體</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;unencrypted&lt;/b&gt;</source>
+        <translation>錢包 &lt;b&gt;未加密&lt;/b&gt;</translation>
     </message>
     <message>
         <source>&amp;PrivateSend information</source>
@@ -526,7 +584,7 @@
         <translation>分頁工具列</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Biblepay network</source>
+        <source>%n active connection(s) to BiblePay network</source>
         <translation><numerusform>%n 個運作中的達世幣網路連線</numerusform></translation>
     </message>
     <message>
@@ -555,7 +613,7 @@
     </message>
     <message>
         <source>Connecting to peers...</source>
-        <translation>正在連接其他節點...</translation>
+        <translation>正在連接其他對等用戶群...</translation>
     </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
@@ -596,6 +654,30 @@
     <message>
         <source>Information</source>
         <translation>資訊</translation>
+    </message>
+    <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>接收和發送多個交易</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>發送多筆交易</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>收到多筆交易</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>發送金額: %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>收到的款項: %1
+</translation>
     </message>
     <message>
         <source>Date: %1
@@ -640,10 +722,6 @@
         <translation>生成 HD 密鑰功能正 &lt;b&gt;啟用&lt;/b&gt;</translation>
     </message>
     <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>生成 HD 密鑰功能被 &lt;b&gt;禁用&lt;/b&gt;</translation>
-    </message>
-    <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
         <translation>錢包&lt;b&gt;已加密&lt;/b&gt;目前為&lt;b&gt;解鎖&lt;/b&gt;狀態</translation>
     </message>
@@ -654,13 +732,6 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>錢包&lt;b&gt;已加密&lt;/b&gt;目前為&lt;b&gt;鎖定&lt;/b&gt;狀態</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>網路警報</translation>
     </message>
 </context>
 <context>
@@ -730,10 +801,6 @@
         <translation>收款位址</translation>
     </message>
     <message>
-        <source>PS Rounds</source>
-        <translation>匿名發送循環</translation>
-    </message>
-    <message>
         <source>Date</source>
         <translation>日期</translation>
     </message>
@@ -798,10 +865,6 @@
         <translation>請切換到“列表模式”來使用此功能。</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>選擇了非匿名的輸入。 &lt;b&gt;匿名發送將會被禁用。&lt;/b&gt;&lt;br&gt;&lt;br&gt;如果你仍然想用匿名發送，請先取消選取所有非匿名的輸入，然後再勾選匿名發送的核取方塊。</translation>
-    </message>
-    <message>
         <source>(%1 locked)</source>
         <translation>(%1 鎖定)</translation>
     </message>
@@ -820,6 +883,14 @@
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>每組輸入可能有 +/- %1 個 duff(s) 的誤差。</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they were spent.</source>
+        <translation>某些資金被取消選取，因為它們已經花費了。</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
+        <translation>某些資金被取消選取，因為它們沒有足夠的混合次數。</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -861,10 +932,6 @@
         <translation>跟這個位址簿項目關聯的位址。只有付款位址才能被修改。</translation>
     </message>
     <message>
-        <source>New receiving address</source>
-        <translation>新建收款位址</translation>
-    </message>
-    <message>
         <source>New sending address</source>
         <translation>新建付款位址</translation>
     </message>
@@ -877,7 +944,7 @@
         <translation>編輯付款位址</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Biblepay address.</source>
+        <source>The entered address "%1" is not a valid BiblePay address.</source>
         <translation>輸入的位址 %1 並不是有效的達世幣位址。</translation>
     </message>
     <message>
@@ -951,6 +1018,22 @@
         <translation>啓動時選擇資料目錄(預設值: %u)</translation>
     </message>
     <message>
+        <source>Set the font family. Possible values: %1. (default: %2)</source>
+        <translation>設置字體系列。 可能的值: %1. (預設值: %2)</translation>
+    </message>
+    <message>
+        <source>Set a scale factor which gets applied to the base font size. Possible range %1 (smallest fonts) to %2 (largest fonts). (default: %3)</source>
+        <translation>設置比例因子，該比例因子將應用於基本字體大小。 可能的範圍是 %1 (最小字體) to %2 (最大字體). (預定值: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for bold texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>設置粗體文本的字體粗幼。 可能的範圍是 %1 to %2 (預定值: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for normal texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>設置普通文本的字體粗幼。 可能的範圍是 %1 to %2 (預設值: %3)</translation>
+    </message>
+    <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
         <translation>設定語言，比如說 de_DE (預設值: 系統語系)</translation>
     </message>
@@ -975,8 +1058,8 @@
         <translation>匿名發送資訊</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Biblepay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;匿名發送基礎知識&lt;/h3&gt; 匿名發送通過隱藏您的資金來源為您提供真正的財務隱私。您的錢包中所有的達世幣都由不同的“輸入”組成，您可以將其視為分開的離散硬幣。&lt;br&gt; 匿名發送使用創新的方法將您的輸入與其他兩個人的輸入相結合，而過程中不會讓您的達世幣離開您的錢包。每時每刻，您仍然控制著您的錢。&lt;hr&gt; &lt;b&gt;匿名發送的運作原理如下:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;匿名發送首先將您的交易分柝成多個標準面額的交易。這些標準面額分別為0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY 和10 BIBLEPAY --有點像您每天使用的紙幣。&lt;/li&gt; &lt;li&gt;您的錢包然後發送請求到網絡上有專門配置的軟件節點，稱為“主節點”。這些主節點會收到您希望混合一些資金的通知。沒有可識別的信息發送到主節點，所以他們永遠不會知道你是"誰"。&lt;/li&gt; &lt;li&gt;當另外兩個人發送類似的消息時，表示希望混合相同的面額的話，混合會話就會開始。相關的主節點會混合這些輸入，並指示所有三個用戶的錢包將已經轉換了輸入的交易支付給自己。你的錢包直接支付給自己，但是付給不同的位址 (稱之為找零位址)。&lt;/li&gt; &lt;li&gt;為了完全掩蓋您的資金來源，您的錢包必須以每個面額來重複此過程數次。每次這個過程完成後，都稱之為一個 "循環"。每個循環的匿名發送都會令確定您的資金來源的工作倍加困難。&lt;/li&gt; &lt;li&gt;這種混合過程發生在後台，而不需要您進行任何操作。當您想進行交易時，您的資金將已被匿名處理。不需再花額外的時間等待。&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;重要:&lt;/b&gt;您的錢包只能擁有1000個"找零位址。" 每次混合事件發生時，最多會使用9個找零位址。這意味著這1000個位址可以容許100次的混合事件。當其的中900個已經被使用後，您的錢包必須創建更多的位址。如果您啟用了自動備份，則只能夠這樣做。&lt;br&gt;因此，禁用備份的用戶也將禁用匿名發送。&lt;hr&gt;如欲了解更多信息請參閱&lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;匿名發送文檔&lt;/a&gt;。</translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the BiblePay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two or more other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two or more other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;匿名發送基礎知識&lt;/h3&gt; 匿名發送通過隱藏您的資金來源為您提供真正的財務隱私。您的錢包中所有的達世幣都由不同的“輸入”組成，您可以將其視為分開的離散硬幣。&lt;br&gt; 匿名發送使用創新的方法將您的輸入與其他兩個人的輸入相結合，而過程中不會讓您的達世幣離開您的錢包。每時每刻，您仍然控制著您的錢。&lt;hr&gt; &lt;b&gt;匿名發送的運作原理如下:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;匿名發送首先將您的交易分柝成多個標準面額的交易。這些標準面額分別為0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY 和10 BIBLEPAY --有點像您每天使用的紙幣。&lt;/li&gt; &lt;li&gt;您的錢包然後發送請求到網絡上有專門配置的軟件節點，稱為“主節點”。這些主節點會收到您希望混合一些資金的通知。沒有可識別的信息發送到主節點，所以他們永遠不會知道你是"誰"。&lt;/li&gt; &lt;li&gt;當另外兩個人發送類似的消息時，表示希望混合相同的面額的話，混合會話就會開始。相關的主節點會混合這些輸入，並指示所有三個用戶的錢包將已經轉換了輸入的交易支付給自己。你的錢包直接支付給自己，但是付給不同的位址 (稱之為找零位址)。&lt;/li&gt; &lt;li&gt;為了完全掩蓋您的資金來源，您的錢包必須以每個面額來重複此過程數次。每次這個過程完成後，都稱之為一個 "循環"。每個循環的匿名發送都會令確定您的資金來源的工作倍加困難。&lt;/li&gt; &lt;li&gt;這種混合過程在後台進行，而不需要您進行任何操作。當您想進行交易時，您的資金將已被匿名處理。不需再花額外的時間等待。&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt; &lt;b&gt; 重要:&lt;/b&gt; 您的錢包只能擁有1000個"找零位址。" 每次混合事件發生時，最多會使用9個找零位址。這意味著這1000個位址可以容許100次的混合事件。當其的中900個已經被使用後，您的錢包必須創建更多的位址。如果您啟用了自動備份，則只能夠這樣做。&lt;br&gt; 因此，禁用備份的用戶也將禁用匿名發送。&lt;hr&gt;如欲了解更多信息請參閱 &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;匿名發送文檔&lt;/a&gt;。</translation>
     </message>
 </context>
 <context>
@@ -1022,8 +1105,8 @@
         <translation>在這個目錄中大約會存放 %1 GB 的資料。</translation>
     </message>
     <message>
-        <source>%1 will download and store a copy of the Biblepay block chain.</source>
-        <translation>%1 會下載 Biblepay 區塊鏈並且儲存一份副本。</translation>
+        <source>%1 will download and store a copy of the BiblePay block chain.</source>
+        <translation>%1 會下載 BiblePay 區塊鏈並且儲存一份副本。</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
@@ -1053,16 +1136,8 @@
         <translation>表單</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>位址</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>狀態</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>收款人</translation>
     </message>
     <message>
         <source>0</source>
@@ -1081,16 +1156,16 @@
         <translation>節點數:</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>DIP3 主節點</translation>
-    </message>
-    <message>
         <source>Show only masternodes this wallet has keys for.</source>
         <translation>僅顯示此錢包中有密鑰的主節點。</translation>
     </message>
     <message>
         <source>My masternodes only</source>
         <translation>只顯示我的主節點</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>服務</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1109,8 +1184,24 @@
         <translation>下一次付款</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>獎金位址</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>運營者獎勵</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>抵押品位址</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>所有者位址</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>投票位址</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1119,6 +1210,10 @@
     <message>
         <source>Copy Collateral Outpoint</source>
         <translation>複製抵押品出點</translation>
+    </message>
+    <message>
+        <source>Updating...</source>
+        <translation>更新中...</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1149,6 +1244,14 @@
         <translation>沒有</translation>
     </message>
     <message>
+        <source>Filter by any property (e.g. address or protx hash)</source>
+        <translation>按任何屬性過濾 (例如 位址 或 protx 哈希值)</translation>
+    </message>
+    <message>
+        <source>Please wait...</source>
+        <translation>請稍候...</translation>
+    </message>
+    <message>
         <source>Additional information for DIP3 Masternode %1</source>
         <translation>關於DIP3主節點%1 的附加信息</translation>
     </message>
@@ -1160,11 +1263,11 @@
         <translation>表單</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Biblepay network, as detailed below.</source>
+        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the BiblePay network, as detailed below.</source>
         <translation>最近的交易可能尚未顯示，因此您的錢包的餘額可能不正確。 一旦你的錢包完成與達世幣網絡的同步，這個信息將是正確的，如下所述。</translation>
     </message>
     <message>
-        <source>Attempting to spend Biblepay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <source>Attempting to spend BiblePay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
         <translation>假如您正在嘗試花費尚未顯示出來的結餘，這個交易將不會被網絡所接受。</translation>
     </message>
     <message>
@@ -1254,12 +1357,12 @@
         <translation>(0 表示程式自動決定，小於 0 表示保留處理器核心不用的數目)</translation>
     </message>
     <message>
-        <source>Amount of Biblepay to keep anonymized</source>
-        <translation>保持匿名的達世幣數量</translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>錢包(&amp;W)</translation>
+    </message>
+    <message>
+        <source>&amp;Appearance</source>
+        <translation>外觀(&amp;A)</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
@@ -1306,24 +1409,44 @@
         <translation>此金額為關閉匿名發送的門檻。</translation>
     </message>
     <message>
-        <source>Automatically open the Biblepay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Target PrivateSend balance</source>
+        <translation>目標匿名發送餘額</translation>
+    </message>
+    <message>
+        <source>Automatically open the BiblePay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>自動在路由器上開放達世幣核心客戶端的通訊埠。只有在你的路由器支援且開啓「通用即插即用」協定(UPnP)時才有作用。</translation>
     </message>
     <message>
-        <source>Accept connections from outside</source>
-        <translation>接受外來連線</translation>
+        <source>Accept connections from outside.</source>
+        <translation>接受來自外部的連接。</translation>
     </message>
     <message>
-        <source>Allow incoming connections</source>
-        <translation>接受外來連線</translation>
+        <source>Allow incomin&amp;g connections</source>
+        <translation>允許傳入的連接</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a SOCKS5 proxy.</source>
+        <source>Connect to the BiblePay network through a SOCKS5 proxy.</source>
         <translation>透過 SOCKS5 代理伺服器來連線到達世幣網路。</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>透過 SOCKS5 代理伺服器連線(預設代理伺服器):(&amp;C)</translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>如果是使用提供的預設 SOCKS5 代理來連接到對等用戶群就加以顯示。</translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
+        <translation>使用單獨的SOCKS＆5代理通過Tor隱藏服務到達對等用戶群:</translation>
+    </message>
+    <message>
+        <source>Hide the icon from the system tray.</source>
+        <translation>隱藏系統工具列中的圖示。</translation>
+    </message>
+    <message>
+        <source>&amp;Hide tray icon</source>
+        <translation>隱藏系統工具列圖示(&amp;H)</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1334,12 +1457,8 @@
         <translation>在交易頁籤的情境選單出現的第三方(比如說區塊探索網站)網址連結。&lt;br/&gt;網址中的 %s 會被取代為交易的雜湊值。可以用直線符號 | 來分隔多個連結。</translation>
     </message>
     <message>
-        <source>Expert</source>
-        <translation>專家</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>這項設置決定輸入的資金將會經過多少個主節點進,行匿名處理。&lt;br/&gt;多輪的匿名化處理提供了更高程度的隱私，但也花費更多的費用。</translation>
+        <source>&amp;Third party transaction URLs</source>
+        <translation>第三方交易網址(&amp;T)</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1370,6 +1489,10 @@
         <translation>可以花還沒確認的零錢(&amp;S)</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>這項設置決定輸入的資金將會經過多少個主節點進行匿名處理。&lt;br/&gt;多輪的匿名化處理提供了更高程度的隱私，但也花費更多的費用。</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>網絡(&amp;N)</translation>
     </message>
@@ -1395,11 +1518,7 @@
     </message>
     <message>
         <source>Used for reaching peers via:</source>
-        <translation>透過以下方式連接節點:</translation>
-    </message>
-    <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>如果是使用提供的預設 SOCKS5 代理來連接到節點就加以顯示。</translation>
+        <translation>透過以下方式連接對等用戶群:</translation>
     </message>
     <message>
         <source>IPv4</source>
@@ -1414,24 +1533,8 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <source>Connect to the BiblePay network through a separate SOCKS5 proxy for Tor hidden services.</source>
         <translation>透過另一個SOCKS5 代理伺服器作為Tor隱藏服務來連線到達世幣網路。</translation>
-    </message>
-    <message>
-        <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>使用另外的 SOCK5 代理伺服器，並透過 Tor 隱藏服務跟節點聯繫:</translation>
-    </message>
-    <message>
-        <source>&amp;Window</source>
-        <translation>視窗(&amp;)</translation>
-    </message>
-    <message>
-        <source>&amp;Hide the icon from the system tray.</source>
-        <translation>從系統托盤中隱藏圖示。(&amp;H)</translation>
-    </message>
-    <message>
-        <source>Hide tray icon</source>
-        <translation>隱藏托盤圖示</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1464,10 +1567,6 @@ https://www.transifex.com/projects/p/biblepay/</source>
 https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
-        <source>User Interface Theme:</source>
-        <translation>用戶界面主題：</translation>
-    </message>
-    <message>
         <source>&amp;Unit to show amounts in:</source>
         <translation>金額顯示單位:(&amp;U)</translation>
     </message>
@@ -1478,10 +1577,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Decimal digits</source>
         <translation>小數位數</translation>
-    </message>
-    <message>
-        <source>Third party transaction URLs</source>
-        <translation>交易的第三方網址連結</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1506,10 +1601,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>default</source>
         <translation>預設值</translation>
-    </message>
-    <message>
-        <source>none</source>
-        <translation>無</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
@@ -1539,7 +1630,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>表單</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Biblepay network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the BiblePay network after a connection is established, but this process has not completed yet.</source>
         <translation>顯示的資訊可能是過期的。跟達世幣網路的連線建立後，你的錢包會自動和網路同步，但是這個步驟還沒完成。</translation>
     </message>
     <message>
@@ -1619,22 +1710,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>完成度:</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>嘗試手動提交匿名發送請求。</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>重置目前匿名發送狀態(此操作可能會影響您目前正在執行的混合過程，並且產生費用!)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>關於匿名發送混合的資訊</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>資訊</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>金額和循環次數:</translation>
     </message>
@@ -1667,18 +1742,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>你提交到主節點的面額。&lt;br&gt;為了混合，其他用戶必須提交完全一樣的面額。</translation>
     </message>
     <message>
-        <source>(Last Message)</source>
-        <translation>(最近一次信息)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>嘗試混合</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>重置</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>還沒同步</translation>
     </message>
@@ -1703,12 +1766,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>%n 次循環</numerusform></translation>
     </message>
     <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>找到足夠的相容的輸入進行匿名處理 %1</translation>
+        <source>Found enough compatible inputs to mix %1</source>
+        <translation>找到足夠的兼容輸入並用來混合 %1</translation>
     </message>
     <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>沒有足夠相容的輸入來進行匿名處理&lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;將匿名處理 &lt;span style='color:red;'&gt;%2&lt;/span&gt; 作為代替</translation>
+        <source>Not enough compatible inputs to mix &lt;span style='%1'&gt;%2&lt;/span&gt;,&lt;br&gt;will mix &lt;span style='%1'&gt;%3&lt;/span&gt; instead</source>
+        <translation>沒有足夠的兼容輸入以進行混合 &lt;span style='%1'&gt;%2&lt;/span&gt;,&lt;br&gt;將會混合 &lt;span style='%1'&gt;%3&lt;/span&gt; 來代替</translation>
     </message>
     <message>
         <source>Overall progress</source>
@@ -1719,12 +1782,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>已經除名的</translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>混合的</translation>
+        <source>Partially mixed</source>
+        <translation>混合了部分資金</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>經過匿名處理的</translation>
+        <source>Mixed</source>
+        <translation>混合的</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1743,8 +1806,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>自上次自動備份後，尚餘小量的公鑰!</translation>
     </message>
     <message>
-        <source>We are about to create a new automatic backup for you, however &lt;span style='color:red;'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
-        <translation>我們即將為您創建一個新的自動備份，但&lt;span style='color.red;'&gt;您應該始終確保 您有另外的一些備份保存在安全的位置&lt;/span&gt;!</translation>
+        <source>We are about to create a new automatic backup for you, however &lt;span style='%1'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
+        <translation>我們即將為您創建一個新的自動備份，但&lt;span style='%1'&gt;您應該始終確保 您有另外的一些備份保存在安全的位置&lt;/span&gt;!</translation>
     </message>
     <message>
         <source>Note: You can turn this message off in options.</source>
@@ -1773,16 +1836,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
         <translation>警告! 無法補充公鑰池，請解鎖您的錢包。</translation>
-    </message>
-    <message>
-        <source>Last PrivateSend message:
-</source>
-        <translation>最近收到的匿名發送訊息:
-</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>匿名發送成功重置。</translation>
     </message>
     <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
@@ -1820,7 +1873,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>無效的付款位址 %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Biblepay address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid BiblePay address or malformed URI parameters.</source>
         <translation>沒辦法解析 URI 位址！可能是因為達世幣位址無效，或是 URI 參數格式錯誤。</translation>
     </message>
     <message>
@@ -1906,6 +1959,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Ping</source>
         <translation>Ping</translation>
     </message>
+    <message>
+        <source>Sent</source>
+        <translation>發送</translation>
+    </message>
+    <message>
+        <source>Received</source>
+        <translation>已收到</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -1918,8 +1979,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>金額</translation>
     </message>
     <message>
-        <source>Enter a Biblepay address (e.g. %1)</source>
+        <source>Enter a BiblePay address (e.g. %1)</source>
         <translation>輸入達世幣位址 (例如 %1)</translation>
+    </message>
+    <message>
+        <source>Appearance Setup</source>
+        <translation>外觀設定</translation>
+    </message>
+    <message>
+        <source>This can also be adjusted later in the "Appearance" tab of the preferences.</source>
+        <translation>您稍後可以在 "外觀" 偏好設定的選項頁中進行調整。</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1978,6 +2047,22 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1又 %2</translation>
     </message>
     <message>
+        <source>%1 B</source>
+        <translation>%1 B</translation>
+    </message>
+    <message>
+        <source>%1 KB</source>
+        <translation>%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation>%1 GB</translation>
+    </message>
+    <message>
         <source>unknown</source>
         <translation>未知</translation>
     </message>
@@ -1995,6 +2080,34 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Error: %1</source>
         <translation>錯誤: %1</translation>
+    </message>
+    <message>
+        <source>Error: Failed to load application fonts.</source>
+        <translation>錯誤: 無法加載應用程序字體。</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-family invalid. Valid values: %1.</source>
+        <translation>錯誤: 指定的字體系列無效。 有效值: %1。</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
+        <translation>錯誤: 指定的 font-weight-normal 無效。 有效範圍 %1 到 %2。</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
+        <translation>錯誤: 指定的 font-weight-bold 無效。 有效範圍 %1 到%2。</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
+        <translation>錯誤: 指定的字體比例無效。 有效範圍 %1 到 %2。</translation>
+    </message>
+    <message>
+        <source>Error: Invalid -custom-css-dir path.</source>
+        <translation>錯誤: 無效的 -custom-css-dir 路徑。</translation>
+    </message>
+    <message>
+        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
+        <translation>錯誤:  -custom-css-dir 路徑中缺少 %1 個CSS 文件。</translation>
     </message>
 </context>
 <context>
@@ -2145,14 +2258,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>網路流量(&amp;N)</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>清除(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Totals</source>
-        <translation>總計</translation>
-    </message>
-    <message>
         <source>Received</source>
         <translation>接收</translation>
     </message>
@@ -2162,15 +2267,15 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>&amp;Peers</source>
-        <translation>節點(&amp;P)</translation>
+        <translation>對等用戶(&amp;P)</translation>
     </message>
     <message>
         <source>Banned peers</source>
-        <translation>已禁止的節點</translation>
+        <translation>已禁止的對等用戶群</translation>
     </message>
     <message>
         <source>Select a peer to view detailed information.</source>
-        <translation>選擇一個節點來查看詳細資訊。</translation>
+        <translation>選擇一個對等用戶來查看詳細資訊。</translation>
     </message>
     <message>
         <source>Whitelisted</source>
@@ -2209,8 +2314,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>數據目錄</translation>
     </message>
     <message>
+        <source>Last block hash</source>
+        <translation>最後一個區塊的哈希值</translation>
+    </message>
+    <message>
         <source>Open the %1 debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation>從目前的資料目錄下開啓 %1 的除錯紀錄檔。當紀錄檔很大時，可能會花好幾秒的時間。</translation>
+    </message>
+    <message>
+        <source>InstantSend locks</source>
+        <translation>即時到帳鎖定</translation>
     </message>
     <message>
         <source>Decrease font size</source>
@@ -2219,6 +2332,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Increase font size</source>
         <translation>增加字體大小</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>重置(&amp;R)</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2353,15 +2470,19 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>歡迎使用 %1 的 RPC 主控台。</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>請用上下游標鍵來瀏覽先前指令的紀錄，並用 &lt;b&gt;Ctrl-L&lt;/b&gt; 來清除畫面。</translation>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>請用上下游標鍵來瀏覽先前指令的紀錄，並用%1來清除畫面。</translation>
     </message>
     <message>
-        <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>請鍵入 &lt;b&gt;help&lt;/b&gt; 來查看可用指令的簡介。</translation>
+        <source>Type %1 for an overview of available commands.</source>
+        <translation>鍵入 %1 以獲取可用命令的概述。</translation>
     </message>
     <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
+        <source>For more information on using this console type %1.</source>
+        <translation>有關使用此控制台的更多信息，請鍵入 %1。</translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
         <translation>警告: 騙子一向積極地告訴用戶在這裡輸入命令，並借此偷取錢包內的錢。 如果沒有完全理解命令的分支，請不要使用這個控制台。</translation>
     </message>
     <message>
@@ -2379,22 +2500,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Total: %1 (Enabled: %2)</source>
         <translation>總計: %1 (已啟用: %2)</translation>
-    </message>
-    <message>
-        <source>%1 B</source>
-        <translation>%1 B (位元組)</translation>
-    </message>
-    <message>
-        <source>%1 KB</source>
-        <translation>%1 KB (千位元組)</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB (百萬位元組)</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB (十億位元組)</translation>
     </message>
     <message>
         <source>(node id: %1)</source>
@@ -2432,15 +2537,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
-        <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>重新使用以前用過的接收地址。&lt;br&gt;重複使用地址會產生安全和私隱問題。&lt;br&gt;不要使用這個選項，除非再次生成之前提出的支付請求。</translation>
-    </message>
-    <message>
-        <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>重複使用現有的收款位址(不建議)(&amp;e)</translation>
-    </message>
-    <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Biblepay network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BiblePay network.</source>
         <translation>附加在付款要求中的訊息，可以不填，打開要求內容時會顯示。注意: 這個訊息不會隨著付款送到達世幣網路上。</translation>
     </message>
     <message>
@@ -2452,7 +2549,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>跟新收款位址關聯的標記，可以不填。</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Biblepay network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BiblePay network.</source>
         <translation>附加在付款要求中的訊息，可以不填，打開要求內容時會顯示。&lt;br&gt;注意: 這個訊息不會隨著付款送到達世幣網路上。</translation>
     </message>
     <message>
@@ -2484,10 +2581,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>清空</translation>
     </message>
     <message>
-        <source>Request InstantSend</source>
-        <translation>要求即時到帳付款</translation>
-    </message>
-    <message>
         <source>Requested payments history</source>
         <translation>先前要求付款的記錄</translation>
     </message>
@@ -2506,6 +2599,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Remove</source>
         <translation>刪掉</translation>
+    </message>
+    <message>
+        <source>Enter a label to associate with the new receiving address</source>
+        <translation>輸入標籤，用來標示新的收款位址</translation>
+    </message>
+    <message>
+        <source>Enter a message to attach to the payment request</source>
+        <translation>輸入信息並附加到支付請求上</translation>
     </message>
     <message>
         <source>Copy URI</source>
@@ -2569,18 +2670,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Message</source>
         <translation>訊息</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>即時到帳</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>是</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>不是</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2689,14 +2778,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>選項...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>使用fallbackfee可能會導致發送一個需要幾個小時或幾天 (或永遠不會) 確認的交易。 考慮手動選擇你的費用，或者等到你已經驗證完整的鏈後。</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>警告：目前無法計算預估手續費。</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>收起手續費設定</translation>
     </message>
@@ -2705,20 +2786,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>目標確認時間:</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>匿名發送</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>即時到帳</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>如果自訂手續費設定為 1000 duffs ，而交易資料大小只有 250 個位元組的話，那麽選擇「每千位元組」就只會付 250 duffs 的手續費，&lt;br /&gt;而「至少」會支付 1000 duffs。但是如果交易資料大小超過一千個位元組，那麽兩者都是每千位元組的費用。</translation>
-    </message>
-    <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>如果自訂手續費設定為 1000 duffs ，而交易資料大小只有 250 個位元組的話，那麽選擇「每千位元組」就只會付 250 duffs 的手續費，&lt;br /&gt;而「總共至少」會支付 1000 duffs。但是如果交易資料大小超過一千個位元組，那麽兩者都是每千位元組的費用。</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for biblepay transactions than the network can process.</source>
@@ -2729,12 +2798,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>每千位元組</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>隱藏</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>使用fallbackfee可能會導致發送一個需要幾個小時或幾天 (或永遠不會) 確認的交易。 考慮手動選擇你的費用，或者等到你已經驗證完整的鏈後。</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>總共最少</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>注意: 沒有足夠的數據用於費用估算，使用備用費來代替。</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>隱藏</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2751,14 +2824,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(手續費智慧演算法還沒準備好。通常都要等幾個區塊才行...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>正常</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>快速</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2817,24 +2882,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>複製找零金額</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 個區塊)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>使用</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>匿名資金</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(匿名發送需要這一數額四捨五入到最接近%1)</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>任何可用資金 (不是匿名的)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>和 即時到帳</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2855,6 +2908,38 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
         <translation>&lt;b&gt;(在 %2 中 %1 個項目顯示出來)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Confirm the PrivateSend action</source>
+        <translation>確認匿名發送的動作</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>只限匿名發送資金</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>任何可用資金</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(由於不允許更改輸出，匿名發送的交易費用會較高)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>交易大小: %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>費用率: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>此交易將消耗 %n 個輸入</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>警告: 將匿名發送資金與 %1 或更多輸入配合使用會損害您的隱私，因此不建議使用</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -2896,10 +2981,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Payment request expired.</source>
         <translation>付款的要求已經過期了。</translation>
     </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n 區塊</numerusform></translation>
-    </message>
     <message>
         <source>Pay only the required fee of %1</source>
         <translation>只需支付所需的費用 %1</translation>
@@ -2909,7 +2990,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>預計可在 %n 個區塊內開始確認。</numerusform></translation>
     </message>
     <message>
-        <source>Warning: Invalid Biblepay address</source>
+        <source>Warning: Invalid BiblePay address</source>
         <translation>警告: 無效的達世幣位址</translation>
     </message>
     <message>
@@ -2940,7 +3021,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>付給:(&amp;T)</translation>
     </message>
     <message>
-        <source>The Biblepay address to send the payment to</source>
+        <source>The BiblePay address to send the payment to</source>
         <translation>接收付款的達世幣位址</translation>
     </message>
     <message>
@@ -2976,7 +3057,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>金額:(&amp;A)</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of Biblepay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
         <translation>手續費將從發送金額中扣除。接收者將收到的達世幣金額將會比您在金額字段中輸入的金額為少。 如果選擇了多個收款人，該費用將會被平均攤分。</translation>
     </message>
     <message>
@@ -2984,11 +3065,15 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>從金額中扣除費用(&amp;u)</translation>
     </message>
     <message>
+        <source>Use available balance</source>
+        <translation>使用可用餘額</translation>
+    </message>
+    <message>
         <source>Message:</source>
         <translation>訊息:</translation>
     </message>
     <message>
-        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Biblepay network.</source>
+        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</source>
         <translation>附加在達世幣付款協議 URI 中的訊息，會和交易內容一起存起來，給你自己做參考。注意: 這個訊息不會送到達世幣網路上。</translation>
     </message>
     <message>
@@ -3041,11 +3126,11 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>簽署訊息(&amp;S)</translation>
     </message>
     <message>
-        <source>You can sign messages/agreements with your addresses to prove you can receive Biblepay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <source>You can sign messages/agreements with your addresses to prove you can receive BiblePay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
         <translation>你可以用自己的位址簽署訊息/協議，來證明你對位址的所有權。但是請小心，不要簽署語意含糊不清的內容，因為釣魚式詐騙可能會用騙你簽署的手法來冒充是你。只有在語句中的細節你都同意時才簽署。</translation>
     </message>
     <message>
-        <source>The Biblepay address to sign the message with</source>
+        <source>The BiblePay address to sign the message with</source>
         <translation>用來簽署訊息的達世幣位址</translation>
     </message>
     <message>
@@ -3077,7 +3162,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>複製目前的簽章到系統剪貼簿</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Biblepay address</source>
+        <source>Sign the message to prove you own this BiblePay address</source>
         <translation>簽署這個訊息來證明這個達世幣位址是你的</translation>
     </message>
     <message>
@@ -3101,11 +3186,11 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>請在下面輸入簽署的位址，訊息(請確定完整複製了所包含的換行，空格，跳位符號等等)，以及簽章，來驗證這個訊息。請小心，除了訊息內容以外，不要對簽章本身過度解讀，以避免被用「中間人攻擊法」詐騙。請注意，這僅僅是證明簽名方接收的地址，它不能證明任何交易的發送人！</translation>
     </message>
     <message>
-        <source>The Biblepay address the message was signed with</source>
+        <source>The BiblePay address the message was signed with</source>
         <translation>簽署這個訊息的達世幣位址</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Biblepay address</source>
+        <source>Verify the message to ensure it was signed with the specified BiblePay address</source>
         <translation>驗證這個訊息來確定是用指定的達世幣位址簽署的</translation>
     </message>
     <message>
@@ -3117,8 +3202,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>重設所有訊息驗證欄位</translation>
     </message>
     <message>
+        <source>Enter a message to be signed</source>
+        <translation>輸入要簽名的消息</translation>
+    </message>
+    <message>
         <source>Click "Sign Message" to generate signature</source>
         <translation>請按一下「簽署訊息」來產生簽章</translation>
+    </message>
+    <message>
+        <source>Enter a message to be verified</source>
+        <translation>輸入要驗證的消息</translation>
+    </message>
+    <message>
+        <source>Enter a signature for the message to be verified</source>
+        <translation>輸入要驗證的消息的簽名</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
@@ -3175,10 +3272,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>[testnet]</source>
         <translation>[testnet]</translation>
     </message>
-    <message>
-        <source>Version %1</source>
-        <translation>版本 %1</translation>
-    </message>
 </context>
 <context>
     <name>TrafficGraphWidget</name>
@@ -3186,7 +3279,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>KB/s</source>
         <translation>KB/s</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>TransactionDesc</name>
     <message numerus="yes">
@@ -3200,10 +3293,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>conflicted</source>
         <translation>發生衝突</translation>
-    </message>
-    <message>
-        <source>%1/offline</source>
-        <translation>%1 次/離線</translation>
     </message>
     <message>
         <source>0/unconfirmed, %1</source>
@@ -3230,36 +3319,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>確認 %1 次</translation>
     </message>
     <message>
-        <source>locked via LLMQ based ChainLocks</source>
-        <translation>透過基於LLMQ 的 ChainLocks鎖定的</translation>
-    </message>
-    <message>
-        <source>verified via LLMQ based InstantSend</source>
-        <translation>經基於LLMQ 的 ChainLocks驗證的</translation>
-    </message>
-    <message>
-        <source>verified via InstantSend</source>
-        <translation>經即時到帳系統核實</translation>
-    </message>
-    <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>即時到帳驗證正在進行- %2 個簽署中的第 %1 個</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>即時到帳驗證失敗</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>狀態</translation>
-    </message>
-    <message>
-        <source>, has not been successfully broadcast yet</source>
-        <translation>，尚未成功廣播</translation>
-    </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>，已通過%n 個節點廣播 </numerusform></translation>
     </message>
     <message>
         <source>Date</source>
@@ -3416,10 +3477,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>至 %1 個數據塊時開啟</translation>
     </message>
     <message>
-        <source>Offline</source>
-        <translation>離線</translation>
-    </message>
-    <message>
         <source>Unconfirmed</source>
         <translation>未確認</translation>
     </message>
@@ -3442,10 +3499,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Immature (%1 confirmations, will be available after %2)</source>
         <translation>未成熟金額 (%1  次確認，經 %2 次確認後方可使用)</translation>
-    </message>
-    <message>
-        <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>沒有其他節點收到這個區塊，也許它不會被接受！</translation>
     </message>
     <message>
         <source>Generated but not accepted</source>
@@ -3492,10 +3545,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>匿名發送產生的除名資金</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>匿名發送</translation>
-    </message>
-    <message>
         <source>watch-only</source>
         <translation>僅限查看</translation>
     </message>
@@ -3524,10 +3573,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>決定是否有一個僅限查看的位址參與這次的交易</translation>
     </message>
     <message>
-        <source>Whether or not this transaction was locked by InstantSend.</source>
-        <translation>這交易是否被即時到帳鎖定。</translation>
-    </message>
-    <message>
         <source>User-defined intent/purpose of the transaction.</source>
         <translation>用戶定義的意圖/交易的目的。</translation>
     </message>
@@ -3541,14 +3586,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>All</source>
         <translation>全部</translation>
-    </message>
-    <message>
-        <source>Locked by InstantSend</source>
-        <translation>被即時到帳鎖定</translation>
-    </message>
-    <message>
-        <source>Not locked by InstantSend</source>
-        <translation>沒有被即時到帳鎖定</translation>
     </message>
     <message>
         <source>Today</source>
@@ -3587,10 +3624,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>付款給</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>匿名發送</translation>
-    </message>
-    <message>
         <source>PrivateSend Make Collateral Inputs</source>
         <translation>用作匿名發送抵押品的輸入</translation>
     </message>
@@ -3619,8 +3652,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>其它</translation>
     </message>
     <message>
-        <source>Enter address or label to search</source>
-        <translation>請輸入要搜尋的位址或標記</translation>
+        <source>Enter address, transaction id, or label to search</source>
+        <translation>輸入位址，交易ID或標籤以進行搜索</translation>
     </message>
     <message>
         <source>Min amount</source>
@@ -3751,14 +3784,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Send Coins</source>
         <translation>付款</translation>
     </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>即時到帳系統暫時並不支援這麼高的交易金額。目前的金額僅限於%1 BIBLEPAY。</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>這個即時到帳交易使用過多的輸入 (&gt;%1)，費用可能很大。</translation>
-    </message>
 </context>
 <context>
     <name>WalletView</name>
@@ -3826,10 +3851,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>為存儲在這個電子錢包的密碼，構建KeePass 入口的URL命名</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>設定高優先度或低手續費的交易資料大小上限成多少位元組(預設值: %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>設定指令碼驗證的執行緒數目 (%u 到 %d，0 表示程式自動決定，小於 0 表示保留處理器核心不用的數目，預設值: %d)</translation>
     </message>
@@ -3843,15 +3864,11 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
-        <translation>警告: 我們和某些連線的節點對於區塊鏈結的決定不同！你可能需要升級，或是需要等其它的節點升級。</translation>
+        <translation>警告: 我們和某些連線的對等用戶群對於區塊鏈結的決定不同！你可能需要升級，或是需要等其它的對等用戶升級。</translation>
     </message>
     <message>
         <source>Accept command line and JSON-RPC commands</source>
         <translation>接受指令列和 JSON-RPC 指令</translation>
-    </message>
-    <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>增加一個要連線的節線，並試著保持對它的連線暢通</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
@@ -3870,16 +3887,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>沒辦法把錢包格式降級</translation>
     </message>
     <message>
-        <source>Cannot write default address</source>
-        <translation>沒辦法把預設位址寫進去</translation>
-    </message>
-    <message>
         <source>Collateral not valid.</source>
         <translation>抵押品無效。</translation>
-    </message>
-    <message>
-        <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>連線到某個節點來取得其它節點的位址，然後斷線</translation>
     </message>
     <message>
         <source>Connection options:</source>
@@ -3955,7 +3964,11 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Accept relayed transactions received from whitelisted peers even when not relaying transactions (default: %d)</source>
-        <translation>即使在沒有中繼交易發生的情況下仍然接受來自節點白名單的中繼交易  (預設值: %d)</translation>
+        <translation>即使在沒有中繼交易發生的情況下仍然接受來自對等用戶白名單的中繼交易  (預設值: %d)</translation>
+    </message>
+    <message>
+        <source>Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info). This option can be specified multiple times to add multiple nodes.</source>
+        <translation>添加一個要連接的節點並嘗試保持其處於連接狀態（有關更多信息，請參見`addnode` RPC 命令幫助）。 這個選項可以指定多次添加多個節點。</translation>
     </message>
     <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
@@ -3963,7 +3976,23 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
-        <translation>和指定的位址繫結，並且把連線過來的節點放進白名單。IPv6 請用 [主機]:通訊埠 這種格式</translation>
+        <translation>和指定的位址繫結，並且把連線過來的對等用戶放進白名單。IPv6 請用 [主機]:通訊埠 這種格式</translation>
+    </message>
+    <message>
+        <source>Bind to given address to listen for JSON-RPC connections. Do not expose the RPC server to untrusted networks such as the public internet! This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
+        <translation>綁定到特定地址來偵聽JSON-RPC連接。 請勿將RPC服務器暴露給不受信任的網絡，例如公共Internet! 除非還傳遞了-rpcallowip，否則將忽略此選項。端口是可選的，並覆蓋-rpcport。對IPv6使用 [host]:port 表示法。可以多次指定此選項 (預設值: 127.0.0.1 和::1 i.e., localhost，或者如果已指定-rpcallowip， 0.0.0.0 和:: i.e., 所有地址)</translation>
+    </message>
+    <message>
+        <source>Cannot provide specific connections and have addrman find outgoing connections at the same.</source>
+        <translation>無法提供特定的連接，並且讓addrman同時找到傳出的連接。</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node; -connect=0 disables automatic connections (the rules for this peer are the same as for -addnode). This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>僅連接到指定的節點; -connect=0 禁用自動連接 (此對等用戶的規則與-addnode的規則相同). 此選項可多次指定連接到多個節點。</translation>
+    </message>
+    <message>
+        <source>Connect to a node to retrieve peer addresses, and disconnect. This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>連接到節點以檢索對等用戶的地址，然後斷開連接。 此選項可多次指定連接到多個節點。</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3982,10 +4011,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>在&lt;address&gt;中啟用嘗試發布雙重花費的即時到帳交易的哈希值</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>加載%s時出錯: 您不能夠在非HD 錢包上啟用HD功能</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>找到未確認的己除名資金輸出，將等待，直到它們確認再繼續。</translation>
     </message>
@@ -4002,16 +4027,24 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>如果在這條鏈中的區塊假設它和它之前的區塊是有效的，並有可能跳過他們的腳本驗證 (0 是驗證全部, 預設值: %s, 測試網: %s)</translation>
     </message>
     <message>
+        <source>Invalid -socketevents ('%s') specified. Only these modes are supported: %s</source>
+        <translation>指定的 -socketevents ('%s') 無效。僅支持以下模式: %s</translation>
+    </message>
+    <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
         <translation>-maxtxfee=&lt;amount&gt;: '%s' 的金額無效 (必須大於最低轉發手續費 %s 以避免交易無法確認)</translation>
+    </message>
+    <message>
+        <source>Location of the auth cookie. Relative paths will be prefixed by a net-specific datadir location. (default: data dir)</source>
+        <translation>身份驗證Cookie的位置。 相對路徑將以網絡特定的datadir位置為前綴。(預設值: data dir)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
         <translation>維護全部交易的索引，用在 getrawtransaction 這個 RPC 請求(預設值: %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>請確保加密您的錢包，並在驗證您的錢包能夠運作後刪除所有未加密的備份!</translation>
+        <source>Make outgoing connections only through network &lt;net&gt; (ipv4, ipv6 or onion). Incoming connections are not affected by this option. This option can be specified multiple times to allow multiple networks.</source>
+        <translation>僅通過網絡 &lt;net&gt; (ipv4, ipv6 或洋蔥路由) 建立傳出連接。 傳入連接不受此選項的影響。這個選項可以指定多次，以容許多個網絡。</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -4019,7 +4052,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
-        <translation>避免與異常的節點重新連線的秒數(預設: %u)</translation>
+        <translation>避免與異常的對等用戶重新連線的秒數(預設: %u)</translation>
     </message>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
@@ -4030,12 +4063,48 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>覆蓋最小叉勺簽名來改變叉勺值。只對regtest和devnet有用。在mainnet或testnet上使用它的話將封鎖你。</translation>
     </message>
     <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>匿名發送要求使用準確的已除名資金來發送，你可能需要再匿名處理一些資金。</translation>
+    </message>
+    <message>
+        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex, -rescan and -disablegovernance=false. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;=%u = automatically prune block files to stay under the specified target size in MiB)</source>
+        <translation>通過啟用舊區塊的修剪 (刪除) 來減少存儲需求。 這允許調用pruneblockchain RPC刪除特定的區塊，並且如果提供了 MiB 中的目標大小，則可以自動修剪舊區塊。此模式與 -txindex, -rescan 和-disablegovernance=false 不兼容。 警告: 恢復此設置需要重新下載整個區塊鏈。 (預設值: 0 = 禁用修剪區塊， 1 = 允許通過RPC手動修剪， &gt;=%u = 自動修剪區塊文件，使其保持在 MiB 中指定的目標大小以下)</translation>
+    </message>
+    <message>
+        <source>Send trace/debug info to console (default: 1 when no -daemon. To disable logging to file, set debuglogfile=0)</source>
+        <translation>將跟踪/除錯信息發送到控制台 (預設值: 1 當沒有 -daemon時。要禁用記錄到文件，請設置成 debuglogfile=0)</translation>
+    </message>
+    <message>
+        <source>Specify configuration file. Relative paths will be prefixed by datadir location. (default: %s)</source>
+        <translation>指定配置文件。 相對路徑將以datadir 位置為前綴。(預設值: %s)</translation>
+    </message>
+    <message>
+        <source>Specify directory to hold wallets (default: &lt;datadir&gt;/wallets if it exists, otherwise &lt;datadir&gt;)</source>
+        <translation>指定存放錢包的目錄 (預設值: &lt;datadir&gt;/wallets 如果已經存在，否則為 &lt;datadir&gt;)</translation>
+    </message>
+    <message>
+        <source>Specify location of debug log file. Relative paths will be prefixed by a net-specific datadir location. (0 to disable; default: %s)</source>
+        <translation>指定調試日誌文件的位置。 相對路徑將以網絡特定的 datadir 位置為前綴。 (設為 0 時代表禁用; 預設值: %s)</translation>
+    </message>
+    <message>
+        <source>Specify pid file. Relative paths will be prefixed by a net-specific datadir location. (default: %s)</source>
+        <translation>指定 pid 文件。相對路徑將以網絡特定的 datadir 位置為前綴。(預設值: %s)</translation>
+    </message>
+    <message>
+        <source>Specify wallet database path. Can be specified multiple times to load multiple wallets. Path is interpreted relative to &lt;walletdir&gt; if it is not absolute, and will be created if it does not exist (as a directory containing a wallet.dat file and log files). For backwards compatibility this will also accept names of existing data files in &lt;walletdir&gt;.)</source>
+        <translation>指定錢包數據庫路徑。可以多次指定以加載多個錢包。 如果路徑不是絕對路徑，則相對於 &lt;walletdir&gt; 進行解釋，如果路徑不存在，則會創建路徑 (作為包含wallet.dat 文件和日誌文件的目錄)。  為了向後兼容，這還將接受 &lt;walletdir&gt;中現有數據文件的名稱。)</translation>
+    </message>
+    <message>
+        <source>Transaction index can't be disabled with governance validation enabled. Either start with -disablegovernance command line switch or enable transaction index.</source>
+        <translation>無法在治理驗證啟用的情況下禁用事務索引。要麼使用-disablegovernance命令行選項，否則就啟用事務索引。</translation>
+    </message>
+    <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
         <translation>使用 N 個單獨的主節點來進行並聯混合資金 (%u-%u, 預設值: %u)</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
-        <translation>使用另外的 SOCK5 代理伺服器，來透過 Tor 隱藏服務跟節點聯繫(預設值: %s)</translation>
+        <translation>使用另外的 SOCK5 代理伺服器，來透過 Tor 隱藏服務跟對等用戶群聯繫(預設值: %s)</translation>
     </message>
     <message>
         <source>User defined mnemonic for HD wallet (bip39). Only has effect during wallet creation/first start (default: randomly generated)</source>
@@ -4047,23 +4116,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
-        <translation>在白名單中的節點不會因為偵測到阻斷服務攻擊而被停用。來自這些節點的交易也一定會被轉發，即使說交易本來就在記憶池裡了也一樣。適用於像是閘道伺服器。</translation>
-    </message>
-    <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>改變 -txindex 參數後，必須要用 -reindex-chainstate 參數來重建資料庫</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>您應該在配置文件中指定一個主節點私鑰。請參閱文檔以獲得幫助。</translation>
-    </message>
-    <message>
-        <source>(default: %s)</source>
-        <translation>(預設值: %s)</translation>
-    </message>
-    <message>
-        <source>-wallet parameter must only specify a filename (not a path)</source>
-        <translation>-wallet 參數必須只指定文件名 (不是路徑)</translation>
+        <translation>在白名單中的對等用戶不會因為偵測到阻斷服務攻擊而被停用。來自這些對等用戶的交易也一定會被轉發，即使說交易本來就在記憶池裡了也一樣。適用於像是閘道伺服器。</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4071,7 +4124,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Always query for peer addresses via DNS lookup (default: %u)</source>
-        <translation>是否一定要用域名查詢來搜尋節點 (預設值: %u)</translation>
+        <translation>是否一定要用域名查詢來搜尋對等用戶 (預設值: %u)</translation>
     </message>
     <message>
         <source>Can't mix: no compatible inputs found!</source>
@@ -4090,16 +4143,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>使用端口&lt;port&gt; 連接到 KeePassHttp (預設值: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>啟用客戶端作為一個主節點 (0-1, 預設值: %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>條目超過最大大小。</translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>加載%s時出錯: 您不能在HD錢包上禁用HD功能</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4158,12 +4203,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>餘額不足。</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>設定 -paytxfee=&lt;金額&gt; 的金額無效: '%s' (至少要有 %s)</translation>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>設定 -discardfee=&lt;金額&gt; 的金額無效: '%s'</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>無效的主節點私鑰。請參閱文檔。</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
+        <translation>設定 -paytxfee=&lt;金額&gt; 的金額無效: '%s' (至少要有 %s)</translation>
     </message>
     <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
@@ -4226,12 +4271,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>沒有找到相容的主節點。</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>不在主節點列表中。</translation>
+        <source>Not enough funds to mix.</source>
+        <translation>沒有足夠的資金以供混合使用。</translation>
     </message>
     <message>
-        <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>只會連接到網絡節點 &lt;net&gt;  (IPv4，IPv6或onion)</translation>
+        <source>Not in the Masternode list.</source>
+        <translation>不在主節點列表中。</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
@@ -4250,32 +4295,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>發送追蹤或除錯資訊到debug.log 中 (預設值: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>盡可能送出不用付手續費的交易(預設值: %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>設定密鑰池大小為 &lt;n&gt; (預設值: %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>設置主節點 BLS 私鑰</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
         <translation>設定處理 RPC 服務請求的執行緒數目(預設值: %d)</translation>
     </message>
     <message>
-        <source>Specify configuration file (default: %s)</source>
-        <translation>指定設定檔(預設值: %s)</translation>
-    </message>
-    <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
         <translation>指定連線在幾毫秒後逾時 (最少值: 1, 預設值: %d)</translation>
-    </message>
-    <message>
-        <source>Specify pid file (default: %s)</source>
-        <translation>指定行程識別碼檔案(預設值: %s)</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
@@ -4286,28 +4315,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>己經提交到主節點，在隊列%s 中等待 </translation>
     </message>
     <message>
-        <source>Synchronization failed</source>
-        <translation>同步失敗</translation>
-    </message>
-    <message>
         <source>Synchronization finished</source>
         <translation>同步完成</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>這並不是一個主節點。</translation>
-    </message>
-    <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
-        <translation>與異常的節點斷線的臨界值 (預設: %u)</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, removing.</source>
-        <translation>太多 %f 輸入金額，正在移除。</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, skipping.</source>
-        <translation>太多 %f 輸入金額，正在移除。</translation>
+        <translation>與異常的對等用戶斷線的臨界值 (預設: %u)</translation>
     </message>
     <message>
         <source>Tor control port password (default: empty)</source>
@@ -4358,6 +4371,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>用戶代理註釋 (%s) 包含不安全的字符。</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>正在驗證錢包...</translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>將重新嘗試...</translation>
     </message>
@@ -4386,20 +4403,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>KeePassHttp  的密鑰，用作與KeePass 的AES加密通信</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>保留最多 &lt;n&gt; 個不可連接的交易於記憶體 (預設值: %u)</translation>
-    </message>
-    <message>
-        <source>Disable all Biblepay specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
-        <translation>禁止所有達世幣的附加功能 (主節點，匿名發送，即時到帳，預算案) (0-1，預設值: %u)</translation>
-    </message>
-    <message>
         <source>%s file contains all private keys from this wallet. Do not share it with anyone!</source>
         <translation>%s 文件包含此錢包中的所有私鑰。 不要與任何人分享!</translation>
     </message>
     <message>
-        <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
-        <translation>和指定的位址繫結以聽候 JSON-RPC 連線。除非也傳遞了-rpcallowip，否則將忽略此選項。端口是可選的，並覆蓋-rpcport。IPv6 請用 [主機]:通訊埠 這種格式。這個選項可以設定多次。(預設值: 127.0.0.1 and ::1 i.e., localhost, 或 假如 -rpcallowip 已被指定, 0.0.0.0 and :: i.e., all addresses)</translation>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>-masternode 選項已被棄用並被忽略, 指定 -masternodeblsprivkey 足以將本節點作為主節點啟動。</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4410,16 +4419,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>在內存池中的交易不要存放超過 &lt;n&gt; 小時 (預設值: %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>啟用即時到帳，顯示鎖定交易的確認次數 (0-1, 預設值: %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
         <translation>允許在每個區塊中使用多用匿名發送的會話，實驗性功能 (0-1，預設值 : %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>允許存儲在這個錢包內的資金自動使用匿名發送 (0-1，預設值 : %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4446,14 +4447,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>如果沒有提供  &lt;category&gt; 又或者 &lt;category&gt; = 1，就會輸出所有的除錯資訊。</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>即時到帳系統暫時並不支援這麼高的交易金額。目前的金額僅限於%1 BIBLEPAY。</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>即時到帳系統要求輸入的資金最少要有%d個確認，你可能需要等待數分鐘然後再重試。</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>維護一個完整的地址索引，用於查詢餘額，txids和未使用的位址輸出 (預設值: %u)</translation>
     </message>
@@ -4467,11 +4460,15 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (temporary service connections excluded) (default: %u)</source>
-        <translation>維持與節點連線數的上限為 &lt;n&gt; 個 (臨時服務連接除外) (預設值: %u)</translation>
+        <translation>維持與對等用戶群連線數的上限為 &lt;n&gt; 個 (臨時服務連接除外) (預設值: %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>匿名發送要求使用準確的已除名資金來發送，你可能需要再匿名處理一些資金。</translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>請確保加密您的錢包，並在驗證您的錢包能夠運作後刪除所有未加密的備份!</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>以MB為單位，把所有孤兒交易的總大小增加到最大 (預設值: %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4482,12 +4479,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>修剪 : 最後的錢包同步超出了修剪的數據。你需要用-reindex (在修剪節點的情況下再次下載整個區塊鏈)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>如果位址低，則通過DNS查找來查詢對等用戶位址 (預設值: 1 除非使用了 -connect )</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>隨機化每個代理連接的憑證。這能使Tor流隔離 (預設值: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>在修剪模式下不能重新掃描區塊資料。你需要使用-reindex 這將再次下載整個區塊鏈。</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>設置主節點 BLS 私鑰並使客戶端能夠充當主節點</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4510,12 +4515,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>網絡版本字符串的總長度  (%i) 超過最大長度 (%i)。減少uacomments參數的數量或大小。</translation>
     </message>
     <message>
-        <source>Transaction index can't be disabled in full mode. Either start with -litemode command line switch or enable transaction index.</source>
-        <translation>無法在完整模式下禁用事務索引。 要麼使用-litemode命令行選項，不然就啟用事務索引。</translation>
-    </message>
-    <message>
         <source>Tries to keep outbound traffic under the given target (in MiB per 24h), 0 = no limit (default: %d)</source>
         <translation>嘗試保持指定目標下的出站流量 (以每24小時多少MB計算), 0 = 沒有限制 (預設值: %d)</translation>
+    </message>
+    <message>
+        <source>Try to create at least N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>嘗試創建每個面額的至少為 N 的輸入 (%u-%u, 預設值: %u)</translation>
     </message>
     <message>
         <source>Unable to locate enough PrivateSend denominated funds for this transaction.</source>
@@ -4534,6 +4539,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>使用通用即插即用協定 (UPnP)，來設定聽候連線的通訊埠的對應(預設值: 當有聽候連線和沒有代理伺服器時為 1)</translation>
     </message>
     <message>
+        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcauth. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
+        <translation>JSON-RPC 連線要用的使用者名稱和雜湊密碼。&lt;userpw&gt; 的格式是: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;。在  share/rpcauth目錄下有一個示範的python 程式。之後客戶端程式就可以用 rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; 這對參數正常連線。這個選項可以指定多次</translation>
+    </message>
+    <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
         <translation>警告! 無法補充公鑰池，請解鎖您的錢包。</translation>
     </message>
@@ -4546,8 +4555,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>警告 : 正在開採未知版本的區塊。未知的規則可能正在生效</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Biblepay-specific functionality is disabled.</source>
-        <translation>您正在使用精簡模式，故此所有與達世幣相關的特別功能已被禁用。</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>您需要使用-reindex來重建數據庫，並更改-timestampindex</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4556,6 +4565,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>(default: %u)</source>
         <translation>(預設值: %u)</translation>
+    </message>
+    <message>
+        <source>-litemode is deprecated.</source>
+        <translation>-litemode 已被棄用。</translation>
     </message>
     <message>
         <source>-maxmempool must be at least %d MB</source>
@@ -4576,6 +4589,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Automatically create Tor hidden service (default: %d)</source>
         <translation>自動創建Tor匿名服務 (預設值: %d)</translation>
+    </message>
+    <message>
+        <source>Disable governance validation (0-1, default: %u)</source>
+        <translation>禁用治理驗證 (0-1, 預設值: %u)</translation>
     </message>
     <message>
         <source>ERROR! Failed to create automatic backup</source>
@@ -4614,8 +4631,36 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>在 &lt;address&gt; 中啟用發布原始交易</translation>
     </message>
     <message>
+        <source>Error upgrading evo database</source>
+        <translation>升級evo數據庫時出錯</translation>
+    </message>
+    <message>
         <source>Error: A fatal internal error occurred, see debug.log for details</source>
         <translation>錯誤:發生一個致命的內部錯誤，請到debug.log查看更多細節</translation>
+    </message>
+    <message>
+        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
+        <translation>錯誤: 無法將套接字添加到 epollfd (epoll_ctl 傳回錯誤 %s)</translation>
+    </message>
+    <message>
+        <source>Exceeded max tries.</source>
+        <translation>超過最大嘗試的次數。</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at</source>
+        <translation>無法清除位於緩存中的已完成請求</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at</source>
+        <translation>無法清除位於緩存中的治理項目</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at</source>
+        <translation>無法清除位於緩存中的主節點資料</translation>
+    </message>
+    <message>
+        <source>Failed to commit EvoDB</source>
+        <translation>提交EvoDB失敗</translation>
     </message>
     <message>
         <source>Failed to create backup %s!</source>
@@ -4630,12 +4675,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>無法刪除備份，錯誤: %s</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>無法載入即時到帳數據緩存</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>無法載入勺叉緩存</translation>
+    </message>
+    <message>
+        <source>Failed to rescan the wallet during initialization</source>
+        <translation>初始化期間無法重新掃描錢包</translation>
     </message>
     <message>
         <source>Fee (in %s/kB) to add to transactions you send (default: %s)</source>
@@ -4654,6 +4699,18 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>設定 -fallbackfee=&lt;amount&gt; 的金額無效: '%s'</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>無效的masternodeblsprivkey。請參閱文檔。</translation>
+    </message>
+    <message>
+        <source>It has been replaced by -disablegovernance.</source>
+        <translation>它已由 -disablegovernance 所代替。</translation>
+    </message>
+    <message>
+        <source>Its replacement -disablegovernance has been forced instead.</source>
+        <translation>替代命令 -disablegovernance 已被強制執行。</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>把交易內存池限制在 &lt;n&gt; MB 以下(預設值: %u)</translation>
     </message>
@@ -4664,10 +4721,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>距離上一次成功送出匿名發送的時間過短。</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>正在載入即時到帳數據緩存...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4688,10 +4741,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Loading wallet...</source>
         <translation>正在載入錢包資料...</translation>
-    </message>
-    <message>
-        <source>Location of the auth cookie (default: data dir)</source>
-        <translation>auth cookie的位置 (預設值 : data dir)</translation>
     </message>
     <message>
         <source>Make the wallet broadcast transactions</source>
@@ -4730,20 +4779,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>節點轉播選項:</translation>
     </message>
     <message>
-        <source>Non-standard public key detected.</source>
-        <translation>檢測到非標準的公鑰。</translation>
-    </message>
-    <message>
         <source>Not compatible with existing transactions.</source>
         <translation>與現有的交易不兼容。</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
         <translation>檔案描述元不足。</translation>
-    </message>
-    <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>沒有足夠的資金進行匿名處理。</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: %u)</source>
@@ -4770,16 +4811,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>匿名發送選項:</translation>
     </message>
     <message>
-        <source>PrivateSend request complete:</source>
-        <translation>完成匿名發送請求:</translation>
-    </message>
-    <message>
         <source>PrivateSend request incomplete:</source>
         <translation>未完成匿名發送請求:</translation>
     </message>
     <message>
         <source>Prune cannot be configured with a negative value.</source>
         <translation>修剪不能設置為負值。</translation>
+    </message>
+    <message>
+        <source>Prune mode is incompatible with -disablegovernance=false.</source>
+        <translation>修剪模式與-disablegovernance = false 並不兼容。</translation>
     </message>
     <message>
         <source>Prune mode is incompatible with -txindex.</source>
@@ -4794,20 +4835,44 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>啟動時重新掃描區塊鏈，來尋找錢包可能漏掉的交易。</translation>
     </message>
     <message>
-        <source>Submitted following entries to masternode: %u</source>
-        <translation>己經提交下列條目到主節點: %u</translation>
+        <source>Send reject messages per BIP61 (default: %u)</source>
+        <translation>根據BIP61發送拒絕消息 (預設值: %u)</translation>
     </message>
     <message>
-        <source>Submitted to masternode, waiting for more entries ( %u ) %s</source>
-        <translation>己經提交到主節點，正在等候更多條目 ( %u ) %s</translation>
+        <source>Socket events mode, which must be one of: %s (default: %s)</source>
+        <translation>套接字事件模式，必須為以下一種: %s (預設值: %s)</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" does not exist</source>
+        <translation>指定的 -walletdir "%s" 不存在</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is a relative path</source>
+        <translation>指定的 -walletdir "%s" 是一個相對路徑</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is not a directory</source>
+        <translation>指定的 -walletdir "%s" 不是一個目錄</translation>
+    </message>
+    <message>
+        <source>Sync mempool from other nodes on start (default: %u)</source>
+        <translation>在啟動時從其他節點內存池開始同步 (預設值: %u)</translation>
     </message>
     <message>
         <source>Synchronizing blockchain...</source>
         <translation>正在同步區塊鏈...</translation>
     </message>
     <message>
+        <source>Target PrivateSend balance (%u-%u, default: %u)</source>
+        <translation>目標匿名發送餘額 (%u-%u, 預設值: %u)</translation>
+    </message>
+    <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
         <translation>錢包軟體會付多於最小轉發費用的手續費。</translation>
+    </message>
+    <message>
+        <source>This is expected because you are running a pruned node.</source>
+        <translation>這是在預期中的，因為您正在運行修剪了的節點。</translation>
     </message>
     <message>
         <source>This is the minimum transaction fee you pay on every transaction.</source>
@@ -4842,6 +4907,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>沒辦法繫結在這台電腦上的 %s 。%s 可能已經在執行了。</translation>
     </message>
     <message>
+        <source>Unable to generate initial keys</source>
+        <translation>無法生成初始密鑰</translation>
+    </message>
+    <message>
         <source>Upgrading UTXO database</source>
         <translation>正在升級 UTXO 資料庫</translation>
     </message>
@@ -4850,12 +4919,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>以提供的名稱來使用devnet </translation>
     </message>
     <message>
-        <source>Wallet debugging/testing options:</source>
-        <translation>錢包除錯與測試選項:</translation>
+        <source>Wallet %s resides outside wallet directory %s</source>
+        <translation>錢包 %s 位處於錢包目錄 %s 外</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>錢包尚未初始化</translation>
+        <source>Wallet debugging/testing options:</source>
+        <translation>錢包除錯與測試選項:</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -4874,8 +4943,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>是否在區塊模式下操作 (預設值: %u)</translation>
     </message>
     <message>
-        <source>You can not start a masternode in lite mode.</source>
-        <translation>您無法在精簡模式下啟動主節點。</translation>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>您無法在啟用了錢包的情況下啟動主節點。</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>您需要使用-reindex  來重建數據庫，並更改-addressindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>您需要使用-reindex  來重建數據庫，並更改-spentindex </translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>改變 -txindex 參數後，必須要用 -reindex 參數來重建資料庫</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
@@ -4894,7 +4975,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>RPC 伺服器選項:</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
+        <source>BiblePay Core</source>
         <translation>達世幣核心</translation>
     </message>
     <message>
@@ -4902,28 +4983,32 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%s 開發人員</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>是否接受外來連線 (預設值: 1 當沒有 -proxy 或 -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>沒辦法鎖定資料目錄 %s。%s 可能已經在執行了。</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>只連接到指定的節點; -noconnect or -connect=0 來禁用自動連接</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>依據 MIT 軟體授權條款散布，詳情請見附帶的 %s 檔案或是 %s</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>對存儲在此錢包中的資金啟用匿名發送 (0-1, 預設值: %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>加載%s時出錯: 您不能夠在非HD錢包上啟用HD功能</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>讀取錢包檔 %s 時發生錯誤！所有的密鑰都正確讀取了，但是交易資料或位址簿資料可能會缺少或不正確。</translation>
     </message>
     <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>排除個別類別的調試信息。可以與-debug = 1結合使用，以輸出除一個或多個指定類別以外的所有類別的調試日誌。</translation>
+    </message>
+    <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
-        <translation>強制轉發從白名點節點收到的交易，即使它們違反了本機的轉發準則(預設值: %d)</translation>
+        <translation>強制轉發從對等用戶白名單收到的交易，即使它們違反了本機的轉發準則(預設值: %d)</translation>
     </message>
     <message>
         <source>Incorrect or no devnet genesis block found. Wrong datadir for devnet specified?</source>
@@ -4931,7 +5016,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Maximum allowed median peer time offset adjustment. Local perspective of time may be influenced by peers forward or backward by this amount. (default: %u seconds)</source>
-        <translation>跟其他節點的時間差最高可接受的中位數值。本機所認為的時間可能會被其他節點影響，往前或往後在這個值之內。(預設值: %u 秒)</translation>
+        <translation>跟其他對等用戶的時間差最高可接受的中位數值。本機所認為的時間可能會被其他節點影響，往前或往後在這個值之內。(預設值: %u 秒)</translation>
     </message>
     <message>
         <source>Maximum total fees (in %s) to use in a single wallet transaction or raw transaction; setting this too low may abort large transactions (default: %s)</source>
@@ -4950,20 +5035,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>如果你覺得 %s 有用，可以幫助我們。關於這個軟體的更多資訊請見 %s。</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>通過不斷混合硬幣來為匿名發送提供流動性(%u-%u, 預設值: %u, 1=非常頻繁, 高收費, %u=非常不頻繁, 低收費)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>如果地址不足，則通過DNS查詢對等地址 (預設值: 1 除非 -connect/-noconnect)</translation>
-    </message>
-    <message>
-        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
-        <translation>修剪(刪除)掉老舊區塊以降低需要的儲存空間。這樣會增加一個 RPC 指令 pruneblockchain，可以使用它來刪除指定的區塊；也可以指定目標儲存空間大小，以啟用對老舊區塊的自動修剪功能。這個模式跟 -txindex 和 -rescan 參數不相容。警告: 還原回不修剪模式會需要重新下載一整個區塊鏈。(預設值: 0 表示不修剪區塊，1 表示允許使用 RPC 指令做修剪，&gt;%u 的值表示為區塊資料的目標大小，單位是百萬位元組，MiB)</translation>
-    </message>
-    <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>設定製造區塊時，所要包含交易每千位元組的最低手續費(單位是 %s)。(預設值: %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>費率 (以 %s/kB 為單位) ，用於表示您將更改添加到費用中以捨棄更改的容忍度 (預設值: %s).  注意: 如果此輸出為粉塵，則將丟棄該輸出，但我們將始終丟棄最高為粉塵中繼的費用，並且高於最高最長目標費用估算值限制的丟棄費</translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>如果更改的金額小於此級別的灰塵，這是您可能會放棄的交易費</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4978,6 +5059,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>在本之交易中，無法找到足夠的匿名發送未除名資金。</translation>
     </message>
     <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>無法重播區塊。您將需要使用-reindex-chainstate來重建數據庫。</translation>
+    </message>
+    <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
         <translation>使用 N 個單獨的主節點來為個別已除名輸入來混合資金 (%u-%u, 預設值: %u)</translation>
     </message>
@@ -4990,10 +5075,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>用於HD錢包 (bip39) 的用戶自定義助記符密碼。僅在創建錢包/首次啟動時有效 (預設值: 空的字符串)</translation>
     </message>
     <message>
-        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcuser. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
-        <translation>JSON-RPC 連線要用的使用者名稱和雜湊密碼。&lt;userpw&gt; 的格式是：&lt;使用者名稱&gt;:&lt;調味值&gt;$&lt;雜湊值&gt;。在 share/rpcuser 目錄下有一個示範的 python 程式。之後客戶端程式就可以用這對參數正常連線：rpcuser=&lt;使用者名稱&gt; 和 rpcpassword=&lt;密碼&gt;。這個選項可以給很多次。</translation>
-    </message>
-    <message>
         <source>Wallet will not create transactions that violate mempool chain limits (default: %u)</source>
         <translation>錢包軟體不會產生違反記憶池交易鏈限制的交易(預設值: %u)</translation>
     </message>
@@ -5002,8 +5083,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>警告: 錢包檔壞掉，但資料被救回來了！原來的檔案 %s 改儲存為 %s，在目錄 %s 下。 如果餘額或交易資料有誤的話，你應該要從備份資料復原回來。</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>是否在關閉時保存內存池並在重新啟動時加載 (預設值: %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
-        <translation>把來自指定位址(例如：1.2.3.4)或 CIDR 格式網段(例如：1.2.3.0/24)的節點放進白名單。這個選項可以設定多次。</translation>
+        <translation>把來自指定位址(例如：1.2.3.4)或 CIDR 格式網段(例如：1.2.3.0/24)的對等用戶放進白名單。這個選項可以設定多次。</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>最近100個區塊中的 %d 個區塊，有意想不到的版本</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -5018,10 +5107,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%s 的設定值異常大！</translation>
     </message>
     <message>
-        <source>(press q to shutdown and continue later)</source>
-        <translation>(按q關閉並稍後繼續)</translation>
-    </message>
-    <message>
         <source>-devnet can only be specified once</source>
         <translation>-devnet 只能指定一次</translation>
     </message>
@@ -5032,6 +5117,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>-rpcport must be specified when -devnet and -server are specified</source>
         <translation>當指定 -devnet 和 -server 時，必須指定 -rpcport</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>是否接受外來連線(預設值: 當沒有 -proxy 或 -connect 時為 1)</translation>
     </message>
     <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
@@ -5054,6 +5143,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>版權 (C)</translation>
     </message>
     <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>每個面額最多創建N個輸入 (%u-%u, 預設值: %u)</translation>
+    </message>
+    <message>
         <source>Error loading %s</source>
         <translation>載入檔案 %s 時發生錯誤</translation>
     </message>
@@ -5064,6 +5157,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
         <translation>載入檔案 %s 時發生錯誤: 這個錢包需要新版的 %s</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>加載%s時出錯: 您不能在HD錢包上禁用HD功能</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>加載錢包 %s 時出錯。 指定了重複的-wallet文件名。</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -5082,6 +5183,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>初始化時的基本檢查失敗了。%s 就要關閉了。</translation>
     </message>
     <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>輸入與輸出大小不相付。</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>無效的 -onion 位址或主機名稱: '%s'</translation>
     </message>
@@ -5094,16 +5199,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>參數 -%s=&lt;金額&gt; 指定的金額無效: '%s'</translation>
     </message>
     <message>
-        <source>Invalid characters in -wallet filename</source>
-        <translation>在 -wallet 文件名中有的無效的字符</translation>
-    </message>
-    <message>
         <source>Invalid spork address specified with -sporkaddr</source>
         <translation>使用參數 -sporkaddr 時指定的spork地址無效</translation>
-    </message>
-    <message>
-        <source>Keep N BIBLEPAY anonymized (%u-%u, default: %u)</source>
-        <translation>保留 N 個已經匿名處理的達世幣 (%u-%u, 預設值: %u)</translation>
     </message>
     <message>
         <source>Loading P2P addresses...</source>
@@ -5112,10 +5209,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Print this help message and exit</source>
         <translation>顯示說明訊息後結束</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>接收並顯示 P2P 網路警示 (預設值: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5130,16 +5223,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>允許轉發非 P2SH 的多簽章交易(預設值: %u)</translation>
     </message>
     <message>
+        <source>Replaying blocks...</source>
+        <translation>正在重播區塊...</translation>
+    </message>
+    <message>
         <source>Rescanning...</source>
         <translation>正在重新掃描...</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
         <translation>用護靈模式在背後執行並接受指令</translation>
-    </message>
-    <message>
-        <source>Send trace/debug info to console instead of debug.log file</source>
-        <translation>在終端機顯示追蹤或除錯資訊，而不是寫到檔案 debug.log 中</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -5174,20 +5267,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>指定資料目錄</translation>
     </message>
     <message>
-        <source>Specify wallet file (within data directory)</source>
-        <translation>指定錢包檔(在資料目錄當中)</translation>
-    </message>
-    <message>
         <source>Specify your own public address</source>
         <translation>指定自己的公開位址</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>正在啟動網路執行緒...</translation>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>自動啟動匿名發送 (0-1, 預設值: %u)</translation>
     </message>
     <message>
-        <source>Synchronization pending...</source>
-        <translation>正在等候同步...</translation>
+        <source>Starting network threads...</source>
+        <translation>正在啟動網路執行緒...</translation>
     </message>
     <message>
         <source>Synchronizing governance objects...</source>
@@ -5242,6 +5331,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>未知狀態: id = %u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>不支持的日誌記錄類別 %s=%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>JSON-RPC 連線使用者名稱</translation>
     </message>
@@ -5250,16 +5343,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>正在驗證區塊資料...</translation>
     </message>
     <message>
-        <source>Verifying wallet...</source>
-        <translation>正在驗證錢包資料...</translation>
-    </message>
-    <message>
         <source>Very low number of keys left: %d</source>
         <translation>尚餘小量的公鑰: %d</translation>
-    </message>
-    <message>
-        <source>Wallet %s resides outside data directory %s</source>
-        <translation>錢包檔 %s 沒有在資料目錄 %s 裡面</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
@@ -5270,20 +5355,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>錢包選項:</translation>
     </message>
     <message>
-        <source>Wallet window title</source>
-        <translation>錢包窗口標題</translation>
-    </message>
-    <message>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <source>Your entries added successfully.</source>
-        <translation>你的條目已經成功被添加。</translation>
+        <source>You are starting with governance validation disabled.</source>
+        <translation>您啟用了禁用治理驗證的選項。</translation>
     </message>
     <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>你的交易已經被資金池所接納!</translation>
+        <source>You can not disable governance validation on a masternode.</source>
+        <translation>您不能在主節點上禁用治理驗證。</translation>
+    </message>
+    <message>
+        <source>Your entries added successfully.</source>
+        <translation>你的條目已經成功被添加。</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

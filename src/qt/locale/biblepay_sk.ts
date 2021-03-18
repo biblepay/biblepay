@@ -70,12 +70,12 @@
         <translation>Adresa prijatia</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Toto sú vaše Biblepay adresy pre posielanie platieb. Pred poslaním mincí vždy overte sumu a doručovaciu adresu.</translation>
+        <source>These are your BiblePay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Toto sú vaše BiblePay adresy pre posielanie platieb. Pred poslaním mincí vždy overte sumu a doručovaciu adresu.</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Toto sú vaše Biblepay adresy pre posielanie platieb. Pre každú transakciu sa doporučuje použiť novú doručovaciu adresu.</translation>
+        <source>These are your BiblePay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Toto sú vaše BiblePay adresy pre posielanie platieb. Pre každú transakciu sa doporučuje použiť novú doručovaciu adresu.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -129,6 +129,9 @@
         <translation>(bez popisu)</translation>
     </message>
 </context>
+<context>
+    <name>AppearanceWidget</name>
+    </context>
 <context>
     <name>AskPassphraseDialog</name>
     <message>
@@ -256,14 +259,17 @@
     </message>
 </context>
 <context>
+    <name>BitcoinAmountField</name>
+    </context>
+<context>
     <name>BitcoinGUI</name>
     <message>
-        <source>A fatal error occurred. Biblepay Core can no longer continue safely and will quit.</source>
-        <translation>Došlo k závažnej chybe. Biblepay Core už nemôže bezpečne pokračovať a bude ukončený.</translation>
+        <source>A fatal error occurred. BiblePay Core can no longer continue safely and will quit.</source>
+        <translation>Došlo k závažnej chybe. BiblePay Core už nemôže bezpečne pokračovať a bude ukončený.</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -286,8 +292,8 @@
         <translation>&amp;Odoslať</translation>
     </message>
     <message>
-        <source>Send coins to a Biblepay address</source>
-        <translation>Poslať mince na Biblepay adresu</translation>
+        <source>Send coins to a BiblePay address</source>
+        <translation>Poslať mince na BiblePay adresu</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
@@ -295,7 +301,7 @@
     </message>
     <message>
         <source>Request payments (generates QR codes and biblepay: URIs)</source>
-        <translation>Vyžiadať platby (vygeneruje QR kódy a Biblepay: URI)</translation>
+        <translation>Vyžiadať platby (vygeneruje QR kódy a BiblePay: URI)</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
@@ -322,8 +328,8 @@
         <translation>Ukončiť program</translation>
     </message>
     <message>
-        <source>Show information about Biblepay Core</source>
-        <translation>Zobraziť informácie o Biblepay Core</translation>
+        <source>Show information about BiblePay Core</source>
+        <translation>Zobraziť informácie o BiblePay Core</translation>
     </message>
     <message>
         <source>About &amp;Qt</source>
@@ -394,16 +400,16 @@
         <translation>Podpísať &amp;správu...</translation>
     </message>
     <message>
-        <source>Sign messages with your Biblepay addresses to prove you own them</source>
-        <translation>Podpísať správy s vašimi Biblepay adresami ako dôkaz že ich vlastníte</translation>
+        <source>Sign messages with your BiblePay addresses to prove you own them</source>
+        <translation>Podpísať správy s vašimi BiblePay adresami ako dôkaz že ich vlastníte</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
         <translation>&amp;Overiť správu...</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Biblepay addresses</source>
-        <translation>Overiť správy pre uistenie, že boli podpísané zadanými Biblepay adresami</translation>
+        <source>Verify messages to ensure they were signed with specified BiblePay addresses</source>
+        <translation>Overiť správy pre uistenie, že boli podpísané zadanými BiblePay adresami</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -490,8 +496,8 @@
         <translation>&amp;Možnosti príkazového riadku</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible Biblepay command-line options</source>
-        <translation>Ukázať %1 zoznam možných nastavení Biblepay pomocou príkazového riadku</translation>
+        <source>Show the %1 help message to get a list with possible BiblePay command-line options</source>
+        <translation>Ukázať %1 zoznam možných nastavení BiblePay pomocou príkazového riadku</translation>
     </message>
     <message>
         <source>%1 client</source>
@@ -526,8 +532,8 @@
         <translation>Lišta záložiek</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Biblepay network</source>
-        <translation><numerusform>%n aktívne spojenie so sieťou Biblepay</numerusform><numerusform>%n aktívne spojenia so sieťou Biblepay</numerusform><numerusform>%n aktívnych spojení so sieťou Biblepay</numerusform><numerusform>%n aktívnych spojení so sieťou Biblepay</numerusform></translation>
+        <source>%n active connection(s) to BiblePay network</source>
+        <translation><numerusform>%n aktívne spojenie so sieťou BiblePay</numerusform><numerusform>%n aktívne spojenia so sieťou BiblePay</numerusform><numerusform>%n aktívnych spojení so sieťou BiblePay</numerusform><numerusform>%n aktívnych spojení so sieťou BiblePay</numerusform></translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -598,6 +604,30 @@
         <translation>Informácie</translation>
     </message>
     <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>Prijaté a odoslané hromadné transakcie</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>Odoslané hromadné transakcie</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>Prijaté hromadné transakcie</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>Poslaná suma: %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>Prijatá suma: %1
+</translation>
+    </message>
+    <message>
         <source>Date: %1
 </source>
         <translation>Dátum: %1
@@ -640,10 +670,6 @@
         <translation>Generovanie HD kľúčov je &lt;b&gt;zapnuté&lt;/b&gt;</translation>
     </message>
     <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>Generovanie HD kľúčov je &lt;b&gt;vypnuté&lt;/b&gt;</translation>
-    </message>
-    <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
         <translation>Peňaženka je &lt;b&gt;zašifrovaná&lt;/b&gt; a momentálne &lt;b&gt;odomknutá&lt;/b&gt;</translation>
     </message>
@@ -654,13 +680,6 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Peňaženka je &lt;b&gt;zašifrovaná&lt;/b&gt; a momentálne &lt;b&gt;zamknutá&lt;/b&gt;</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>Výstraha siete</translation>
     </message>
 </context>
 <context>
@@ -730,10 +749,6 @@
         <translation>Prijaté s adresou</translation>
     </message>
     <message>
-        <source>PS Rounds</source>
-        <translation>Kôl PS</translation>
-    </message>
-    <message>
         <source>Date</source>
         <translation>Dátum</translation>
     </message>
@@ -798,10 +813,6 @@
         <translation>Pre použitie tejto funkcie prepnite na "Zoznamový mód".</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>Vybratý ne-anonymizovaný vstup. &lt;b&gt;PrivateSend bude vypnutý.&lt;/b&gt;&lt;br&gt;&lt;br&gt;Ak si stále želáte použiť PrivateSend, najskôr odznačte všetky ne-anonymizované vstupy a potom znova zaškrtnite PrivateSend políčko.</translation>
-    </message>
-    <message>
         <source>(%1 locked)</source>
         <translation>(%1 zamknutých)</translation>
     </message>
@@ -861,10 +872,6 @@
         <translation>Adresa spojená s týmto záznamom v adresári. Možné upravovať len pre odosielajúce adresy.</translation>
     </message>
     <message>
-        <source>New receiving address</source>
-        <translation>Nová adresa pre prijímanie</translation>
-    </message>
-    <message>
         <source>New sending address</source>
         <translation>Nová adresa pre odoslanie</translation>
     </message>
@@ -877,8 +884,8 @@
         <translation>Upraviť adresu pre odoslanie</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Biblepay address.</source>
-        <translation>Zadaná adresa "%1" nie je platná Biblepay adresa.</translation>
+        <source>The entered address "%1" is not a valid BiblePay address.</source>
+        <translation>Zadaná adresa "%1" nie je platná BiblePay adresa.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
@@ -975,8 +982,8 @@
         <translation>Informácie o PrivateSend</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Biblepay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;Základy PrivateSend&lt;/h3&gt; PrivateSend Vám poskytuje skutočné finančné súkromie skrývaním pôvodu vašich zdrojov. Všetky Biblepay vo vašej peňaženke pozostávajú z rôznych "vstupov", ktoré si môžete predstaviť ako rozdelené, which you can think of as separate, diskrétne mince.&lt;br&gt; PrivateSend používa zdokonalený proces pre miešanie Vašich vstupov so vstupmi iných ľudí bez toho. aby vaše mince museli opustiť Vašu peňaženku. Počas cele doby máte kontrolu nad Vašimi peniazmi.&lt;hr&gt; &lt;b&gt;Proces PrivateSend funguje nasledovne:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend začne rozdelením vašich transakčných vstupov na štandardné časti, takzvané denominácie. Tieto denominácie sú 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY a 10 BIBLEPAY -- v podstate niečo ako papierové peniaze, ktoré používate každý deň.&lt;/li&gt; &lt;li&gt;Vaša peňaženka potom pošle požiadavok špeciálne nastavenému softvérovému uzlu nazvaného "Masternode". Tieto masternódy sú potom informované, že máte záujem miešať určité denominácie. Masternode neobdrží žiadne informácie ktoré by Vás identifikovali, takže nikdy nevedia kto ste.&lt;/li&gt; &lt;li&gt;Keď ďalší dvaja ľudia pošlú podobnú správu hovoriacu o tom že chcú miešať rovnakú denomináciu, začne sa samotné miešanie. Masternode zamieša vstupy a povie peňaženkám všetkých troch používateľov, aby zaplatili teraz už zmiešané vstupy sami sebe. Vaša peňaženka zaplatí tieto denominácie priamo sebe, ale už na inú adresu (nazývanú "meniaca adresa").&lt;/li&gt; &lt;li&gt;Aby boli vaše zdroje plne ukryté, vaša peňaženka musí zopakovať tento proces niekoľko krát s každou denomináciou.  Vždy keď je tento proces dokončený, je nazvaný "kolo". Každé kolo PrivateSend exponenciálne sťažuje určiť odkiaľ pochádzajú vaše zdroje.&lt;/li&gt; &lt;li&gt;Toto miešanie sa deje na pozadí bez nutnosti zásahov z vašej strany. Keď si prajete uskutočniť transakciu, vaše zdroje budú už anonymné. Nie je nutné na nič čakať.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt; &lt;b&gt;DÔLEŽITÉ:&lt;/b&gt; Vaša peňaženka obsahuje iba 1000 týchto "meniacich adries". Vždy keď prebehne miešanie, použije sa maximálne až 9 vašich adries. To znamená, že týchto 1000 adries vystačí zhruba na 100 miešaní. Keď sa použije 900 adries, vaša peňaženka musí vytvoriť viac adries. Toto je však možné iba vtedy, keď máte zapnuté automatické zálohovanie.&lt;br&gt; V dôsledku toho, používatelia ktorí majú zálohovanie vypnuté, budú mať vypnutý aj PrivateSend. &lt;hr&gt;&lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;Viac informácií nájdete v dokumentácii PrivateSend&lt;/a&gt;.</translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the BiblePay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two or more other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two or more other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;Základy PrivateSend&lt;/h3&gt; PrivateSend vám poskytuje skutočné finančné súkromie skrývaním pôvodu vašich zdrojov. Všetky BiblePaye vo vašej peňaženke pozostávajú z rôznych "vstupov", ktoré si môžete predstaviť ako rozdelené,  diskrétne mince.&lt;br&gt; PrivateSend používa zdokonalený proces pre miešanie vašich vstupov so vstupmi iných ľudí bez toho, aby vaše mince museli opustiť peňaženku. Počas celej doby máte kontrolu nad vašimi peniazmi.&lt;hr&gt; &lt;b&gt;Proces PrivateSend funguje nasledovne:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend začne rozdelením vašich transakčných vstupov na štandardné časti, takzvané denominácie. Tieto denominácie sú 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY a 10 BIBLEPAY -- v podstate niečo ako papierové peniaze, ktoré používate každý deň.&lt;/li&gt; &lt;li&gt;Vaša peňaženka potom pošle požiadavok špeciálne nastavenému softvérovému uzlu nazvaného "Masternód". Tieto masternódy sú potom informované, že máte záujem miešať určité denominácie. Masternód neobdrží žiadne informácie ktoré by vás identifikovali, takže nikdy nevie kto ste.&lt;/li&gt; &lt;li&gt;Keď ďalší dvaja ľudia pošlú podobnú správu hovoriacu o tom, že chcú miešať rovnakú denomináciu, začne sa samotné miešanie. Masternód zamieša vstupy a povie peňaženkám všetkých troch používateľov, aby zaplatili teraz už zmiešané vstupy sami sebe. Vaša peňaženka zaplatí tieto denominácie priamo sebe, ale už na inú adresu (nazývanú "meniaca adresa").&lt;/li&gt; &lt;li&gt;Aby boli vaše zdroje plne ukryté, vaša peňaženka musí zopakovať tento proces niekoľko krát s každou denomináciou.  Vždy keď je tento proces dokončený, je nazvaný "kolo". Každé kolo PrivateSend exponenciálne sťažuje určiť, odkiaľ pochádzajú vaše zdroje.&lt;/li&gt; &lt;li&gt;Toto miešanie sa deje na pozadí, bez nutnosti zásahov z vašej strany. Keď si prajete uskutočniť transakciu, vaše zdroje budú už zmiešané. Nie je nutné na nič čakať.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt; &lt;b&gt;DÔLEŽITÉ:&lt;/b&gt; Vaša peňaženka obsahuje iba 1000 takýchto "meniacich adries". Vždy keď prebehne miešanie, použije sa maximálne až 9 vašich adries. To znamená, že týchto 1000 adries vystačí zhruba na 100 miešaní. Keď sa použije 900 adries, vaša peňaženka musí vytvoriť viac adries. Toto je však možné iba vtedy, keď máte zapnuté automatické zálohovanie.&lt;br&gt; V dôsledku toho, používatelia ktorí majú zálohovanie vypnuté, budú mať vypnutý aj PrivateSend. &lt;hr&gt;Viac informácií nájdete v &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;dokumentácií ku PrivateSend&lt;/a&gt;.</translation>
     </message>
 </context>
 <context>
@@ -1022,8 +1029,8 @@
         <translation>V tomto adresári bude uložených približne %1 GB dát.</translation>
     </message>
     <message>
-        <source>%1 will download and store a copy of the Biblepay block chain.</source>
-        <translation>%1 stiahne a bude uchovávať kópiu Biblepay blockchainu.</translation>
+        <source>%1 will download and store a copy of the BiblePay block chain.</source>
+        <translation>%1 stiahne a bude uchovávať kópiu BiblePay blockchainu.</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
@@ -1053,16 +1060,8 @@
         <translation>Od</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>Adresa</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Stav</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>Príjemca</translation>
     </message>
     <message>
         <source>0</source>
@@ -1081,16 +1080,16 @@
         <translation>Počet uzlov:</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>DIP3 Masternódy</translation>
-    </message>
-    <message>
         <source>Show only masternodes this wallet has keys for.</source>
         <translation>Zobraziť len masternódy, pre ktoré má táto peňaženka kľúče.</translation>
     </message>
     <message>
         <source>My masternodes only</source>
         <translation>Iba moje masternódy</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>Služba</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1109,8 +1108,24 @@
         <translation>Ďalšia platba</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>Výplatná adresa</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>Odmena operátora</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>Zaisťovacia adresa</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>Adresa vlastníka</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>Hlasovacia adresa</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1160,12 +1175,12 @@
         <translation>Forma</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Biblepay network, as detailed below.</source>
-        <translation>Nedávne transakcie ešte nemusia byť viditeľné, a preto stav vašej peňaženky môže byť nesprávny. Informácia bude správna hneď ako vaša peňaženka dokončí synchronizáciu so sieťou Biblepay. Viac detailov nájdete nižšie.</translation>
+        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the BiblePay network, as detailed below.</source>
+        <translation>Nedávne transakcie ešte nemusia byť viditeľné, a preto stav vašej peňaženky môže byť nesprávny. Informácia bude správna hneď ako vaša peňaženka dokončí synchronizáciu so sieťou BiblePay. Viac detailov nájdete nižšie.</translation>
     </message>
     <message>
-        <source>Attempting to spend Biblepay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>Pokúsiť sa minút Biblepay, ktoré sú ovplyvnené "ešte nezobrazenými" transakciami, nebudú akceptované sieťou.</translation>
+        <source>Attempting to spend BiblePay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <translation>Pokúsiť sa minút BiblePay, ktoré sú ovplyvnené "ešte nezobrazenými" transakciami, nebudú akceptované sieťou.</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
@@ -1254,10 +1269,6 @@
         <translation>(0 = auto, &lt;0 = nechať toľkoto voľných jadier)</translation>
     </message>
     <message>
-        <source>Amount of Biblepay to keep anonymized</source>
-        <translation>Suma Biblepay ktorú držať anonymne </translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>&amp;Peňaženka</translation>
     </message>
@@ -1306,24 +1317,24 @@
         <translation>Táto suma slúži ako hranica pre vypnutie PrivateSend akonáhle je dosiahnutá.</translation>
     </message>
     <message>
-        <source>Automatically open the Biblepay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automaticky otvoriť na smerovači port pre Biblepay Core klient. Toto funguje iba ak váš smerovač  podporuje UPnP a je povolené</translation>
+        <source>Target PrivateSend balance</source>
+        <translation>Cieľový PrivateSend zostatok</translation>
     </message>
     <message>
-        <source>Accept connections from outside</source>
-        <translation>Akceptovať pripojenie z vonku</translation>
+        <source>Automatically open the BiblePay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automaticky otvoriť na smerovači port pre BiblePay Core klient. Toto funguje iba ak váš smerovač  podporuje UPnP a je povolené</translation>
     </message>
     <message>
-        <source>Allow incoming connections</source>
-        <translation>Povoliť prichádzajúce spojenia</translation>
-    </message>
-    <message>
-        <source>Connect to the Biblepay network through a SOCKS5 proxy.</source>
-        <translation>Pripojiť sa do siete Biblepay cez proxy SOCKS5.</translation>
+        <source>Connect to the BiblePay network through a SOCKS5 proxy.</source>
+        <translation>Pripojiť sa do siete BiblePay cez proxy SOCKS5.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>&amp;Pripojiť sa cez SOCKS5 proxy (predvolené proxy):</translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>Zobrazuje či je poskytované predvolené SOCKS5 proxy používané pre získavanie peerov cez tento typ siete.</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1332,14 +1343,6 @@
     <message>
         <source>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items.&lt;br/&gt;%s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</source>
         <translation>URL tretích strán (napr. prehliadač blockchain) ktoré sa zobrazujú v záložke transakcií ako položky kontextového menu.&lt;br/&gt; %s v URL je nahradené hash-om transakcie. Viaceré URL sú oddelené zvislou čiarou |.</translation>
-    </message>
-    <message>
-        <source>Expert</source>
-        <translation>Expert</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Toto nastavenie určuje množstvo jednotlivých masternódov cez ktoré sa bude anonymizovať vstup.&lt;br/&gt; Viac kôl anonymizácie dáva väčšiu úroveň súkromia, ale tiež stojí viac na poplatkoch.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1370,6 +1373,10 @@
         <translation>&amp;Minúť nepotvrdený výdavok</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Toto nastavenie určuje množstvo jednotlivých masternódov cez ktoré sa bude miešať vstup.&lt;br/&gt; Viac kôl miešania poskytuje väčšiu úroveň súkromia, ale tiež stojí viac na poplatkoch.</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>&amp;Sieť</translation>
     </message>
@@ -1398,10 +1405,6 @@
         <translation>Použité pre získavanie peerov cez:</translation>
     </message>
     <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Zobrazuje, či je poskytované predvolené SOCKS5 proxy používané pre získavanie peerov cez tento typ siete.</translation>
-    </message>
-    <message>
         <source>IPv4</source>
         <translation>IPv4</translation>
     </message>
@@ -1414,24 +1417,8 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Pripojiť sa do siete Biblepay cez oddelené SOCKS5 proxy pre skryté služby Tor.</translation>
-    </message>
-    <message>
-        <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Použiť samostatný SOCKS5 proxy server na dosiahnutie počítačov cez skryté služby Tor:</translation>
-    </message>
-    <message>
-        <source>&amp;Window</source>
-        <translation>&amp;Okno</translation>
-    </message>
-    <message>
-        <source>&amp;Hide the icon from the system tray.</source>
-        <translation>&amp;Skryť ikonu zo systémovej lišty.</translation>
-    </message>
-    <message>
-        <source>Hide tray icon</source>
-        <translation>Skryť ikonu v oblasti oznámení</translation>
+        <source>Connect to the BiblePay network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <translation>Pripojiť sa do siete BiblePay cez oddelené SOCKS5 proxy pre skryté služby Tor.</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1464,10 +1451,6 @@ https://www.transifex.com/projects/p/biblepay/</source>
 https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
-        <source>User Interface Theme:</source>
-        <translation>Motív užívateľského rozhrania:</translation>
-    </message>
-    <message>
         <source>&amp;Unit to show amounts in:</source>
         <translation>&amp;Zobrazovať hodnoty v jednotkách:</translation>
     </message>
@@ -1478,10 +1461,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Decimal digits</source>
         <translation>Decimálne čísla</translation>
-    </message>
-    <message>
-        <source>Third party transaction URLs</source>
-        <translation>URL transakcií s tretími stranami</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1506,10 +1485,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>default</source>
         <translation>predvolené</translation>
-    </message>
-    <message>
-        <source>none</source>
-        <translation>žiadne</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
@@ -1539,8 +1514,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Forma</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Biblepay network after a connection is established, but this process has not completed yet.</source>
-        <translation>Zobrazené informácie môžu byť zastaralé. Vaša peňaženka sa automaticky zosynchronizuje so sieťou Biblepay akonáhle nadviaže spojenie, avšak tento proces ešte nebol dokončený.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the BiblePay network after a connection is established, but this process has not completed yet.</source>
+        <translation>Zobrazené informácie môžu byť zastaralé. Vaša peňaženka sa automaticky zosynchronizuje so sieťou BiblePay akonáhle nadviaže spojenie, avšak tento proces ešte nebol dokončený.</translation>
     </message>
     <message>
         <source>Available:</source>
@@ -1619,22 +1594,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Dokončenie:</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Skúsiť manuálne odoslať PrivateSend požiadavku.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Vynulovať súčasný stav PrivateSend (môže prerušiť PrivateSend ak je v procese miešania, čo Vás môže stáť peniaze!)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>Informácie o PrivateSend a miešaní</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>Informácie</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>Čiastka a kolá:</translation>
     </message>
@@ -1667,18 +1626,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Denominácie ktoré ste odoslali na Masternode. &lt;br&gt;Pre miešanie, ostatný používatelia musia odoslať rovnakú sumu denominácií.</translation>
     </message>
     <message>
-        <source>(Last Message)</source>
-        <translation>(Posledná správa)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Výskúšať mix</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Resetovať</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>nesynchronizované</translation>
     </message>
@@ -1703,14 +1650,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>%n kolo</numerusform><numerusform>%n kolá</numerusform><numerusform>%n kôl</numerusform><numerusform>%n kôl</numerusform></translation>
     </message>
     <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Nájdený dostatok kompatibilných vstupov na anonymizáciu %1</translation>
-    </message>
-    <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>Nedostatok kompatibilných vstupov na anonymizáciu &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;bude anonymizovaných &lt;span style='color:red;'&gt;%2&lt;/span&gt;</translation>
-    </message>
-    <message>
         <source>Overall progress</source>
         <translation>Celkový progres</translation>
     </message>
@@ -1719,12 +1658,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Denominované </translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>Zmiešané</translation>
+        <source>Partially mixed</source>
+        <translation>Čiastočne zmiešané</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>Anonymizované</translation>
+        <source>Mixed</source>
+        <translation>Zmiešané</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1743,8 +1682,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Od poslednej automatickej zálohy zostáva veľmi málo kľúčov!</translation>
     </message>
     <message>
-        <source>We are about to create a new automatic backup for you, however &lt;span style='color:red;'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
-        <translation>Chystáme sa pre Vás vytvoriť automatickú zálohu, avšak &lt;span style='color:red;'&gt;mali by ste sa uistiť, že máte zálohy uložené na bezpečnom mieste&lt;/span&gt;!</translation>
+        <source>We are about to create a new automatic backup for you, however &lt;span style='%1'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
+        <translation>Chystáme sa pre Vás vytvoriť automatickú zálohu, avšak &lt;span style='%1'&gt;mali by ste sa uistiť, že máte zálohy uložené na bezpečnom mieste&lt;/span&gt;!</translation>
     </message>
     <message>
         <source>Note: You can turn this message off in options.</source>
@@ -1775,17 +1714,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>UPOZORNENIE! Chyba pri doplňovaní zásobníku kľúčov. Pre doplnenie musíte odomknúť vašu peňaženku.</translation>
     </message>
     <message>
-        <source>Last PrivateSend message:
-</source>
-        <translation>Posledná PrivateSend správa:
-
-</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>PrivateSend bol úspešne obnovený</translation>
-    </message>
-    <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
         <translation>Ak nechcete vidieť interné Darksend poplatky/transakcie, vyberte "Najčastejšie" ako typ na záložke "Transakcie".</translation>
     </message>
@@ -1806,7 +1734,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Cannot start biblepay: click-to-pay handler</source>
-        <translation>Biblepay sa nedá spustiť: click-to-pay handler</translation>
+        <translation>BiblePay sa nedá spustiť: click-to-pay handler</translation>
     </message>
     <message>
         <source>URI handling</source>
@@ -1821,8 +1749,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Neplatná adresa platby %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Biblepay address or malformed URI parameters.</source>
-        <translation>URI sa nedá analyzovať! Toto môže byť spôsobené neplatnou Biblepay adresou, alebo nesprávnym tvarom URI parametrov.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid BiblePay address or malformed URI parameters.</source>
+        <translation>URI sa nedá analyzovať! Toto môže byť spôsobené neplatnou BiblePay adresou, alebo nesprávnym tvarom URI parametrov.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1907,7 +1835,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Ping</source>
         <translation>Odozva</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>QObject</name>
     <message>
@@ -1919,8 +1847,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Suma</translation>
     </message>
     <message>
-        <source>Enter a Biblepay address (e.g. %1)</source>
-        <translation>Zadajte Biblepay adresu (e.g. %1)</translation>
+        <source>Enter a BiblePay address (e.g. %1)</source>
+        <translation>Zadajte BiblePay adresu (e.g. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1997,7 +1925,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Error: %1</source>
         <translation>Chyba: %1</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>QRDialog</name>
     <message>
@@ -2146,14 +2074,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&amp;Sieťová prevádzka</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>&amp;Vyčistiť</translation>
-    </message>
-    <message>
-        <source>Totals</source>
-        <translation>Celkovo</translation>
-    </message>
-    <message>
         <source>Received</source>
         <translation>Prijaté</translation>
     </message>
@@ -2214,12 +2134,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Otvoriť %1 ladiaci výpis z aktuálnej zložky. Pri veľkých súboroch to môže chvíľu trvať.</translation>
     </message>
     <message>
+        <source>InstantSend locks</source>
+        <translation>Zámky InstantSend</translation>
+    </message>
+    <message>
         <source>Decrease font size</source>
         <translation>Zmenšiť písmo</translation>
     </message>
     <message>
         <source>Increase font size</source>
         <translation>Zväčšiť písmo</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>&amp;Resetovať</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2354,16 +2282,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Vitajte v %1 RPC konzole</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Použite šipky hore a dole pre navigáciu históriou a &lt;b&gt;Ctrl-L&lt;/b&gt; pre vyčistenie obrazovky.</translation>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>Použi šipky hore a dolu pre navigáciu históriou a %1 pre vyčistenie obrazovky.</translation>
     </message>
     <message>
-        <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>Napíšte &lt;b&gt;help&lt;/b&gt; pre prehľad dostupných príkazov.</translation>
-    </message>
-    <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
-        <translation>UPOZORNENIE: Podvodníci sú aktívni a hovoria používateľom, aby sem zadávali príkazy a kradnú obsah peňaženky. Nepoužívajte túto konzolu bez úplného pochopenia dopadu príkazu.</translation>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
+        <translation>UPOZORNENIE: Podvodníci sú aktívni a hovoria používateľom, aby sem zadávali príkazy pričom kradnú obsah peňaženky. Nepoužívajte túto konzolu bez úplného pochopenia dopadov takýchto príkazov.</translation>
     </message>
     <message>
         <source>In:</source>
@@ -2380,22 +2304,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Total: %1 (Enabled: %2)</source>
         <translation>Celkovo: %1 (Povolené: %2)</translation>
-    </message>
-    <message>
-        <source>%1 B</source>
-        <translation>%1 B</translation>
-    </message>
-    <message>
-        <source>%1 KB</source>
-        <translation>%1 KB</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB</translation>
     </message>
     <message>
         <source>(node id: %1)</source>
@@ -2433,16 +2341,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
-        <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Znovu použiť jednu z už použitých adries pre prijímanie. &lt;br&gt;Znovu používanie adries je problematické v otázke bezpečnosti aj súkromia.&lt;br/&gt; Používajte to len v prípade ak znovu generujete výzvu na zaplatenie, ktorú ste už vytvorili v minulosti.</translation>
-    </message>
-    <message>
-        <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>Z&amp;novu použiť jestvujúcu prijímaciu adresu (neodporúča sa)</translation>
-    </message>
-    <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Pripojiť ku vyžiadanej platbe voliteľnú správu, ktorá sa zobrazí, keď bude žiadosť otvorená. Poznámka: Správa nebude poslaná spolu s platbou cez sieť Biblepay.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Pripojiť ku vyžiadanej platbe voliteľnú správu, ktorá sa zobrazí, keď bude žiadosť otvorená. Poznámka: Správa nebude poslaná spolu s platbou cez sieť BiblePay.</translation>
     </message>
     <message>
         <source>&amp;Message:</source>
@@ -2453,8 +2353,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Voliteľný popis ktorý sa pridá k tejto novej prijímajúcej adrese.</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Pripojiť ku vyžiadanej platbe voliteľnú správu, ktorá sa zobrazí, keď bude žiadosť otvorená. &lt;br&gt;Poznámka: Správa nebude poslaná spolu s platbou cez sieť Biblepay.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Pripojiť ku vyžiadanej platbe voliteľnú správu, ktorá sa zobrazí, keď bude žiadosť otvorená. &lt;br&gt;Poznámka: Správa nebude poslaná spolu s platbou cez sieť BiblePay.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2483,10 +2383,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Clear</source>
         <translation>Vyčistiť</translation>
-    </message>
-    <message>
-        <source>Request InstantSend</source>
-        <translation>Vyžiadať InstantSend</translation>
     </message>
     <message>
         <source>Requested payments history</source>
@@ -2570,18 +2466,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Message</source>
         <translation>Správa</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Áno</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Nie</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2690,14 +2574,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Vybrať...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>Používanie fallbackfee môže mať za následok odoslanie transakcie, ktorá sa bude potvrdzovať niekoľko hodín alebo dní (prípadne nikdy). Zvážte možnosť výberu poplatku ručne alebo počkajte, než potvrdíte kompletný reťazec blokov.</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Upozornenie: teraz nie je možné poplatok odhadnúť.</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>skryť nastavenia poplatkov</translation>
     </message>
@@ -2706,36 +2582,28 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Cieľový čas potvrdenia:</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>InstantSend</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>Ak je vlastný poplatok nastavený na 1000 duffov a transakcia je len 250 bytov, v tom prípade "za kilobajt" zaplatí iba 250 duffov na poplatkoch, &lt;br /&gt;zatiaľ čo "pri najmenšom" zaplatí 1000 duffov. Pre transakcie väčšie ako jeden kilobajt, obe zaplatia rovnako za kilobajt. </translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Ak je vlastný poplatok nastavený na 1000 duffov a transakcia je len 250 bytov, v tom prípade "za kilobajt" zaplatí iba 250 duffov na poplatkoch, &lt;br /&gt;zatiaľ čo "celkovo pri najmenšom" zaplatí 1000 duffov. Pre transakcie väčšie ako jeden kilobajt, obe zaplatia rovnako za kilobajt. </translation>
-    </message>
-    <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for biblepay transactions than the network can process.</source>
-        <translation>Platenie minimálneho poplatku je v poriadku pokiaľ je objem transakcií menší ako je miesto v bloku. &lt;br /&gt;Buďte opatrný pretože to môže skončiť s nikdy nepotvrdenými transakciami, akonáhle je dopyt po Biblepay transakciách väčší ako dokáže sieť Biblepay spracovať.</translation>
+        <translation>Platenie minimálneho poplatku je v poriadku pokiaľ je objem transakcií menší ako je miesto v bloku. &lt;br /&gt;Buďte opatrný pretože to môže skončiť s nikdy nepotvrdenými transakciami, akonáhle je dopyt po BiblePay transakciách väčší ako dokáže sieť BiblePay spracovať.</translation>
     </message>
     <message>
         <source>per kilobyte</source>
         <translation>za kilobajt</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Skryť</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>Používanie fallbackfee môže mať za následok odoslanie transakcie, ktorá sa bude potvrdzovať niekoľko hodín alebo dní (prípadne nikdy). Zvážte možnosť výberu poplatku ručne alebo počkajte, než potvrdíte kompletný reťazec blokov.</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>celkovo z prinajmenej</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>Poznámka: Nie je dostatok údajov na odhad poplatku, miesto toho sa použije preddefinovaná hodnota.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Skryť</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2752,14 +2620,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(Inteligentný poplatok nebol ešte inicializovaný. Obvykle to trvá nekoľko blokov...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>normálny</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>rýchly</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2818,24 +2678,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Kopírovať zmenu</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 blokov)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>používa</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>anonymné zdroje</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(PrivateSend vyžaduje aby bola táto suma zaokrúhlená nahor k najbližšej %1).</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>akékoľvek dostupné zdroje (nie anonýmne)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>a InstantSend</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2856,6 +2704,34 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
         <translation>&lt;b&gt;(%1 z %2 zobrazených položiek)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>Iba PrivateSend prostriedky</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>akékoľvek dostupné zdroje</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(Transakcie typu PrivateSend majú zvyčajne vyššie poplatky, pretože nie sú povolené žiadne zmeny výstupu)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>Veľkosť transakcie: %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>Sadzba poplatku: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>Táto transakcia spotrebuje %n vstup</numerusform><numerusform>Táto transakcia spotrebuje %n vstupy</numerusform><numerusform>Táto transakcia spotrebuje %n vstupov</numerusform><numerusform>Táto transakcia spotrebuje %n vstupov</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>Varovanie: Použitie PrivateSend s %1 alebo viac vstupmi môže poškodiť vaše súkromie a neodporúča sa</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -2897,10 +2773,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Payment request expired.</source>
         <translation>Vypršala platnosť požiadavky na platbu.</translation>
     </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n blok</numerusform><numerusform>%n bloky</numerusform><numerusform>%n blokov</numerusform><numerusform>%n blokov</numerusform></translation>
-    </message>
     <message>
         <source>Pay only the required fee of %1</source>
         <translation>Zaplatiť iba požadovaný poplatok %1</translation>
@@ -2910,8 +2782,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>Odhad pre začiatok potvrdzovania je %n blok.</numerusform><numerusform>Odhad pre začiatok potvrdzovania sú %n bloky.</numerusform><numerusform>Odhad pre začiatok potvrdzovania je %n blokov.</numerusform><numerusform>Odhad pre začiatok potvrdzovania je %n blokov.</numerusform></translation>
     </message>
     <message>
-        <source>Warning: Invalid Biblepay address</source>
-        <translation>Upozornenie: Neplatná Biblepay adresa</translation>
+        <source>Warning: Invalid BiblePay address</source>
+        <translation>Upozornenie: Neplatná BiblePay adresa</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
@@ -2941,8 +2813,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Zapla&amp;tiť:</translation>
     </message>
     <message>
-        <source>The Biblepay address to send the payment to</source>
-        <translation>Biblepay adresa pre poslanie platby</translation>
+        <source>The BiblePay address to send the payment to</source>
+        <translation>BiblePay adresa pre poslanie platby</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2977,8 +2849,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Su&amp;ma:</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of Biblepay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>Poplatok sa odpočíta od čiastky, ktorú odosielate. Príjemca dostane menej Biblepay ako zadáte. Ak je vybraných viacero príjemcov, poplatok je rozdelený rovnakým dielom.</translation>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation>Poplatok sa odpočíta od čiastky, ktorú odosielate. Príjemca dostane menej BiblePay ako zadáte. Ak je vybraných viacero príjemcov, poplatok je rozdelený rovnakým dielom.</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
@@ -2989,8 +2861,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Správa:</translation>
     </message>
     <message>
-        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Biblepay network.</source>
-        <translation>Správa ktorá bola pripojená ku biblepay: URI ktorá sa uchová spolu s transakciou pre vašu referenciu. Poznámka: Táto správa nebude poslaná cez sieť Biblepay.</translation>
+        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</source>
+        <translation>Správa ktorá bola pripojená ku biblepay: URI ktorá sa uchová spolu s transakciou pre vašu referenciu. Poznámka: Táto správa nebude poslaná cez sieť BiblePay.</translation>
     </message>
     <message>
         <source>This is an unauthenticated payment request.</source>
@@ -3042,12 +2914,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&amp;Podpísať Správu</translation>
     </message>
     <message>
-        <source>You can sign messages/agreements with your addresses to prove you can receive Biblepay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>Môžete podpísať správy/dohody svojou adresou aby ste dokázali, že na ňu prijať Biblepay. Buďte opatrní a nepodpisuje nič vágne alebo náhodné, nakoľko útoky typu "phishing" vás môžu lákať k ich podpísaniu vašej identity. Podpisujte iba vyhlásenia s úplnými detailami s ktorými súhlasíte.</translation>
+        <source>You can sign messages/agreements with your addresses to prove you can receive BiblePay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <translation>Môžete podpísať správy/dohody svojou adresou aby ste dokázali, že na ňu prijať BiblePay. Buďte opatrní a nepodpisuje nič vágne alebo náhodné, nakoľko útoky typu "phishing" vás môžu lákať k ich podpísaniu vašej identity. Podpisujte iba vyhlásenia s úplnými detailami s ktorými súhlasíte.</translation>
     </message>
     <message>
-        <source>The Biblepay address to sign the message with</source>
-        <translation>Biblepay adresa na podpísanie správy</translation>
+        <source>The BiblePay address to sign the message with</source>
+        <translation>BiblePay adresa na podpísanie správy</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -3078,8 +2950,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Kopírovať práve zvolenú adresu do systémovej schránky</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Biblepay address</source>
-        <translation>Podpísať spravu aby ste dokázali, že vlastníte túto Biblepay adresu</translation>
+        <source>Sign the message to prove you own this BiblePay address</source>
+        <translation>Podpísať spravu aby ste dokázali, že vlastníte túto BiblePay adresu</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -3102,12 +2974,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Vložte adresu príjemcu, správu (uistite sa, že presne kopírujete ukončenia riadkov, medzery, odrážky, atď.) a podpis pre potvrdenie správy. Buďte opatrní a nedomýšľajte si viac než je uvedené v samotnej podpísanej správe a môžete sa tak vyhnúť podvodu MITM útokom. Toto len potvrdzuje, že podpisujúca strana môže prijímať na tejto adrese, nepotvrdzuje to vlastníctvo žiadnej transakcie!</translation>
     </message>
     <message>
-        <source>The Biblepay address the message was signed with</source>
-        <translation>Adresa Biblepay s ktorou bola podpísaná správa</translation>
+        <source>The BiblePay address the message was signed with</source>
+        <translation>Adresa BiblePay s ktorou bola podpísaná správa</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Biblepay address</source>
-        <translation>Overiť správu pre uistenie, že bola podpísaná zadanou Biblepay adresou</translation>
+        <source>Verify the message to ensure it was signed with the specified BiblePay address</source>
+        <translation>Overiť správu pre uistenie, že bola podpísaná zadanou BiblePay adresou</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -3176,10 +3048,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>[testnet]</source>
         <translation>[testovacia sieť]</translation>
     </message>
-    <message>
-        <source>Version %1</source>
-        <translation>Verzia %1</translation>
-    </message>
 </context>
 <context>
     <name>TrafficGraphWidget</name>
@@ -3187,7 +3055,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>KB/s</source>
         <translation>KB/s</translation>
     </message>
-</context>
+    </context>
 <context>
     <name>TransactionDesc</name>
     <message numerus="yes">
@@ -3201,10 +3069,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>conflicted</source>
         <translation>sporné</translation>
-    </message>
-    <message>
-        <source>%1/offline</source>
-        <translation>%1/offline</translation>
     </message>
     <message>
         <source>0/unconfirmed, %1</source>
@@ -3231,36 +3095,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 potvrdení</translation>
     </message>
     <message>
-        <source>locked via LLMQ based ChainLocks</source>
-        <translation>zamknuté pomocou LLMQ ChainLocks</translation>
-    </message>
-    <message>
-        <source>verified via LLMQ based InstantSend</source>
-        <translation>overené pomocou LLMQ InstantSend</translation>
-    </message>
-    <message>
-        <source>verified via InstantSend</source>
-        <translation>overené cez InstantSend</translation>
-    </message>
-    <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>Prebieha overovanie InstantSend - %1 z %2 podpisov</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>Overenie InstantSend zlyhalo</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Stav</translation>
-    </message>
-    <message>
-        <source>, has not been successfully broadcast yet</source>
-        <translation>, ešte nebola úspešne odoslaná</translation>
-    </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, vysielaný cez %n uzol</numerusform><numerusform>, vysielaný cez %n uzle</numerusform><numerusform>, vysielaný cez %n uzlov</numerusform><numerusform>, vysielaný cez %n uzlov</numerusform></translation>
     </message>
     <message>
         <source>Date</source>
@@ -3417,10 +3253,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Otvorené do %1</translation>
     </message>
     <message>
-        <source>Offline</source>
-        <translation>Offline</translation>
-    </message>
-    <message>
         <source>Unconfirmed</source>
         <translation>Nepotvrdené</translation>
     </message>
@@ -3443,10 +3275,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Immature (%1 confirmations, will be available after %2)</source>
         <translation>Nezrelé (%1 potvrdení, bude k dispozícii po %2)</translation>
-    </message>
-    <message>
-        <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>Ten blok nebol prijatý žiadnou inou nódou a pravdepodobne nebude akceptovaný!</translation>
     </message>
     <message>
         <source>Generated but not accepted</source>
@@ -3493,10 +3321,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Vytvorené denominácie PrivateSend</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
         <source>watch-only</source>
         <translation>iba sledovanie</translation>
     </message>
@@ -3525,10 +3349,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Či sú ale nie sú, adresy iba na sledovanie zahrnuté v tejto transakcii.</translation>
     </message>
     <message>
-        <source>Whether or not this transaction was locked by InstantSend.</source>
-        <translation>Či bola, alebo nebola táto transakcia uzamknutá pomocou InstantSend.</translation>
-    </message>
-    <message>
         <source>User-defined intent/purpose of the transaction.</source>
         <translation>Užívateľsky určený účel transakcie.</translation>
     </message>
@@ -3542,14 +3362,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>All</source>
         <translation>Všetko</translation>
-    </message>
-    <message>
-        <source>Locked by InstantSend</source>
-        <translation>Uzamknuté cez InstantSend</translation>
-    </message>
-    <message>
-        <source>Not locked by InstantSend</source>
-        <translation>Neuzamknuté cez InstantSend</translation>
     </message>
     <message>
         <source>Today</source>
@@ -3588,10 +3400,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Odoslané na</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>PrivateSend</translation>
-    </message>
-    <message>
         <source>PrivateSend Make Collateral Inputs</source>
         <translation>Uskutočnené zaisťovacie PrivateSend vstupy</translation>
     </message>
@@ -3618,10 +3426,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Other</source>
         <translation>Iné</translation>
-    </message>
-    <message>
-        <source>Enter address or label to search</source>
-        <translation>Pre vyhľadávanie vložte adresu alebo popis</translation>
     </message>
     <message>
         <source>Min amount</source>
@@ -3752,14 +3556,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Send Coins</source>
         <translation>Poslať Mince</translation>
     </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>InstantSend zatiaľ nepodporuje posielanie takto vysokých čiastok. Transakcie sú limitované na %1 BIBLEPAY.</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Pre InstantSend transakciu bolo použitých príliš veľa vstupov (&gt;%1), poplatok by mohol byť obrovský. </translation>
-    </message>
 </context>
 <context>
     <name>WalletView</name>
@@ -3827,10 +3623,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Meno pre vytvorenie url pre položku KeePass, ktorá uchová heslo peňženky</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Nastavte maximálnu veľkosť vysoko-prioritných/nízko-poplatkových transakcií v bajtoch (predvolené: %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>Nastaviť počeť vlákien overujúcich skripty (%u až %d, 0 = auto, &lt;0 = nechať toľkoto jadier voľných, prednastavené: %d)</translation>
     </message>
@@ -3851,10 +3643,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Prijímať príkazy z príkazového riadku a JSON-RPC</translation>
     </message>
     <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Pridať uzol pre pripojenie a pokúsiť sa udržať otvorené pripojenie</translation>
-    </message>
-    <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
         <translation>Povoliť vyhľadávania DNS pre -addnode, -seenode a -connect</translation>
     </message>
@@ -3871,16 +3659,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Nie je možné prejsť na staršiu verziu peňaženky</translation>
     </message>
     <message>
-        <source>Cannot write default address</source>
-        <translation>Nie je možné zapísať predvolenú adresu</translation>
-    </message>
-    <message>
         <source>Collateral not valid.</source>
         <translation>Zaistenie je neplatné.</translation>
-    </message>
-    <message>
-        <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Pre načítanie peer adresy sa pripojte k uzlu, a odpojte</translation>
     </message>
     <message>
         <source>Connection options:</source>
@@ -3983,10 +3763,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Povoliť publikovanie transakčných hashov, ktoré sa pokúsili o dvojité minutie InstantSend v &lt;address&gt;</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>Chyba pri načítaní %s: Nemôžete zapnúť HD na už existujúcej nie-HD peňaženke</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Nájdené nepotvrdené denominované výstupy, pre pokračovanie sa čaká kým sa nepotvrdia.</translation>
     </message>
@@ -4011,10 +3787,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Udržiavať kompletný transakčný index, využíva getrawtransaction rpc volanie (predvolené: %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Uistite sa, že máte´vašu peňaženku zašifrovanú a zmazané všetky nezašifrované zálohy potom, ako overíte, že peňaženka funguje! </translation>
-    </message>
-    <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
         <translation>Maximálna veľkosť dát v transakciách nosných dát, ktoré prenášame a ťažíme (predvolené: %u)</translation>
     </message>
@@ -4029,6 +3801,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
         <translation>Nahrádza minimálny počet spork podpisovateľov pre zmenu spork hodnoty. Použiteľné iba pre regtest a devnet. Použitie tejto funkcie na hlavnej alebo testovacej vás zablokuje.</translation>
+    </message>
+    <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>Pre poslanie zdrojov používa PrivateSend presné denominované sumy, možno iba potrebujete zmiešať viac mincí. </translation>
+    </message>
+    <message>
+        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex, -rescan and -disablegovernance=false. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;=%u = automatically prune block files to stay under the specified target size in MiB)</source>
+        <translation>Obmedziť nároky na úložný priestor orezávaním (mazaním) starých blokov. Táto voľba tiež umožní použiť RPC volanie pruneblockchain na zmazanie konkrétnych blokov a ďalej automatické orezávanie starých blokov, ak je zadaná cieľová veľkosť súborov z blokmi v MiB. Tento režim nie je zlúčiteľný s -txindex, -rescan ani -disablegovernance=false. Upozornenie: opätovná zmena tohoto nastavenia bude vyžadovať nové stiahnutie celého blockchainu . (predvolené: 0 = bloky neorezávať, 1 = povoliť ručné orezávanie cez RPC, &gt;=%u = automatické orezávanie blokov tak, aby bola udržaná cieľová veľkosť súborov s blokmi v MiB)</translation>
     </message>
     <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
@@ -4049,22 +3829,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
         <translation>Uzle na zoznam povolených nemôžu byť DoS zakázané a ich transakcie vždy postúpené ďalej, aj v prípade, ak sú už pamäťovej fronte. Užitočné napr. pre brány</translation>
-    </message>
-    <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>Potrebujete prebudovať databázu použitím -reindex-chainstate pre zmenu -txindex</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>V konfigurácii by ste mali špecifikovať masternodeblsprivkey. Pre pomoc sa pozrite do dokumentácie.</translation>
-    </message>
-    <message>
-        <source>(default: %s)</source>
-        <translation>(predvolené: %s)</translation>
-    </message>
-    <message>
-        <source>-wallet parameter must only specify a filename (not a path)</source>
-        <translation>-wallet parameter musí špecifikovať len názov súboru (nie cestu)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4091,16 +3855,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Pripojiť ku KeePassHttp na porte &lt;port&gt; (predvolené: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>Povoliť klientovi aby vystupoval ako masternode (0-1, predvolené: %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>Vstup prekračuje maximálnu veľkosť.</translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>Chyba pri načítaní %s: Nemôžete vypnúť HD na už existujúcej HD peňaženke</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4159,12 +3915,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Nedostatok prostriedkov.</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>Neplatná suma pre -paytxfee=&lt;amount&gt;: '%s' (musí byť aspoň %s)</translation>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>Neplatná suma pre -discardfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>Neplatný masternodeblsprivkey. Pozrite si dokumentáciu.</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
+        <translation>Neplatná suma pre -paytxfee=&lt;amount&gt;: '%s' (musí byť aspoň %s)</translation>
     </message>
     <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
@@ -4227,12 +3983,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Nekompatibilný Masternode zdroj.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Nie je v zozname Masternode.</translation>
+        <source>Not enough funds to mix.</source>
+        <translation>Nedostatok zdrojov pre miešanie.</translation>
     </message>
     <message>
-        <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Pripojiť iba k uzlom v sieti &lt;net&gt; (ipv4, ipv6, alebo onion)</translation>
+        <source>Not in the Masternode list.</source>
+        <translation>Nie je v zozname Masternode.</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
@@ -4251,32 +4007,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Poslať sledovacie/ladiace informácie do debug.log súboru (predvolené: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>Poslať ako transakcie bez poplatku, ak je to možné (predvolené: %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Nastaviť veľkosť kľúča fronty na &lt;n&gt; (predvolené: %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>Nastaviť súkromný kľúč masternode BLS</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
         <translation>Nastaviť počet vlákien na obsluhu RPC volaní (predvolené: %d)</translation>
     </message>
     <message>
-        <source>Specify configuration file (default: %s)</source>
-        <translation>Zadať konfiguračný súbor (predvolené: %s)</translation>
-    </message>
-    <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
         <translation>Zadajte časový limit pripojenia v milisekundách (minimum: 1, predvolené: %d)</translation>
-    </message>
-    <message>
-        <source>Specify pid file (default: %s)</source>
-        <translation>Zadať pid súbor (predvolené: %s)</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
@@ -4287,28 +4027,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Odoslané na masternode, čaká vo fronte %s</translation>
     </message>
     <message>
-        <source>Synchronization failed</source>
-        <translation>Synchronizácia zlyhala</translation>
-    </message>
-    <message>
         <source>Synchronization finished</source>
         <translation>Synchronizácia dokončená</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Toto nie je Masternode.</translation>
-    </message>
-    <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
         <translation>Hranica pre odpájanie zle sa správajúcim partnerským uzlom (predvolené: %u)</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, removing.</source>
-        <translation>Príliš mnoho %f denominácií, maže sa.</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, skipping.</source>
-        <translation>Príliš mnoho %f denominácií, preskakuje sa.</translation>
     </message>
     <message>
         <source>Tor control port password (default: empty)</source>
@@ -4359,6 +4083,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Komentár u typu klienta (%s) obsahuje riskantné znaky.</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>Overuje sa peňaženka(y)...</translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>Skúsime znovu...</translation>
     </message>
@@ -4387,20 +4115,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Kľúč KeePassHttp pre šifrovanú AES komunikáciu s KeePass</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>V pamäti udržiavať najviac &lt;n&gt; nepotvrdených transakcií (predvolené: %u)</translation>
-    </message>
-    <message>
-        <source>Disable all Biblepay specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
-        <translation>Vypnúť všetky funkcie špecifické pre Biblepay (Masternódy, PrivateSend, InstantSend, Správu) (0-1, predvolené: %u)</translation>
-    </message>
-    <message>
         <source>%s file contains all private keys from this wallet. Do not share it with anyone!</source>
         <translation>Súbor %s obsahuje všetky súkromné kľúče z tejto peňaženky. Nezdieľajte s nikým!</translation>
     </message>
     <message>
-        <source>Bind to given address to listen for JSON-RPC connections. This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
-        <translation>Pripojte na zadanú adresu pre počúvanie spojenia JSON-RPC. Táto voľba sa ignoruje, pokiaľ nie je úspešne zadané -rpcallowip. Port je voliteľný a prepisuje -rpcport. Pre IPv6 použite zápis [host]:port. Táto možnosť môže byť zadaná viackrát (predvolené: 127.0.0.1 a ::1, t.j. localhost, alebo ak bolo zadané -rpcallowip, 0.0.0.0 a :: t.j. všetky adresy)</translation>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>Podpora -masternode príkazu bola ukončená a je ignorovaná, na spustenie tohto uzla ako masternódu stačí zadanie -masternodeblsprivkey.</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4411,16 +4131,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Nedržať transakcie v zásobníku dlhšie ako &lt;n&gt; hodín (predvolené: %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Zapnúť InstantSend, ukázať potvrdenia pre zamknuté transakcie (0-1, predvolené: %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
         <translation>Zapnúť viac PrivateSend miešaní za jeden blok, experimentálne (0-1, predvolené: %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Povoliť používanie automatického PrivateSend pre zdroje uložené v tejto peňaženke (0-1, predvolené: %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4447,14 +4159,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Pokiaľ &lt;category&gt; nie je nastavená, alebo &lt;category&gt; = 1, vypíš všetky informácie pre ladenie.</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>InstantSend zatiaľ nepodporuje posielanie takto vysokých čiastok. Transakcie sú limitované na %1 BIBLEPAY.</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>InstantSend vyžaduje vstupy s aspoň %d potvrdeniami, môžete počkať pár minút a skúsiť znova.</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>Udržiavať kompletný index adries, používaný pre zisťovanie zostatku a neminutých vstupov pre adresy (predvolené: %u)</translation>
     </message>
@@ -4471,8 +4175,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Udržiavať najviac &lt;n&gt; spojení s inými počítačmi (dočasné servisné spojenia nie sú zahrnuté) (predvolené: %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>Pre poslanie zdrojov používa PrivateSend presné sumy, potrebujete jednoducho anonymizovať viac mincí. </translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>Uistite sa, že máte vašu peňaženku zašifrovanú a zmazané všetky nezašifrované zálohy potom ako ste overili, že peňaženka funguje!</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>Maximálna celková veľkosť všetkých opustených transakcií v megabajtoch (predvolené: %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4483,12 +4191,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Orezávanie: posledná synchronizácia peňaženky prebehla už pred orezanými dátami. Je treba spustiť -reindex (stiahne znovu celý blockchain v prípade orezaného uzlu)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>Dotaz na partnerské adresy pomocou vyhľadávania DNS v prípade nedostatku adries (predvolené: 1 ak nie je použité -connect)</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>Použít náhodné údaje pro každé proxy spojení. To umožní izolovat nesouvisející datové toky v Toru (predvolené: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>V orezanom režime nie je možné reťazec blokov pre-skenovať. Musíte vykonať -reindex, čo znova stiahne celý blockchain.</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>Nastaviť súkromný BLS masternód kľúč a umožniť klientovi, aby sa správal ako masternód</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4511,10 +4227,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Celková dĺžka verzie sieťového reťazca (%i) prekračuje maximálnu dĺžku (%i). Znížte počet a veľkosť parametra  uacomments.</translation>
     </message>
     <message>
-        <source>Transaction index can't be disabled in full mode. Either start with -litemode command line switch or enable transaction index.</source>
-        <translation>Index transakcií nie je možné deaktivovať v plnom režime. Buď začnite s prepínačom príkazového riadka -litemode alebo aktivujte index transakcií.</translation>
-    </message>
-    <message>
         <source>Tries to keep outbound traffic under the given target (in MiB per 24h), 0 = no limit (default: %d)</source>
         <translation>Sa snaží držať odchádzajúce prevádzku v rámci daného cieľa (v MB za 24h), 0 = žiadny limit (predvolený: %d)</translation>
     </message>
@@ -4535,6 +4247,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Skúsiť použiť UPnP pre mapovanie počúvajúceho portu (predvolené: 1 počas počúvania a bez -proxy)</translation>
     </message>
     <message>
+        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcauth. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
+        <translation>Užívateľské meno a zahašované heslo pre JSON-RPC spojenie. Pole &lt;userpw&gt;  má formát: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Pomocný python skript je priložený v share/rpcauth. Klient sa potom už pripojuje normálne pomocou páru argumentov rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt;. Túto voľbu môžete použiť i viackrát</translation>
+    </message>
+    <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
         <translation>UPOZORNENIE! Chyba pri doplňovaní zásobníku kľúčov. Pre doplnenie musíte odomknúť vašu peňaženku.</translation>
     </message>
@@ -4547,8 +4263,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Upozornenie: Ťaží sa neznáma verzia blokov! Je možné, že sú v platnosti neznáme pravidlá</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Biblepay-specific functionality is disabled.</source>
-        <translation>Začínate v režime Lite, všetky funkcie špecifické pre Biblepay sú deaktivované.</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>Potrebujete prebudovať databázu použitím -reindex zmeniť -timestampindex</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4631,10 +4347,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Nepodarilo sa vymazať zálohu, chyba: %s</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>Chyba pri načítaní vyrovnávajúcej pamäti InstantSend dát z</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>Chyba pri načítaní vyrovnávajúcej pamäti sporks z</translation>
     </message>
@@ -4655,6 +4367,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Neplatná suma pre -fallbackfee=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>Neplatný masternodeblsprivkey. Pozrite si dokumentáciu.</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>Udržovať zasobník transakcií menší než &lt;n&gt; megabajtov (predvolené: %u)</translation>
     </message>
@@ -4665,10 +4381,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>Posledná úspešná PrivateSend akcia bola uskutočnená pred príliš krátkou chvíľou.</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>Načíta sa vyrovnávacia pamäť InstantSend dát...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4689,10 +4401,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Loading wallet...</source>
         <translation>Načítavanie peňaženky...</translation>
-    </message>
-    <message>
-        <source>Location of the auth cookie (default: data dir)</source>
-        <translation>Umiestnenie overovacieho cookie súboru (predvolená: Priečinok s dátami)</translation>
     </message>
     <message>
         <source>Make the wallet broadcast transactions</source>
@@ -4731,20 +4439,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Prenosové možnosti uzla:</translation>
     </message>
     <message>
-        <source>Non-standard public key detected.</source>
-        <translation>Detekovaný neštandardný verejný kľúč.</translation>
-    </message>
-    <message>
         <source>Not compatible with existing transactions.</source>
         <translation>Nie je kompatibilné s existujúcou transakciou.</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
         <translation>Nedostatok kľúčových slov súboru.</translation>
-    </message>
-    <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>Nedostatok zdrojov na anonymizáciu.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: %u)</source>
@@ -4771,10 +4471,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Možnosti PrivateSend:</translation>
     </message>
     <message>
-        <source>PrivateSend request complete:</source>
-        <translation>Dokončené PrivateSend požiadavky:</translation>
-    </message>
-    <message>
         <source>PrivateSend request incomplete:</source>
         <translation>Nedokončené PrivateSend požiadavky:</translation>
     </message>
@@ -4793,14 +4489,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Rescan the block chain for missing wallet transactions on startup</source>
         <translation>Pri spustení skontrolovať reťaz blokov pre chýbajúce transakcie peňaženky</translation>
-    </message>
-    <message>
-        <source>Submitted following entries to masternode: %u</source>
-        <translation>Odoslané nasledujúce záznamy na masternód :%u</translation>
-    </message>
-    <message>
-        <source>Submitted to masternode, waiting for more entries ( %u ) %s</source>
-        <translation>Odoslané na masternód, čaká sa na viac vstupov ( %u ) %s</translation>
     </message>
     <message>
         <source>Synchronizing blockchain...</source>
@@ -4855,10 +4543,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Ladiace / testovacie možnosti peňaženky.</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>Peňaženka nie je inicializovaná</translation>
-    </message>
-    <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
         <translation>Peňaženka musí byť prepísaná: pre dokončenie reštartujte %s</translation>
     </message>
@@ -4875,8 +4559,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Či fungovat iba v čistom blokovom režime (predvolené: %u)</translation>
     </message>
     <message>
-        <source>You can not start a masternode in lite mode.</source>
-        <translation>V režime Lite nemôžete spustiť masternode.</translation>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>Nie je možné spustiť masternód s povolenou peňaženkou.</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>Potrebujete prebudovať databázu použitím -reindex zmeniť -addressindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>Potrebujete prebudovať databázu použitím -reindex zmeniť -spentindex</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>Potrebujete prebudovať databázu použitím -reindex zmeniť -txindex</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
@@ -4895,32 +4591,36 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Možnosti servra RPC:</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>The %s developers</source>
         <translation>Vývojári %s</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Prijímať pripojenie z vonku (predvolené: 1, ak nie -proxy alebo -connect/-noconnect)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>Nedá sa uzamknúť zložka %s. %s pravdepodobne už beží.</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Pripojiť iba k zadanému uzlu(-om); -noconnect alebo -connect=0, aby ste zakázali automatické pripojenia</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>Distribuované pod softvérovou licenciou MIT, viď sprievodný súbor %s alebo %s</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Povoliť používanie PrivateSend pre zdroje uložené v tejto peňaženke (0-1, predvolené: %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>Chyba pri načítaní %s: Nemôžete zapnúť HD na už existujúcej nie-HD peňaženke</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>Nastala chyba pri čítaní súboru %s! Všetky kľúče sa prečítali správne, ale dáta o transakciách alebo záznamy v adresári môžu chýbať alebo byť nesprávne.</translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>Vylúčiť informácie o ladení pre kategóriu. Môže byť použitý v spojení s -debug=1 pre výstup protokolov ladenia pre všetky kategórie okrem jednej, alebo viacerých špecifikovaných kategórií.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
@@ -4951,20 +4651,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Keď si myslíte, že %s je užitočný, podporte nás. Pre viac informácií o software navštívte %s.</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Poskytnúť likviditu PrivateSend tým, že občas miešať mince na priebežnej báze (%u-%u, predvolené: %u, 1=veľmi často, vysoké poplatky, %u=veľmi zriedkavo, nízke poplatky)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Dotaz pre uzlové adresy cez vyhľadávanie DNS, ak je nodostatok adries (predvolené: 1 okrem -connect/-noconnect)</translation>
-    </message>
-    <message>
-        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
-        <translation>Obmedziť nároky na úložný priestor orezávaním (mazaním) starých blokov. Táto voľba tiež umožní použiť RPC volanie pruneblockchain na zmazanie konkrétnych blokov a ďalej automatické orezávanie starých blokov, ak je zadaná cieľová veľkosť súborov z blokmi v MiB. Tento režim nie je zlúčiteľný s -txindex ani -rescan. Upozornenie: opätovná zmena tohoto nastavenia bude vyžadovať nové stiahnutie celého blockchainu . (predvolené: 0 = bloky neorezávať, 1 = povoliť ručné orezávanie cez RPC, &gt;%u = automatické orezávanie blokov tak, aby bola udržaná cieľová veľkosť súborov s blokmi v MiB)</translation>
-    </message>
-    <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>Nastaviť nejnižší akceptovateľný poplatok (v %s/kB) pre transakcie, ktoré majú byť zahrnutý do nových blokov. (predvolené: %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>Sadzba poplatku (v %s/kB), ktorá udáva vašu toleranciu k zahodeniu výdavku a jeho pripočítaním k poplatku (predvolené: %s). Poznámka: Výstup je zahodený, ak je nižší ako udaná suma. Vždy zahodíme až poplatok za prenos prachu a poplatok za zahodenie, ktorý je limitovaný odhadom poplatku za najdlhší cieľ.</translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>Toto je transakčný poplatok, ktorý môžete zahodiť, ak je výdavok menší ako prach pri tejto úrovni</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4979,6 +4675,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Pre túto transakciu nie je možné nájsť dostatok neverejnených prostriedkov PrivateSend.</translation>
     </message>
     <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>Bloky nie je možné prehrať. Potrebujete prebudovať databázu použitím -reindex-chainstate.</translation>
+    </message>
+    <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
         <translation>Použiť N oddelených masternódov pre každý denominovaný vstup na zmiešanie prostriedkov (%u-%u, predvolené: %u)</translation>
     </message>
@@ -4991,10 +4691,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Užívateľsky definovaná zapamätaná prístupová fráza pre HD peňaženku (BIP39). Platí iba počas vytvárania peňaženky/prvého spustenia (predvolené: prázdny reťazec)</translation>
     </message>
     <message>
-        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcuser. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
-        <translation>Užívateľské meno a zahašované heslo pre JSON-RPC spojenie. Pole &lt;userpw&gt;  má formát: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Pomocný python skript je priložený v share/rpcuser. Klient sa potom už pripojuje normálne pomocou páru argumentov rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt;. Túto voľbu môžete použiť i viackrát</translation>
-    </message>
-    <message>
         <source>Wallet will not create transactions that violate mempool chain limits (default: %u)</source>
         <translation>Peňaženka nebude vytvárať transakcie, ktoré by porušovali limity transakčného zásobníku reťazcov (predvolené: %u)</translation>
     </message>
@@ -5003,8 +4699,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Varovanie: Peňaženka poškodená, dáta boli zachránené! Originálna %s ako %s v %s; ak váš zostatok alebo transakcie sú nesprávne, mali by ste obnoviť zálohu.</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>Či sa má ale nemá mempool uložiť pri vypnutí a načítať pri reštarte (predvolené: %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
         <translation>Povoliť partnerov pripájajúcich sa z danej IP adresy (napr. 1.2.3.4) alebo zo siete vo formáte CIDR (napr. 1.2.3.0/24). Môže byť zadané viackrát.</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>%d z posledných 100 blokov má neočakávanú verziu</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -5019,10 +4723,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Hodnota %s je nastavená veľmi vysoko!</translation>
     </message>
     <message>
-        <source>(press q to shutdown and continue later)</source>
-        <translation>(stlačením tlačidla q vypnúť a pokračovať neskôr)</translation>
-    </message>
-    <message>
         <source>-devnet can only be specified once</source>
         <translation>-devnet môže byť zadaný iba raz</translation>
     </message>
@@ -5033,6 +4733,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>-rpcport must be specified when -devnet and -server are specified</source>
         <translation>-rpcport musí byť zadaný, keď sú špecifikované -devnet a -server</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Prijímať pripojenie z vonku (predvolené: 1, ak nie -proxy alebo -connect)</translation>
     </message>
     <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
@@ -5055,6 +4759,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Autorské práva (C)</translation>
     </message>
     <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Vytvoriť až N vstupov z každej denominovanej sumy (%u-%u, predvolené: %u)</translation>
+    </message>
+    <message>
         <source>Error loading %s</source>
         <translation>Chyba načítania %s</translation>
     </message>
@@ -5065,6 +4773,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
         <translation>Chyba načítania %s: Peňaženka vyžaduje novšiu verziu %s</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>Chyba pri načítaní %s: Nemôžete vypnúť HD na už existujúcej HD peňaženke</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>Chyba pri načítaní peňaženky %s. Bol špecifikovaný duplikáty parameter -wallet.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -5083,6 +4799,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Kontrola čistoty pri inicializácií zlyhala. %s sa vypína.</translation>
     </message>
     <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>Nesúlad veľkosti vstupov a výstupov.</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>Neplatná -onion adresa alebo hostiteľ: '%s'</translation>
     </message>
@@ -5095,16 +4815,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Neplatná suma pre -%s=&lt;amount&gt;: '%s'</translation>
     </message>
     <message>
-        <source>Invalid characters in -wallet filename</source>
-        <translation>Neplatné znaky v názve súboru -wallet</translation>
-    </message>
-    <message>
         <source>Invalid spork address specified with -sporkaddr</source>
         <translation>Neplatná spork adresa určená pomocou -sporkaddr</translation>
-    </message>
-    <message>
-        <source>Keep N BIBLEPAY anonymized (%u-%u, default: %u)</source>
-        <translation>Udržujte N BIBLEPAY anonymizovaných (%u-%u, predvolené: %u)</translation>
     </message>
     <message>
         <source>Loading P2P addresses...</source>
@@ -5113,10 +4825,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Print this help message and exit</source>
         <translation>Vytlačiť túto pomocnú správu a ukončiť</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Obdržať a zobraziť sieťové P2P varovania (predvolené: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5131,16 +4839,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Prenášať non-P2SH multi-podpis (predvolené: %u)</translation>
     </message>
     <message>
+        <source>Replaying blocks...</source>
+        <translation>Prebieha nahratie blokov ...</translation>
+    </message>
+    <message>
         <source>Rescanning...</source>
         <translation>Znova prehľadávam...</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
         <translation>Bežať na pozadí ako démon a prijímať príkazy</translation>
-    </message>
-    <message>
-        <source>Send trace/debug info to console instead of debug.log file</source>
-        <translation>Odoslať trace/debug informácie na konzolu namiesto debug.info žurnálu</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -5175,20 +4883,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Zadať dátový adresár</translation>
     </message>
     <message>
-        <source>Specify wallet file (within data directory)</source>
-        <translation>Zadajte súbor peňaženky (vrámci dátovej zložky)</translation>
-    </message>
-    <message>
         <source>Specify your own public address</source>
         <translation>Zadajte vašu vlastnú verejnú adresu</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>Spúšťajú sa sieťové vlákna...</translation>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>Spustiť PrivateSend automaticky (0-1, predvolené: %u)</translation>
     </message>
     <message>
-        <source>Synchronization pending...</source>
-        <translation>Synchronizácia čaká...</translation>
+        <source>Starting network threads...</source>
+        <translation>Spúšťajú sa sieťové vlákna...</translation>
     </message>
     <message>
         <source>Synchronizing governance objects...</source>
@@ -5243,6 +4947,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Neznámy stav: id = %u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>Nepodporovaná záznamová kategória %s =%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>Užívateľské meno pre JSON-RPC spojenia</translation>
     </message>
@@ -5251,16 +4959,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Overovanie blokov...</translation>
     </message>
     <message>
-        <source>Verifying wallet...</source>
-        <translation>Overuje sa peňaženka...</translation>
-    </message>
-    <message>
         <source>Very low number of keys left: %d</source>
         <translation>Zostáva veľmi málo kľúčov: %d</translation>
-    </message>
-    <message>
-        <source>Wallet %s resides outside data directory %s</source>
-        <translation>Peňaženka %s je umiestnená mimo dátový adresár %s.</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
@@ -5271,20 +4971,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Možnosti peňaženky:</translation>
     </message>
     <message>
-        <source>Wallet window title</source>
-        <translation>Nadpis okna peňaženky</translation>
-    </message>
-    <message>
         <source>Warning</source>
         <translation>Upozornenie</translation>
     </message>
     <message>
         <source>Your entries added successfully.</source>
         <translation>Vaše položky boli úspešne pridané.</translation>
-    </message>
-    <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>Vaša transakcia bola pridaná do fronty!</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

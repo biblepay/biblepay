@@ -1,14 +1,14 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bls_ies.h"
+#include <bls/bls_ies.h>
 
-#include "hash.h"
-#include "random.h"
-#include "streams.h"
+#include <hash.h>
+#include <random.h>
+#include <streams.h>
 
-#include "crypto/aes.h"
+#include <crypto/aes.h>
 
 template <typename Out>
 static bool EncryptBlob(const void* in, size_t inSize, Out& out, const void* symKey, const void* iv)

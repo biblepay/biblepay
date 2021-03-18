@@ -1,13 +1,13 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018-2020 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DAC_CRYPTO_BLS_WORKER_H
-#define DAC_CRYPTO_BLS_WORKER_H
+#ifndef BIBLEPAY_CRYPTO_BLS_WORKER_H
+#define BIBLEPAY_CRYPTO_BLS_WORKER_H
 
-#include "bls.h"
+#include <bls/bls.h>
 
-#include "ctpl.h"
+#include <ctpl.h>
 
 #include <future>
 #include <mutex>
@@ -158,7 +158,7 @@ private:
     std::map<uint256, std::shared_future<CBLSPublicKey> > publicKeyShareCache;
 
 public:
-    CBLSWorkerCache(CBLSWorker& _worker) :
+    explicit CBLSWorkerCache(CBLSWorker& _worker) :
         worker(_worker) {}
 
     BLSVerificationVectorPtr BuildQuorumVerificationVector(const uint256& cacheKey, const std::vector<BLSVerificationVectorPtr>& vvecs)
@@ -202,4 +202,4 @@ private:
     }
 };
 
-#endif //DAC_CRYPTO_BLS_WORKER_H
+#endif //BIBLEPAY_CRYPTO_BLS_WORKER_H

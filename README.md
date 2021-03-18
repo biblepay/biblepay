@@ -1,16 +1,16 @@
-BiblePay Core staging tree 0.14.0
-===============================
+BiblePay Core staging tree 0.16
+===========================
 
 `master:` [![Build Status](https://travis-ci.org/biblepay/biblepay.svg?branch=master)](https://travis-ci.org/biblepay/biblepay) `develop:` [![Build Status](https://travis-ci.org/biblepay/biblepay.svg?branch=develop)](https://travis-ci.org/biblepay/biblepay/branches)
 
 https://www.biblepay.org
 
 
-What is Biblepay?
-----------------
+What is BiblePay?
+-------------
 
-Biblepay is an experimental digital currency that enables anonymous, instant
-payments to anyone, anywhere in the world. Biblepay uses peer-to-peer technology
+BiblePay is an experimental digital currency that enables instant, private
+payments to anyone, anywhere in the world. BiblePay uses peer-to-peer technology
 to operate with no central authority: managing transactions and issuing money
 are carried out collectively by the network. BiblePay Core is the name of the open
 source software which enables the use of this currency.
@@ -49,9 +49,9 @@ submit new unit tests for old code. Unit tests can be compiled and run
 (assuming they weren't disabled in configure) with: `make check`. Further details on running
 and extending unit tests can be found in [/src/test/README.md](/src/test/README.md).
 
-There are also [regression and integration tests](/qa) of the RPC interface, written
+There are also [regression and integration tests](/test), written
 in Python, that are run automatically on the build server.
-These tests can be run (if the [test dependencies](/qa) are installed) with: `qa/pull-tester/rpc-tests.py`
+These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
 
 The Travis CI system makes sure that every pull request is built for Windows, Linux, and OS X, and that unit/sanity tests are run automatically.
 

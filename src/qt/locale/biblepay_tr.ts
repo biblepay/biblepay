@@ -22,6 +22,14 @@
         <translation>&amp;Kopyala</translation>
     </message>
     <message>
+        <source>Show QR code for the currently selected address</source>
+        <translation>Seçili adres için QR kodu göster</translation>
+    </message>
+    <message>
+        <source>&amp;Show QR code</source>
+        <translation>&amp;QR kodu göster</translation>
+    </message>
+    <message>
         <source>Delete the currently selected address from the list</source>
         <translation>Seçili adresi listeden sil</translation>
     </message>
@@ -62,12 +70,12 @@
         <translation>Alım adresleri</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Bunlar ödemeleri göndermek için kullanacağınız Biblepay adreslerinizdir. Biblepay yollamadan önce tutarı ve alıcının alım adresini her zaman kontrol ediniz.</translation>
+        <source>These are your BiblePay addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Bunlar ödemeleri göndermek için kullanacağınız BiblePay adreslerinizdir. BiblePay yollamadan önce tutarı ve alıcının alım adresini her zaman kontrol ediniz.</translation>
     </message>
     <message>
-        <source>These are your Biblepay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Bunlar ödemeleri almak için kullanacağınız Biblepay adreslerinizdir. Her işlem için yeni bir alım adresi kullanmanız tavsiye edilir.</translation>
+        <source>These are your BiblePay addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Bunlar ödemeleri almak için kullanacağınız BiblePay adreslerinizdir. Her işlem için yeni bir alım adresi kullanmanız tavsiye edilir.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -80,6 +88,14 @@
     <message>
         <source>&amp;Edit</source>
         <translation>&amp;Değiştir</translation>
+    </message>
+    <message>
+        <source>&amp;Show address QR code</source>
+        <translation>&amp;Adresin QR kodunu göster</translation>
+    </message>
+    <message>
+        <source>QR code</source>
+        <translation>QR kod</translation>
     </message>
     <message>
         <source>Export Address List</source>
@@ -114,6 +130,45 @@
     </message>
 </context>
 <context>
+    <name>AppearanceWidget</name>
+    <message>
+        <source>Lighter</source>
+        <translation>Daha Hafif</translation>
+    </message>
+    <message>
+        <source>Bolder</source>
+        <translation>Daha Kalın</translation>
+    </message>
+    <message>
+        <source>Font Weight Normal:</source>
+        <translation>Yazı Tipi Genişliği Normal:</translation>
+    </message>
+    <message>
+        <source>Smaller</source>
+        <translation>Daha Küçük</translation>
+    </message>
+    <message>
+        <source>Bigger</source>
+        <translation>Daha Büyük</translation>
+    </message>
+    <message>
+        <source>Font Scale:</source>
+        <translation>Yazı Tipi Ölçeği:</translation>
+    </message>
+    <message>
+        <source>Font Family:</source>
+        <translation>Yazı Tipi Ailesi:</translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation>Tema:</translation>
+    </message>
+    <message>
+        <source>Font Weight Bold:</source>
+        <translation>Yazı Tipi Genişliği Kalın:</translation>
+    </message>
+</context>
+<context>
     <name>AskPassphraseDialog</name>
     <message>
         <source>Passphrase Dialog</source>
@@ -130,6 +185,10 @@
     <message>
         <source>Repeat new passphrase</source>
         <translation>Yeni parolayı tekrarlayınız</translation>
+    </message>
+    <message>
+        <source>Show password</source>
+        <translation>Şifreyi göster</translation>
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
@@ -240,14 +299,21 @@
     </message>
 </context>
 <context>
+    <name>BitcoinAmountField</name>
+    <message>
+        <source>Amount in %1</source>
+        <translation>%1 Cinsinden miktar</translation>
+    </message>
+</context>
+<context>
     <name>BitcoinGUI</name>
     <message>
-        <source>A fatal error occurred. Biblepay Core can no longer continue safely and will quit.</source>
-        <translation>Kritik bir hata oluştu. Biblepay Core artık güvenli şekilde devam edemez ve kapanacak.</translation>
+        <source>A fatal error occurred. BiblePay Core can no longer continue safely and will quit.</source>
+        <translation>Kritik bir hata oluştu. BiblePay Core artık güvenli şekilde devam edemez ve kapanacak.</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -270,8 +336,8 @@
         <translation>&amp;Gönder</translation>
     </message>
     <message>
-        <source>Send coins to a Biblepay address</source>
-        <translation>Bir Biblepay adresine coin gönder</translation>
+        <source>Send coins to a BiblePay address</source>
+        <translation>Bir BiblePay adresine coin gönder</translation>
     </message>
     <message>
         <source>&amp;Receive</source>
@@ -279,7 +345,7 @@
     </message>
     <message>
         <source>Request payments (generates QR codes and biblepay: URIs)</source>
-        <translation>Ödeme talep et (QR kodu ve Biblepay URI'si oluşturur)</translation>
+        <translation>Ödeme talep et (QR kodu ve BiblePay URI'si oluşturur)</translation>
     </message>
     <message>
         <source>&amp;Transactions</source>
@@ -306,8 +372,8 @@
         <translation>Uygulamadan çık</translation>
     </message>
     <message>
-        <source>Show information about Biblepay Core</source>
-        <translation>Biblepay Core hakkında bilgileri göster</translation>
+        <source>Show information about BiblePay Core</source>
+        <translation>BiblePay Core hakkında bilgileri göster</translation>
     </message>
     <message>
         <source>About &amp;Qt</source>
@@ -324,6 +390,10 @@
     <message>
         <source>&amp;About %1</source>
         <translation>%1 &amp;Hakkında</translation>
+    </message>
+    <message>
+        <source>PrivateSend coins to a BiblePay address</source>
+        <translation>Koinleri BiblePay adresine ÖzelGönder</translation>
     </message>
     <message>
         <source>Modify configuration options for %1</source>
@@ -378,16 +448,16 @@
         <translation>&amp;İleti imzala...</translation>
     </message>
     <message>
-        <source>Sign messages with your Biblepay addresses to prove you own them</source>
-        <translation>İletileri adreslerin size ait olduğunu ispatlamak için Biblepay adresleri ile imzala</translation>
+        <source>Sign messages with your BiblePay addresses to prove you own them</source>
+        <translation>İletileri adreslerin size ait olduğunu ispatlamak için BiblePay adresleri ile imzala</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
         <translation>İletiyi &amp;kontrol et...</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Biblepay addresses</source>
-        <translation>Belirtilen Biblepay adresleri ile imzalandıklarından emin olmak için iletileri kontrol et</translation>
+        <source>Verify messages to ensure they were signed with specified BiblePay addresses</source>
+        <translation>Belirtilen BiblePay adresleri ile imzalandıklarından emin olmak için iletileri kontrol et</translation>
     </message>
     <message>
         <source>&amp;Information</source>
@@ -467,19 +537,23 @@
     </message>
     <message>
         <source>Open a biblepay: URI or payment request</source>
-        <translation>Bir Biblepay: bağlantısı ya da ödeme talebi aç</translation>
+        <translation>Bir BiblePay: bağlantısı ya da ödeme talebi aç</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
         <translation>&amp;Komut satırı seçenekleri</translation>
     </message>
     <message>
-        <source>Show the %1 help message to get a list with possible Biblepay command-line options</source>
-        <translation>Olası Biblepay komut satırı seçeneklerinin listesini görmek için %1 yardım mesajını göster</translation>
+        <source>Show the %1 help message to get a list with possible BiblePay command-line options</source>
+        <translation>Olası BiblePay komut satırı seçeneklerinin listesini görmek için %1 yardım mesajını göster</translation>
     </message>
     <message>
         <source>%1 client</source>
         <translation>%1 istemci</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;unencrypted&lt;/b&gt;</source>
+        <translation>Cüzdan &lt;b&gt;şifrelenmemiş&lt;/b&gt;</translation>
     </message>
     <message>
         <source>&amp;PrivateSend information</source>
@@ -510,8 +584,8 @@
         <translation>Sekme araç çubuğu</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Biblepay network</source>
-        <translation><numerusform>Biblepay ağına %n aktif bağlantı</numerusform><numerusform>Biblepay ağına %n aktif bağlantı</numerusform></translation>
+        <source>%n active connection(s) to BiblePay network</source>
+        <translation><numerusform>BiblePay ağına %n aktif bağlantı</numerusform><numerusform>BiblePay ağına %n aktif bağlantı</numerusform></translation>
     </message>
     <message>
         <source>Network activity disabled</source>
@@ -582,6 +656,30 @@
         <translation>Bilgi</translation>
     </message>
     <message>
+        <source>Received and sent multiple transactions</source>
+        <translation>Birden fazla işlem alındı ve gönderildi</translation>
+    </message>
+    <message>
+        <source>Sent multiple transactions</source>
+        <translation>Birden fazla işlem gönderildi</translation>
+    </message>
+    <message>
+        <source>Received multiple transactions</source>
+        <translation>Birden fazla işlem alındı</translation>
+    </message>
+    <message>
+        <source>Sent Amount: %1
+</source>
+        <translation>Gönderilen Tutar: %1
+</translation>
+    </message>
+    <message>
+        <source>Received Amount: %1
+</source>
+        <translation>Alınan Tutar: %1
+</translation>
+    </message>
+    <message>
         <source>Date: %1
 </source>
         <translation>Tarih: %1
@@ -624,10 +722,6 @@
         <translation>HD anahtar oluşturma &lt;b&gt;etkin&lt;/b&gt;</translation>
     </message>
     <message>
-        <source>HD key generation is &lt;b&gt;disabled&lt;/b&gt;</source>
-        <translation>HD anahtar oluşturma &lt;b&gt;devre dışı&lt;/b&gt;</translation>
-    </message>
-    <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;unlocked&lt;/b&gt;</source>
         <translation>Cüzdan &lt;b&gt;şifrelenmiştir&lt;/b&gt; ve şu anda &lt;b&gt;kilidi açıktır&lt;/b&gt;</translation>
     </message>
@@ -638,13 +732,6 @@
     <message>
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation>Cüzdan &lt;b&gt;şifrelenmiştir&lt;/b&gt; ve şu anda &lt;b&gt;kilitlidir&lt;/b&gt;</translation>
-    </message>
-</context>
-<context>
-    <name>ClientModel</name>
-    <message>
-        <source>Network Alert</source>
-        <translation>Ağ Uyarısı</translation>
     </message>
 </context>
 <context>
@@ -714,8 +801,8 @@
         <translation>Şu adresle alındı</translation>
     </message>
     <message>
-        <source>PS Rounds</source>
-        <translation>ÖG Turları</translation>
+        <source>Mixing Rounds</source>
+        <translation>Karıştırma Turları</translation>
     </message>
     <message>
         <source>Date</source>
@@ -782,10 +869,6 @@
         <translation>Bu fonksiyonu kullanmak için lütfen "Liste modu"na geçin.</translation>
     </message>
     <message>
-        <source>Non-anonymized input selected. &lt;b&gt;PrivateSend will be disabled.&lt;/b&gt;&lt;br&gt;&lt;br&gt;If you still want to use PrivateSend, please deselect all non-anonymized inputs first and then check the PrivateSend checkbox again.</source>
-        <translation>Anonim hale getirilmemiş girdi seçildi. &lt;b&gt;Özel Gönder devre dışı olacak&lt;/b&gt;&lt;br&gt;&lt;br&gt;Yine de Özel Gönder kullanmak istiyorsanız, lütfen önce anonim hale getirilmemiş girdilerin seçimini kaldırın sonra Özel Gönder kutusunu işaretleyin.</translation>
-    </message>
-    <message>
         <source>(%1 locked)</source>
         <translation>(%1 kilitlendi)</translation>
     </message>
@@ -804,6 +887,30 @@
     <message>
         <source>Can vary +/- %1 duff(s) per input.</source>
         <translation>Girdi başına +/- %1 duff değişebilir.</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they were spent.</source>
+        <translation>Bazı koinler harcandığı için seçilmedi.</translation>
+    </message>
+    <message>
+        <source>Some coins were unselected because they do not have enough mixing rounds.</source>
+        <translation>Yeterli karıştırma turları olmadığından bazı koinler seçilmedi.</translation>
+    </message>
+    <message>
+        <source>Show all coins</source>
+        <translation>Tüm koinleri göster</translation>
+    </message>
+    <message>
+        <source>Hide PrivateSend coins</source>
+        <translation>ÖzelGönder koinleri gizle</translation>
+    </message>
+    <message>
+        <source>Show all PrivateSend coins</source>
+        <translation>ÖzelGönder koinleri göster</translation>
+    </message>
+    <message>
+        <source>Show spendable coins only</source>
+        <translation>Harcanabilir koinleri göster</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -846,7 +953,7 @@
     </message>
     <message>
         <source>New receiving address</source>
-        <translation>Yeni alım adresi</translation>
+        <translation>Yeni alıcı adresi</translation>
     </message>
     <message>
         <source>New sending address</source>
@@ -861,8 +968,8 @@
         <translation>Gönderi adresini düzenle</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Biblepay address.</source>
-        <translation>Girilen %1 adresi, geçerli bir Biblepay adresi değildir.</translation>
+        <source>The entered address "%1" is not a valid BiblePay address.</source>
+        <translation>Girilen %1 adresi, geçerli bir BiblePay adresi değildir.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
@@ -935,6 +1042,22 @@
         <translation>Başlangıçta veri klasörü seç (varsayılan: %u)</translation>
     </message>
     <message>
+        <source>Set the font family. Possible values: %1. (default: %2)</source>
+        <translation>Yazı tipi ailesini belirleyin. Olası değerler: %1. (varsayılan: %2)</translation>
+    </message>
+    <message>
+        <source>Set a scale factor which gets applied to the base font size. Possible range %1 (smallest fonts) to %2 (largest fonts). (default: %3)</source>
+        <translation>Temel yazı tipi boyutuna uygulanacak ölçek faktörünü belirleyin. Olası aralık %1 (en küçük yazı tipleri) ile %2 (en büyük yazı tipleri).(varsayılan: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for bold texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>Kalın metinler için yazı tipi genişliği belirleyin. Olası aralık %1 ile %2 (varsayılan: %3)</translation>
+    </message>
+    <message>
+        <source>Set the font weight for normal texts. Possible range %1 to %2 (default: %3)</source>
+        <translation>Normal metinler için yazı tipi genişliği belirleyin. Olası aralık %1 ile %2 (varsayılan: %3)</translation>
+    </message>
+    <message>
         <source>Set language, for example "de_DE" (default: system locale)</source>
         <translation>Lisan belirt, mesela "de_De" (varsayılan: sistem dili)</translation>
     </message>
@@ -959,8 +1082,8 @@
         <translation>Özel Gönder bilgisi</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the Biblepay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be anonymized. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
-        <translation>&lt;h3&gt;Özel Gönder Temel Bilgiler&lt;/h3&gt; Özel Gönder size paranızın gerçek kaynağını gizleyerek tam bir gizlilik imkanı sağlar. Cüzdanınızdaki Biblepay farklı "girdiler"den oluşur, bunu ayrı gizli paralar olarak düşünebilirsiniz.&lt;br&gt; Özel Gönder sizin girdilerinizi başka iki kişinin girdileri ile karıştırmak için yenilikçi bir işlem kullanır ve bu sırada paranın cüzdanınızdan çıkmasına gerek kalmaz. Her an paranızın kontrolü sizdedir.&lt;hr&gt; &lt;b&gt;Özel Gönder işlemi şöyle işler:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;Özel Gönder işlem girdilerinizi standart birimlere bölerek başlar. Bu birimler 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY ve 10 BIBLEPAY'dir -- her gün kullandığınız kağıt para gibi düşünebilirsiniz.&lt;/li&gt; &lt;li&gt;Sonra cüzdanınız ağdaki özel ayarlanmış yazılım düğümlerine talepler gönderir, bunşara "ana düğümler" denir. Bu ana düğümlere sizin belli bir miktar birimi karıştırmak istediğiniz bilgisi gider. Ana düğümlere kimliğinizi açık edecek bir bilgi gönderilmez, bu yüzden "kim" olduğunuzu bilmezler.&lt;/li&gt; &lt;li&gt;Aynı birimleri karıştırmak istediğini belirten iki başka kişi daha benzer mesajlar gönderince, karıştırma işlemi başlar. Ana düğüm giridleri karıştırır ve üç kullanıcının da cüzdanına şimdi dönüştürülmüş olan girdiyi kendilerne ödemelerini emreder. Cüzdanınız bu birimleri doğrudan kendisine öder ama farklı bir adres kullanır (buna değişim adresi denir).&lt;/li&gt; &lt;li&gt;Paranızı tamamen gizlemek için cüzdanınız bu işlemi her birim için birkaç defa tekrar etmelidir. Her işlem tamamlandığına buna bir "tur" denir. Her bir Özel Gönder turu paranızın kaynağının bulunmasını üstel olarak zorlaştırır.&lt;/li&gt; &lt;li&gt;Bu karışım işlemi arkaplanda sizin tarafınızdan bir müdahale olmadan gerçekleşir. Bir işlem yapmak istediğinizde bakiyeniz zaten anonimleştirilmiş olacaktır. Ek bir beklemeye gerek kalmaz.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;ÖNEMLİ:&lt;/b&gt; Cüzdanınızda bu "değişim adreslerinden" sadece 1000 tane vardır. Her bir karışım işleminde bu adreslerden 9 taneye kadar kullanılır. Bu da 1000 adresin yaklaşık 100 karışım işlemine yeteceği anlamına gelir. 900 tanesi kullanıldığı zaman, cüzdanınızın daha fazla adres oluşturması gerekir. Yalnız bunu ancak otomatik yedekleme etkinse yapabilir.&lt;br&gt; Sonuç olarak yedeklemeyi kapatan kullanıcılar aynı zamanda Özel Gönderi de kapatmış olurlar. &lt;hr&gt;Daha fazla bilgi için lütfen &lt;a href="https://docs.biblepay.org/en/latest/wallets/biblepaycore/privatesend-instantsend.html"&gt;Özel Gönder dökümantasyonuna&lt;/a&gt; göz atın.         </translation>
+        <source>&lt;h3&gt;PrivateSend Basics&lt;/h3&gt; PrivateSend gives you true financial privacy by obscuring the origins of your funds. All the BiblePay in your wallet is comprised of different "inputs" which you can think of as separate, discrete coins.&lt;br&gt; PrivateSend uses an innovative process to mix your inputs with the inputs of two or more other people, without having your coins ever leave your wallet. You retain control of your money at all times.&lt;hr&gt; &lt;b&gt;The PrivateSend process works like this:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;PrivateSend begins by breaking your transaction inputs down into standard denominations. These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.&lt;/li&gt; &lt;li&gt;Your wallet then sends requests to specially configured software nodes on the network, called "masternodes." These masternodes are informed then that you are interested in mixing a certain denomination. No identifiable information is sent to the masternodes, so they never know "who" you are.&lt;/li&gt; &lt;li&gt;When two or more other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. Your wallet pays that denomination directly to itself, but in a different address (called a change address).&lt;/li&gt; &lt;li&gt;In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. Each time the process is completed, it's called a "round." Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.&lt;/li&gt; &lt;li&gt;This mixing process happens in the background without any intervention on your part. When you wish to make a transaction, your funds will already be mixed. No additional waiting is required.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;IMPORTANT:&lt;/b&gt; Your wallet only contains 1000 of these "change addresses." Every time a mixing event happens, up to 9 of your addresses are used up. This means those 1000 addresses last for about 100 mixing events. When 900 of them are used, your wallet must create more addresses. It can only do this, however, if you have automatic backups enabled.&lt;br&gt; Consequently, users who have backups disabled will also have PrivateSend disabled. &lt;hr&gt;For more information, see the &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;PrivateSend documentation&lt;/a&gt;.</source>
+        <translation>&lt;h3&gt;ÖzelGönder Temel Bilgiler&lt;/h3&gt; ÖzelGönder size paranızın gerçek kaynağını gizleyerek tam bir gizlilik imkanı sağlar. Cüzdanınızdaki BiblePay farklı "girdiler"den oluşur, bunu ayrı gizli paralar olarak düşünebilirsiniz.&lt;br&gt; ÖzelGönder sizin girdilerinizi başka iki kişinin girdileri ile karıştırmak için yenilikçi bir işlem kullanır ve bu sırada paranın cüzdanınızdan çıkmasına gerek kalmaz. Her an paranızın kontrolü sizdedir.&lt;hr&gt; &lt;b&gt;ÖzelGönder işlemi şöyle işler:&lt;/b&gt;&lt;ol type="1"&gt; &lt;li&gt;ÖzelGönder işlem girdilerinizi standart birimlere bölerek başlar. Bu birimler 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY ve 10 BIBLEPAY'dir -- her gün kullandığınız kağıt para gibi düşünebilirsiniz.&lt;/li&gt; &lt;li&gt;Sonra cüzdanınız ağdaki özel ayarlanmış yazılım düğümlerine talepler gönderir, bunşara "ana düğümler" denir. Bu ana düğümlere sizin belli bir miktar birimi karıştırmak istediğiniz bilgisi gider. Ana düğümlere kimliğinizi açık edecek bir bilgi gönderilmez, bu yüzden "kim" olduğunuzu bilmezler.&lt;/li&gt; &lt;li&gt;Aynı birimleri karıştırmak istediğini belirten iki başka kişi daha benzer mesajlar gönderince, karıştırma işlemi başlar. Ana düğüm giridleri karıştırır ve üç kullanıcının da cüzdanına şimdi dönüştürülmüş olan girdiyi kendilerne ödemelerini emreder. Cüzdanınız bu birimleri doğrudan kendisine öder ama farklı bir adres kullanır (buna değişim adresi denir).&lt;/li&gt; &lt;li&gt;Paranızı tamamen gizlemek için cüzdanınız bu işlemi her birim için birkaç defa tekrar etmelidir. Her işlem tamamlandığına buna bir "tur" denir. Her bir ÖzelGönder turu paranızın kaynağının bulunmasını üstel olarak zorlaştırır.&lt;/li&gt; &lt;li&gt;Bu karışım işlemi arkaplanda sizin tarafınızdan bir müdahale olmadan gerçekleşir. Bir işlem yapmak istediğinizde bakiyeniz zaten karışmış olacaktır. Ek bir beklemeye gerek kalmaz.&lt;/li&gt; &lt;/ol&gt; &lt;hr&gt;&lt;b&gt;ÖNEMLİ:&lt;/b&gt; Cüzdanınızda bu "değişim adreslerinden" sadece 1000 tane vardır. Her bir karışım işleminde bu adreslerden 9 taneye kadar kullanılır. Bu da 1000 adresin yaklaşık 100 karışım işlemine yeteceği anlamına gelir. 900 tanesi kullanıldığı zaman, cüzdanınızın daha fazla adres oluşturması gerekir. Yalnız bunu ancak otomatik yedekleme etkinse yapabilir.&lt;br&gt; Sonuç olarak yedeklemeyi kapatan kullanıcılar aynı zamanda ÖzelGönderi de kapatmış olurlar. &lt;hr&gt;Daha fazla bilgi için lütfen &lt;a style="%1" href="https://docs.biblepay.org/en/stable/wallets/biblepaycore/privatesend-instantsend.html"&gt;ÖzelGönder dökümantasyonuna&lt;/a&gt; göz atın.         </translation>
     </message>
 </context>
 <context>
@@ -976,6 +1099,10 @@
     <message>
         <source>As this is the first time the program is launched, you can choose where %1 will store its data.</source>
         <translation>Bu programın ilk kez başlatılmasından dolayı %1 yazılımının verilerini nerede saklayacağını seçebilirsiniz.</translation>
+    </message>
+    <message>
+        <source>When you click OK, %1 will begin to download and process the full %4 block chain (%2GB) starting with the earliest transactions in %3 when %4 initially launched.</source>
+        <translation>Tamam'a tıkladığınızda, %1, bütün %4 blok zincirini (%2GB) %4 ilk olarak yayınlandığında %3'deki en erken işlemlerden  indirmeye ve işlemeye başlayacaktır.</translation>
     </message>
     <message>
         <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
@@ -1002,8 +1129,8 @@
         <translation>Yaklaşık %1 GB veri bu dizinde depolanacak.</translation>
     </message>
     <message>
-        <source>%1 will download and store a copy of the Biblepay block chain.</source>
-        <translation>%1 lik Biblepay blok zinciri nin bir kopyasını indirecek ve depolayacak.</translation>
+        <source>%1 will download and store a copy of the BiblePay block chain.</source>
+        <translation>%1 lik BiblePay blok zinciri nin bir kopyasını indirecek ve depolayacak.</translation>
     </message>
     <message>
         <source>The wallet will also be stored in this directory.</source>
@@ -1033,16 +1160,8 @@
         <translation>Form</translation>
     </message>
     <message>
-        <source>Address</source>
-        <translation>Adres</translation>
-    </message>
-    <message>
         <source>Status</source>
         <translation>Durum</translation>
-    </message>
-    <message>
-        <source>Payee</source>
-        <translation>Alacaklı</translation>
     </message>
     <message>
         <source>0</source>
@@ -1061,8 +1180,16 @@
         <translation>Düğüm Sayısı:</translation>
     </message>
     <message>
-        <source>DIP3 Masternodes</source>
-        <translation>DIP3 Ana Düğümleri</translation>
+        <source>Show only masternodes this wallet has keys for.</source>
+        <translation>Yalnızca bu cüzdanın anahtarlarına sahip olan anadüğümleri göster.</translation>
+    </message>
+    <message>
+        <source>My masternodes only</source>
+        <translation>Sadece benim anadüğümlerim</translation>
+    </message>
+    <message>
+        <source>Service</source>
+        <translation>Hizmet</translation>
     </message>
     <message>
         <source>PoSe Score</source>
@@ -1081,8 +1208,24 @@
         <translation>Gelecek Ödeme</translation>
     </message>
     <message>
+        <source>Payout Address</source>
+        <translation>Ödeme Adresleri</translation>
+    </message>
+    <message>
         <source>Operator Reward</source>
         <translation>Operatör Ödülü</translation>
+    </message>
+    <message>
+        <source>Collateral Address</source>
+        <translation>Teminat Adresi</translation>
+    </message>
+    <message>
+        <source>Owner Address</source>
+        <translation>Adres Sahibi</translation>
+    </message>
+    <message>
+        <source>Voting Address</source>
+        <translation>Oylama Adresi</translation>
     </message>
     <message>
         <source>Copy ProTx Hash</source>
@@ -1091,6 +1234,10 @@
     <message>
         <source>Copy Collateral Outpoint</source>
         <translation>Teminat Çıkış Noktasını Kopyala</translation>
+    </message>
+    <message>
+        <source>Updating...</source>
+        <translation>Güncelleştiriyor...</translation>
     </message>
     <message>
         <source>ENABLED</source>
@@ -1121,6 +1268,14 @@
         <translation>YOK</translation>
     </message>
     <message>
+        <source>Filter by any property (e.g. address or protx hash)</source>
+        <translation>Herhangi bir özelliğe göre filtreleyin (ör. adres veya protx hash'ı)</translation>
+    </message>
+    <message>
+        <source>Please wait...</source>
+        <translation>Lütfen bekleyin...</translation>
+    </message>
+    <message>
         <source>Additional information for DIP3 Masternode %1</source>
         <translation>DIP3 Ana Düğümü %1 için ek bilgi</translation>
     </message>
@@ -1132,12 +1287,12 @@
         <translation>Form</translation>
     </message>
     <message>
-        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Biblepay network, as detailed below.</source>
-        <translation>Son işlemler henüz görünmeyebilir ve bu nedenle cüzdanınızın bakiyesi yanlış olabilir. Bu bilgiler, aşağıda detaylandırıldığı gibi, cüzdanınız Biblepay ağı ile senkronizasyonunu tamamladığında doğru olacaktır. </translation>
+        <source>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the BiblePay network, as detailed below.</source>
+        <translation>Son işlemler henüz görünmeyebilir ve bu nedenle cüzdanınızın bakiyesi yanlış olabilir. Bu bilgiler, aşağıda detaylandırıldığı gibi, cüzdanınız BiblePay ağı ile senkronizasyonunu tamamladığında doğru olacaktır. </translation>
     </message>
     <message>
-        <source>Attempting to spend Biblepay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
-        <translation>Daha görüntülenmemiş işlemler tarafından etkilenen Biblepay'i harcama teşebbüsü ağ tarafından kabul edilmez.</translation>
+        <source>Attempting to spend BiblePay that are affected by not-yet-displayed transactions will not be accepted by the network.</source>
+        <translation>Daha görüntülenmemiş işlemler tarafından etkilenen BiblePay'i harcama teşebbüsü ağ tarafından kabul edilmez.</translation>
     </message>
     <message>
         <source>Number of blocks left</source>
@@ -1226,12 +1381,12 @@
         <translation>(0 = otomatik, &lt;0 = bu kadar çekirdeği kullanma)</translation>
     </message>
     <message>
-        <source>Amount of Biblepay to keep anonymized</source>
-        <translation>Anonim tutulacak Biblepay tutarı</translation>
-    </message>
-    <message>
         <source>W&amp;allet</source>
         <translation>&amp;Cüzdan</translation>
+    </message>
+    <message>
+        <source>&amp;Appearance</source>
+        <translation>&amp;Görünüm</translation>
     </message>
     <message>
         <source>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</source>
@@ -1278,24 +1433,44 @@
         <translation>Bu tutar ulaşıldığında Özel Gönderi kapatacak bir eşik olarak çalışır.</translation>
     </message>
     <message>
-        <source>Automatically open the Biblepay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Router'da otomatik olarak Biblepay Core istemcisi portu aç. Bu sadece router'ınız UPnP destekliyorsa ve etkinse çalışır.</translation>
+        <source>Target PrivateSend balance</source>
+        <translation>ÖzelGönder bakiyesi hedefle</translation>
     </message>
     <message>
-        <source>Accept connections from outside</source>
+        <source>Automatically open the BiblePay Core client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Router'da otomatik olarak BiblePay Core istemcisi portu aç. Bu sadece router'ınız UPnP destekliyorsa ve etkinse çalışır.</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside.</source>
         <translation>Dışarıdan bağlantı kabul et</translation>
     </message>
     <message>
-        <source>Allow incoming connections</source>
+        <source>Allow incomin&amp;g connections</source>
         <translation>Gelen bağlantılara izin ver</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a SOCKS5 proxy.</source>
-        <translation>Biblepay ağına bir SOCKS5 vekil sunucusu aracılığıyla bağlan.</translation>
+        <source>Connect to the BiblePay network through a SOCKS5 proxy.</source>
+        <translation>BiblePay ağına bir SOCKS5 vekil sunucusu aracılığıyla bağlan.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
         <translation>SOCKS5 vekil sunucusu aracılığıyla &amp;bağlan (varsayılan vekil sunucusu):</translation>
+    </message>
+    <message>
+        <source>Shows if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
+        <translation>Bu ağ türünde eşlere ulaşmak için varsayılan SOCKS5 proxy'nin kullanılıp kullanılmadığını gösterir.</translation>
+    </message>
+    <message>
+        <source>Use separate SOCKS&amp;5 proxy to reach peers via Tor hidden services:</source>
+        <translation>Eşlere gizli Tor servisleri kullanarak ulaşmak için ayrı SOCKS&amp;5 vekil sunucusu kullan:</translation>
+    </message>
+    <message>
+        <source>Hide the icon from the system tray.</source>
+        <translation>Simgeyi sistem çubuğunda gizle.</translation>
+    </message>
+    <message>
+        <source>&amp;Hide tray icon</source>
+        <translation>&amp;Sistem çubuğu simgesini gizle</translation>
     </message>
     <message>
         <source>Minimize instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</source>
@@ -1306,12 +1481,8 @@
         <translation>İşlemler sekmesinde bağlam menüsü ögeleri gibi görünen  üçüncü parti URLleri (ör. bir blok tarayıcısı).&lt;br/&gt;URL'deki %s işlem hashi ile değiştirilir. Birden fazla URL dikey çizgi | ile ayrılır.</translation>
     </message>
     <message>
-        <source>Expert</source>
-        <translation>Gelişmiş</translation>
-    </message>
-    <message>
-        <source>This setting determines the amount of individual masternodes that an input will be anonymized through.&lt;br/&gt;More rounds of anonymization gives a higher degree of privacy, but also costs more in fees.</source>
-        <translation>Bu ayar, bir girdinin anonim hale getirilmesi için kullanılacak ana düğüm sayısını belirler.&lt;br/&gt;Daha çok anonimleştirme turu daha yüksek bir gizlilik sağlar ama daha maliyetli olur.</translation>
+        <source>&amp;Third party transaction URLs</source>
+        <translation>&amp;Üçüncü taraf işlem URL'leri</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1342,6 +1513,10 @@
         <translation>Teyit edilmemiş para üstünü &amp;harca</translation>
     </message>
     <message>
+        <source>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</source>
+        <translation>Bu ayar, girdinin karıştırılma işlemi boyunca gerekecek anadüğüm sayısını belirler.&lt;br/&gt;Karıştırma turu ne kadar yüksek olursa gizlilik derecesi o kadar artar fakat daha maliyetli olur.</translation>
+    </message>
+    <message>
         <source>&amp;Network</source>
         <translation>&amp;Şebeke</translation>
     </message>
@@ -1370,10 +1545,6 @@
         <translation>Eşlere ulaşmak için kullanılır, şu üzerinden:</translation>
     </message>
     <message>
-        <source>Shows, if the supplied default SOCKS5 proxy is used to reach peers via this network type.</source>
-        <translation>Bu ağ türünde eşlere ulaşmak için varsayılan SOCKS5 proxy'nin kullanılıp kullanılmadığını gösterir.</translation>
-    </message>
-    <message>
         <source>IPv4</source>
         <translation>IPv4</translation>
     </message>
@@ -1386,24 +1557,8 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Biblepay network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Biblepay ağına gizli Tor servisleri için ayrı bir SOCKS5 vekil sunucusu aracılığıyla bağlan.</translation>
-    </message>
-    <message>
-        <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
-        <translation>Eşlere Tor gizli servislerini kullanarak ulaşmak için ayrı SOCKS5 vekilleri kullan:</translation>
-    </message>
-    <message>
-        <source>&amp;Window</source>
-        <translation>&amp;Pencere</translation>
-    </message>
-    <message>
-        <source>&amp;Hide the icon from the system tray.</source>
-        <translation>Simgeyi sistem çubuğunda &amp;gizle.</translation>
-    </message>
-    <message>
-        <source>Hide tray icon</source>
-        <translation>Sistem çubuğu simgesini gizle</translation>
+        <source>Connect to the BiblePay network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <translation>BiblePay ağına gizli Tor servisleri için ayrı bir SOCKS5 vekil sunucusu aracılığıyla bağlan.</translation>
     </message>
     <message>
         <source>Show only a tray icon after minimizing the window.</source>
@@ -1436,10 +1591,6 @@ https://www.transifex.com/projects/p/biblepay/</source>
 https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
-        <source>User Interface Theme:</source>
-        <translation>Kullanıcı Arayüzü Teması:</translation>
-    </message>
-    <message>
         <source>&amp;Unit to show amounts in:</source>
         <translation>Meblağları göstermek için &amp;birim:</translation>
     </message>
@@ -1450,10 +1601,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Decimal digits</source>
         <translation>Ondalık haneler</translation>
-    </message>
-    <message>
-        <source>Third party transaction URLs</source>
-        <translation>Üçüncü taraf muamele URL'leri</translation>
     </message>
     <message>
         <source>Active command-line options that override above options:</source>
@@ -1478,10 +1625,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>default</source>
         <translation>varsayılan</translation>
-    </message>
-    <message>
-        <source>none</source>
-        <translation>Boş</translation>
     </message>
     <message>
         <source>Confirm options reset</source>
@@ -1511,8 +1654,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Form</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Biblepay network after a connection is established, but this process has not completed yet.</source>
-        <translation>Görüntülenen bilgiler güncel olmayabilir. Bağlantı kurulduğunda cüzdanınız otomatik olarak Biblepay ağı ile senkronize olur ancak bu işlem henüz tamamlanmamıştır.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the BiblePay network after a connection is established, but this process has not completed yet.</source>
+        <translation>Görüntülenen bilgiler güncel olmayabilir. Bağlantı kurulduğunda cüzdanınız otomatik olarak BiblePay ağı ile senkronize olur ancak bu işlem henüz tamamlanmamıştır.</translation>
     </message>
     <message>
         <source>Available:</source>
@@ -1591,22 +1734,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Tamamlanma:</translation>
     </message>
     <message>
-        <source>Try to manually submit a PrivateSend request.</source>
-        <translation>Bir Özel Gönder isteğini elle göndermeyi dene.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of PrivateSend (can interrupt PrivateSend if it's in the process of Mixing, which can cost you money!)</source>
-        <translation>Özel Gönderin mevcut durumunu sıfırla (eğer bir Karışım işlemi devam ediyorsa Özel Gönderi yarıda keser, bu da para kaybetmenize neden olabilir!)</translation>
-    </message>
-    <message>
-        <source>Information about PrivateSend and Mixing</source>
-        <translation>Özel Gönder ve Karışım hakkında bilgi</translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation>Bilgi</translation>
-    </message>
-    <message>
         <source>Amount and Rounds:</source>
         <translation>Tutar ve Turlar:</translation>
     </message>
@@ -1639,18 +1766,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Ana düğüme gönderdiğiniz birimler.&lt;br&gt;Karıştırmak için diğer kullanıcılar da tam olarak aynı birimleri göndermelidir.</translation>
     </message>
     <message>
-        <source>(Last Message)</source>
-        <translation>(Son Mesaj)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Karışım Dene</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Sıfırla</translation>
-    </message>
-    <message>
         <source>out of sync</source>
         <translation>eşleşme dışı</translation>
     </message>
@@ -1675,12 +1790,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>%n Tur</numerusform><numerusform>%n Tur</numerusform></translation>
     </message>
     <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
+        <source>Found enough compatible inputs to mix %1</source>
         <translation>%1 anonim hale getirmek için yeterli uyumlu girdi bulundu</translation>
     </message>
     <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style='color:red;'&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style='color:red;'&gt;%2&lt;/span&gt; instead</source>
-        <translation>&lt;span style='color:red;'&gt;%1&lt;/span&gt; anonim hale getirmek için yeterli uyumlu girdi yok,&lt;br&gt;onun yerine&lt;span style='color:red;'&gt;%2&lt;/span&gt; anonim hale getirilecek</translation>
+        <source>Not enough compatible inputs to mix &lt;span style='%1'&gt;%2&lt;/span&gt;,&lt;br&gt;will mix &lt;span style='%1'&gt;%3&lt;/span&gt; instead</source>
+        <translation>&lt;span style='%1'&gt;%2&lt;/span&gt;anonim hale getirmek için yeterli uyumlu girdi yok,&lt;br&gt;onun yerine &lt;span style='%1'&gt;%3&lt;/span&gt;  anonim hale getirilecek</translation>
     </message>
     <message>
         <source>Overall progress</source>
@@ -1691,12 +1806,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Birimlendirildi</translation>
     </message>
     <message>
-        <source>Mixed</source>
-        <translation>Karıştırıldı</translation>
+        <source>Partially mixed</source>
+        <translation>Kısmen karıştırılmış</translation>
     </message>
     <message>
-        <source>Anonymized</source>
-        <translation>Anonim Yapıldı</translation>
+        <source>Mixed</source>
+        <translation>Karıştırıldı</translation>
     </message>
     <message numerus="yes">
         <source>Denominated inputs have %5 of %n rounds on average</source>
@@ -1715,8 +1830,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Son otomatik yedekten beri çok az sayıda anahtar kaldı!</translation>
     </message>
     <message>
-        <source>We are about to create a new automatic backup for you, however &lt;span style='color:red;'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
-        <translation>Sizin için yeni bir otomatik yedek oluşturmak üzereyiz ancak &lt;span style='color:red;'&gt; yedeklerinizin her zaman güvenli bir yerde taşındığından emin olmalısınız&lt;/span&gt;!</translation>
+        <source>We are about to create a new automatic backup for you, however &lt;span style='%1'&gt; you should always make sure you have backups saved in some safe place&lt;/span&gt;!</source>
+        <translation>Sizin için yeni bir otomatik yedek oluşturmak üzereyiz ancak &lt;span style='%1'&gt; yedeklerinizin her zaman güvenli bir yerde taşındığından emin olmalısınız&lt;/span&gt;!</translation>
     </message>
     <message>
         <source>Note: You can turn this message off in options.</source>
@@ -1747,16 +1862,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>UYARI! Anahtar havuzu yenilenemedi, lütfen devam etmek için cüzdanınızın kilidini açın.</translation>
     </message>
     <message>
-        <source>Last PrivateSend message:
-</source>
-        <translation>Son Özel Gönder mesajı:
-</translation>
-    </message>
-    <message>
-        <source>PrivateSend was successfully reset.</source>
-        <translation>Özel Gönder başarıyla sıfırlandı.</translation>
-    </message>
-    <message>
         <source>If you don't want to see internal PrivateSend fees/transactions select "Most Common" as Type on the "Transactions" tab.</source>
         <translation>Eğer Özel Gönderin iç ücretlerini/işlemlerini görmek istemiyorsanız "İşlemler" sekmesinde Tür olarak "En Sıkı" seçin.</translation>
     </message>
@@ -1777,7 +1882,7 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     </message>
     <message>
         <source>Cannot start biblepay: click-to-pay handler</source>
-        <translation>Biblepay başlatılamadı: tıkla-ve-öde yöneticisi</translation>
+        <translation>BiblePay başlatılamadı: tıkla-ve-öde yöneticisi</translation>
     </message>
     <message>
         <source>URI handling</source>
@@ -1792,8 +1897,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 ödeme adresi geçersizdir</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Biblepay address or malformed URI parameters.</source>
-        <translation>URI ayrıştırılamıyor! Bunun nedeni geçersiz bir Biblepay adresi veya hatalı biçimlendirilmiş URI değişkenleri olabilir.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid BiblePay address or malformed URI parameters.</source>
+        <translation>URI ayrıştırılamıyor! Bunun nedeni geçersiz bir BiblePay adresi veya hatalı biçimlendirilmiş URI değişkenleri olabilir.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1878,6 +1983,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Ping</source>
         <translation>Ping</translation>
     </message>
+    <message>
+        <source>Sent</source>
+        <translation>Gönderildi</translation>
+    </message>
+    <message>
+        <source>Received</source>
+        <translation>Alındı</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -1890,8 +2003,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Tutar</translation>
     </message>
     <message>
-        <source>Enter a Biblepay address (e.g. %1)</source>
-        <translation>Bir Biblepay adresi giriniz (mesela %1)</translation>
+        <source>Enter a BiblePay address (e.g. %1)</source>
+        <translation>Bir BiblePay adresi giriniz (mesela %1)</translation>
+    </message>
+    <message>
+        <source>Appearance Setup</source>
+        <translation>Görünüm Ayarları</translation>
+    </message>
+    <message>
+        <source>Please choose your preferred settings for the appearance of %1</source>
+        <translation>Lütfen %1 görünümü için tercih ettiğiniz ayarları seçin</translation>
+    </message>
+    <message>
+        <source>This can also be adjusted later in the "Appearance" tab of the preferences.</source>
+        <translation>Bu, daha sonra tercihlerin "Görünüm" sekmesinden de ayarlanabilir.</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1950,6 +2075,22 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 ve %2</translation>
     </message>
     <message>
+        <source>%1 B</source>
+        <translation>%1 B</translation>
+    </message>
+    <message>
+        <source>%1 KB</source>
+        <translation>%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation>%1 GB</translation>
+    </message>
+    <message>
         <source>unknown</source>
         <translation>bilinmiyor</translation>
     </message>
@@ -1967,6 +2108,34 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Error: %1</source>
         <translation>Hata: %1</translation>
+    </message>
+    <message>
+        <source>Error: Failed to load application fonts.</source>
+        <translation>Hata: Uygulama yazı tipleri yüklenemedi.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-family invalid. Valid values: %1.</source>
+        <translation>Hata: Belirtilen yazı tipi ailesi geçersiz. Geçerli değerler: %1.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-normal invalid. Valid range %1 to %2.</source>
+        <translation>Hata: Belirtilen yazı-tipi-genişliği-normal geçersiz. Geçerli aralık %1 ile %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-weight-bold invalid. Valid range %1 to %2.</source>
+        <translation>Hata: Belirtilen yazı-tipi-genişliği-kalın geçersiz. Geçerli aralık %1 ile %2.</translation>
+    </message>
+    <message>
+        <source>Error: Specified font-scale invalid. Valid range %1 to %2.</source>
+        <translation>Hata: Belirtilen yazı-tipi-ölçeği geçersiz. Geçerli aralık %1 ile %2.</translation>
+    </message>
+    <message>
+        <source>Error: Invalid -custom-css-dir path.</source>
+        <translation>Hata: Geçersiz -custom-css-dir yolu.</translation>
+    </message>
+    <message>
+        <source>Error: %1 CSS file(s) missing in -custom-css-dir path.</source>
+        <translation>Hata: %1 CSS dosya(larında)sında -custom-css-dir yolu eksik.</translation>
     </message>
 </context>
 <context>
@@ -2117,14 +2286,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&amp;Şebeke trafiği</translation>
     </message>
     <message>
-        <source>&amp;Clear</source>
-        <translation>&amp;Temizle</translation>
-    </message>
-    <message>
-        <source>Totals</source>
-        <translation>Toplamlar</translation>
-    </message>
-    <message>
         <source>Received</source>
         <translation>Alınan</translation>
     </message>
@@ -2181,8 +2342,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Veri konumu</translation>
     </message>
     <message>
+        <source>Last block hash</source>
+        <translation>Son block hash'ı</translation>
+    </message>
+    <message>
         <source>Open the %1 debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation>Güncel veri klasöründen %1 hata ayıklama kütük dosyasını açar. Büyük kütük dosyaları için bu birkaç saniye alabilir.</translation>
+    </message>
+    <message>
+        <source>InstantSend locks</source>
+        <translation>AnındaGönder kilitleri</translation>
     </message>
     <message>
         <source>Decrease font size</source>
@@ -2191,6 +2360,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Increase font size</source>
         <translation>Yazıtipi boyutunu büyült</translation>
+    </message>
+    <message>
+        <source>&amp;Reset</source>
+        <translation>&amp;Reset</translation>
     </message>
     <message>
         <source>Services</source>
@@ -2325,15 +2498,19 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 RPC konsoluna hoş geldiniz.</translation>
     </message>
     <message>
-        <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
-        <translation>Tarihçede gezinmek için imleç tuşlarını kullanınız, &lt;b&gt;Ctrl-L&lt;/b&gt; ile de ekranı temizleyebilirsiniz.</translation>
+        <source>Use up and down arrows to navigate history, and %1 to clear screen.</source>
+        <translation>Tarihçede gezinmek için imleç tuşlarını kullanınız, %1 ile de ekranı temizleyebilirsiniz.</translation>
     </message>
     <message>
-        <source>Type &lt;b&gt;help&lt;/b&gt; for an overview of available commands.</source>
-        <translation>Mevcut komutların listesi için &lt;b&gt;help&lt;/b&gt; yazınız.</translation>
+        <source>Type %1 for an overview of available commands.</source>
+        <translation>Kullanılabilir komutlara genel bakış için %1 yazın.</translation>
     </message>
     <message>
-        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramification of a command.</source>
+        <source>For more information on using this console type %1.</source>
+        <translation>Bu konsolun kullanımı hakkında daha fazla bilgi için %1 yazın.</translation>
+    </message>
+    <message>
+        <source>WARNING: Scammers have been active, telling users to type commands here, stealing their wallet contents. Do not use this console without fully understanding the ramifications of a command.</source>
         <translation>UYARI: Kullanıcıların cüzdan içeriğini çalmak için buraya komut girmenizi söyleyen dolandırıcılar olabilir. Bir komutun ne anlama geldiğini tam olarak bilmiyorsanız bu konsolu kullanmayın.</translation>
     </message>
     <message>
@@ -2349,20 +2526,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Ağ etkinliği devre dışı bırakıldı</translation>
     </message>
     <message>
-        <source>%1 B</source>
-        <translation>%1 B</translation>
-    </message>
-    <message>
-        <source>%1 KB</source>
-        <translation>%1 KB</translation>
-    </message>
-    <message>
-        <source>%1 MB</source>
-        <translation>%1 MB</translation>
-    </message>
-    <message>
-        <source>%1 GB</source>
-        <translation>%1 GB</translation>
+        <source>Total: %1 (Enabled: %2)</source>
+        <translation>Toplam: %1 (Etkinleştirilen: %2)</translation>
     </message>
     <message>
         <source>(node id: %1)</source>
@@ -2400,16 +2565,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
-        <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
-        <translation>Öneden kullanılmış bir alım adresini tekrar kullan.&lt;br&gt;Adresleri tekrar kullanmak güvenlik ve gizlilik sorunlarına neden olur.&lt;br&gt;Eğer daha önce yapılmış bir ödeme talebi tekrar oluşturulmadıysa bunu kullanmayın.</translation>
-    </message>
-    <message>
-        <source>R&amp;euse an existing receiving address (not recommended)</source>
-        <translation>&amp;Hâlihazırda bulunan bir alım adresini kullan (önerilmez)</translation>
-    </message>
-    <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Talep açıldığında gösterilecek, isteğinize dayalı, ödeme talebi ile ilişkilendirilecek bir ileti. Not: Bu ileti ödeme ile birlikte Biblepay ağı üzerinden gönderilmeyecektir.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Talep açıldığında gösterilecek, isteğinize dayalı, ödeme talebi ile ilişkilendirilecek bir ileti. Not: Bu ileti ödeme ile birlikte BiblePay ağı üzerinden gönderilmeyecektir.</translation>
     </message>
     <message>
         <source>&amp;Message:</source>
@@ -2420,8 +2577,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Yeni alım adresi ile ilişkili, seçiminize dayalı etiket.</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Biblepay network.</source>
-        <translation>Ödeme talebine eklenecek isteğe bağlı bir mesaj, talep açıldığında gösterilecektir.&lt;br&gt;Not: Mesaj ödeme ile birlikte Biblepay ağı üzerinden gönderilmez.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BiblePay network.</source>
+        <translation>Ödeme talebine eklenecek isteğe bağlı bir mesaj, talep açıldığında gösterilecektir.&lt;br&gt;Not: Mesaj ödeme ile birlikte BiblePay ağı üzerinden gönderilmez.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2452,10 +2609,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Temizle</translation>
     </message>
     <message>
-        <source>Request InstantSend</source>
-        <translation>Anında Gönder Talep Et</translation>
-    </message>
-    <message>
         <source>Requested payments history</source>
         <translation>Talep edilen ödemelerin tarihçesi</translation>
     </message>
@@ -2474,6 +2627,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Remove</source>
         <translation>Kaldır</translation>
+    </message>
+    <message>
+        <source>Enter a label to associate with the new receiving address</source>
+        <translation>Yeni alıcı adresiyle ilişkilendirmek için bir etiket girin</translation>
+    </message>
+    <message>
+        <source>Enter a message to attach to the payment request</source>
+        <translation>Ödeme talebine eklemek için bir mesaj girin</translation>
     </message>
     <message>
         <source>Copy URI</source>
@@ -2537,18 +2698,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Message</source>
         <translation>İleti</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>Anında Gönder</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Evet</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Hayır</translation>
     </message>
     <message>
         <source>Resulting URI too long, try to reduce the text for label / message.</source>
@@ -2657,14 +2806,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Seç...</translation>
     </message>
     <message>
-        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until your have validated the complete chain.</source>
-        <translation>Fallbackfee kullanmak, bir işlemin teyit edilmesinin satler veya günler almasına (ve hiçbir zaman teyit edilememesine) neden olabilir. Ücreti elle seçmeyi veya tüm zincirin onaylanmasını beklemeyi göz önünde bulundurun.</translation>
-    </message>
-    <message>
-        <source>Warning: Fee estimation is currently not possible.</source>
-        <translation>Uyarı: Ücret tahmini şu anda mümkün değildir.</translation>
-    </message>
-    <message>
         <source>collapse fee-settings</source>
         <translation>ücret-ayarlarını-küçült</translation>
     </message>
@@ -2673,20 +2814,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Doğrulama süresi hedefi:</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>Özel Gönder</translation>
-    </message>
-    <message>
-        <source>InstantSend</source>
-        <translation>Anında Gönder</translation>
-    </message>
-    <message>
         <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>Eğer özel ücret 1000 duff olarak belirlendiyse ve işlem sadece 250 bayt ise "kilobayt başına" ücret olarak sadece 250 duff ödersiniz,&lt;br /&gt;bu da "en az" 1000 duff öder. Bir kilobayttan büyük işlemler için ikisi de kilobayt başına ödeme yapar.</translation>
-    </message>
-    <message>
-        <source>If the custom fee is set to 1000 duffs and the transaction is only 250 bytes, then "per kilobyte" only pays 250 duffs in fee,&lt;br /&gt;while "total at least" pays 1000 duffs. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Eğer özel ücret 1000 duff olarak belirlendiyse ve işlem sadece 250 bayt ise "kilobayt başına" ücret olarak sadece 250 duff ödersiniz,&lt;br /&gt;bu da "toplam en az" 1000 duff öder. Bir kilobayttan büyük işlemler için ikisi de kilobayt başına ödeme yapar.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for biblepay transactions than the network can process.</source>
@@ -2697,12 +2826,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>kilobayt başı</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Gizle</translation>
+        <source>Using the fallbackfee can result in sending a transaction that will take several hours or days (or never) to confirm. Consider choosing your fee manually or wait until you have validated the complete chain.</source>
+        <translation>Fallbackfee kullanmak, bir işlemin teyit edilmesinin satler veya günler almasına (ve hiçbir zaman teyit edilememesine) neden olabilir. Ücreti elle seçmeyi veya tüm zincirin onaylanmasını beklemeyi göz önünde bulundurun.</translation>
     </message>
     <message>
-        <source>total at least</source>
-        <translation>toplam en az</translation>
+        <source>Note: Not enough data for fee estimation, using the fallback fee instead.</source>
+        <translation>Not: Ücret tahmini için yeterli veri yok. Bunun yerine geri dönüş ücretini kullanılacak.</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Gizle</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2719,14 +2852,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>(Smart fee not initialized yet. This usually takes a few blocks...)</source>
         <translation>(Zeki ücret henüz başlatılmadı. Bu genelde birkaç blok alır...)</translation>
-    </message>
-    <message>
-        <source>normal</source>
-        <translation>normal</translation>
-    </message>
-    <message>
-        <source>fast</source>
-        <translation>hızlı</translation>
     </message>
     <message>
         <source>Confirm the send action</source>
@@ -2785,24 +2910,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Para üstünü kopyala</translation>
     </message>
     <message>
+        <source>%1 (%2 blocks)</source>
+        <translation>%1 (%2 blocks)</translation>
+    </message>
+    <message>
         <source>using</source>
         <translation>bunu kullanarak:</translation>
-    </message>
-    <message>
-        <source>anonymous funds</source>
-        <translation>anonim bakiye</translation>
-    </message>
-    <message>
-        <source>(privatesend requires this amount to be rounded up to the nearest %1).</source>
-        <translation>(özel gönder için bu tutarın en yakın %1 tutarına yuvarlanması gerekiyor).</translation>
-    </message>
-    <message>
-        <source>any available funds (not anonymous)</source>
-        <translation>tüm mevcut bakiye (anonim değil)</translation>
-    </message>
-    <message>
-        <source>and InstantSend</source>
-        <translation>ve Anında Gönder</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2823,6 +2936,38 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>&lt;b&gt;(%1 of %2 entries displayed)&lt;/b&gt;</source>
         <translation>&lt;b&gt;(%1 / %2 girdi gösteriliyor)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Confirm the PrivateSend action</source>
+        <translation>ÖzelGönder işlemini onaylayın</translation>
+    </message>
+    <message>
+        <source>PrivateSend funds only</source>
+        <translation>Yalnızca ÖzelGönder fonları</translation>
+    </message>
+    <message>
+        <source>any available funds</source>
+        <translation>mevcut fonlar</translation>
+    </message>
+    <message>
+        <source>(PrivateSend transactions have higher fees usually due to no change output being allowed)</source>
+        <translation>(ÖzelGönder işlemlerinde genellikle değişken çıktıya izin verilmediği için ücretler daha yüksektir)</translation>
+    </message>
+    <message>
+        <source>Transaction size: %1</source>
+        <translation>İşlem Boyutu: %1</translation>
+    </message>
+    <message>
+        <source>Fee rate: %1</source>
+        <translation>Ücret oranı: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>This transaction will consume %n input(s)</source>
+        <translation><numerusform>Bu işlem %n girdi tüketecektir</numerusform><numerusform>Bu işlem %n girdi tüketecektir</numerusform></translation>
+    </message>
+    <message>
+        <source>Warning: Using PrivateSend with %1 or more inputs can harm your privacy and is not recommended</source>
+        <translation>Uyarı: %1 veya daha fazla girdi ile ÖzelGönder kullanmak gizliliğinize zarar verebilir ve tavsiye edilmez</translation>
     </message>
     <message>
         <source>Confirm send coins</source>
@@ -2864,10 +3009,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>Payment request expired.</source>
         <translation>Ödeme talebinin geçerlilik süresi bitti.</translation>
     </message>
-    <message numerus="yes">
-        <source>%n block(s)</source>
-        <translation><numerusform>%n blok</numerusform><numerusform>%n blok</numerusform></translation>
-    </message>
     <message>
         <source>Pay only the required fee of %1</source>
         <translation>Sadece asgari ücret olan %1 tutarını öde</translation>
@@ -2877,8 +3018,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation><numerusform>%n blok içinde onaylamanın başlayacağı tahmin ediliyor.</numerusform><numerusform>%n blok içinde onaylamanın başlayacağı tahmin ediliyor.</numerusform></translation>
     </message>
     <message>
-        <source>Warning: Invalid Biblepay address</source>
-        <translation>UYARI: Geçersiz Biblepay adresi</translation>
+        <source>Warning: Invalid BiblePay address</source>
+        <translation>UYARI: Geçersiz BiblePay adresi</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
@@ -2908,8 +3049,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&amp;Şu adrese öde:</translation>
     </message>
     <message>
-        <source>The Biblepay address to send the payment to</source>
-        <translation>Ödemenin yollanacağı Biblepay adresi</translation>
+        <source>The BiblePay address to send the payment to</source>
+        <translation>Ödemenin yollanacağı BiblePay adresi</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2944,20 +3085,24 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Mebla&amp;ğ:</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of Biblepay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>Ücret gönderilen tutardan düşülecek. Alıcı sizin tutar alanına girdiğinizden daha düşük miktarda Biblepay alacak. Eğer birden fazla alıcı seçilirse, ücret eşit bölünür.</translation>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation>Ücret gönderilen tutardan düşülecek. Alıcı sizin tutar alanına girdiğinizden daha düşük miktarda BiblePay alacak. Eğer birden fazla alıcı seçilirse, ücret eşit bölünür.</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
         <translation>Ücreti tutardan düş</translation>
     </message>
     <message>
+        <source>Use available balance</source>
+        <translation>Mevcut bakiyeyi kullan</translation>
+    </message>
+    <message>
         <source>Message:</source>
         <translation>Mesaj:</translation>
     </message>
     <message>
-        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Biblepay network.</source>
-        <translation>Referans için Biblepay: URI'siyle iliştirilmiş işlemle birlikte depolanacak bir ileti. Not: Bu mesaj Biblepay ağı üzerinden gönderilmeyecektir.</translation>
+        <source>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</source>
+        <translation>Referans için BiblePay: URI'siyle iliştirilmiş işlemle birlikte depolanacak bir ileti. Not: Bu mesaj BiblePay ağı üzerinden gönderilmeyecektir.</translation>
     </message>
     <message>
         <source>This is an unauthenticated payment request.</source>
@@ -3009,12 +3154,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Mesaj &amp;imzala</translation>
     </message>
     <message>
-        <source>You can sign messages/agreements with your addresses to prove you can receive Biblepay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>Onlara gönderilen Biblepay'i alabildiğinizi ispatlamak için mesajları/anlaşmaları adresleriniz ile imzalayabilirsiniz. Muallak ya da rastgele bir şeyi imzalamamaya dikkat edin çünkü kimlik avı saldırıları ile sizi kimliğinizi açık etmek için dolandırabilirler. Sadece anlaştığınız tam ayrıntılı beyanları imzalayın.</translation>
+        <source>You can sign messages/agreements with your addresses to prove you can receive BiblePay sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <translation>Onlara gönderilen BiblePay'i alabildiğinizi ispatlamak için mesajları/anlaşmaları adresleriniz ile imzalayabilirsiniz. Muallak ya da rastgele bir şeyi imzalamamaya dikkat edin çünkü kimlik avı saldırıları ile sizi kimliğinizi açık etmek için dolandırabilirler. Sadece anlaştığınız tam ayrıntılı beyanları imzalayın.</translation>
     </message>
     <message>
-        <source>The Biblepay address to sign the message with</source>
-        <translation>İletinin imzalanmasında kullanılacak Biblepay adresi</translation>
+        <source>The BiblePay address to sign the message with</source>
+        <translation>İletinin imzalanmasında kullanılacak BiblePay adresi</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -3045,8 +3190,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Güncel imzayı sistem panosuna kopyala</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Biblepay address</source>
-        <translation>Bu Biblepay adresine sahip olduğunuzu ispatlamak için mesajı imzala</translation>
+        <source>Sign the message to prove you own this BiblePay address</source>
+        <translation>Bu BiblePay adresine sahip olduğunuzu ispatlamak için mesajı imzala</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -3069,12 +3214,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Alıcının adresini, iletiyi (satır sonları, boşluklar, sekmeler vs. karakterleri tam olarak kopyaladığınızdan emin olunuz) ve imzayı aşağıya giriniz. Bir ortadaki adam saldırısı tarafından kandırılmaya engel olmak için imzadan, imzalı iletinin içeriğini aşan bir anlam çıkarmamaya dikkat ediniz. Bunun sadece imzalayan tarafın adres ile alım yapabildiğini ispatladığını ve herhangi bir işlemin gönderi tarafını kanıtlayamayacağını unutmayınız!</translation>
     </message>
     <message>
-        <source>The Biblepay address the message was signed with</source>
-        <translation>İletinin imzalanmasında kullanılan Biblepay adresi</translation>
+        <source>The BiblePay address the message was signed with</source>
+        <translation>İletinin imzalanmasında kullanılan BiblePay adresi</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Biblepay address</source>
-        <translation>Belirtilen Biblepay adresi ile imzalandığını doğrulamak için iletiyi kontrol et</translation>
+        <source>Verify the message to ensure it was signed with the specified BiblePay address</source>
+        <translation>Belirtilen BiblePay adresi ile imzalandığını doğrulamak için iletiyi kontrol et</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -3085,8 +3230,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Tüm mesaj kontrolü alanlarını sıfırla</translation>
     </message>
     <message>
+        <source>Enter a message to be signed</source>
+        <translation>İmzalanması için bir mesaj girin</translation>
+    </message>
+    <message>
         <source>Click "Sign Message" to generate signature</source>
         <translation>İmzayı oluşturmak için "İletiyi İmzala"ya tıklayın</translation>
+    </message>
+    <message>
+        <source>Enter a message to be verified</source>
+        <translation>Doğrulanması için bir mesaj girin</translation>
+    </message>
+    <message>
+        <source>Enter a signature for the message to be verified</source>
+        <translation>Doğrulanacak mesaj için bir imza girin</translation>
     </message>
     <message>
         <source>The entered address is invalid.</source>
@@ -3143,16 +3300,24 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <source>[testnet]</source>
         <translation>[testnet]</translation>
     </message>
-    <message>
-        <source>Version %1</source>
-        <translation>Sürüm %1</translation>
-    </message>
 </context>
 <context>
     <name>TrafficGraphWidget</name>
     <message>
         <source>KB/s</source>
         <translation>KB/s</translation>
+    </message>
+    <message>
+        <source>Totals</source>
+        <translation>Toplam</translation>
+    </message>
+    <message>
+        <source>Received</source>
+        <translation>Alındı</translation>
+    </message>
+    <message>
+        <source>Sent</source>
+        <translation>Gönderildi</translation>
     </message>
 </context>
 <context>
@@ -3168,10 +3333,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>conflicted</source>
         <translation>Uyuşmadı</translation>
-    </message>
-    <message>
-        <source>%1/offline</source>
-        <translation>%1/çevrim dışı</translation>
     </message>
     <message>
         <source>0/unconfirmed, %1</source>
@@ -3198,28 +3359,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 doğrulama</translation>
     </message>
     <message>
+        <source>locked via ChainLocks</source>
+        <translation>ZincirKilidi ile kilitli</translation>
+    </message>
+    <message>
         <source>verified via InstantSend</source>
-        <translation>Anında Gönder ile onaylanmış</translation>
-    </message>
-    <message>
-        <source>InstantSend verification in progress - %1 of %2 signatures</source>
-        <translation>Anında Gönder onaylaması sürüyor - %1 / %2 imza</translation>
-    </message>
-    <message>
-        <source>InstantSend verification failed</source>
-        <translation>Anında Gönder onaylaması başarısız</translation>
+        <translation>AnındaGönder ile onaylandı</translation>
     </message>
     <message>
         <source>Status</source>
         <translation>Durum</translation>
-    </message>
-    <message>
-        <source>, has not been successfully broadcast yet</source>
-        <translation>, henüz başarılı bir şekilde yayınlanmadı</translation>
-    </message>
-    <message numerus="yes">
-        <source>, broadcast through %n node(s)</source>
-        <translation><numerusform>, %n düğümden yayın</numerusform><numerusform>, %n düğümden yayın</numerusform></translation>
     </message>
     <message>
         <source>Date</source>
@@ -3376,10 +3525,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%1 değerine dek açık</translation>
     </message>
     <message>
-        <source>Offline</source>
-        <translation>Çevrim dışı</translation>
-    </message>
-    <message>
         <source>Unconfirmed</source>
         <translation>Doğrulanmamış</translation>
     </message>
@@ -3404,12 +3549,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Olgunlaşmamış (%1 doğrulama, %2 doğrulama sonra kullanılabilir olacaktır)</translation>
     </message>
     <message>
-        <source>This block was not received by any other nodes and will probably not be accepted!</source>
-        <translation>Bu blok başka hiçbir düğüm tarafından alınmamıştır ve muhtemelen kabul edilmeyecektir!</translation>
-    </message>
-    <message>
         <source>Generated but not accepted</source>
         <translation>Oluşturuldu ama kabul edilmedi</translation>
+    </message>
+    <message>
+        <source>verified via InstantSend</source>
+        <translation>AnındaGönder ile onaylandı</translation>
+    </message>
+    <message>
+        <source>locked via ChainLocks</source>
+        <translation>ZincirKilidi ile kilitli</translation>
     </message>
     <message>
         <source>Received with</source>
@@ -3452,10 +3601,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Özel Gönder Birim Oluştur</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>Özel Gönder</translation>
-    </message>
-    <message>
         <source>watch-only</source>
         <translation>Sadece izlenen</translation>
     </message>
@@ -3484,10 +3629,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Bu işleme sadece-izlenen bir adresin dahil edilip, edilmediği.</translation>
     </message>
     <message>
-        <source>Whether or not this transaction was locked by InstantSend.</source>
-        <translation>Bu işlem Anında Gönder ile kilitlendi mi gösterir.</translation>
-    </message>
-    <message>
         <source>User-defined intent/purpose of the transaction.</source>
         <translation>İşlemin kullanıcı tanımlı amacı.</translation>
     </message>
@@ -3501,14 +3642,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>All</source>
         <translation>Hepsi</translation>
-    </message>
-    <message>
-        <source>Locked by InstantSend</source>
-        <translation>Anında Gönder ile kilitlendi</translation>
-    </message>
-    <message>
-        <source>Not locked by InstantSend</source>
-        <translation>Anında Gönder ile kilitlenmedi</translation>
     </message>
     <message>
         <source>Today</source>
@@ -3547,10 +3680,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Gönderildiği adres</translation>
     </message>
     <message>
-        <source>PrivateSend</source>
-        <translation>Özel Gönder</translation>
-    </message>
-    <message>
         <source>PrivateSend Make Collateral Inputs</source>
         <translation>Özel Gönder Teminat Girdisi Yap</translation>
     </message>
@@ -3579,8 +3708,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Diğer</translation>
     </message>
     <message>
-        <source>Enter address or label to search</source>
-        <translation>Aranacak adres ya da etiket giriniz</translation>
+        <source>Enter address, transaction id, or label to search</source>
+        <translation>Arama için adres, işlem kimliği veya etiket girin</translation>
     </message>
     <message>
         <source>Min amount</source>
@@ -3621,6 +3750,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Show transaction details</source>
         <translation>İşlem ayrıntılarını göster</translation>
+    </message>
+    <message>
+        <source>Show address QR code</source>
+        <translation>Adresin QR kodunu göster</translation>
     </message>
     <message>
         <source>Export Transaction History</source>
@@ -3675,6 +3808,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>İşlem tarihçesi %1 konumuna başarıyla kaydedildi.</translation>
     </message>
     <message>
+        <source>QR code</source>
+        <translation>QR kod</translation>
+    </message>
+    <message>
         <source>Range:</source>
         <translation>Tarih Aralığı:</translation>
     </message>
@@ -3702,14 +3839,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Send Coins</source>
         <translation>Bitcoini Gönder</translation>
-    </message>
-    <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>Anında Gönder şu anda bu kadar yüksek tutarları göndermeyi desteklemiyor. İşlemler şimdilik %1 BIBLEPAY ile sınırlı.</translation>
-    </message>
-    <message>
-        <source>Used way too many inputs (&gt;%1) for this InstantSend transaction, fees could be huge.</source>
-        <translation>Bu Anında Gönder işlemi için çok fazla girdi (&gt;%1) kullanıldı, ücret çok yüksek olabilir.</translation>
     </message>
 </context>
 <context>
@@ -3778,10 +3907,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Cüzdan parolanızı bulunduran KeePass girdisine url oluşturmak için ad</translation>
     </message>
     <message>
-        <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Yüksek öncelikli/düşük ücretli muamelelerin azami boyutunu bayt olarak ayarla (varsayılan: %d)</translation>
-    </message>
-    <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
         <translation>Betik kontrolü iş parçacıklarının sayısını belirler (%u ilâ %d, 0 = otomatik, &lt;0 = bu sayıda çekirdeği kullanma, varsayılan: %d)</translation>
     </message>
@@ -3802,10 +3927,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Komut satırı ve JSON-RPC komutlarını kabul et</translation>
     </message>
     <message>
-        <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Bağlanılacak düğüm ekle ve bağlantıyı zinde tutmaya çalış</translation>
-    </message>
-    <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
         <translation>-addnode, -seednode ve -connect için DNS aramalarına izin ver</translation>
     </message>
@@ -3822,16 +3943,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Cüzdan eski biçime geri alınamaz</translation>
     </message>
     <message>
-        <source>Cannot write default address</source>
-        <translation>Varsayılan adres yazılamadı</translation>
-    </message>
-    <message>
         <source>Collateral not valid.</source>
         <translation>Teminat geçerli değil.</translation>
-    </message>
-    <message>
-        <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Eş adresleri elde etmek için bir düğüme bağlan ve ardından bağlantıyı kes</translation>
     </message>
     <message>
         <source>Connection options:</source>
@@ -3910,12 +4023,32 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>İşlemler aktarılmadığında dahi beyaz listedeki eşlerden aktarılan işlemleri kabul et (varsayılan: %d)</translation>
     </message>
     <message>
+        <source>Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info). This option can be specified multiple times to add multiple nodes.</source>
+        <translation>Bağlanmak için bir düğüm ekleyin ve bağlantıyı açık tutmaya çalışın (daha fazla bilgi için `addnode` RPC komut yardımına göz atın). Bu seçenek, birden çok düğüm eklemek için birden çok kez belirtilebilir.</translation>
+    </message>
+    <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
         <translation>Belirtilen kaynaktan JSON-RPC bağlantılarını kabul et. Bir &lt;ip&gt; için geçerli olanlar şunlardır: IP adresi (mesela 1.2.3.4), bir ağ/ağ maskesi (örneğin 1.2.3.4/255.255.255.0) ya da bir ağ/CIDR (mesela 1.2.3.4/24). Bu seçenek birden fazla kez belirtilebilir</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
         <translation>Belirtilen adrese bağlan ve ona bağlanan eşleri beyaz listeye al. IPv6 için [makine]:port imlasını kullanınız</translation>
+    </message>
+    <message>
+        <source>Bind to given address to listen for JSON-RPC connections. Do not expose the RPC server to untrusted networks such as the public internet! This option is ignored unless -rpcallowip is also passed. Port is optional and overrides -rpcport. Use [host]:port notation for IPv6. This option can be specified multiple times (default: 127.0.0.1 and ::1 i.e., localhost, or if -rpcallowip has been specified, 0.0.0.0 and :: i.e., all addresses)</source>
+        <translation>JSON-RPC bağlantılarını dinlemek için verilen adrese bağlayın. -Rpcallowip de geçilmezse bu seçenek yoksayılır. RPC sunucusunu halka açık internet gibi güvenilmeyen ağlara maruz bırakmayın! Port isteğe bağlıdır ve -rpcport geçersiz kılar. [Host] kullanın: IPv6 için port notasyonu. Bu seçenek birden çok kez belirtilebilir (varsayılan: 127.0.0.1 ve :: 1, localhost veya -rpcallowip belirtilmişse, 0.0.0.0 ve :: i.e., tüm adresler)</translation>
+    </message>
+    <message>
+        <source>Cannot provide specific connections and have addrman find outgoing connections at the same.</source>
+        <translation>Giden bağlantıları addrman araması ile aynı zamanda belirli bağlantılar sağlayamaz.</translation>
+    </message>
+    <message>
+        <source>Connect only to the specified node; -connect=0 disables automatic connections (the rules for this peer are the same as for -addnode). This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>Sadece belirtilen düğüme bağlanın; -connect=0 otomatik bağlantıları devre dışı bırakır (bu eş için kurallar -addnode ile aynıdır). Bu seçenek, birden çok düğüme bağlanmak için birden çok kez belirtilebilir.</translation>
+    </message>
+    <message>
+        <source>Connect to a node to retrieve peer addresses, and disconnect. This option can be specified multiple times to connect to multiple nodes.</source>
+        <translation>Eş adresleri almak için bir düğüme bağlanın ve bağlantıyı kesin. Bu seçenek, birden çok düğüme bağlanmak için birden çok kez belirtilebilir.</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3934,10 +4067,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>&lt;address&gt; adresindeki Anında Gönder çift harcama girişimleri için işlem hash yayınını etkinleştir.</translation>
     </message>
     <message>
-        <source>Error loading %s: You can't enable HD on a already existing non-HD wallet</source>
-        <translation>%s yüklenirken hata: Zaten var olan bir HD olmayan cüzdanda HD etkinleştiremezsiniz</translation>
-    </message>
-    <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
         <translation>Teyit edilmemiş birimlendirilmiş çıktılar bulundu, devam etmek için teyit edilene kadar beklenecek.</translation>
     </message>
@@ -3954,16 +4083,24 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Eğer bu blok zincirde yer alıyorsa onun ve atalarının geçerli olduğunu varsay ve potansiyel olarak onların betik doğrulamasını atla.  (Tümünü doğrulamak için 0, varsayılan %s, testnet: %s)</translation>
     </message>
     <message>
+        <source>Invalid -socketevents ('%s') specified. Only these modes are supported: %s</source>
+        <translation>Geçersiz -socketevents ('%s') belirtildi. Yalnızca şu modlar desteklenir: %s</translation>
+    </message>
+    <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s' (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
         <translation>-maxtxfee=&lt;tutar&gt; için geçersiz tutar: '%s' (Sıkışmış işlemleri önlemek için en az %s değerinde en düşük aktarım ücretine eşit olmalıdır)</translation>
+    </message>
+    <message>
+        <source>Location of the auth cookie. Relative paths will be prefixed by a net-specific datadir location. (default: data dir)</source>
+        <translation>Kimlik doğrulama çerezinin yeri. Göreli yollar ağa özgü bir veri konumu tarafından datadir olarak alınacaktır. (varsayılan: data dir)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
         <translation>İşlemlerin tamamının indeksini tut, getrawtransaction rpc çağrısı tarafından kullanılır (varsayılan: %u)</translation>
     </message>
     <message>
-        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you verified that wallet works!</source>
-        <translation>Cüzdanın çalıştığından emin olduktan sonra mutlaka cüzdanınızı şifreleyip şifrelenmemiş tüm yedekleri silin!</translation>
+        <source>Make outgoing connections only through network &lt;net&gt; (ipv4, ipv6 or onion). Incoming connections are not affected by this option. This option can be specified multiple times to allow multiple networks.</source>
+        <translation>Dışa dönük bağlantıları ağ üzerinden yapın &lt;net&gt; (ipv4, ipv6 veya onion). Gelen bağlantılar bu seçenekten etkilenmez. Bu seçenek, birden çok ağa izin vermek için birden çok kez belirtilebilir.</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
@@ -3980,6 +4117,42 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Overrides minimum spork signers to change spork value. Only useful for regtest and devnet. Using this on mainnet or testnet will ban you.</source>
         <translation>Spork değerini değiştirmek için ereken spork imzacısı sayısını değiştirir. Sadece regtest ve devnet için kullanılır. Bunu mainnet veya testnette kullanırsanız atılırsınız.</translation>
+    </message>
+    <message>
+        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to mix some more coins.</source>
+        <translation>Özel Gönder para göndermek için tam olarak birimlendirilmiş meblağlar kullanır, sadece biraz daha fazla parayı anonim hale getirmeniz gerekiyor.</translation>
+    </message>
+    <message>
+        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex, -rescan and -disablegovernance=false. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;=%u = automatically prune block files to stay under the specified target size in MiB)</source>
+        <translation>Eski blokları budamayı (silme) etkinleştirerek depolama gereksinimlerini azaltın. Bu belirli blokları silmek için pruneblockchain uzak yordam çağrısına RPC izin verir. Eğer bloklar hedef mebibyte boyutuna ulaşırsa eski blokların otomatik olarak budanmasını sağlar. Bu kip, -txindex, -rescan ve -disablegovernance=false ile uyumsuzdur. Uyarı: Bu ayarı geri almak, blok zincirinin tamamını yeniden yüklemeyi gerektirir. (varsayılan: 0 = blok budaması devre dışı, 1 = RPC üzerinden manuel budamaya izin verir, &gt;=%u = mebibyte olarak belirtilen hedef boyutun altında kalması için blok dosyalarını otomatik olarak budar)</translation>
+    </message>
+    <message>
+        <source>Send trace/debug info to console (default: 1 when no -daemon. To disable logging to file, set debuglogfile=0)</source>
+        <translation>İzleme/hata ayıklama bilgilerini konsola gönder (varsayılan: -daemon olmadığında 1. Dosya kaydını devre dışı bırakmak için debuglogfile=0 olarak ayarlayın)</translation>
+    </message>
+    <message>
+        <source>Specify configuration file. Relative paths will be prefixed by datadir location. (default: %s)</source>
+        <translation>Yapılandırma dosyasını belirtin. Göreli yollar bir veri konumu tarafından datadir olarak alınacaktır. (varsayılan: %s)</translation>
+    </message>
+    <message>
+        <source>Specify directory to hold wallets (default: &lt;datadir&gt;/wallets if it exists, otherwise &lt;datadir&gt;)</source>
+        <translation>Cüzdanların tutulacağı dizini belirtin (varsayılan: varsa &lt;datadir&gt;/wallets, aksi takdirde &lt;datadir&gt;)</translation>
+    </message>
+    <message>
+        <source>Specify location of debug log file. Relative paths will be prefixed by a net-specific datadir location. (0 to disable; default: %s)</source>
+        <translation>Hata ayıklama günlük dosyasının konumunu belirtin. Göreli yollar ağa özgü bir veri konumu tarafından datadir olarak alınacaktır. (Devre dışı bırakmak için 0; varsayılan: %s)</translation>
+    </message>
+    <message>
+        <source>Specify pid file. Relative paths will be prefixed by a net-specific datadir location. (default: %s)</source>
+        <translation>Pid dosyasını belirtin. Göreli yollar bir veri konumu tarafından datadir olarak alınacaktır. (varsayılan: %s)</translation>
+    </message>
+    <message>
+        <source>Specify wallet database path. Can be specified multiple times to load multiple wallets. Path is interpreted relative to &lt;walletdir&gt; if it is not absolute, and will be created if it does not exist (as a directory containing a wallet.dat file and log files). For backwards compatibility this will also accept names of existing data files in &lt;walletdir&gt;.)</source>
+        <translation>Cüzdan veritabanı yolunu belirtin. Birden çok cüzdan yüklemek için birden çok kez belirtilebilir. Yol mutlak değilse &lt;walletdir&gt;'e göre yorumlanır, yoksa oluşturulur (wallet.dat dosyası ve günlük dosyalarını içeren bir dizin olarak). Geriye dönük uyumluluk için &lt;walletdir&gt;.)'deki mevcut veri dosyalarının adlarını da kabul edecektir.</translation>
+    </message>
+    <message>
+        <source>Transaction index can't be disabled with governance validation enabled. Either start with -disablegovernance command line switch or enable transaction index.</source>
+        <translation>Yönetim doğrulaması etkinken işlem endeksi devre dışı bırakılamaz. Ya -disablegovernance komut satırı anahtarıyla başlayın ya da işlem endeksini etkinleştirin.</translation>
     </message>
     <message>
         <source>Use N separate masternodes in parallel to mix funds (%u-%u, default: %u)</source>
@@ -4000,18 +4173,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
         <translation>Beyaz listeye alınan eşler DoS yasaklamasına uğramazlar ve işlemleri zaten mempool'da olsalar da daima aktarılır, bu mesela bir geçit için kullanışlıdır</translation>
-    </message>
-    <message>
-        <source>You need to rebuild the database using -reindex-chainstate to change -txindex</source>
-        <translation>-txindex'i değiştirmek için -reindex-chainstate kullanarak veritabanını baştan kurmalısınız</translation>
-    </message>
-    <message>
-        <source>You should specify a masternodeblsprivkey in the configuration. Please see documentation for help.</source>
-        <translation>Ayarlarda bir masternodeblsprivkey belirtmelisiniz. Yardım için dökümanlara göz atın.</translation>
-    </message>
-    <message>
-        <source>(default: %s)</source>
-        <translation>(varsayılan: %s)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
@@ -4038,16 +4199,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Port &lt;port&gt; üstünde KeePassHttp'ye bağlan (varsayılan: %u)</translation>
     </message>
     <message>
-        <source>Enable the client to act as a masternode (0-1, default: %u)</source>
-        <translation>İstemcinin ana düğüm olarak davranmasını etkinleştir (0-1, varsayılan: %u)</translation>
-    </message>
-    <message>
         <source>Entry exceeds maximum size.</source>
         <translation>Girdi maksimum boyutu aşıyor.</translation>
-    </message>
-    <message>
-        <source>Error loading %s: You can't disable HD on a already existing HD wallet</source>
-        <translation>%s yüklenirken hata: Zaten var olan bir HD cüzdanda HD'yi kapatamazsınız.</translation>
     </message>
     <message>
         <source>Failed to load fulfilled requests cache from</source>
@@ -4106,12 +4259,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Yetersiz bakiye.</translation>
     </message>
     <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
-        <translation>-paytxfee=&lt;tutar&gt;:'%s' unsurunda geçersiz tutar (asgari %s olması lazımdır)</translation>
+        <source>Invalid amount for -discardfee=&lt;amount&gt;: '%s'</source>
+        <translation>-discardfee=&lt;meblağ&gt; için geçersiz meblağ: '%s'</translation>
     </message>
     <message>
-        <source>Invalid masternodeblsprivkey. Please see documenation.</source>
-        <translation>Geçersiz masternodeblsprivkey. Lütfen dökümanlara göz atın.</translation>
+        <source>Invalid amount for -paytxfee=&lt;amount&gt;: '%s' (must be at least %s)</source>
+        <translation>-paytxfee=&lt;tutar&gt;:'%s' unsurunda geçersiz tutar (asgari %s olması lazımdır)</translation>
     </message>
     <message>
         <source>Invalid minimum number of spork signers specified with -minsporkkeys</source>
@@ -4174,12 +4327,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Hiç uyumlu Ana düğüm bulunamadı.</translation>
     </message>
     <message>
-        <source>Not in the Masternode list.</source>
-        <translation>Ana düğüm listesinde yok.</translation>
+        <source>Not enough funds to mix.</source>
+        <translation>Karıştırılacak yeterli bakiye yok.</translation>
     </message>
     <message>
-        <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Sadece &lt;net&gt; ağındaki düğümlere bağlan (ipv4, ipv6 veya onion)</translation>
+        <source>Not in the Masternode list.</source>
+        <translation>Ana düğüm listesinde yok.</translation>
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
@@ -4198,32 +4351,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>trace/debug bilgisini debug.log dosyasına gönder (varsayılan: %u)</translation>
     </message>
     <message>
-        <source>Send transactions as zero-fee transactions if possible (default: %u)</source>
-        <translation>Eğer mümkünse işlemleri sıfır maliyetli işlem olarak gönder (varsayılan: %u)</translation>
-    </message>
-    <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
         <translation>Anahtar alan boyutunu &lt;n&gt; değerine ayarla (varsayılan: %u)</translation>
-    </message>
-    <message>
-        <source>Set the masternode BLS private key</source>
-        <translation>Ana düğüm BLS özel anahtarını belirle</translation>
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
         <translation>Hizmet RCP aramaları iş parçacığı sayısını belirle (varsayılan: %d)</translation>
     </message>
     <message>
-        <source>Specify configuration file (default: %s)</source>
-        <translation>Yapılandırma dosyası belirtiniz (varsayılan: %s)</translation>
-    </message>
-    <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
         <translation>Bağlantı zaman aşım süresini milisaniye olarak belirt (en düşüki: 1, varsayılan: %d)</translation>
-    </message>
-    <message>
-        <source>Specify pid file (default: %s)</source>
-        <translation>Pid dosyası belirtiniz (varsayılan: %s)</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
@@ -4234,28 +4371,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Ana düğüme gönderildi, kuyrukta bekleniyor %s</translation>
     </message>
     <message>
-        <source>Synchronization failed</source>
-        <translation>Eşleme başarısız</translation>
-    </message>
-    <message>
         <source>Synchronization finished</source>
         <translation>Eşleme bitti</translation>
     </message>
     <message>
-        <source>This is not a Masternode.</source>
-        <translation>Bu bir Ana Düğüm değil.</translation>
-    </message>
-    <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
         <translation>Aksaklık gösteren eşlerle bağlantıyı kesme sınırı (varsayılan: %u)</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, removing.</source>
-        <translation>Çok fazla %f birimi, siliniyor.</translation>
-    </message>
-    <message>
-        <source>Too many %f denominations, skipping.</source>
-        <translation>Çok fazla %f birimi, geçiliyor.</translation>
     </message>
     <message>
         <source>Tor control port password (default: empty)</source>
@@ -4306,6 +4427,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Kullanıcı Aracı açıklaması (%s) güvensiz karakterler içermektedir.</translation>
     </message>
     <message>
+        <source>Verifying wallet(s)...</source>
+        <translation>Cüzdan(lar) doğrulanıyor...</translation>
+    </message>
+    <message>
         <source>Will retry...</source>
         <translation>Tekrar denenecek...</translation>
     </message>
@@ -4334,16 +4459,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>KeePass ile AES şifreli iletişim sağlamak için KeePassHttp anahtarı</translation>
     </message>
     <message>
-        <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Hafızada en çok &lt;n&gt; bağlanılamaz işlem tut (varsayılan: %u)</translation>
-    </message>
-    <message>
-        <source>Disable all Biblepay specific functionality (Masternodes, PrivateSend, InstantSend, Governance) (0-1, default: %u)</source>
-        <translation>Tüm Biblepay spesifik işlevleri kapat (Ana Düğümler, Özel Gönder, Anında Gönder, Yönetim) (0-1, varsayılan: %u)</translation>
-    </message>
-    <message>
         <source>%s file contains all private keys from this wallet. Do not share it with anyone!</source>
         <translation>%s dosyası bu cüzdana ait tüm özel anahtarları tutuyor. Kimseyle paylaşmayın!</translation>
+    </message>
+    <message>
+        <source>-masternode option is deprecated and ignored, specifying -masternodeblsprivkey is enough to start this node as a masternode.</source>
+        <translation>-masternode seçeneği kullanımdan kaldırılmış ve yoksayılmıştır, -masternodeblsprivkey belirtilmesi bu düğümü anadüğüm olarak başlatmak için yeterlidir.</translation>
     </message>
     <message>
         <source>Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)</source>
@@ -4354,16 +4475,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>İşlemleri bellek alanında &lt;n&gt; saatten fazla tutma (varsayılan: %u)</translation>
     </message>
     <message>
-        <source>Enable InstantSend, show confirmations for locked transactions (0-1, default: %u)</source>
-        <translation>Anında Gönderi aç, kilitlenmiş işlemler için teyitleri gösterir (0-1, varsayılan: %u)</translation>
-    </message>
-    <message>
         <source>Enable multiple PrivateSend mixing sessions per block, experimental (0-1, default: %u)</source>
         <translation>Blok başına birden fazla Özel Gönder karışım işlemini aç, deneysel (0-1, varsayılan: %u)</translation>
-    </message>
-    <message>
-        <source>Enable use of automated PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Bu cüzdanda depolanan meblağ için otomatik Özel Gönder kullanımını aç (0-1, varsayılan: %u)</translation>
     </message>
     <message>
         <source>Execute command when a wallet InstantSend transaction is successfully locked (%s in cmd is replaced by TxID)</source>
@@ -4390,14 +4503,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Eğer &lt;category&gt; belirtilmemişse ya da &lt;category&gt; = 1 ise, tüm hata ayıklama verilerini çıktı al.</translation>
     </message>
     <message>
-        <source>InstantSend doesn't support sending values that high yet. Transactions are currently limited to %1 BIBLEPAY.</source>
-        <translation>Özel Gönder şu anda bu kadar büyük meblağları desteklemiyor. Şu anda işlemler %1 BIBLEPAY ile sınırlı.</translation>
-    </message>
-    <message>
-        <source>InstantSend requires inputs with at least %d confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>Anında Gönder için girdilerin en az %d teyidi olması gerekiyor, birkaç dakika daha bekleyip tekrar denemeniz gerekebilir.</translation>
-    </message>
-    <message>
         <source>Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)</source>
         <translation>Tam adres endeksi tut, bakiye, txid ve adresler için harcanmamış çıktı sorgusu yapmak için kullanılır (varsayılan: %u)</translation>
     </message>
@@ -4414,8 +4519,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Eşlerle en fazla &lt;n&gt; bağlantı sağla (geçici hizmet bağlantıları dahil değildir) (varsayılan: %u)</translation>
     </message>
     <message>
-        <source>PrivateSend uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
-        <translation>Özel Gönder para göndermek için tam olarak birimlendirilmiş meblağlar kullanır, sadece biraz daha fazla parayı anonim hale getirmeniz gerekiyor.</translation>
+        <source>Make sure to encrypt your wallet and delete all non-encrypted backups after you have verified that the wallet works!</source>
+        <translation>Cüzdanın çalıştığından emin olduktan sonra mutlaka cüzdanınızı şifreleyip şifrelenmemiş tüm yedekleri silin!</translation>
+    </message>
+    <message>
+        <source>Maximum total size of all orphan transactions in megabytes (default: %u)</source>
+        <translation>Tüm yetim işlemlerin megabayt cinsinden maksimum toplam boyutu (varsayılan: %u)</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -4426,12 +4535,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Budama: son cüzdan eşleşmesi budanmış verilerin ötesine gitmektedir. -reindex kullanmanız gerekmektedir (Budanmış düğüm ise tüm blok zincirini tekrar indirmeniz gerekir.)</translation>
     </message>
     <message>
+        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect used)</source>
+        <translation>Eğer adresler az ise, DNS arama yoluyla eş adres sorgulaması (-connect kullanılmadıkça default: 1)</translation>
+    </message>
+    <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
         <translation>Her vekil bağlantısı için kimlik verilerini rastgele yap. Bu, Tor akış izolasyonunu etkinleştirir (varsayılan: %u)</translation>
     </message>
     <message>
         <source>Rescans are not possible in pruned mode. You will need to use -reindex which will download the whole blockchain again.</source>
         <translation>Tekrar taramalar budanmış kipte mümkün değildir. Tüm blok zincirini tekrar indirecek olan -reindex seçeneğini kullanmanız gerekecektir.</translation>
+    </message>
+    <message>
+        <source>Set the masternode BLS private key and enable the client to act as a masternode</source>
+        <translation>Ana düğüm BLS özel anahtarını belirle ve istemcinin anadüğüm işlevi görmesini sağla</translation>
     </message>
     <message>
         <source>Specify full path to directory for automatic wallet backups (must exist)</source>
@@ -4454,12 +4571,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Ağ sürümü zincirinin toplam boyutu (%i) en yüksek boyutu geçmektedir (%i). Kullanıcı aracı açıklamasının sayısı veya boyutunu azaltınız.</translation>
     </message>
     <message>
-        <source>Transaction index can't be disabled in full mode. Either start with -litemode command line switch or enable transaction index.</source>
-        <translation>Tam modda işlem endeksi kapatılamaz. Ya komut satırından -litemode ile başlatın ya da işlem endeksini açın.</translation>
-    </message>
-    <message>
         <source>Tries to keep outbound traffic under the given target (in MiB per 24h), 0 = no limit (default: %d)</source>
         <translation>Giden trafiği belirtilen hedefin altında tutmaya çalışır (24 saat başı MiB olarak), 0 = sınırsız (varsayılan: %d)</translation>
+    </message>
+    <message>
+        <source>Try to create at least N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Her bir miktar için en az N kadar girdi oluşturmayı deneyin (%u-%u, varsayılan: %u)</translation>
     </message>
     <message>
         <source>Unable to locate enough PrivateSend denominated funds for this transaction.</source>
@@ -4478,6 +4595,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Dinlenecek portu haritalamak için UPnP kullan (varsayılan: dinlenildiğinde ve -proxy olmadığında 1)</translation>
     </message>
     <message>
+        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcauth. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
+        <translation>JSON-RPC bağlantıları için kullanıcı adı ve karmalanmış parola. &lt;userpw&gt; alanı şu biçimdedir: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Kanonik bir Python betiği share/rpcauth klasöründe bulunabilir. Ardından istemci normal şekilde rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; argüman çiftini kullanarak bağlanabilir. Bu seçenek birden çok kez belirtilebilir.</translation>
+    </message>
+    <message>
         <source>WARNING! Failed to replenish keypool, please unlock your wallet to do so.</source>
         <translation>UYARI! Anahtar havuzu yenilenemedi, lütfen devam etmek için cüzdanınızın kilidini açın.</translation>
     </message>
@@ -4490,8 +4611,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Uyarı: Bilinmeyen blok sürümü oluşturulmaya çalışılıyor. Bilinmeyen kuralların işlemesi mümkündür.</translation>
     </message>
     <message>
-        <source>You are starting in lite mode, all Biblepay-specific functionality is disabled.</source>
-        <translation>Lite modda başlatıyorsunuz, tüm Biblepay spesifik işlevler kapalı olacak.</translation>
+        <source>You need to rebuild the database using -reindex to change -timestampindex</source>
+        <translation>-timestampindex'i değiştirmek için -reindex'i kullanarak veritabanını baştan kurmalısınız</translation>
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain</source>
@@ -4500,6 +4621,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>(default: %u)</source>
         <translation>(varsayılan: %u)</translation>
+    </message>
+    <message>
+        <source>-litemode is deprecated.</source>
+        <translation>-litemode kullanımdan kaldırıldı.</translation>
     </message>
     <message>
         <source>-maxmempool must be at least %d MB</source>
@@ -4520,6 +4645,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Automatically create Tor hidden service (default: %d)</source>
         <translation>Otomatik olarak gizli Tor servisi oluştur (varsayılan: %d)</translation>
+    </message>
+    <message>
+        <source>Disable governance validation (0-1, default: %u)</source>
+        <translation>Yönetim doğrulamayı devre dışı bırak (0-1, varsayılan: %u)</translation>
     </message>
     <message>
         <source>ERROR! Failed to create automatic backup</source>
@@ -4558,8 +4687,36 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Ham işlemin &lt;adres&gt;te yayınlanmasını etkinleştir</translation>
     </message>
     <message>
+        <source>Error upgrading evo database</source>
+        <translation>Evo veritabanını yükseltirken hata oluştu</translation>
+    </message>
+    <message>
         <source>Error: A fatal internal error occurred, see debug.log for details</source>
         <translation>Hata: Ölümcül dahili bir hata meydana geldi, ayrıntılar için debug.log dosyasına bakınız</translation>
+    </message>
+    <message>
+        <source>Error: failed to add socket to epollfd (epoll_ctl returned error %s)</source>
+        <translation>Hata: epollfd'ye soket eklenemedi (epoll_ctl %s hatası verdi)</translation>
+    </message>
+    <message>
+        <source>Exceeded max tries.</source>
+        <translation>Maksimum deneme aşıldı.</translation>
+    </message>
+    <message>
+        <source>Failed to clear fulfilled requests cache at</source>
+        <translation>Yerine getirilmiş istek önbelleği temizlenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to clear governance cache at</source>
+        <translation>Yönetim önbelliği temizlenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to clear masternode cache at</source>
+        <translation>Anadüğüm önbelliği temizlenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to commit EvoDB</source>
+        <translation>EvoDB gerçekleştirilemedi</translation>
     </message>
     <message>
         <source>Failed to create backup %s!</source>
@@ -4574,12 +4731,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Yedek silinemedi, hata: %s</translation>
     </message>
     <message>
-        <source>Failed to load InstantSend data cache from</source>
-        <translation>Şuradan Anında Gönder verisi önbelleği yüklemesi başarısız:</translation>
-    </message>
-    <message>
         <source>Failed to load sporks cache from</source>
         <translation>Şuradan spork önbelleği yüklemesi başarısız:</translation>
+    </message>
+    <message>
+        <source>Failed to rescan the wallet during initialization</source>
+        <translation>Başlatma sırasında cüzdan yeniden taranamadı</translation>
     </message>
     <message>
         <source>Fee (in %s/kB) to add to transactions you send (default: %s)</source>
@@ -4598,6 +4755,18 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation> -fallbackfee=&lt;tutar&gt; için geçersiz tutar: '%s'</translation>
     </message>
     <message>
+        <source>Invalid masternodeblsprivkey. Please see documentation.</source>
+        <translation>Geçersiz masternodeblsprivkey. Lütfen dökümanlara göz atın.</translation>
+    </message>
+    <message>
+        <source>It has been replaced by -disablegovernance.</source>
+        <translation>-disablegovernance ile değiştirildi.</translation>
+    </message>
+    <message>
+        <source>Its replacement -disablegovernance has been forced instead.</source>
+        <translation>-disablegovernance bunun yerine zorlandı.</translation>
+    </message>
+    <message>
         <source>Keep the transaction memory pool below &lt;n&gt; megabytes (default: %u)</source>
         <translation>İşlem bellek alanını &lt;n&gt; megabayttan düşük tut (varsayılan: %u)</translation>
     </message>
@@ -4608,10 +4777,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Last successful PrivateSend action was too recent.</source>
         <translation>Son başarılı Özel Gönder eylemi çok yakında yapıldı.</translation>
-    </message>
-    <message>
-        <source>Loading InstantSend data cache...</source>
-        <translation>Anında Gönder verisi önbelleği yükleniyor...</translation>
     </message>
     <message>
         <source>Loading block index...</source>
@@ -4632,10 +4797,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Loading wallet...</source>
         <translation>Cüzdan yükleniyor...</translation>
-    </message>
-    <message>
-        <source>Location of the auth cookie (default: data dir)</source>
-        <translation>auth çerezinin konumu (varsayılan: veri klasörü)</translation>
     </message>
     <message>
         <source>Make the wallet broadcast transactions</source>
@@ -4674,20 +4835,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Düğüm aktarma seçenekleri:</translation>
     </message>
     <message>
-        <source>Non-standard public key detected.</source>
-        <translation>Standart olmayan herkese açık anahtar tespit edildi.</translation>
-    </message>
-    <message>
         <source>Not compatible with existing transactions.</source>
         <translation>Var olan işlemlerle uyumlu değil.</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
         <translation>Kafi derecede dosya tanımlayıcıları mevcut değil.</translation>
-    </message>
-    <message>
-        <source>Not enough funds to anonymize.</source>
-        <translation>Anonim hale getirilecek yeterli bakiye yok.</translation>
     </message>
     <message>
         <source>Number of automatic wallet backups (default: %u)</source>
@@ -4714,16 +4867,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Özel Gönder seçenekleri:</translation>
     </message>
     <message>
-        <source>PrivateSend request complete:</source>
-        <translation>Özel Gönder talebi tamamlandı:</translation>
-    </message>
-    <message>
         <source>PrivateSend request incomplete:</source>
         <translation>Özel Gönder talebi tamamlanmadı:</translation>
     </message>
     <message>
         <source>Prune cannot be configured with a negative value.</source>
         <translation>Budama negatif bir değerle yapılandırılamaz.</translation>
+    </message>
+    <message>
+        <source>Prune mode is incompatible with -disablegovernance=false.</source>
+        <translation>Prune modu -disablegovernance=false ile uyumsuz.</translation>
     </message>
     <message>
         <source>Prune mode is incompatible with -txindex.</source>
@@ -4738,8 +4891,44 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Başlangıçta blok zincirini eksik cüzdan işlemleri için tekrar tara</translation>
     </message>
     <message>
+        <source>Send reject messages per BIP61 (default: %u)</source>
+        <translation>BIP61 adetince reddedilme mesajları gönder (varsayılan: %u)</translation>
+    </message>
+    <message>
+        <source>Socket events mode, which must be one of: %s (default: %s)</source>
+        <translation>Bunlardan biri olması gereken soket etkinlikleri modu: %s (varsayılan: %s)</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" does not exist</source>
+        <translation>Belirtilen -walletdir "%s" mevcut değil.</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is a relative path</source>
+        <translation>Belirtilen -walletdir "%s" göreli bir yoldur</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is not a directory</source>
+        <translation>Belirtilen -walletdir "%s" dizin değildir</translation>
+    </message>
+    <message>
+        <source>Sync mempool from other nodes on start (default: %u)</source>
+        <translation>Başlangıçta diğer düğümlerden mempool'u senkronize et (varsayılan: %u)</translation>
+    </message>
+    <message>
+        <source>Synchronizing blockchain...</source>
+        <translation>Blok zinciri eşleniyor...</translation>
+    </message>
+    <message>
+        <source>Target PrivateSend balance (%u-%u, default: %u)</source>
+        <translation>ÖzelGönder bakiyesini hedefle (%u-%u, varsayılan: %u)</translation>
+    </message>
+    <message>
         <source>The wallet will avoid paying less than the minimum relay fee.</source>
         <translation>Cüzdan en az aktarma ücretinden daha az ödeme yapmaktan sakınacaktır.</translation>
+    </message>
+    <message>
+        <source>This is expected because you are running a pruned node.</source>
+        <translation>Bu pruned düğümü çalıştırdığınız için beklenen bir durumdur.</translation>
     </message>
     <message>
         <source>This is the minimum transaction fee you pay on every transaction.</source>
@@ -4774,6 +4963,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Bu bilgisayarda %s unsuruna bağlanılamadı. %s muhtemelen hâlihazırda çalışmaktadır.</translation>
     </message>
     <message>
+        <source>Unable to generate initial keys</source>
+        <translation>Başlangıç anahtarları oluşturulamıyor</translation>
+    </message>
+    <message>
         <source>Upgrading UTXO database</source>
         <translation>UTXO veritabanı yükseltiliyor</translation>
     </message>
@@ -4782,12 +4975,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Verilen ad ile devnet zinciri kullan</translation>
     </message>
     <message>
-        <source>Wallet debugging/testing options:</source>
-        <translation>Cüzdan hata ayıklama/test etme seçenekleri:</translation>
+        <source>Wallet %s resides outside wallet directory %s</source>
+        <translation>Cüzdan %s, %s cüzdan dizininin dışında bulunuyor</translation>
     </message>
     <message>
-        <source>Wallet is not initialized</source>
-        <translation>Cüzdan başlatılmadı</translation>
+        <source>Wallet debugging/testing options:</source>
+        <translation>Cüzdan hata ayıklama/test etme seçenekleri:</translation>
     </message>
     <message>
         <source>Wallet needed to be rewritten: restart %s to complete</source>
@@ -4806,8 +4999,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Sadece blok kipinde çalışılıp çalışılmayacağı (varsayılan: %u)</translation>
     </message>
     <message>
-        <source>You can not start a masternode in lite mode.</source>
-        <translation>Bir ana düğümü lite modda başlatamazsınız.</translation>
+        <source>You can not start a masternode with wallet enabled.</source>
+        <translation>Cüzdan etkinleştirilmişken bir ana düğüm başlatamazsınız.</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -addressindex</source>
+        <translation>-addressindex'i değiştirmek için -reindex'i kullanarak veritabanını baştan kurmalısınız</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -spentindex</source>
+        <translation>-spentindex'i değiştirmek için -spentindex'i kullanarak veritabanını baştan kurmalısınız</translation>
+    </message>
+    <message>
+        <source>You need to rebuild the database using -reindex to change -txindex</source>
+        <translation>-txindex'i değiştirmek için veritabanını -reindex kullanarak tekrar inşa etmeniz gerekmektedir</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
@@ -4826,32 +5031,36 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>RPC sunucu seçenekleri:</translation>
     </message>
     <message>
-        <source>Biblepay Core</source>
-        <translation>Biblepay Core</translation>
+        <source>BiblePay Core</source>
+        <translation>BiblePay Core</translation>
     </message>
     <message>
         <source>The %s developers</source>
         <translation>%s geliştiricileri</translation>
     </message>
     <message>
-        <source>Accept connections from outside (default: 1 if no -proxy or -connect/-noconnect)</source>
-        <translation>Dışarıdan gelen bağlantıları kabul et (varsayılan: -proxy veya -connect/-noconnect yoksa 1)</translation>
-    </message>
-    <message>
         <source>Cannot obtain a lock on data directory %s. %s is probably already running.</source>
         <translation>%s veri dizininde kilit elde edilemedi. %s muhtemelen hâlihazırda çalışmaktadır.</translation>
-    </message>
-    <message>
-        <source>Connect only to the specified node(s); -noconnect or -connect=0 alone to disable automatic connections</source>
-        <translation>Sadece belirtilen düğümler bağlan; otomatik bağlantıları devredışı bırakmak için -noconnect veya -connect=0 yeterli</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>MIT yazılım lisansı altında dağıtılmıştır, beraberindeki %s ya da %s dosyasına bakınız.</translation>
     </message>
     <message>
+        <source>Enable use of PrivateSend for funds stored in this wallet (0-1, default: %u)</source>
+        <translation>Bu cüzdanda saklanan fonlar için ÖzelGönder kullanımını etkinleştir (0-1, varsayılan: %u)</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't enable HD on an already existing non-HD wallet</source>
+        <translation>%s yüklenirken hata: Zaten var olan bir HD olmayan cüzdanda HD etkinleştiremezsiniz</translation>
+    </message>
+    <message>
         <source>Error reading %s! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
         <translation>%s dosyasının okunması sırasında bir hata meydana geldi! Tüm anahtarlar doğru bir şekilde okundu, ancak işlem verileri ya da adres defteri ögeleri hatalı veya eksik olabilir.</translation>
+    </message>
+    <message>
+        <source>Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.</source>
+        <translation>Bir kategori için hata ayıklama bilgilerini hariç tut. Belirtilen bir veya daha fazla kategori dışındaki tüm kategoriler için hata ayıklama günlüklerini çıktılamak için -debug = 1 ile birlikte kullanılabilir.</translation>
     </message>
     <message>
         <source>Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)</source>
@@ -4882,20 +5091,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%s programını faydalı buluyorsanız lütfen katkıda bulununuz. Yazılım hakkında daha fazla bilgi için %s adresini ziyaret ediniz.</translation>
     </message>
     <message>
-        <source>Provide liquidity to PrivateSend by infrequently mixing coins on a continual basis (%u-%u, default: %u, 1=very frequent, high fees, %u=very infrequent, low fees)</source>
-        <translation>Sürekli olarak para karışımı yaparak Özel Göndere likidite sağla  (%u-%u, varsayılan: %u, 1=çok sık, yüksek ücret, %u=düşük sıklıkta, düşük ücret)</translation>
-    </message>
-    <message>
-        <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect/-noconnect)</source>
-        <translation>Eğer adresler az ise DNS lookup ile eş adresi talebi (varsayılan: 1 eğer -connect/-noconnect değilse)</translation>
-    </message>
-    <message>
-        <source>Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. Warning: Reverting this setting requires re-downloading the entire blockchain. (default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, &gt;%u = automatically prune block files to stay under the specified target size in MiB)</source>
-        <translation>Eski blokları budamayı (silme) etkinleştirerek depolama gereksinimlerini azaltın. Bu belirli blokları silmek için pruneblockchain uzak yordam çağrısına (RPC) izin verir. Eğer bloklar hedef mebibyte boyutuna ulaşırsa eski blokların otomatik olarak budanmasını sağlar. Bu kip, -txindex ve -rescan ile uyumsuzdur. Uyarı: Bu ayarı geri almak, blok zincirinin tamamını yeniden yüklemeyi gerektirir. (varsayılan: 0 = blok budaması devre dışı, 1 = RPC üzerinden manuel budamaya izin verir, &gt;%u = mebibyte olarak belirtilen hedef boyutun altında kalması için blok dosyalarını otomatik olarak budar)</translation>
-    </message>
-    <message>
         <source>Set lowest fee rate (in %s/kB) for transactions to be included in block creation. (default: %s)</source>
         <translation>Blok oluşturmaya dahil olan işlemler için en düşük ücret oranını (%s/kB olarak) ayarla. (varsayılan: %s)</translation>
+    </message>
+    <message>
+        <source>The fee rate (in %s/kB) that indicates your tolerance for discarding change by adding it to the fee (default: %s). Note: An output is discarded if it is dust at this rate, but we will always discard up to the dust relay fee and a discard fee above that is limited by the fee estimate for the longest target</source>
+        <translation>Ücrette (%s/kB cinsinden) para üstünü iptal etme toleransınızı gösteren ve bunu ücrete ekleyen (default: %s). Not: Bu orandaki çıktı toz olarak atılır, ancak her zaman toz geçişi ücretine ve yukarıdaki en uzun hedef için yapılan ücret tahmininin sınırladığı bir miktar atar.</translation>
+    </message>
+    <message>
+        <source>This is the transaction fee you may discard if change is smaller than dust at this level</source>
+        <translation>Bu, para üstü seviyesi tozdan daha küçükse, iptal edebileceğiniz işlem ücretidir.</translation>
     </message>
     <message>
         <source>This is the transaction fee you may pay when fee estimates are not available.</source>
@@ -4910,6 +5115,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Bu işlem için yeterli Özel Gönder ile birimlendirilmemiş bakiye bulunamadı.</translation>
     </message>
     <message>
+        <source>Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.</source>
+        <translation>Bloklar tekrarlanamıyor. -Reindex-chainstate kullanarak veritabanını yeniden kurmanız gerekecek.</translation>
+    </message>
+    <message>
         <source>Use N separate masternodes for each denominated input to mix funds (%u-%u, default: %u)</source>
         <translation>Her birimlendirilmiş girdi tutarı için N ayrı ana düğüm kullan (%u-%u, varsayılan: %u)</translation>
     </message>
@@ -4922,10 +5131,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>HD cüzdan (BIP39) için kullanıcı tarafından belirlenmiş anımsatıcı parola. Sadece cüzdan oluşturma/ilk açılış sırasında etkilidir (varsayılan: boş metin)</translation>
     </message>
     <message>
-        <source>Username and hashed password for JSON-RPC connections. The field &lt;userpw&gt; comes in the format: &lt;USERNAME&gt;:&lt;SALT&gt;$&lt;HASH&gt;. A canonical python script is included in share/rpcuser. The client then connects normally using the rpcuser=&lt;USERNAME&gt;/rpcpassword=&lt;PASSWORD&gt; pair of arguments. This option can be specified multiple times</source>
-        <translation>JSON-RPC bağlantıları için kullanıcı adı ve karmalanmış parola. &lt;userpw&gt; alanı şu biçimdedir: &lt;KULLANICI ADI&gt;:&lt;SALT&gt;$&lt;HASH&gt;. Kanonik bir Python betiği share/rpcuser klasöründe bulunabilir. Ardından istemci normal şekilde rpcuser=&lt;KULLANICI ADI&gt;/rpcpassword=&lt;PAROLA&gt; argüman çiftini kullanarak bağlanabilir. Bu seçenek birden çok kez belirtilebilir.</translation>
-    </message>
-    <message>
         <source>Wallet will not create transactions that violate mempool chain limits (default: %u)</source>
         <translation>Cüzdan, zincir bellek alanı limitlerini ihlal eden işlem oluşturmayacak. (varsayılan: %u)</translation>
     </message>
@@ -4934,8 +5139,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Uyarı: wallet.dat bozuk, veriler geri kazanıldı! Özgün %s, %s olarak %s klasörüne kaydedildi; bakiyeniz ya da işlemleriniz yanlışsa bir yedeklemeden tekrar yüklemeniz gerekir.</translation>
     </message>
     <message>
+        <source>Whether to save the mempool on shutdown and load on restart (default: %u)</source>
+        <translation>Kapatma sırasında mempool'un kaydedilip kaydedilmemesi ve yeniden başlatma sırasında yüklenmesi (default: %u)</translation>
+    </message>
+    <message>
         <source>Whitelist peers connecting from the given IP address (e.g. 1.2.3.4) or CIDR notated network (e.g. 1.2.3.0/24). Can be specified multiple times.</source>
         <translation>Beyaz listeye eklenen eşler verilen IP adresinden (ör. 1.2.3.4) veya CIDR ağından (ör. 1.2.3.0/24) bağlanabilir. Değerler birden çok kez kullanılabilir.</translation>
+    </message>
+    <message>
+        <source>%d of last 100 blocks have unexpected version</source>
+        <translation>Son 100 bloğun %d'si beklenmedik versiyona sahip</translation>
     </message>
     <message>
         <source>%s corrupt, salvage failed</source>
@@ -4950,10 +5163,6 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>%s çok yüksek ayarlanmış!</translation>
     </message>
     <message>
-        <source>(press q to shutdown and continue later)</source>
-        <translation>(kapatıp daha sonra devam etmek için q tuşuna basın)</translation>
-    </message>
-    <message>
         <source>-devnet can only be specified once</source>
         <translation>-devnet sadece bir kere belirtilebilir</translation>
     </message>
@@ -4964,6 +5173,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>-rpcport must be specified when -devnet and -server are specified</source>
         <translation>-devnet ve -server belirtildiğinde -rpcport da belirtilmelidir</translation>
+    </message>
+    <message>
+        <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
+        <translation>Dışarıdan gelen bağlantıları kabul et (varsayılan: -proxy veya -connect yoksa 1)</translation>
     </message>
     <message>
         <source>Allow RFC1918 addresses to be relayed and connected to (default: %u)</source>
@@ -4986,6 +5199,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Copyright (C)</translation>
     </message>
     <message>
+        <source>Create up to N inputs of each denominated amount (%u-%u, default: %u)</source>
+        <translation>Her bir miktar için en fazla N kadar giriş oluşturun (%u-%u, default: %u)</translation>
+    </message>
+    <message>
         <source>Error loading %s</source>
         <translation>%s unsurunun yüklenmesinde hata oluştu</translation>
     </message>
@@ -4996,6 +5213,14 @@ https://www.transifex.com/projects/p/biblepay/</translation>
     <message>
         <source>Error loading %s: Wallet requires newer version of %s</source>
         <translation>%s unsurunun yüklenmesinde hata oluştu: cüzdan %s programının yeni bir sürümüne ihtiyaç duyuyor</translation>
+    </message>
+    <message>
+        <source>Error loading %s: You can't disable HD on an already existing HD wallet</source>
+        <translation>%s yüklenirken hata: Zaten var olan bir HD cüzdanda HD'yi kapatamazsınız.</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. Duplicate -wallet filename specified.</source>
+        <translation>%s cüzdan yüklenirken hata oluştu. Bu dosya adı zaten mevcut.</translation>
     </message>
     <message>
         <source>Error upgrading chainstate database</source>
@@ -5014,6 +5239,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Başlatma sınaması başarısız oldu. %s kapatılıyor.</translation>
     </message>
     <message>
+        <source>Inputs vs outputs size mismatch.</source>
+        <translation>Girdi ve çıktı boyutları tutarsız.</translation>
+    </message>
+    <message>
         <source>Invalid -onion address or hostname: '%s'</source>
         <translation>Geçersiz -onion adresi veya ana makine adı: '%s'</translation>
     </message>
@@ -5030,20 +5259,12 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>-sporkaddr ile yanlış spork adresi belirtildi</translation>
     </message>
     <message>
-        <source>Keep N BIBLEPAY anonymized (%u-%u, default: %u)</source>
-        <translation>N BIBLEPAY'i anonim tut (%u-%u, varsayılan: %u)</translation>
-    </message>
-    <message>
         <source>Loading P2P addresses...</source>
         <translation>P2P adresleri yükleniyor...</translation>
     </message>
     <message>
         <source>Print this help message and exit</source>
         <translation>Bu yardım mesajını yaz ve çık</translation>
-    </message>
-    <message>
-        <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>P2P ağ uyarılarını al ve göster (varsayılan: %u)</translation>
     </message>
     <message>
         <source>Reducing -maxconnections from %d to %d, because of system limitations.</source>
@@ -5058,16 +5279,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>P2SH olmayan çoklu imzaları aktar (varsayılan: %u)</translation>
     </message>
     <message>
+        <source>Replaying blocks...</source>
+        <translation>Tekrarlanan bloklar...</translation>
+    </message>
+    <message>
         <source>Rescanning...</source>
         <translation>Yeniden tarama...</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
         <translation>Arka planda daemon (servis) olarak çalış ve komutları kabul et</translation>
-    </message>
-    <message>
-        <source>Send trace/debug info to console instead of debug.log file</source>
-        <translation>İzleme/hata ayıklama verilerini debug.log dosyası yerine konsola gönder</translation>
     </message>
     <message>
         <source>Session not complete!</source>
@@ -5102,20 +5323,16 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Veri dizinini belirt</translation>
     </message>
     <message>
-        <source>Specify wallet file (within data directory)</source>
-        <translation>Cüzdan dosyası belirtiniz (veri klasörünün içinde)</translation>
-    </message>
-    <message>
         <source>Specify your own public address</source>
         <translation>Kendi genel adresinizi tanımlayın</translation>
     </message>
     <message>
-        <source>Starting network threads...</source>
-        <translation>Ağ iş parçacıkları başlatılıyor...</translation>
+        <source>Start PrivateSend automatically (0-1, default: %u)</source>
+        <translation>ÖzelGönder'i otomatik olarak başlat (0-1, default: %u)</translation>
     </message>
     <message>
-        <source>Synchronization pending...</source>
-        <translation>Eşleme bekliyor...</translation>
+        <source>Starting network threads...</source>
+        <translation>Ağ iş parçacıkları başlatılıyor...</translation>
     </message>
     <message>
         <source>Synchronizing governance objects...</source>
@@ -5170,6 +5387,10 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Bilinmeyen durum: id = %u</translation>
     </message>
     <message>
+        <source>Unsupported logging category %s=%s.</source>
+        <translation>Desteklenmeyen günlük kaydı kategorisi %s=%s.</translation>
+    </message>
+    <message>
         <source>Username for JSON-RPC connections</source>
         <translation>JSON-RPC bağlantıları için kullanıcı ismi</translation>
     </message>
@@ -5178,16 +5399,8 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Bloklar kontrol ediliyor...</translation>
     </message>
     <message>
-        <source>Verifying wallet...</source>
-        <translation>Cüzdan kontrol ediliyor...</translation>
-    </message>
-    <message>
         <source>Very low number of keys left: %d</source>
         <translation>Çok az sayıda anahtar kaldı: %d</translation>
-    </message>
-    <message>
-        <source>Wallet %s resides outside data directory %s</source>
-        <translation>%s cüzdan %s veri klasörünün dışında bulunuyor</translation>
     </message>
     <message>
         <source>Wallet is locked.</source>
@@ -5198,20 +5411,20 @@ https://www.transifex.com/projects/p/biblepay/</translation>
         <translation>Cüzdan seçenekleri:</translation>
     </message>
     <message>
-        <source>Wallet window title</source>
-        <translation>Cüzdan penceresi başlığı</translation>
-    </message>
-    <message>
         <source>Warning</source>
         <translation>Uyarı</translation>
     </message>
     <message>
-        <source>Your entries added successfully.</source>
-        <translation>Girdileriniz başarıyla eklendi.</translation>
+        <source>You are starting with governance validation disabled.</source>
+        <translation>Yönetim doğrulama devre dışı bırakılmış bir şekilde başlıyorsunuz.</translation>
     </message>
     <message>
-        <source>Your transaction was accepted into the pool!</source>
-        <translation>İşleminiz havuza kabul edildi!</translation>
+        <source>You can not disable governance validation on a masternode.</source>
+        <translation>Bir anadüğümde yönetim doğrulamasını devre dışı bırakamazsınız.</translation>
+    </message>
+    <message>
+        <source>Your entries added successfully.</source>
+        <translation>Girdileriniz başarıyla eklendi.</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>

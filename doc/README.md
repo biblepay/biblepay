@@ -1,11 +1,11 @@
-BiblePay Core 0.14.0
-=====================
+BiblePay Core
+==========
 
-This is the official reference wallet for Biblepay digital currency and comprises the backbone of the Biblepay peer-to-peer network. You can [download BiblePay Core](https://www.biblepay.org/downloads/) or [build it yourself](#building) using the guides below.
+This is the official reference wallet for BiblePay digital currency and comprises the backbone of the BiblePay peer-to-peer network. You can [download BiblePay Core](https://www.biblepay.org/downloads/) or [build it yourself](#building) using the guides below.
 
 Running
 ---------------------
-The following are some helpful notes on how to run Biblepay on your native platform.
+The following are some helpful notes on how to run BiblePay on your native platform.
 
 ### Unix
 
@@ -20,19 +20,16 @@ Unpack the files into a directory, and then run biblepay-qt.exe.
 
 ### OS X
 
-Drag Biblepay-Qt to your applications folder, and then run Biblepay-Qt.
+Drag BiblePay-Qt to your applications folder, and then run BiblePay-Qt.
 
 ### Need Help?
 
-* See the [Biblepay documentation](https://docs.biblepay.org)
+* See the [BiblePay documentation](https://docs.biblepay.org)
 for help and more information.
-* Ask for help on [Biblepay Nation Discord](http://biblepaychat.org)
-* Ask for help on the [Biblepay Forum](https://biblepay.org/forum)
-=======
-* See the [Dash Developer Documentation](https://dash-docs.github.io/) 
+* See the [BiblePay Developer Documentation](https://biblepay-docs.github.io/) 
 for technical specifications and implementation details.
-* Ask for help on [Dash Nation Discord](http://dashchat.org)
-* Ask for help on the [Dash Forum](https://dash.org/forum)
+* Ask for help on [BiblePay Nation Discord](http://biblepaychat.org)
+* Ask for help on the [BiblePay Forum](https://biblepay.org/forum)
 
 Building
 ---------------------
@@ -62,12 +59,13 @@ The BiblePay Core repo's [root README](/README.md) contains relevant information
 - [Benchmarking](benchmarking.md)
 
 ### Resources
-* Discuss on the [Biblepay Forum](https://biblepay.org/forum), in the Development & Technical Discussion board.
-* Discuss on [Biblepay Nation Discord](http://biblepaychat.org)
+* Discuss on the [BiblePay Forum](https://biblepay.org/forum), in the Development & Technical Discussion board.
+* Discuss on [BiblePay Nation Discord](http://biblepaychat.org)
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)
 - [Files](files.md)
+- [Fuzz-testing](fuzzing.md)
 - [Reduce Traffic](reduce-traffic.md)
 - [Tor Support](tor.md)
 - [Init Scripts (systemd/upstart/openrc)](init.md)

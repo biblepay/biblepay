@@ -1,38 +1,41 @@
-// Copyright (c) 2018-2019 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2018-2020 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
-#include "consensus/validation.h"
-#include "core_io.h"
-#include "init.h"
-#include "messagesigner.h"
-#include "rpc/server.h"
-#include "utilmoneystr.h"
-#include "validation.h"
-#include "smartcontract-server.h"
-#include "kjv.h"
+#include <base58.h>
+#include <consensus/validation.h>
+#include <core_io.h>
+#include <init.h>
+#include <messagesigner.h>
+#include <rpc/safemode.h>
+#include <rpc/server.h>
+#include <txmempool.h>
+#include <utilmoneystr.h>
+#include <validation.h>
 
 #ifdef ENABLE_WALLET
-#include "wallet/coincontrol.h"
-#include "wallet/wallet.h"
-#include "wallet/rpcwallet.h"
+#include <wallet/coincontrol.h>
+#include <wallet/wallet.h>
+#include <wallet/rpcwallet.h>
 #endif//ENABLE_WALLET
 
-#include "netbase.h"
-#include "rpcpog.h"
+#include <netbase.h>
 
-#include "evo/specialtx.h"
-#include "evo/providertx.h"
-#include "evo/deterministicmns.h"
-#include "evo/simplifiedmns.h"
+#include <evo/specialtx.h>
+#include <evo/providertx.h>
+#include <evo/deterministicmns.h>
+#include <evo/simplifiedmns.h>
+
+#include <bls/bls.h>
+
+#include "masternode/masternode-meta.h"
+#include "validation.h"
+#include "kjv.h"
 #include "evo/cbtx.h"
 #include "smartcontract-client.h"
 #include "smartcontract-server.h"
-#include "rpcpodc.h"
-
-#include "bls/bls.h"
+#include "rpcutxo.h"
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 
 #ifdef ENABLE_WALLET
 extern UniValue signrawtransaction(const JSONRPCRequest& request);
@@ -44,8 +47,7 @@ std::string GetHelpString(int nParamNum, std::string strParamName)
 {
     static const std::map<std::string, std::string> mapParamHelp = {
         {"collateralAddress",
-            "%d. \"collateralAddress\"        (string, required) The address to send the collateral to.\n"
-            "                              Must be a P2PKH address.\n"
+            "%d. \"collateralAddress\"        (string, required) The biblepay address to send the collateral to.\n"
         },
         {"collateralHash",
             "%d. \"collateralHash\"           (string, required) The collateral transaction hash.\n"
@@ -68,7 +70,7 @@ std::string GetHelpString(int nParamNum, std::string strParamName)
             "                              Must be unique on the network. Can be set to 0, which will require a ProUpServTx afterwards.\n"
         },
         {"operatorKey",
-            "%d. \"operatorKey\"              (string, required) The operator private key belonging to the\n"
+            "%d. \"operatorKey\"              (string, required) The operator BLS private key associated with the\n"
             "                              registered operator public key.\n"
         },
         {"operatorPayoutAddress",
@@ -76,21 +78,30 @@ std::string GetHelpString(int nParamNum, std::string strParamName)
             "                              Only allowed when the ProRegTx had a non-zero operatorReward value.\n"
             "                              If set to an empty string, the currently active payout address is reused.\n"
         },
-        {"operatorPubKey",
-            "%d. \"operatorPubKey\"           (string, required) The operator BLS public key. The private key does not have to be known.\n"
-            "                              It has to match the private key which is later used when operating the masternode.\n"
+        {"operatorPubKey_register",
+            "%d. \"operatorPubKey\"           (string, required) The operator BLS public key. The BLS private key does not have to be known.\n"
+            "                              It has to match the BLS private key which is later used when operating the masternode.\n"
+        },
+        {"operatorPubKey_update",
+            "%d. \"operatorPubKey\"           (string, required) The operator BLS public key. The BLS private key does not have to be known.\n"
+            "                              It has to match the BLS private key which is later used when operating the masternode.\n"
+            "                              If set to an empty string, the currently active operator BLS public key is reused.\n"
         },
         {"operatorReward",
             "%d. \"operatorReward\"           (numeric, required) The fraction in %% to share with the operator. The value must be\n"
             "                              between 0.00 and 100.00.\n"
         },
         {"ownerAddress",
-            "%d. \"ownerAddress\"             (string, required) The address to use for payee updates and proposal voting.\n"
+            "%d. \"ownerAddress\"             (string, required) The biblepay address to use for payee updates and proposal voting.\n"
             "                              The private key belonging to this address must be known in your wallet. The address must\n"
             "                              be unused and must differ from the collateralAddress\n"
         },
-        {"payoutAddress",
-            "%d. \"payoutAddress\"            (string, required) The address to use for masternode reward payments.\n"
+        {"payoutAddress_register",
+            "%d. \"payoutAddress\"            (string, required) The biblepay address to use for masternode reward payments.\n"
+        },
+        {"payoutAddress_update",
+            "%d. \"payoutAddress\"            (string, required) The biblepay address to use for masternode reward payments.\n"
+            "                              If set to an empty string, the currently active payout address is reused.\n"
         },
         {"proTxHash",
             "%d. \"proTxHash\"                (string, required) The hash of the initial ProRegTx.\n"
@@ -98,10 +109,15 @@ std::string GetHelpString(int nParamNum, std::string strParamName)
         {"reason",
             "%d. reason                     (numeric, optional) The reason for masternode service revocation.\n"
         },
-        {"votingAddress",
+        {"votingAddress_register",
             "%d. \"votingAddress\"            (string, required) The voting key address. The private key does not have to be known by your wallet.\n"
             "                              It has to match the private key which is later used when voting on proposals.\n"
             "                              If set to an empty string, ownerAddress will be used.\n"
+        },
+        {"votingAddress_update",
+            "%d. \"votingAddress\"            (string, required) The voting key address. The private key does not have to be known by your wallet.\n"
+            "                              It has to match the private key which is later used when voting on proposals.\n"
+            "                              If set to an empty string, the currently active voting key address is reused.\n"
         },
     };
 
@@ -112,18 +128,18 @@ std::string GetHelpString(int nParamNum, std::string strParamName)
     return strprintf(it->second, nParamNum);
 }
 
-// Allows to specify an address or priv key. In case of an address, the priv key is taken from the wallet
+// Allows to specify BiblePay address or priv key. In case of BiblePay address, the priv key is taken from the wallet
 static CKey ParsePrivKey(CWallet* pwallet, const std::string &strKeyOrAddress, bool allowAddresses = true) {
-    CBitcoinAddress address;
-    if (allowAddresses && address.SetString(strKeyOrAddress) && address.IsValid()) {
+    CTxDestination dest = DecodeDestination(strKeyOrAddress);
+    if (allowAddresses && IsValidDestination(dest)) {
 #ifdef ENABLE_WALLET
         if (!pwallet) {
             throw std::runtime_error("addresses not supported when wallet is disabled");
         }
         EnsureWalletIsUnlocked(pwallet);
-        CKeyID keyId;
+        const CKeyID *keyID = boost::get<CKeyID>(&dest);
         CKey key;
-        if (!address.GetKeyID(keyId) || !pwallet->GetKey(keyId, key))
+        if (!keyID || !pwallet->GetKey(*keyID, key))
             throw std::runtime_error(strprintf("non-wallet or invalid address %s", strKeyOrAddress));
         return key;
 #else//ENABLE_WALLET
@@ -140,12 +156,12 @@ static CKey ParsePrivKey(CWallet* pwallet, const std::string &strKeyOrAddress, b
 
 static CKeyID ParsePubKeyIDFromAddress(const std::string& strAddress, const std::string& paramName)
 {
-    CBitcoinAddress address(strAddress);
-    CKeyID keyID;
-    if (!address.IsValid() || !address.GetKeyID(keyID)) {
+    CTxDestination dest = DecodeDestination(strAddress);
+    const CKeyID *keyID = boost::get<CKeyID>(&dest);
+    if (!keyID) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("%s must be a valid P2PKH address, not %s", paramName, strAddress));
     }
-    return keyID;
+    return *keyID;
 }
 
 static CBLSPublicKey ParseBLSPubKey(const std::string& hexKey, const std::string& paramName)
@@ -171,8 +187,14 @@ static CBLSSecretKey ParseBLSSecretKey(const std::string& hexKey, const std::str
 template<typename SpecialTxPayload>
 static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const SpecialTxPayload& payload, const CTxDestination& fundDest)
 {
-    assert(pwallet != NULL);
-    LOCK2(cs_main, pwallet->cs_wallet);
+    assert(pwallet != nullptr);
+
+    // Make sure the results are valid at least up to the most recent block
+    // the user could have gotten from another RPC command prior to now
+    pwallet->BlockUntilSyncedToCurrentChain();
+
+    LOCK2(cs_main, mempool.cs);
+    LOCK(pwallet->cs_wallet);
 
     CTxDestination nodest = CNoDestination();
     if (fundDest == nodest) {
@@ -213,7 +235,7 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
     }
 
     if (!coinControl.HasSelected()) {
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "No funds at specified address (special transaction error)");
+        throw JSONRPCError(RPC_INTERNAL_ERROR, strprintf("No funds at specified address %s", EncodeDestination(fundDest)));
     }
 
     CWalletTx wtx;
@@ -222,7 +244,7 @@ static void FundSpecialTx(CWallet* pwallet, CMutableTransaction& tx, const Speci
     int nChangePos = -1;
     std::string strFailReason;
 
-    if (!pwallet->CreateTransaction(vecSend, wtx, reservekey, nFee, nChangePos, strFailReason, &coinControl, false, ALL_COINS, false, tx.vExtraPayload.size())) {
+    if (!pwallet->CreateTransaction(vecSend, wtx, reservekey, nFee, nChangePos, strFailReason, coinControl, false, tx.vExtraPayload.size())) {
         throw JSONRPCError(RPC_INTERNAL_ERROR, strFailReason);
     }
 
@@ -279,12 +301,14 @@ static void SignSpecialTxPayloadByHash(const CMutableTransaction& tx, SpecialTxP
 
 static std::string SignAndSendSpecialTx(const CMutableTransaction& tx)
 {
+    {
     LOCK(cs_main);
 
     CValidationState state;
     if (!CheckSpecialTx(tx, chainActive.Tip(), state)) {
         throw std::runtime_error(FormatStateMessage(state));
     }
+    } // cs_main
 
     CDataStream ds(SER_NETWORK, PROTOCOL_VERSION);
     ds << tx;
@@ -304,7 +328,7 @@ void protx_register_fund_help(CWallet* const pwallet)
 {
     throw std::runtime_error(
             "protx register_fund \"collateralAddress\" \"ipAndPort\" \"ownerAddress\" \"operatorPubKey\" \"votingAddress\" operatorReward \"payoutAddress\" ( \"fundAddress\" )\n"
-            "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 1000 coins\n"
+            "\nCreates, funds and sends a ProTx to the network. The resulting transaction will move 1000 BiblePay\n"
             "to the address specified by collateralAddress and will then function as the collateral of your\n"
             "masternode.\n"
             "A few of the limitations you see in the arguments are temporary and might be lifted after DIP3\n"
@@ -314,10 +338,10 @@ void protx_register_fund_help(CWallet* const pwallet)
             + GetHelpString(1, "collateralAddress")
             + GetHelpString(2, "ipAndPort")
             + GetHelpString(3, "ownerAddress")
-            + GetHelpString(4, "operatorPubKey")
-            + GetHelpString(5, "votingAddress")
+            + GetHelpString(4, "operatorPubKey_register")
+            + GetHelpString(5, "votingAddress_register")
             + GetHelpString(6, "operatorReward")
-            + GetHelpString(7, "payoutAddress")
+            + GetHelpString(7, "payoutAddress_register")
             + GetHelpString(8, "fundAddress") +
             "\nResult:\n"
             "\"txid\"                        (string) The transaction id.\n"
@@ -339,10 +363,10 @@ void protx_register_help(CWallet* const pwallet)
             + GetHelpString(2, "collateralIndex")
             + GetHelpString(3, "ipAndPort")
             + GetHelpString(4, "ownerAddress")
-            + GetHelpString(5, "operatorPubKey")
-            + GetHelpString(6, "votingAddress")
+            + GetHelpString(5, "operatorPubKey_register")
+            + GetHelpString(6, "votingAddress_register")
             + GetHelpString(7, "operatorReward")
-            + GetHelpString(8, "payoutAddress")
+            + GetHelpString(8, "payoutAddress_register")
             + GetHelpString(9, "feeSourceAddress") +
             "\nResult:\n"
             "\"txid\"                        (string) The transaction id.\n"
@@ -363,10 +387,10 @@ void protx_register_prepare_help()
             + GetHelpString(2, "collateralIndex")
             + GetHelpString(3, "ipAndPort")
             + GetHelpString(4, "ownerAddress")
-            + GetHelpString(5, "operatorPubKey")
-            + GetHelpString(6, "votingAddress")
+            + GetHelpString(5, "operatorPubKey_register")
+            + GetHelpString(6, "votingAddress_register")
             + GetHelpString(7, "operatorReward")
-            + GetHelpString(8, "payoutAddress")
+            + GetHelpString(8, "payoutAddress_register")
             + GetHelpString(9, "feeSourceAddress") +
             "\nResult:\n"
             "{                             (json object)\n"
@@ -413,6 +437,8 @@ UniValue protx_register(const JSONRPCRequest& request)
         protx_register_prepare_help();
     }
 
+    ObserveSafeMode();
+
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
         return NullUniValue;
 
@@ -432,11 +458,11 @@ UniValue protx_register(const JSONRPCRequest& request)
     ptx.nVersion = CProRegTx::CURRENT_VERSION;
 
     if (isFundRegister) {
-        CBitcoinAddress collateralAddress(request.params[paramIdx].get_str());
-        if (!collateralAddress.IsValid()) {
+        CTxDestination collateralDest = DecodeDestination(request.params[paramIdx].get_str());
+        if (!IsValidDestination(collateralDest)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("invalid collaterall address: %s", request.params[paramIdx].get_str()));
         }
-        CScript collateralScript = GetScriptForDestination(collateralAddress.Get());
+        CScript collateralScript = GetScriptForDestination(collateralDest);
 
         CTxOut collateralTxOut(collateralAmount, collateralScript);
         tx.vout.emplace_back(collateralTxOut);
@@ -458,10 +484,8 @@ UniValue protx_register(const JSONRPCRequest& request)
     }
 
     if (request.params[paramIdx].get_str() != "") {
-        if (!Lookup(request.params[paramIdx].get_str().c_str(), ptx.addr, Params().GetDefaultPort(), false)) 
-		{
-			if (fEnforceSanctuaryPort)
-				throw std::runtime_error(strprintf("invalid network address %s", request.params[paramIdx].get_str()));
+        if (!Lookup(request.params[paramIdx].get_str().c_str(), ptx.addr, Params().GetDefaultPort(), false)) {
+            throw std::runtime_error(strprintf("invalid network address %s", request.params[paramIdx].get_str()));
         }
     }
 
@@ -481,29 +505,29 @@ UniValue protx_register(const JSONRPCRequest& request)
     }
     ptx.nOperatorReward = operatorReward;
 
-    CBitcoinAddress payoutAddress(request.params[paramIdx + 5].get_str());
-    if (!payoutAddress.IsValid()) {
+    CTxDestination payoutDest = DecodeDestination(request.params[paramIdx + 5].get_str());
+    if (!IsValidDestination(payoutDest)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("invalid payout address: %s", request.params[paramIdx + 5].get_str()));
     }
 
     ptx.keyIDOwner = keyOwner.GetPubKey().GetID();
     ptx.pubKeyOperator = pubKeyOperator;
     ptx.keyIDVoting = keyIDVoting;
-    ptx.scriptPayout = GetScriptForDestination(payoutAddress.Get());
+    ptx.scriptPayout = GetScriptForDestination(payoutDest);
 
     if (!isFundRegister) {
         // make sure fee calculation works
         ptx.vchSig.resize(65);
     }
 
-    CBitcoinAddress fundAddress = payoutAddress;
-    if (request.params.size() > paramIdx + 6) {
-        fundAddress = CBitcoinAddress(request.params[paramIdx + 6].get_str());
-        if (!fundAddress.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid address: ") + request.params[paramIdx + 6].get_str());
+    CTxDestination fundDest = payoutDest;
+    if (!request.params[paramIdx + 6].isNull()) {
+        fundDest = DecodeDestination(request.params[paramIdx + 6].get_str());
+        if (!IsValidDestination(fundDest))
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid BiblePay address: ") + request.params[paramIdx + 6].get_str());
     }
 
-    FundSpecialTx(pwallet, tx, ptx, fundAddress.Get());
+    FundSpecialTx(pwallet, tx, ptx, fundDest);
     UpdateSpecialTxInputsHash(tx, ptx);
 
     if (isFundRegister) {
@@ -527,8 +551,9 @@ UniValue protx_register(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral not found: %s", ptx.collateralOutpoint.ToStringShort()));
         }
         CTxDestination txDest;
-        CKeyID keyID;
-        if (!ExtractDestination(coin.out.scriptPubKey, txDest) || !CBitcoinAddress(txDest).GetKeyID(keyID)) {
+        ExtractDestination(coin.out.scriptPubKey, txDest);
+        const CKeyID *keyID = boost::get<CKeyID>(&txDest);
+        if (!keyID) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral type not supported: %s", ptx.collateralOutpoint.ToStringShort()));
         }
 
@@ -539,14 +564,14 @@ UniValue protx_register(const JSONRPCRequest& request)
 
             UniValue ret(UniValue::VOBJ);
             ret.push_back(Pair("tx", EncodeHexTx(tx)));
-            ret.push_back(Pair("collateralAddress", CBitcoinAddress(txDest).ToString()));
+            ret.push_back(Pair("collateralAddress", EncodeDestination(txDest)));
             ret.push_back(Pair("signMessage", ptx.MakeSignString()));
             return ret;
         } else {
             // lets prove we own the collateral
             CKey key;
-            if (!pwallet->GetKey(keyID, key)) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral key not in wallet: %s", CBitcoinAddress(keyID).ToString()));
+            if (!pwallet->GetKey(*keyID, key)) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral key not in wallet: %s", EncodeDestination(txDest)));
             }
             SignSpecialTxPayloadByString(tx, ptx, key);
             SetTxPayload(tx, ptx);
@@ -561,6 +586,8 @@ UniValue protx_register_submit(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 3) {
         protx_register_submit_help(pwallet);
     }
+
+    ObserveSafeMode();
 
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
         return NullUniValue;
@@ -615,19 +642,19 @@ UniValue protx_update_service(const JSONRPCRequest& request)
     if (request.fHelp || (request.params.size() < 4 || request.params.size() > 6))
         protx_update_service_help(pwallet);
 
+    ObserveSafeMode();
+
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
         return NullUniValue;
 
     EnsureWalletIsUnlocked(pwallet);
 
     CProUpServTx ptx;
-    ptx.nVersion = CProRegTx::CURRENT_VERSION;
+    ptx.nVersion = CProUpServTx::CURRENT_VERSION;
     ptx.proTxHash = ParseHashV(request.params[1], "proTxHash");
 
-    if (!Lookup(request.params[2].get_str().c_str(), ptx.addr, Params().GetDefaultPort(), false)) 
-	{
-		if (fEnforceSanctuaryPort)
-			throw std::runtime_error(strprintf("invalid network address %s", request.params[2].get_str()));
+    if (!Lookup(request.params[2].get_str().c_str(), ptx.addr, Params().GetDefaultPort(), false)) {
+        throw std::runtime_error(strprintf("invalid network address %s", request.params[2].get_str()));
     }
 
     CBLSSecretKey keyOperator = ParseBLSSecretKey(request.params[3].get_str(), "operatorKey");
@@ -646,15 +673,15 @@ UniValue protx_update_service(const JSONRPCRequest& request)
     tx.nType = TRANSACTION_PROVIDER_UPDATE_SERVICE;
 
     // param operatorPayoutAddress
-    if (request.params.size() >= 5) {
+    if (!request.params[4].isNull()) {
         if (request.params[4].get_str().empty()) {
             ptx.scriptOperatorPayout = dmn->pdmnState->scriptOperatorPayout;
         } else {
-            CBitcoinAddress payoutAddress(request.params[4].get_str());
-            if (!payoutAddress.IsValid()) {
+            CTxDestination payoutDest = DecodeDestination(request.params[4].get_str());
+            if (!IsValidDestination(payoutDest)) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("invalid operator payout address: %s", request.params[4].get_str()));
             }
-            ptx.scriptOperatorPayout = GetScriptForDestination(payoutAddress.Get());
+            ptx.scriptOperatorPayout = GetScriptForDestination(payoutDest);
         }
     } else {
         ptx.scriptOperatorPayout = dmn->pdmnState->scriptOperatorPayout;
@@ -663,11 +690,10 @@ UniValue protx_update_service(const JSONRPCRequest& request)
     CTxDestination feeSource;
 
     // param feeSourceAddress
-    if (request.params.size() >= 6) {
-        CBitcoinAddress feeSourceAddress = CBitcoinAddress(request.params[5].get_str());
-        if (!feeSourceAddress.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid address: ") + request.params[5].get_str());
-        feeSource = feeSourceAddress.Get();
+    if (!request.params[5].isNull()) {
+        feeSource = DecodeDestination(request.params[5].get_str());
+        if (!IsValidDestination(feeSource))
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid BiblePay address: ") + request.params[5].get_str());
     } else {
         if (ptx.scriptOperatorPayout != CScript()) {
             // use operator reward address as default source for fees
@@ -684,6 +710,27 @@ UniValue protx_update_service(const JSONRPCRequest& request)
     SetTxPayload(tx, ptx);
 
     return SignAndSendSpecialTx(tx);
+}
+
+void protx_update_registrar_help(CWallet* const pwallet)
+{
+    throw std::runtime_error(
+            "protx update_registrar \"proTxHash\" \"operatorPubKey\" \"votingAddress\" \"payoutAddress\" ( \"feeSourceAddress\" )\n"
+            "\nCreates and sends a ProUpRegTx to the network. This will update the operator key, voting key and payout\n"
+            "address of the masternode specified by \"proTxHash\".\n"
+            "The owner key of the masternode must be known to your wallet.\n"
+            + HelpRequiringPassphrase(pwallet) + "\n"
+            "\nArguments:\n"
+            + GetHelpString(1, "proTxHash")
+            + GetHelpString(2, "operatorPubKey_update")
+            + GetHelpString(3, "votingAddress_update")
+            + GetHelpString(4, "payoutAddress_update")
+            + GetHelpString(5, "feeSourceAddress") +
+            "\nResult:\n"
+            "\"txid\"                        (string) The transaction id.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("protx", "update_registrar \"0123456701234567012345670123456701234567012345670123456701234567\" \"982eb34b7c7f614f29e5c665bc3605f1beeef85e3395ca12d3be49d2868ecfea5566f11cedfad30c51b2403f2ad95b67\" \"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\"")
+    );
 }
 
 static std::map<std::string, double> mvBlockVersion;
@@ -749,26 +796,6 @@ UniValue versionreport(const JSONRPCRequest& request)
 	return uVersionReport;
 }
 
-void protx_update_registrar_help(CWallet* const pwallet)
-{
-    throw std::runtime_error(
-            "protx update_registrar \"proTxHash\" \"operatorPubKey\" \"votingAddress\" \"payoutAddress\" ( \"feeSourceAddress\" )\n"
-            "\nCreates and sends a ProUpRegTx to the network. This will update the operator key, voting key and payout\n"
-            "address of the masternode specified by \"proTxHash\".\n"
-            "The owner key of the masternode must be known to your wallet.\n"
-            + HelpRequiringPassphrase(pwallet) + "\n"
-            "\nArguments:\n"
-            + GetHelpString(1, "proTxHash")
-            + GetHelpString(2, "operatorPubKey")
-            + GetHelpString(3, "votingAddress")
-            + GetHelpString(4, "payoutAddress")
-            + GetHelpString(5, "feeSourceAddress") +
-            "\nResult:\n"
-            "\"txid\"                        (string) The transaction id.\n"
-            "\nExamples:\n"
-            + HelpExampleCli("protx", "update_registrar \"0123456701234567012345670123456701234567012345670123456701234567\" \"982eb34b7c7f614f29e5c665bc3605f1beeef85e3395ca12d3be49d2868ecfea5566f11cedfad30c51b2403f2ad95b67\" \"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\"")
-    );
-}
 
 UniValue protx_update_registrar(const JSONRPCRequest& request)
 {
@@ -777,13 +804,15 @@ UniValue protx_update_registrar(const JSONRPCRequest& request)
         protx_update_registrar_help(pwallet);
     }
 
+    ObserveSafeMode();
+
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
         return NullUniValue;
 
     EnsureWalletIsUnlocked(pwallet);
 
     CProUpRegTx ptx;
-    ptx.nVersion = CProRegTx::CURRENT_VERSION;
+    ptx.nVersion = CProUpRegTx::CURRENT_VERSION;
     ptx.proTxHash = ParseHashV(request.params[1], "proTxHash");
 
     auto dmn = deterministicMNManager->GetListAtChainTip().GetMN(ptx.proTxHash);
@@ -801,15 +830,19 @@ UniValue protx_update_registrar(const JSONRPCRequest& request)
         ptx.keyIDVoting = ParsePubKeyIDFromAddress(request.params[3].get_str(), "voting address");
     }
 
-    CBitcoinAddress payoutAddress(request.params[4].get_str());
-    if (!payoutAddress.IsValid()) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("invalid payout address: %s", request.params[4].get_str()));
+    CTxDestination payoutDest;
+    ExtractDestination(ptx.scriptPayout, payoutDest);
+    if (request.params[4].get_str() != "") {
+        payoutDest = DecodeDestination(request.params[4].get_str());
+        if (!IsValidDestination(payoutDest)) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("invalid payout address: %s", request.params[4].get_str()));
+        }
+        ptx.scriptPayout = GetScriptForDestination(payoutDest);
     }
-    ptx.scriptPayout = GetScriptForDestination(payoutAddress.Get());
 
     CKey keyOwner;
     if (!pwallet->GetKey(dmn->pdmnState->keyIDOwner, keyOwner)) {
-        throw std::runtime_error(strprintf("Private key for owner address %s not found in your wallet", CBitcoinAddress(dmn->pdmnState->keyIDOwner).ToString()));
+        throw std::runtime_error(strprintf("Private key for owner address %s not found in your wallet", EncodeDestination(dmn->pdmnState->keyIDOwner)));
     }
 
     CMutableTransaction tx;
@@ -819,14 +852,14 @@ UniValue protx_update_registrar(const JSONRPCRequest& request)
     // make sure we get anough fees added
     ptx.vchSig.resize(65);
 
-    CBitcoinAddress feeSourceAddress = payoutAddress;
-    if (request.params.size() > 5) {
-        feeSourceAddress = CBitcoinAddress(request.params[5].get_str());
-        if (!feeSourceAddress.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid address: ") + request.params[5].get_str());
+    CTxDestination feeSourceDest = payoutDest;
+    if (!request.params[5].isNull()) {
+        feeSourceDest = DecodeDestination(request.params[5].get_str());
+        if (!IsValidDestination(feeSourceDest))
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid BiblePay address: ") + request.params[5].get_str());
     }
 
-    FundSpecialTx(pwallet, tx, ptx, feeSourceAddress.Get());
+    FundSpecialTx(pwallet, tx, ptx, feeSourceDest);
     SignSpecialTxPayloadByHash(tx, ptx, keyOwner);
     SetTxPayload(tx, ptx);
 
@@ -861,18 +894,20 @@ UniValue protx_revoke(const JSONRPCRequest& request)
         protx_revoke_help(pwallet);
     }
 
+    ObserveSafeMode();
+
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp))
         return NullUniValue;
 
     EnsureWalletIsUnlocked(pwallet);
 
     CProUpRevTx ptx;
-    ptx.nVersion = CProRegTx::CURRENT_VERSION;
+    ptx.nVersion = CProUpRevTx::CURRENT_VERSION;
     ptx.proTxHash = ParseHashV(request.params[1], "proTxHash");
 
     CBLSSecretKey keyOperator = ParseBLSSecretKey(request.params[2].get_str(), "operatorKey");
 
-    if (request.params.size() > 3) {
+    if (!request.params[3].isNull()) {
         int32_t nReason = ParseInt32V(request.params[3], "reason");
         if (nReason < 0 || nReason > CProUpRevTx::REASON_LAST) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("invalid reason %d, must be between 0 and %d", nReason, CProUpRevTx::REASON_LAST));
@@ -893,11 +928,11 @@ UniValue protx_revoke(const JSONRPCRequest& request)
     tx.nVersion = 3;
     tx.nType = TRANSACTION_PROVIDER_UPDATE_REVOKE;
 
-    if (request.params.size() > 4) {
-        CBitcoinAddress feeSourceAddress = CBitcoinAddress(request.params[4].get_str());
-        if (!feeSourceAddress.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid address: ") + request.params[4].get_str());
-        FundSpecialTx(pwallet, tx, ptx, feeSourceAddress.Get());
+    if (!request.params[4].isNull()) {
+        CTxDestination feeSourceDest = DecodeDestination(request.params[4].get_str());
+        if (!IsValidDestination(feeSourceDest))
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid BiblePay address: ") + request.params[4].get_str());
+        FundSpecialTx(pwallet, tx, ptx, feeSourceDest);
     } else if (dmn->pdmnState->scriptOperatorPayout != CScript()) {
         // Using funds from previousely specified operator payout address
         CTxDestination txDest;
@@ -991,14 +1026,21 @@ UniValue BuildDMNListEntry(CWallet* pwallet, const CDeterministicMNCPtr& dmn, bo
         ownsCollateral = CheckWalletOwnsScript(pwallet, collateralTx->vout[dmn->collateralOutpoint.n].scriptPubKey);
     }
 
-    UniValue walletObj(UniValue::VOBJ);
-    walletObj.push_back(Pair("hasOwnerKey", hasOwnerKey));
-    walletObj.push_back(Pair("hasOperatorKey", hasOperatorKey));
-    walletObj.push_back(Pair("hasVotingKey", hasVotingKey));
-    walletObj.push_back(Pair("ownsCollateral", ownsCollateral));
-    walletObj.push_back(Pair("ownsPayeeScript", CheckWalletOwnsScript(pwallet, dmn->pdmnState->scriptPayout)));
-    walletObj.push_back(Pair("ownsOperatorRewardScript", CheckWalletOwnsScript(pwallet, dmn->pdmnState->scriptOperatorPayout)));
-    o.push_back(Pair("wallet", walletObj));
+#ifdef ENABLE_WALLET
+    if (pwallet) {
+        UniValue walletObj(UniValue::VOBJ);
+        walletObj.push_back(Pair("hasOwnerKey", hasOwnerKey));
+        walletObj.push_back(Pair("hasOperatorKey", hasOperatorKey));
+        walletObj.push_back(Pair("hasVotingKey", hasVotingKey));
+        walletObj.push_back(Pair("ownsCollateral", ownsCollateral));
+        walletObj.push_back(Pair("ownsPayeeScript", CheckWalletOwnsScript(pwallet, dmn->pdmnState->scriptPayout)));
+        walletObj.push_back(Pair("ownsOperatorRewardScript", CheckWalletOwnsScript(pwallet, dmn->pdmnState->scriptOperatorPayout)));
+        o.push_back(Pair("wallet", walletObj));
+    }
+#endif
+
+    auto metaInfo = mmetaman.GetMetaInfo(dmn->proTxHash);
+    o.push_back(Pair("metaInfo", metaInfo->ToJson()));
 
     return o;
 }
@@ -1016,7 +1058,7 @@ UniValue protx_list(const JSONRPCRequest& request)
 #endif
 
     std::string type = "registered";
-    if (request.params.size() > 1) {
+    if (!request.params[1].isNull()) {
         type = request.params[1].get_str();
     }
 
@@ -1031,13 +1073,13 @@ UniValue protx_list(const JSONRPCRequest& request)
 #ifdef ENABLE_WALLET
         LOCK2(cs_main, pwallet->cs_wallet);
 
-        if (request.params.size() > 3) {
+        if (request.params.size() > 4) {
             protx_list_help();
         }
 
-        bool detailed = request.params.size() > 2 ? ParseBoolV(request.params[2], "detailed") : false;
+        bool detailed = !request.params[2].isNull() ? ParseBoolV(request.params[2], "detailed") : false;
 
-        int height = request.params.size() > 3 ? ParseInt32V(request.params[3], "height") : chainActive.Height();
+        int height = !request.params[3].isNull() ? ParseInt32V(request.params[3], "height") : chainActive.Height();
         if (height < 1 || height > chainActive.Height()) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid height specified");
         }
@@ -1067,9 +1109,9 @@ UniValue protx_list(const JSONRPCRequest& request)
 
         LOCK(cs_main);
 
-        bool detailed = request.params.size() > 2 ? ParseBoolV(request.params[2], "detailed") : false;
+        bool detailed = !request.params[2].isNull() ? ParseBoolV(request.params[2], "detailed") : false;
 
-        int height = request.params.size() > 3 ? ParseInt32V(request.params[3], "height") : chainActive.Height();
+        int height = !request.params[3].isNull() ? ParseInt32V(request.params[3], "height") : chainActive.Height();
         if (height < 1 || height > chainActive.Height()) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "invalid height specified");
         }
@@ -1194,83 +1236,154 @@ UniValue protx_diff(const JSONRPCRequest& request)
     );
 }
 
-UniValue nonfinancialtxtojson(const JSONRPCRequest& request)
+UniValue protx(const JSONRPCRequest& request)
 {
-	if (request.fHelp)
-		throw std::runtime_error("nonfinancialtxtojson txid\nDescribes a non-financial transaction (dev use only).");
+    if (request.fHelp && request.params.empty()) {
+        protx_help();
+    }
 
-	uint256 uHash = ParseHashV(request.params[0], "nonFinancialTxId");
-    CTransactionRef nonFinTx;
-	
-    uint256 tmpHashBlock;
-    if (!GetTransaction(uHash, nonFinTx, Params().GetConsensus(), tmpHashBlock)) 
-		throw std::runtime_error("Unable to find this non-financial-txid.");
-	
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << nonFinTx;
-    std::string sNonFinHex = HexStr(ssTx.begin(), ssTx.end());
+    std::string command;
+    if (!request.params[0].isNull()) {
+        command = request.params[0].get_str();
+    }
 
-	CMutableTransaction mNonFinTx;
-    if (!DecodeHexTx(mNonFinTx, sNonFinHex)) 
-		throw std::runtime_error("Unable to decode non-financial-tx.");
-
-	CNonFinancialTx ptx;
-	if (!GetTxPayload(mNonFinTx, ptx)) 
-		throw std::runtime_error("Unable to retrieve non-financial payload.");
-
-    if (mNonFinTx.nType != TRANSACTION_NON_FINANCIAL) 
-			throw std::runtime_error("Not a non-financial transaction.");
-	UniValue obj;
-    ptx.ToJson(obj);
-	return obj;
+#ifdef ENABLE_WALLET
+    if (command == "register" || command == "register_fund" || command == "register_prepare") {
+        return protx_register(request);
+    } else if (command == "register_submit") {
+        return protx_register_submit(request);
+    } else if (command == "update_service") {
+        return protx_update_service(request);
+    } else if (command == "update_registrar") {
+        return protx_update_registrar(request);
+    } else if (command == "revoke") {
+        return protx_revoke(request);
+    } else
+#endif
+    if (command == "list") {
+        return protx_list(request);
+    } else if (command == "info") {
+        return protx_info(request);
+    } else if (command == "diff") {
+        return protx_diff(request);
+    } else {
+        protx_help();
+    }
 }
 
-UniValue createnonfinancialtransaction(const JSONRPCRequest& request)
+void bls_generate_help()
 {
-	if (request.fHelp)
-		throw std::runtime_error("createnonfinancialtransaction (dev use only)\nCreates a non-financial transaction (dev use only).");
+    throw std::runtime_error(
+            "bls generate\n"
+            "\nReturns a BLS secret/public key pair.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"secret\": \"xxxx\",        (string) BLS secret key\n"
+            "  \"public\": \"xxxx\",        (string) BLS public key\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("bls generate", "")
+    );
+}
 
-	CNonFinancialTx ptx;
-	ptx.nVersion = CProRegTx::CURRENT_VERSION;
-	ptx.proTxHash = uint256S("0x01");
-	ptx.inputsHash = uint256S("0x02");
-	ptx.sNonce = GetRandHash().GetHex();
-	ptx.sObjectType = "PRAYER";
-	ptx.sKey = "OUT_TX_P_01";
-	ptx.sValue = "Let us pray for divine assistance in Venezuela for those short of medicine or food.";
-	ptx.dsqlHash = uint256S("0x03");
-	ptx.iObjectSize = 125;
-	ptx.sExtraPayload = "In Jesus Name, Amen.";
-	ptx.nTimestamp = GetAdjustedTime();
-	CMutableTransaction tx;
-	tx.nVersion = 3;
-	tx.nType = TRANSACTION_NON_FINANCIAL;
-	std::string sPayAddress = DefaultRecAddress("Christian-Public-Key"); 
-	CBitcoinAddress baPayAddress(sPayAddress);
-	bool fSubtractFee = false;
-	bool fInstantSend = false;
-	std::string sError;
-	std::string sData = "<NONFINANCIALTX/>";
-	// Send minute amount of currency to CPK to ensure we can afford to fund the non-financial Tx
-	CWalletTx wtx;
-	bool fSent = RPCSendMoney(sError, baPayAddress.Get(), 1 * COIN, fSubtractFee, wtx, fInstantSend, sData);
-	CTxDestination feeSource;
-	feeSource = baPayAddress.Get();
-	// Fund the non financial tx
-	FundSpecialTx(pwalletMain, tx, ptx, feeSource);
-	// sign the non financial with the CPK
-	CKeyID keyID;
-	if (!baPayAddress.GetKeyID(keyID))
+UniValue bls_generate(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) {
+        bls_generate_help();
+    }
+
+    CBLSSecretKey sk;
+    sk.MakeNewKey();
+
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("secret", sk.ToString()));
+    ret.push_back(Pair("public", sk.GetPublicKey().ToString()));
+    return ret;
+}
+
+void bls_fromsecret_help()
+{
+    throw std::runtime_error(
+            "bls fromsecret \"secret\"\n"
+            "\nParses a BLS secret key and returns the secret/public key pair.\n"
+            "\nArguments:\n"
+            "1. \"secret\"                (string, required) The BLS secret key\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"secret\": \"xxxx\",        (string) BLS secret key\n"
+            "  \"public\": \"xxxx\",        (string) BLS public key\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("bls fromsecret", "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+    );
+}
+
+UniValue bls_fromsecret(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2) {
+        bls_fromsecret_help();
+    }
+
+    CBLSSecretKey sk;
+    if (!sk.SetHexStr(request.params[1].get_str())) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Secret key must be a valid hex string of length %d", sk.SerSize*2));
+    }
+
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("secret", sk.ToString()));
+    ret.push_back(Pair("public", sk.GetPublicKey().ToString()));
+    return ret;
+}
+
+[[ noreturn ]] void bls_help()
+{
+    throw std::runtime_error(
+            "bls \"command\" ...\n"
+            "Set of commands to execute BLS related actions.\n"
+            "To get help on individual commands, use \"help bls command\".\n"
+            "\nArguments:\n"
+            "1. \"command\"        (string, required) The command to execute\n"
+            "\nAvailable commands:\n"
+            "  generate          - Create a BLS secret/public key pair\n"
+            "  fromsecret        - Parse a BLS secret key and return the secret/public key pair\n"
+            );
+}
+
+bool AcquireWallet3()
+{
+	std::vector<CWallet*> wallets = GetWallets();
+	if (wallets.size() > 0)
 	{
-		sError = "Address does not refer to key";
-		return sError;
+		pwalletpog = wallets[0];
+		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
+		return true;
 	}
-	CKey key;
-	if (!pwalletMain->GetKey(keyID, key)) 
-		throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("collateral key not in wallet: %s", CBitcoinAddress(keyID).ToString()));
-    SignSpecialTxPayloadByString(tx, ptx, key);
- 	SetTxPayload(tx, ptx);
-	return SignAndSendSpecialTx(tx);
+	else
+	{
+		pwalletpog = NULL;
+		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
+	}
+	return false;
+}
+
+UniValue _bls(const JSONRPCRequest& request)
+{
+    if (request.fHelp && request.params.empty()) {
+        bls_help();
+    }
+
+    std::string command;
+    if (!request.params[0].isNull()) {
+        command = request.params[0].get_str();
+    }
+
+    if (command == "generate") {
+        return bls_generate(request);
+    } else if (command == "fromsecret") {
+        return bls_fromsecret(request);
+    } else {
+        bls_help();
+    }
 }
 
 UniValue trackdashpay(const JSONRPCRequest& request)
@@ -1386,11 +1499,10 @@ UniValue dashpay(const JSONRPCRequest& request)
 	std::string sDashPayAddress = GetSporkValue("DashPayAddress");
 	const CChainParams& chainparams = Params();
 
-	CBitcoinAddress baDest(sDashPayAddress);
 	if (sDashAddress.empty())
 		throw std::runtime_error("Dash Destination address must be populated.");
 
-	if (!baDest.IsValid() || sDashAddress.length() != 34 || sDashAddress.substr(0,1) != "X")
+	if (!ValidateAddress2(sDashAddress) || sDashAddress.length() != 34 || sDashAddress.substr(0,1) != "X")
 		throw std::runtime_error("Sorry, DashPay destination address is invalid for this IX transaction.");
 	
 	bool fSubtractFee = false;
@@ -1400,7 +1512,9 @@ UniValue dashpay(const JSONRPCRequest& request)
 	if (sErrorDryRun.empty() && sError.empty() && nMode == 1)
 	{
 		// Set up an atomic transaction here
-		fSent = RPCSendMoney(sError, baDest.Get(), nCoinAmount * COIN, fSubtractFee, wtx, fInstantSend, sXML);
+		CScript spkDest = GetScriptForDestination(DecodeDestination(sDashAddress));
+			
+		fSent = RPCSendMoney(sError, spkDest, nCoinAmount * COIN, fSubtractFee, wtx, fInstantSend, sXML);
 		if (fSent)
 		{
 			sXML += "<txid>" + wtx.GetHash().GetHex() + "</txid>";
@@ -1579,20 +1693,28 @@ UniValue easystake(const JSONRPCRequest& request)
 {
 	// Jan 20, 2021 - Easy Stake - R ANDREWS - BIBLEPAY
 		
-	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real";
+	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real  [Optional `Ticker`=Override Foreign Ticker]";
 	std::string sError;
-	if (request.fHelp || (request.params.size() != 4))
+	if (request.fHelp || (request.params.size() != 4 && request.params.size() != 5))
 		throw std::runtime_error(sHelp.c_str());
 		
 	double nMin = cdbl(request.params[0].getValStr(), 2);
+	std::string sTickerOverride;
+	if (request.params.size() > 4)
+		sTickerOverride = request.params[4].getValStr();
+
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
-	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	bool fWallet = AcquireWallet();
+	AcquireWallet3();
+
+	std::string sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
+
 	if (sBBPUTXO.empty())
 	{
 		// They dont have one with 1+ day of age; try one without age
 		LogPrintf("\nEasyStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
-		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+		sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	}
 	if (sBBPUTXO.empty())
 	{
@@ -1606,7 +1728,10 @@ UniValue easystake(const JSONRPCRequest& request)
 	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
 	std::string sForeignAddress = request.params[1].getValStr();
 	std::string sForeignTicker = GetSymbolFromAddress(sForeignAddress);
-	
+	if (!sTickerOverride.empty())
+		sForeignTicker = sTickerOverride;
+	boost::to_upper(sForeignTicker);
+		
 	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
 	bool fDryRun = cdbl(request.params[3].getValStr(), 0) == 0;
 	bool fReturnFirst = (nForeignAmount == -1);
@@ -1636,7 +1761,7 @@ UniValue easystake(const JSONRPCRequest& request)
 	std::string sTXID;
 	UTXOStake ds;
 
-	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	std::string sBBPSig = pwalletpog->SignBBPUTXO(sBBPUTXO, sError);
 	if (!sError.empty())
 	{
 		results.push_back(Pair("BBP Signing Error", sError));
@@ -1685,12 +1810,14 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
-	std::string sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 1, sBBPAddress, nBBPReturnAmount);
+	bool fWallet = AcquireWallet3();
+
+	std::string sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	if (sBBPUTXO.empty())
 	{
 		// They dont have one with 1+ day of age; try one without age
 		LogPrintf("\nEasyBBPStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
-		sBBPUTXO = pwalletMain->GetBestUTXO(nMin * COIN, 0, sBBPAddress, nBBPReturnAmount);
+		sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	}
 	
 	if (sBBPUTXO.empty())
@@ -1713,7 +1840,7 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 
 	std::string sTXID;
 	UTXOStake ds;
-	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	std::string sBBPSig = pwalletpog->SignBBPUTXO(sBBPUTXO, sError);
 	if (!sError.empty())
 	{
 		results.push_back(Pair("BBP Signing Error", sError));
@@ -1782,7 +1909,7 @@ UniValue utxostake(const JSONRPCRequest& request)
 
 	std::string sError;
 
-	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
+	std::string sBBPSig = pwalletpog->SignBBPUTXO(sBBPUTXO, sError);
 	UniValue results(UniValue::VOBJ);
 
 	if (!sError.empty())
@@ -1827,84 +1954,6 @@ UniValue utxostake(const JSONRPCRequest& request)
 	return results;
 }
 
-
-UniValue dashstake(const JSONRPCRequest& request)
-{
-	// Dash Staking
-	// This allows you to lock up Y amount of Dash + Z amount of BBP in a contract, and receive monthly rewards on this amount.
-	// Starting initially as of September 15th, 2020, we will start with 6 month contracts (this is primarily to ensure the prices of each underlying currency do not change significatly since the start date of the contract).
-	// IE, assets will need to be re-locked once every 6 months to ensure fresh price quotes (as we strive to lock roughly equal amounts of BBP with equal amounts of DASH).
-	// However, we do tolerate price changes during the duration of the contract.
-	// But, if either asset is spent, the contract is cancelled (cancelled during our next GSC height after an asset is spent).
-	// You can see if a contract is in force by looking at the "expiration" and the "expired" and the "spent" fields of each contract.
-	// Contracts pay interest rewards MONTHLY.  At the contract height + 30*205 successively, for each period.
-	// To get a dashstake quote, type 'dashstakequote' first.
-	// Example:
-	// dashstake BBP_UTXO-ORDINAL DASH_UTXO-ORDINAL DASH_SIGNATURE 0=test/1=authorize
-	// To create a signature, from DASH type:  signmessage dash_public_key DASH-UTXO-ORDINAL <enter>.  Copy the Dash signature into the BiblePay 'dashstake' command.
-
-	// NOTE:  UTXOs cannot be re-used until a contract expires.
-	// The lower stake amount denominated in BBP is used to assess the MonthlyEarnings based on the market value of Dash and BBP at the time the contract is created.
-	// You may re-lock after expiration.
-
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-		
-	std::string sHelp = "You must specify dashstake BBP_UTXO-ORDINAL DASH_UTXO-ORDINAL DASH_SIGNATURE I_AGREE=Authorize.\n" + GetHowey(true, false);
-	
-	if (request.fHelp || (request.params.size() != 4))
-		throw std::runtime_error(sHelp.c_str());
-		
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	std::string sBBPUTXO = request.params[0].get_str();
-	std::string sDashUTXO = request.params[1].get_str();
-	std::string sDashSig = request.params[2].get_str();
-
-	std::string sError;
-
-	std::string sBBPSig = SignBBPUTXO(sBBPUTXO, sError);
-	UniValue results(UniValue::VOBJ);
-
-	if (!sError.empty())
-	{
-		results.push_back(Pair("BBP Signing Error", sError));
-		return results;
-	}
-
-	std::string sAuth = request.params[3].get_str();
-
-	WhaleMetric wm = GetDashStakeMetrics(chainActive.Tip()->nHeight, true);
-	std::string sTXID;
-	DashStake ds;
-	if (sAuth == "I_AGREE")
-	{
-		bool fSent = SendDashStake(sCPK, sTXID, sError, sBBPUTXO, sDashUTXO, sBBPSig, sDashSig, 30 * 6.5, sCPK, false, ds);
-		if (!fSent || !sError.empty())
-		{
-			results.push_back(Pair("DWU", RoundToString(GetDWUBasedOnMaturity(30 * 6.5, wm.DWU) * 100, 4)));
-			results.push_back(Pair("Error (Not Sent)", sError));
-		}
-		else
-		{
-			ds = GetDashStakeByUTXO(sBBPUTXO);
-			LockUTXOStakes();
-			results.push_back(Pair("DWU", ds.ActualDWU * 100));
-			results.push_back(Pair("Next Payment Height", ds.Height + BLOCKS_PER_DAY));
-			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
-			results.push_back(Pair("Dash Value USD", ds.nDashValueUSD));
-			results.push_back(Pair("BBP Qty", ds.nBBPQty));
-			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
-			results.push_back(Pair("Dash Amount", (double)ds.nDashAmount/COIN));
-			results.push_back(Pair("Results", "The Dash Stake Contract was created successfully.  Thank you for using BIBLEPAY and DASH. "));
-			results.push_back(Pair("TXID", sTXID));
-		}
-	}
-	else
-	{
-		throw std::runtime_error(sHelp.c_str());
-	}
-	return results;
-}
-
 UniValue listexpenses(const JSONRPCRequest& request)
 {
 	std::string sHelp = "You must specify listexpenses max_days";
@@ -1936,68 +1985,15 @@ UniValue listexpenses(const JSONRPCRequest& request)
 	return results;
 }
 
-UniValue dws(const JSONRPCRequest& request)
-{
-	// Dynamic Whale Staking
-	// dws amount duration_in_days 0=test/1=authorize
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-		
-	std::string sHelp = "You must specify dws amount duration_in_days 0=test/I_AGREE=Authorize [optional=SPECIFIC_STAKE_RETURN_ADDRESS (If Left Empty, we will send your stake back to your CPK)].\n" + GetHowey(true, true);
-	
-	if (request.fHelp || (request.params.size() != 3 && request.params.size() != 4))
-		throw std::runtime_error(sHelp.c_str());
-	double nAmt = cdbl(request.params[0].get_str(), 2);
-	double nDuration = cdbl(request.params[1].get_str(), 0);
-	std::string sAuthorize = request.params[2].get_str();
-	
-	std::string sReturnAddress = DefaultRecAddress("Christian-Public-Key");
-	if (request.params.size() > 3)
-	{
-		sReturnAddress = request.params[3].get_str();
-	}
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	UniValue results(UniValue::VOBJ);
-
-	results.push_back(Pair("Staking Amount", nAmt));
-	results.push_back(Pair("Duration", nDuration));
-	int64_t nStakeTime = GetAdjustedTime();
-	int64_t nReclaimTime = (86400 * nDuration) + nStakeTime;
-	WhaleMetric wm = GetWhaleMetrics(chainActive.Tip()->nHeight, true);
-	results.push_back(Pair("Reclaim Date", TimestampToHRDate(nReclaimTime)));
-	results.push_back(Pair("Return Address", sReturnAddress));
-	results.push_back(Pair("DWU", RoundToString(GetDWUBasedOnMaturity(nDuration, wm.DWU) * 100, 4)));
-	std::string sTXID;
-	std::string sError;
-	if (sAuthorize == "I_AGREE")
-	{
-		bool fSent = SendDWS(sTXID, sError, sReturnAddress, sCPK, nAmt, nDuration, false);
-		if (!fSent || !sError.empty())
-		{
-			results.push_back(Pair("Error (Not Sent)", sError));
-		}
-		else
-		{
-			results.push_back(Pair("Results", "Burn was successful.  You will receive your original " + CURRENCY_NAME + " back on the Reclaim Date, plus the stake reward.  Please give the wallet an extra 48 hours after the reclaim date to process the return stake.  "));
-			results.push_back(Pair("TXID", sTXID));
-		}
-	}
-	else
-	{
-		// Dry Run
-		results.push_back(Pair("Test Mode", GetHowey(true, true)));
-	}
-	return results;
-}
-
 UniValue getpin(const JSONRPCRequest& request)
 {
 	if (request.fHelp || (request.params.size() != 1))
 		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, etc. \r\n");
 	UniValue results(UniValue::VOBJ);
 	std::string s2 = request.params[0].get_str();
-	if (s2.length() != 34)
+	if (s2.length() != 34 && s2.length() != 42)
 	{
-		throw std::runtime_error("Address must be 34 characters long. ");
+		throw std::runtime_error("Address must be 34 characters long (BTC/ALTCOIN) or 42 characters long (ETH). ");
 	}
 	double nPin = AddressToPin(s2);
 	results.push_back(Pair("pin", nPin));
@@ -2026,8 +2022,7 @@ UniValue give(const JSONRPCRequest& request)
 		{
 			// ToDo:  Report to the user the % and Charity Name as we iterate through the gift, and show which orphans were affected by this persons generosity
 			results.push_back(Pair("Allocated Charity", sAllocatedCharity));
-			CBitcoinAddress baCharity(sAllocatedCharity);
-			CScript spkCharity = GetScriptForDestination(baCharity.Get());
+			CScript spkCharity = GetScriptForDestination(DecodeDestination(sAllocatedCharity));
 			CAmount nAmount = dGive * nPct * COIN;
 			results.push_back(Pair("Amount", (double)nAmount/COIN));
 			CRecipient recipient = {spkCharity, nAmount, false, fSubtractFeeFromAmount};
@@ -2038,17 +2033,22 @@ UniValue give(const JSONRPCRequest& request)
 	bool fUseInstantSend = false;
 	std::string sError;
 	CValidationState state;
-	CReserveKey reserveKey(pwalletMain);
+	AcquireWallet3();
+
+	CReserveKey reserveKey(pwalletpog);
 	CWalletTx wtx;
 	std::string sGiftXML = "<gift><amount>" + RoundToString(dGive, 2) + "</amount></gift>";
-	bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, NULL, true, ALL_COINS, fUseInstantSend, 0, sGiftXML);
+    CCoinControl coinControl;
+    
+	bool fCreated = pwalletpog->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl,
+		true, 0, sGiftXML);
 	if (!fCreated)    
 	{
 		results.push_back(Pair("Error", sError));
 	}
 	else
 	{
-		if (!pwalletMain->CommitTransaction(wtx, reserveKey, g_connman.get(), state, NetMsgType::TX))
+		if (!pwalletpog->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
 		{
 			throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
 		}
@@ -2058,273 +2058,6 @@ UniValue give(const JSONRPCRequest& request)
 	{
 		results.push_back(Pair("Thank You", "May your family be blessed with the richest blessings of Abraham, Isaac and Jacob. "));
 	}
-	return results;
-}
-
-UniValue dashstakequote(const JSONRPCRequest& request)
-{
-	// Dash Whale Staking
-	if (request.fHelp || (request.params.size() != 0 && request.params.size() != 1 && request.params.size() != 2 && request.params.size() != 3))
-		throw std::runtime_error("You must specify dashstakequote [optional 1=my dash stakes only, 2=all whale stakes] [optional 1=Include Expired, 2=Include Non-Expired only (default)].");
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	UniValue results(UniValue::VOBJ);
-	double dDetails = 0;
-	double dAdvanced = 0;
-	if (request.params.size() > 0)
-		dDetails = cdbl(request.params[0].get_str(), 0);
-	double dExpired = 2;
-	if (request.params.size() > 1)
-		dExpired = cdbl(request.params[1].get_str(), 0);
-
-	if (request.params.size() > 2)
-		dAdvanced = cdbl(request.params[2].get_str(), 0);
-
-	if (dDetails == 1 || dDetails == 2)
-	{
-		std::vector<DashStake> w = GetDashStakes(true);
-		results.push_back(Pair("Total Dash Stake Quantity", (int)w.size()));
-		for (int i = 0; i < w.size(); i++)
-		{
-			DashStake ws = w[i];
-			bool fIncExpired = (!ws.expired && dExpired == 2) || (dExpired == 1);
-			if (ws.found && fIncExpired && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK)))
-			{
-				std::string sRow = "BBPQty: "+ RoundToString(ws.nBBPQty, 2) + ", BBPAmount: " + RoundToString((double)ws.nBBPAmount/COIN, 2) 
-					+ ", DashAmount: "+ RoundToString((double)ws.nDashAmount/COIN, 2)
-					+ ", MonthlyReward: " + RoundToString(ws.MonthlyEarnings, 2) 
-					+ ", DWU: " + RoundToString(GetDWUBasedOnMaturity(ws.Duration, ws.DWU) * 100, 4) 
-					+ ", Duration: " + RoundToString(ws.Duration, 0) 
-					+ ", Height: " + RoundToString(ws.Height, 0) 
-					+ ", Time: " + TimestampToHRDate(ws.Time)
-					+ ", Expiration: " + TimestampToHRDate(ws.MaturityTime)
-					+ ", BBPUTXO: "+ ws.BBPUTXO + ", DASHUTXO: "+ ws.DashUTXO + ", BBPSIG: "+ ws.BBPSignature + ", DashSig: "+ ws.DashSignature 
-					+ ", BBPPrice: "+ RoundToString(ws.nBBPPrice, 12) + ", DashPrice: "+ RoundToString(ws.nDashPrice, 12) + ", BTCPrice: "
-					+ RoundToString(ws.nBTCPrice, 12) + ", BBP_VALUE_USD: "+ RoundToString(ws.nBBPValueUSD, 4) + ", DASH_VALUE_USD: "
-					+ RoundToString(ws.nDashValueUSD, 4) + ", BBPAddress: "+ ws.BBPAddress + ", DashAddress: "+ ws.DashAddress;
-				// Found, Not Expired, Not Spent, and SignatureValue, and MonthlyEarnings > 0
-				bool fPassesPaymentRequirements = ws.found && !ws.expired && ws.MonthlyEarnings > 0 && ws.SignatureValid && !ws.spent;
-				sRow += ", Expired: " + ToYesNo(ws.expired) + ", SigValid: "+ ToYesNo(ws.SignatureValid) + ", BBPSig: " + ToYesNo(ws.BBPSignatureValid) 
-					+ ", DashSig: " + ToYesNo(ws.DashSignatureValid) + ", Spent: "+ ToYesNo(ws.spent) + ", Payable: " + ToYesNo(fPassesPaymentRequirements);
-
-				std::string sKey = ws.CPK + "-" + RoundToString(i + 1, 0) + "-" + ws.BBPUTXO + "-" + ws.DashUTXO;
-
-				if (fPassesPaymentRequirements)
-					results.push_back(Pair(sKey, sRow));
-			}
-		}
-	}
-	results.push_back(Pair("Metrics", "v1.3"));
-	// Call out for Dash Stake Metrics
-	WhaleMetric wm = GetDashStakeMetrics(chainActive.Tip()->nHeight, true);
-	if (dAdvanced == 1)
-	{
-		results.push_back(Pair("Total Gross Commitments Due Today", wm.nTotalGrossCommitmentsDueToday));
-		results.push_back(Pair("Total Future Commitments", wm.nTotalFutureCommitments));
-		results.push_back(Pair("Total Gross Future Commitments", wm.nTotalGrossFutureCommitments));
-		results.push_back(Pair("Total Commitments Due Today", wm.nTotalCommitmentsDueToday));
-		results.push_back(Pair("Total Monthly Commitments", wm.nTotalMonthlyCommitments));
-		results.push_back(Pair("Total Gross Monthly Commitments", wm.nTotalGrossMonthlyCommitments));
-		results.push_back(Pair("Total Annual Reward", wm.nTotalAnnualReward));
-		results.push_back(Pair("Saturation Percent Annual", RoundToString(wm.nSaturationPercentAnnual * 100, 8)));
-		results.push_back(Pair("Saturation Percent Monthly", RoundToString(wm.nSaturationPercentMonthly * 100, 8)));
-	}
-	results.push_back(Pair("Total Stakes Today", wm.nTotalBurnsToday));
-	results.push_back(Pair("DWU", RoundToString(GetDWUBasedOnMaturity(30 * 6.5, wm.DWU) * 100, 4)));
-	return results;
-}
-
-bool IsStakeInBlock(int nHeight, WhaleStake ws, double& nShortPct)
-{
-	CBlockIndex* pindex = FindBlockByHeight(nHeight);
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-	if (!pindex) 
-		return false;
-	CBlock block;
-	std::string sMsg;
-	nShortPct = 0;
-	double nHighAmount = 0;
-	if (ReadBlockFromDisk(block, pindex, consensusParams)) 
-	{
-		double dFoundationDonation = 0;
-		for (unsigned int i = 0; i < block.vtx[0]->vout.size(); i++)
-		{
-			sMsg += block.vtx[0]->vout[i].sTxOutMessage;
-			double dAmount = (double)block.vtx[0]->vout[i].nValue / COIN;
-			bool fWhaleReward = Contains(RoundToString(dAmount, 4), ".1527");
-			std::string sPK = PubKeyToAddress(block.vtx[0]->vout[i].scriptPubKey);
-			if (fWhaleReward && (sPK == ws.ReturnAddress || sPK == ws.CPK) && RoundToString(dAmount, 0) == RoundToString(ws.TotalOwed, 0))
-				return true;
-			if (fWhaleReward && (sPK == ws.ReturnAddress || sPK == ws.CPK))
-			{
-				if (dAmount > nHighAmount)
-					nHighAmount = dAmount;
-			}
-		}
-		if (nHighAmount > 0)
-		{
-			nShortPct = 1 - (nHighAmount / ws.TotalOwed+.0001);
-			if (nShortPct > .99 && nShortPct < 1.01)
-					nShortPct = 1.0;
-			return true;
-		}
-	}
-	if (block.vtx[0]->vout.size() < 5)
-	{
-		nShortPct = 1.01;
-		return false;
-	}
-	nShortPct = 1.0;
-	return false;
-}
-
-UniValue claimreward(const JSONRPCRequest& request)
-{
-	if (request.fHelp || (request.params.size() != 2))
-		throw std::runtime_error("You must specify claimreward non_biblepay_public_address non_biblepay_signature.");
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	UniValue results(UniValue::VOBJ);
-
-	std::string sPub = request.params[0].get_str();
-	std::string sSig = request.params[1].get_str();
-	// ToDo:  Print the campaign name here along with the coin-type.  For now, we start with DASH (76).
-	int nKeyType = 76;
-	bool fVerified = VerifyNonstandardSignature(sPub, "bbp", sSig, nKeyType);
-	if (!fVerified)
-	{
-		results.push_back(Pair("Results", "Sorry, the signature is invalid.  Please try copying the signature from the source wallet with https://wiki.biblepay.org/Scratchpad.  Maybe it has invalid characters. "));
-	}
-	else
-	{
-		// Check to see if there is a reward to be claimed
-		std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
-		std::string sXML = "<non_bbp_pubkey>" + sPub + "</non_bbp_pubkey><non_bbp_signature>" + sSig + "</non_bbp_signature><non_bbp_keytype>" + RoundToString(nKeyType, 0) 
-			+ "</non_bbp_keytype><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
-		DACResult b = DSQL_ReadOnlyQuery("BMS/CheckReward", sXML);
-		std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
-		std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
-		double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
-		results.push_back(Pair("Outcome", sOutcome));
-		results.push_back(Pair("Narrative", sNarr));
-		results.push_back(Pair("Amount Rewarded", nAmount));
-	}
-	return results;
-}
-
-UniValue newuser(const JSONRPCRequest& request)
-{
-	if (request.fHelp || (request.params.size() != 1))
-		throw std::runtime_error("You must specify newuser emailaddress");
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	UniValue results(UniValue::VOBJ);
-	std::string sEmail = request.params[0].get_str();
-	std::string sRewardAddress = DefaultRecAddress("Christian-Public-Key");
-	std::string sXML = "<email>" + sEmail + "</email><bbp_pubkey>" + sRewardAddress + "</bbp_pubkey>";
-	DACResult b = DSQL_ReadOnlyQuery("BMS/NewUser", sXML);
-	std::string sOutcome = ExtractXML(b.Response, "<outcome>", "</outcome>");
-	std::string sNarr = ExtractXML(b.Response, "<narr>", "</narr>");
-	double nAmount = cdbl(ExtractXML(b.Response, "<amount>", "</amount>"), 2);
-	results.push_back(Pair("Outcome", sOutcome));
-	results.push_back(Pair("Narrative", sNarr));
-	results.push_back(Pair("Amount Rewarded", nAmount));
-	return results;
-}
-
-UniValue dwsquote(const JSONRPCRequest& request)
-{
-	// Dynamic Whale Staking
-	if (request.fHelp || (request.params.size() != 0 && request.params.size() != 1 && request.params.size() != 2 && request.params.size() != 3))
-		throw std::runtime_error("You must specify dwsquote [optional 1=my whale stakes only, 2=all whale stakes] [optional 1=Include Paid/Unpaid, 2=Include Unpaid only (default), 3=Paid Only, 4=Paid with Anomolies only] [Optional 1=Advanced Totals,0=Default Totals].");
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	UniValue results(UniValue::VOBJ);
-	double dDetails = 0;
-	double dAdvanced = 0;
-	if (request.params.size() > 0)
-		dDetails = cdbl(request.params[0].get_str(), 0);
-	double dPaid = 2;
-	if (request.params.size() > 1)
-		dPaid = cdbl(request.params[1].get_str(), 0);
-
-	if (request.params.size() > 2)
-		dAdvanced = cdbl(request.params[2].get_str(), 0);
-
-	double dTotal = 0;
-	double dTotalImpact = 0;
-	if (dDetails == 1 || dDetails == 2)
-	{
-		std::vector<WhaleStake> w = GetDWS(true);
-		results.push_back(Pair("Total DWS Quantity", (int)w.size()));
-			for (int i = 0; i < w.size(); i++)
-		{
-			WhaleStake ws = w[i];
-			bool fIncForPayment = (!ws.paid && dPaid == 2) || (dPaid == 1);
-			int nRewardHeight = GetWhaleStakeSuperblockHeight(ws.MaturityHeight);
-
-			if (dPaid == 3 || dPaid == 4)
-				fIncForPayment = nRewardHeight < chainActive.Tip()->nHeight;
-			double nShtPct = 0;
-			bool fInBlock = IsStakeInBlock(nRewardHeight, ws, nShtPct);
-			if (nRewardHeight > 1 && nRewardHeight < 233640)
-			{
-				nShtPct = 0;
-				fInBlock = true;
-			}
-
-			if (dPaid == 4 && !(nShtPct > 0))
-				fIncForPayment = false;
-
-			if (ws.found && fIncForPayment && ((dDetails == 2) || (dDetails==1 && ws.CPK == sCPK)))
-			{
-				std::string sInBlock = ToYesNo(fInBlock);
-				if (nShtPct > 0)
-					sInBlock += " (-" + RoundToString(nShtPct * 100, 2) + "%)";
-				if (nRewardHeight > chainActive.Tip()->nHeight)
-					sInBlock = "FUTURE";
-				std::string sRow = "Burned: " + RoundToString(ws.Amount, 2) + ", Reward: " + RoundToString(ws.TotalOwed, 2) + ", DWU: " 
-					+ RoundToString(ws.ActualDWU*100, 4) + ", Duration: " + RoundToString(ws.Duration, 0) + ", BurnHeight: " + RoundToString(ws.BurnHeight, 0) 
-					+ ", RewardHeight: " + RoundToString(nRewardHeight, 0) + " [" + RoundToString(ws.MaturityHeight, 0) + "], MaturityDate: " + TimestampToHRDate(ws.MaturityTime) 
-					+ ", ReturnAddress: " + ws.ReturnAddress + ", InBlock: " + sInBlock;
-					std::string sKey = ws.CPK + " " + RoundToString(i+1, 0);
-				if (dPaid == 4)
-				{
-					sRow += ", Impact: " + RoundToString(ws.TotalOwed * nShtPct, 2);
-					dTotalImpact += ws.TotalOwed * nShtPct;
-				}
-				dTotal += ws.Amount;
-
-				// ToDo: Add parameter to show the return_to_address if user desires it
-				results.push_back(Pair(sKey, sRow));
-			}
-		}
-	}
-	// NOTE:  Rob paid for all anomalies up to block 233640, so we need to cross those off this report for prod.
-	results.push_back(Pair("Metrics", "v1.3"));
-	// Call out for Whale Metrics
-	WhaleMetric wm = GetWhaleMetrics(chainActive.Tip()->nHeight, true);
-	if (dPaid==4)
-	{
-		results.push_back(Pair("Total Impact", dTotalImpact));
-	}
-	if (dAdvanced == 1)
-	{
-		results.push_back(Pair("Total Gross Commitments Due Today", wm.nTotalGrossCommitmentsDueToday));
-		results.push_back(Pair("Total Future Commitments", wm.nTotalFutureCommitments));
-		results.push_back(Pair("Total Gross Future Commitments", wm.nTotalGrossFutureCommitments));
-		results.push_back(Pair("Total Commitments Due Today", wm.nTotalCommitmentsDueToday));
-		results.push_back(Pair("Total Monthly Commitments", wm.nTotalMonthlyCommitments));
-		results.push_back(Pair("Total Gross Monthly Commitments", wm.nTotalGrossMonthlyCommitments));
-		results.push_back(Pair("Total Annual Reward", wm.nTotalAnnualReward));
-		results.push_back(Pair("Saturation Percent Annual", RoundToString(wm.nSaturationPercentAnnual * 100, 8)));
-		results.push_back(Pair("Saturation Percent Monthly", RoundToString(wm.nSaturationPercentMonthly * 100, 8)));
-	}
-	results.push_back(Pair("Total Gross Burns Today", wm.nTotalGrossBurnsToday));
-	
-	results.push_back(Pair("Total Burns Today", wm.nTotalBurnsToday));
-	results.push_back(Pair("Total Burns in Report", dTotal));
-
-	results.push_back(Pair("30 day DWU", RoundToString(GetDWUBasedOnMaturity(30, wm.DWU) * 100, 4)));
-	results.push_back(Pair("90 day DWU", RoundToString(GetDWUBasedOnMaturity(90, wm.DWU) * 100, 4)));
-	results.push_back(Pair("180 day DWU", RoundToString(GetDWUBasedOnMaturity(180, wm.DWU) * 100, 4)));
-	results.push_back(Pair("365 day DWU", RoundToString(GetDWUBasedOnMaturity(365, wm.DWU) * 100, 4)));
 	return results;
 }
 
@@ -2399,198 +2132,79 @@ UniValue hexblocktocoinbase(const JSONRPCRequest& request)
 
 UniValue listutxostakes(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1) 
-		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all/2=spent");
+    if (request.fHelp || request.params.size() != 2) 
+		throw std::runtime_error("You may specify listutxostakes 0=mine/1=all 0=unspent/1=all");
 	UniValue results(UniValue::VOBJ);
 	
-	double nType = cdbl(request.params[0].get_str(), 0);
+	double nMineType = cdbl(request.params[0].get_str(), 0);
+	double nSpentType = cdbl(request.params[0].get_str(), 0);
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
+	CAmount nTotalForeignAmount = 0;
+	CAmount nTotalAmount = 0;
+	std::map<std::string, CAmount> mapAmounts;
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
 	for (int i = 0; i < uStakes.size(); i++)
 	{
 		UTXOStake d = uStakes[i];
 		int nStatus = GetUTXOStatus(d.TXID);
-		if (nStatus != -1 || nType == 2)
+		if (d.found && d.nValue > 0)
 		{
-			if ((sCPK == d.CPK && nType == 0 && d.found && d.nValue > 0) || (nType == 1 && d.found && d.nValue > 0) || (nType == 2 && d.found && d.nValue > 0))
+			if ((nMineType == 0 && sCPK == d.CPK) || nMineType == 1)
 			{
-				std::string sSigs = "Sigs: " + d.SignatureNarr;
-				std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
-					+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
-					+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
-	
-				results.push_back(Pair(d.TXID.GetHex(), sRow));
+				if (nStatus != -1 || nSpentType == 1)
+				{
+					std::string sSigs = "Sigs: " + d.SignatureNarr;
+					std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
+						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
+						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
+					results.push_back(Pair(d.TXID.GetHex(), sRow));
+					nTotalAmount += d.nBBPAmount;
+					nTotalForeignAmount += d.nForeignAmount;
+					mapAmounts[d.ReportTicker] += d.ReportTicker == "BBP" ? d.nBBPAmount : d.nForeignAmount;
+				}
 			}
 		}
+		if (nSpentType == 3)
+		{
+			AssimilateUTXO(d);
+		}
 	}
+	for (const auto& kv : mapAmounts) 
+	{
+		results.push_back(Pair("Total " + kv.first, AmountToString(kv.second)));
+	}
+	results.push_back(Pair("Total Foreign", AmountToString(nTotalForeignAmount)));
+    results.push_back(Pair("Total Hybrid BBP", AmountToString(nTotalAmount)));
+    
 	return results;
 }
 
-UniValue protx(const JSONRPCRequest& request)
-{
-    if (request.fHelp && request.params.empty()) {
-        protx_help();
-    }
 
-    std::string command;
-    if (request.params.size() >= 1) {
-        command = request.params[0].get_str();
-    }
 
-#ifdef ENABLE_WALLET
-    if (command == "register" || command == "register_fund" || command == "register_prepare") {
-        return protx_register(request);
-    } else if (command == "register_submit") {
-        return protx_register_submit(request);
-    } else if (command == "update_service") {
-        return protx_update_service(request);
-    } else if (command == "update_registrar") {
-        return protx_update_registrar(request);
-    } else if (command == "revoke") {
-        return protx_revoke(request);
-    } else
-#endif
-    if (command == "list") {
-        return protx_list(request);
-    } else if (command == "info") {
-        return protx_info(request);
-    } else if (command == "diff") {
-        return protx_diff(request);
-    } else {
-        protx_help();
-    }
-}
 
-void bls_generate_help()
-{
-    throw std::runtime_error(
-            "bls generate\n"
-            "\nReturns a BLS secret/public key pair.\n"
-            "\nResult:\n"
-            "{\n"
-            "  \"secret\": \"xxxx\",        (string) BLS secret key\n"
-            "  \"public\": \"xxxx\",        (string) BLS public key\n"
-            "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("bls generate", "")
-    );
-}
-
-UniValue bls_generate(const JSONRPCRequest& request)
-{
-    if (request.fHelp || request.params.size() != 1) {
-        bls_generate_help();
-    }
-
-    CBLSSecretKey sk;
-    sk.MakeNewKey();
-
-    UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("secret", sk.ToString()));
-    ret.push_back(Pair("public", sk.GetPublicKey().ToString()));
-    return ret;
-}
-
-void bls_fromsecret_help()
-{
-    throw std::runtime_error(
-            "bls fromsecret \"secret\"\n"
-            "\nParses a BLS secret key and returns the secret/public key pair.\n"
-            "\nArguments:\n"
-            "1. \"secret\"                (string, required) The BLS secret key\n"
-            "\nResult:\n"
-            "{\n"
-            "  \"secret\": \"xxxx\",        (string) BLS secret key\n"
-            "  \"public\": \"xxxx\",        (string) BLS public key\n"
-            "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("bls fromsecret", "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-    );
-}
-
-UniValue bls_fromsecret(const JSONRPCRequest& request)
-{
-    if (request.fHelp || request.params.size() != 2) {
-        bls_fromsecret_help();
-    }
-
-    CBLSSecretKey sk;
-    if (!sk.SetHexStr(request.params[1].get_str())) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Secret key must be a valid hex string of length %d", sk.SerSize*2));
-    }
-
-    UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("secret", sk.ToString()));
-    ret.push_back(Pair("public", sk.GetPublicKey().ToString()));
-    return ret;
-}
-
-[[ noreturn ]] void bls_help()
-{
-    throw std::runtime_error(
-            "bls \"command\" ...\n"
-            "Set of commands to execute BLS related actions.\n"
-            "To get help on individual commands, use \"help bls command\".\n"
-            "\nArguments:\n"
-            "1. \"command\"        (string, required) The command to execute\n"
-            "\nAvailable commands:\n"
-            "  generate          - Create a BLS secret/public key pair\n"
-            "  fromsecret        - Parse a BLS secret key and return the secret/public key pair\n"
-            );
-}
-
-UniValue _bls(const JSONRPCRequest& request)
-{
-    if (request.fHelp && request.params.empty()) {
-        bls_help();
-    }
-
-    std::string command;
-    if (request.params.size() >= 1) {
-        command = request.params[0].get_str();
-    }
-
-    if (command == "generate") {
-        return bls_generate(request);
-    } else if (command == "fromsecret") {
-        return bls_fromsecret(request);
-    } else {
-        bls_help();
-    }
-}
 
 static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         okSafeMode
-  //  --------------------- ------------------------  -----------------------  ----------
-	{ "evo",                "bookname",                     &bookname,                      false, {}  },
-	{ "evo",                "books",                        &books,                         false, {}  },
-	{ "evo",                "datalist",                     &datalist,                      false, {}  },
-	{ "evo",                "claimreward",                  &claimreward,                   false, {}  },
-	{ "evo",                "dashpay",                      &dashpay,                       false, {}  },
-	{ "evo",                "dashstakequote",               &dashstakequote,                false, {}  },
-	{ "evo",                "dashstake",                    &dashstake,                     false, {}  },
-	{ "evo",                "give",                         &give,                          false, {}  },
-	{ "evo",                "getpin",                       &getpin,                        false, {}  },
-	{ "evo",                "dws",                          &dws,                           false, {}  },
-	{ "evo",                "dwsquote",                     &dwsquote,                      false, {}  },
-	{ "evo",                "easystake",                    &easystake,                     false, {}  },
-	{ "evo",                "listutxostakes",               &listutxostakes,                false, {}  },
-	{ "evo",                "listdacdonations",             &listdacdonations,              false, {}  },
-	{ "evo",                "listexpenses",                 &listexpenses,                  false, {}  },
-	{ "evo",                "easybbpstake",                 &easybbpstake,                  false, {}  },
-	{ "evo",                "newuser",                      &newuser,                       false, {}  },
-	{ "evo",                "utxostake",                    &utxostake,                     false, {}  },
-	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,            false, {}  },
-	{ "evo",                "getpobhhash",                  &getpobhhash,                   false, {}  },
-    { "evo",                "bls",                          &_bls,                          false, {}  },
-    { "evo",                "protx",                        &protx,                         false, {}  },
-	{ "evo",                "createnonfinancialtransaction",&createnonfinancialtransaction, false, {}  },
-	{ "evo",                "nonfinancialtxtojson",         &nonfinancialtxtojson,          false, {}  },
-	{ "evo",                "faucetcode",                   &faucetcode,                    false, {}  },
-	{ "evo",                "trackdashpay",                 &trackdashpay,                  false, {}  },
-	{ "evo",                "sendgscc",                     &sendgscc,                      false, {}  },
-	{ "evo",                "versionreport",                &versionreport,                 false, {}  },
+{ //  category              name                      actor (function)
+  //  --------------------- ------------------------  -----------------------
+    { "evo",                "bls",                          &_bls,               {}  },
+    { "evo",                "protx",                        &protx,              {}  },
+	{ "evo",                "bookname",                     &bookname,           {}  },
+	{ "evo",                "books",                        &books,              {}  },
+	{ "evo",                "datalist",                     &datalist,           {}  },
+	{ "evo",                "dashpay",                      &dashpay,            {}  },
+	{ "evo",                "give",                         &give,               {}  },
+	{ "evo",                "getpin",                       &getpin,             {}  },
+	{ "evo",                "easystake",                    &easystake,          {}  },
+	{ "evo",                "listutxostakes",               &listutxostakes,     {}  },
+	{ "evo",                "listdacdonations",             &listdacdonations,   {}  },
+	{ "evo",                "listexpenses",                 &listexpenses,       {}  },
+	{ "evo",                "easybbpstake",                 &easybbpstake,       {}  },
+	{ "evo",                "utxostake",                    &utxostake,          {}  },
+	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase, {}  },
+	{ "evo",                "faucetcode",                   &faucetcode,         {}  },
+	{ "evo",                "trackdashpay",                 &trackdashpay,       {}  },
+	{ "evo",                "versionreport",                &versionreport,      {}  },
 };
 
 void RegisterEvoRPCCommands(CRPCTable &tableRPC)

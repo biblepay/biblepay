@@ -1,53 +1,45 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2016 The Dash Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "sendcoinsentry.h"
-#include "ui_sendcoinsentry.h"
+#include <qt/sendcoinsentry.h>
+#include <qt/forms/ui_sendcoinsentry.h>
 
-#include "addressbookpage.h"
-#include "addresstablemodel.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "platformstyle.h"
-#include "walletmodel.h"
-#include "rpcpog.h"
-#include "rpcpodc.h"
+#include <qt/addressbookpage.h>
+#include <qt/addresstablemodel.h>
+#include <qt/guiutil.h>
+#include <qt/optionsmodel.h>
 
 #include <QApplication>
 #include <QClipboard>
-#include <QUrl>
 
-SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *parent) :
+SendCoinsEntry::SendCoinsEntry(QWidget* parent) :
     QStackedWidget(parent),
     ui(new Ui::SendCoinsEntry),
-    model(0),
-    platformStyle(_platformStyle)
+    model(0)
 {
     ui->setupUi(this);
 
+    GUIUtil::disableMacFocusRect(this);
+
     setCurrentWidget(ui->SendCoins);
 
-    if (platformStyle->getUseExtraSpacing())
-        ui->payToLayout->setSpacing(4);
 #if QT_VERSION >= 0x040700
     ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book"));
 #endif
 
-    QString theme = GUIUtil::getThemeName();
+    setButtonIcons();
 
-    // These icons are needed on Mac also!
-    ui->addressBookButton->setIcon(QIcon(":/icons/" + theme + "/address-book"));
-    ui->pasteButton->setIcon(QIcon(":/icons/" + theme + "/editpaste"));
-    ui->deleteButton->setIcon(QIcon(":/icons/" + theme + "/remove"));
-    ui->deleteButton_is->setIcon(QIcon(":/icons/" + theme + "/remove"));
-    ui->deleteButton_s->setIcon(QIcon(":/icons/" + theme + "/remove"));
-      
-    // normal address field
-    GUIUtil::setupAddressWidget(ui->payTo, this);
-    // just a label for displaying address(es)
-    ui->payTo_is->setFont(GUIUtil::fixedPitchFont());
+    // normal biblepay address field
+    GUIUtil::setupAddressWidget(ui->payTo, this, true);
+
+    GUIUtil::setFont({ui->payToLabel,
+                     ui->labellLabel,
+                     ui->amountLabel,
+                     ui->messageLabel}, GUIUtil::FontWeight::Normal, 15);
+
+    GUIUtil::updateFonts();
 
     // Connect signals
     connect(ui->payAmount, SIGNAL(valueChanged()), this, SIGNAL(payAmountChanged()));
@@ -55,18 +47,18 @@ SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *par
     connect(ui->deleteButton, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_is, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_s, SIGNAL(clicked()), this, SLOT(deleteClicked()));
+    connect(ui->useAvailableBalanceButton, SIGNAL(clicked()), this, SLOT(useAvailableBalanceClicked()));
+
 	connect(ui->chkDonate, SIGNAL(toggled(bool)), this, SLOT(updateFoundationAddress()));
 	connect(ui->chkDWS, SIGNAL(toggled(bool)), this, SLOT(updateBurnAddress()));
 	connect(ui->chkDiary, SIGNAL(toggled(bool)), this, SLOT(diaryEntry()));
 	// Anti-Censorship Features (ACF)
 	connect(ui->btnAttach, SIGNAL(clicked()), this, SLOT(attachFile()));
-	if (true)
-	{
-		ui->btnAttach->setVisible(false);
-		ui->lblIPFSFee->setVisible(false);
-		ui->txtFile->setVisible(false);
-		ui->lblatt->setVisible(false);
-	}
+	ui->btnAttach->setVisible(false);
+	ui->lblIPFSFee->setVisible(false);
+	ui->txtFile->setVisible(false);
+	ui->lblatt->setVisible(false);
+	
 }
 
 void SendCoinsEntry::diaryEntry()
@@ -90,6 +82,12 @@ void SendCoinsEntry::updateFoundationAddress()
 		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().FoundationPODSAddress));
 	    ui->payAmount->setFocus();
 	}
+	else
+	{
+		ui->payTo->setText("");
+		ui->payAmount->clear();
+        ui->payAmount->setFocus();
+	}
 }
 
 void SendCoinsEntry::updateBurnAddress()
@@ -102,8 +100,14 @@ void SendCoinsEntry::updateBurnAddress()
 		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().BurnAddress));
 	    ui->payAmount->setFocus();
 	}
+	else
+	{
+		// Clear the to address, so people dont accidentally burn bbp without a utxo-stake (recommended by https://forum.biblepay.org/index.php?topic=517.msg10227#msg10227)
+		ui->payTo->setText("");
+		ui->payAmount->clear();
+        ui->payAmount->setFocus();
+	}
 }
-
 
 SendCoinsEntry::~SendCoinsEntry()
 {
@@ -120,7 +124,7 @@ void SendCoinsEntry::on_addressBookButton_clicked()
 {
     if(!model)
         return;
-    AddressBookPage dlg(platformStyle, AddressBookPage::ForSelection, AddressBookPage::SendingTab, this);
+    AddressBookPage dlg(AddressBookPage::ForSelection, AddressBookPage::SendingTab, this);
     dlg.setModel(model->getAddressTableModel());
     if(dlg.exec())
     {
@@ -131,7 +135,14 @@ void SendCoinsEntry::on_addressBookButton_clicked()
 
 void SendCoinsEntry::on_payTo_textChanged(const QString &address)
 {
-    updateLabel(address);
+    SendCoinsRecipient rcp;
+    if (GUIUtil::parseBitcoinURI(address, &rcp)) {
+        ui->payTo->blockSignals(true);
+        setValue(rcp);
+        ui->payTo->blockSignals(false);
+    } else {
+        updateLabel(address);
+    }
 }
 
 void SendCoinsEntry::setModel(WalletModel *_model)
@@ -167,9 +178,19 @@ void SendCoinsEntry::clear()
     updateDisplayUnit();
 }
 
+void SendCoinsEntry::checkSubtractFeeFromAmount()
+{
+    ui->checkboxSubtractFeeFromAmount->setChecked(true);
+}
+
 void SendCoinsEntry::deleteClicked()
 {
     Q_EMIT removeEntry(this);
+}
+
+void SendCoinsEntry::useAvailableBalanceClicked()
+{
+    Q_EMIT useAvailableBalance(this);
 }
 
 bool SendCoinsEntry::validate()
@@ -223,14 +244,14 @@ SendCoinsRecipient SendCoinsEntry::getValue()
     recipient.amount = ui->payAmount->value();
     recipient.message = ui->messageTextLabel->text();
     recipient.fSubtractFeeFromAmount = (ui->checkboxSubtractFeeFromAmount->checkState() == Qt::Checked);
-	// DAC: Messages and Prayers:
+	// BBP: Messages and Prayers:
 	recipient.txtMessage = ui->txtMessage->text();
 	recipient.fDonate = (ui->chkDonate->checkState() == Qt::Checked);
 	recipient.fTithe = (ui->chkTithe->checkState() == Qt::Checked);
 	recipient.fPrayer = (ui->chkPrayer->checkState() == Qt::Checked);
 	recipient.fDiary = (ui->chkDiary->checkState() == Qt::Checked);
 	recipient.fDWS = (ui->chkDWS->checkState() == Qt::Checked);
-	// End of DAC
+	// End of BBP
     return recipient;
 }
 
@@ -276,18 +297,23 @@ void SendCoinsEntry::setValue(const SendCoinsRecipient &value)
         ui->messageTextLabel->setVisible(!recipient.message.isEmpty());
         ui->messageLabel->setVisible(!recipient.message.isEmpty());
 
-        ui->addAsLabel->clear();
-        ui->payTo->setText(recipient.address); // this may set a label from addressbook
-        if (!recipient.label.isEmpty()) // if a label had been set from the addressbook, don't overwrite with an empty label
-            ui->addAsLabel->setText(recipient.label);
+        ui->payTo->setText(recipient.address);
+        ui->addAsLabel->setText(recipient.label);
         ui->payAmount->setValue(recipient.amount);
     }
+
+    updateLabel(recipient.address);
 }
 
 void SendCoinsEntry::setAddress(const QString &address)
 {
     ui->payTo->setText(address);
     ui->payAmount->setFocus();
+}
+
+void SendCoinsEntry::setAmount(const CAmount &amount)
+{
+    ui->payAmount->setValue(amount);
 }
 
 bool SendCoinsEntry::isClear()
@@ -300,6 +326,7 @@ void SendCoinsEntry::setFocus()
     ui->payTo->setFocus();
 }
 
+/*
 void SendCoinsEntry::attachFile()
 {
     QString filename = GUIUtil::getOpenFileName(this, tr("Select a file to attach to this transaction"), "", "", NULL);
@@ -318,6 +345,7 @@ void SendCoinsEntry::attachFile()
 	
     ui->txtFile->setText(GUIUtil::TOQS(sFN));
 }
+*/
 
 void SendCoinsEntry::updateDisplayUnit()
 {
@@ -328,6 +356,24 @@ void SendCoinsEntry::updateDisplayUnit()
         ui->payAmount_is->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
         ui->payAmount_s->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
     }
+}
+
+void SendCoinsEntry::changeEvent(QEvent* e)
+{
+    QStackedWidget::changeEvent(e);
+    if (e->type() == QEvent::StyleChange) {
+        // Adjust button icon colors on theme changes
+        setButtonIcons();
+    }
+}
+
+void SendCoinsEntry::setButtonIcons()
+{
+    GUIUtil::setIcon(ui->addressBookButton, "address-book");
+    GUIUtil::setIcon(ui->pasteButton, "editpaste");
+    GUIUtil::setIcon(ui->deleteButton, "remove", GUIUtil::ThemedColor::RED);
+    GUIUtil::setIcon(ui->deleteButton_is, "remove", GUIUtil::ThemedColor::RED);
+    GUIUtil::setIcon(ui->deleteButton_s, "remove", GUIUtil::ThemedColor::RED);
 }
 
 bool SendCoinsEntry::updateLabel(const QString &address)

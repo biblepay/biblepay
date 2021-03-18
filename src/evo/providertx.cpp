@@ -1,45 +1,43 @@
-// Copyright (c) 2018-2019 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2018-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "deterministicmns.h"
-#include "providertx.h"
-#include "specialtx.h"
+#include <evo/deterministicmns.h>
+#include <evo/providertx.h>
+#include <evo/specialtx.h>
 
-#include "base58.h"
-#include "chainparams.h"
-#include "clientversion.h"
-#include "core_io.h"
-#include "hash.h"
-#include "messagesigner.h"
-#include "script/standard.h"
-#include "streams.h"
-#include "univalue.h"
-#include "validation.h"
+#include <base58.h>
+#include <chainparams.h>
+#include <clientversion.h>
+#include <core_io.h>
+#include <hash.h>
+#include <messagesigner.h>
+#include <script/standard.h>
+#include <streams.h>
+#include <univalue.h>
+#include <validation.h>
 
 template <typename ProTx>
 static bool CheckService(const uint256& proTxHash, const ProTx& proTx, CValidationState& state)
 {
     if (!proTx.addr.IsValid()) {
-        return state.DoS(10, false, REJECT_INVALID, "bad-protx-addr");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
-    if (Params().NetworkIDString() != CBaseChainParams::REGTEST && !proTx.addr.IsRoutable()) {
-        return state.DoS(10, false, REJECT_INVALID, "bad-protx-addr");
+    if (Params().RequireRoutableExternalIP() && !proTx.addr.IsRoutable()) {
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
 
-    int mainnetDefaultPort = Params(CBaseChainParams::MAIN).GetDefaultPort();
-    if (Params().NetworkIDString() == CBaseChainParams::MAIN) 
-	{
-        if (proTx.addr.GetPort() != mainnetDefaultPort && fEnforceSanctuaryPort) {
-            return state.DoS(10, false, REJECT_INVALID, "bad-protx-addr-port");
+    static int mainnetDefaultPort = CreateChainParams(CBaseChainParams::MAIN)->GetDefaultPort();
+    if (Params().NetworkIDString() == CBaseChainParams::MAIN) {
+        if (proTx.addr.GetPort() != mainnetDefaultPort) {
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr-port");
         }
-    } else if (proTx.addr.GetPort() == mainnetDefaultPort && Params().NetworkIDString() != CBaseChainParams::MAIN) {
-        return state.DoS(10, false, REJECT_INVALID, "bad-protx-addr-port");
+    } else if (proTx.addr.GetPort() == mainnetDefaultPort) {
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr-port");
     }
 
     if (!proTx.addr.IsIPv4()) {
-        return state.DoS(10, false, REJECT_INVALID, "bad-protx-addr");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
 
     return true;
@@ -87,6 +85,11 @@ static bool CheckInputsHash(const CTransaction& tx, const ProTx& proTx, CValidat
 
 bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
+
+	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
+	if (!fLLMQActive2)
+		return true;
+
     if (tx.nType != TRANSACTION_PROVIDER_REGISTER) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
     }
@@ -126,6 +129,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     // It's allowed to set addr to 0, which will put the MN into PoSe-banned state and require a ProUpServTx to be issues later
     // If any of both is set, it must be valid however
     if (ptx.addr != CService() && !CheckService(tx.GetHash(), ptx, state)) {
+        // pass the state returned by the function above
         return false;
     }
 
@@ -134,7 +138,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     }
 
     CTxDestination collateralTxDest;
-    CKeyID keyForPayloadSig;
+    const CKeyID *keyForPayloadSig = nullptr;
     COutPoint collateralOutpoint;
 
     if (!ptx.collateralOutpoint.hash.IsNull()) {
@@ -149,7 +153,8 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
         // Extract key from collateral. This only works for P2PK and P2PKH collaterals and will fail for P2SH.
         // Issuer of this ProRegTx must prove ownership with this key by signing the ProRegTx
-        if (!CBitcoinAddress(collateralTxDest).GetKeyID(keyForPayloadSig)) {
+        keyForPayloadSig = boost::get<CKeyID>(&collateralTxDest);
+        if (!keyForPayloadSig) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-pkh");
         }
 
@@ -174,7 +179,6 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     if (collateralTxDest == CTxDestination(ptx.keyIDOwner) || collateralTxDest == CTxDestination(ptx.keyIDVoting)) {
         return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-reuse");
     }
-	const Consensus::Params& consensusParams = Params().GetConsensus();
 
     if (pindexPrev) {
         auto mnList = deterministicMNManager->GetListForBlock(pindexPrev);
@@ -189,8 +193,8 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
             return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-key");
         }
 
-	    if (pindexPrev->nHeight > Params().GetConsensus().DIP0003EnforcementHeight) {
-           if (ptx.keyIDOwner != ptx.keyIDVoting) {
+        if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
+            if (ptx.keyIDOwner != ptx.keyIDVoting) {
                 return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }
         }
@@ -200,9 +204,10 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
         return false;
     }
 
-    if (!keyForPayloadSig.IsNull()) {
+    if (keyForPayloadSig) {
         // collateral is not part of this ProRegTx, so we must verify ownership of the collateral
-        if (!CheckStringSig(ptx, keyForPayloadSig, state)) {
+        if (!CheckStringSig(ptx, *keyForPayloadSig, state)) {
+            // pass the state returned by the function above
             return false;
         }
     } else {
@@ -215,27 +220,14 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     return true;
 }
 
-bool CheckNonFinancialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
-{
-    if (tx.nType != TRANSACTION_NON_FINANCIAL) {
-        return state.DoS(1, false, REJECT_INVALID, "bad-non-financial-transaction-type");
-    }
-
-    CNonFinancialTx ptx;
-    if (!GetTxPayload(tx, ptx)) {
-        return state.DoS(1, false, REJECT_INVALID, "bad-non-financial-transaction-payload");
-    }
-
-    if (ptx.nVersion == 0 || ptx.nVersion > CNonFinancialTx::CURRENT_VERSION) {
-        return state.DoS(1, false, REJECT_INVALID, "bad-non-financial-transaction-version");
-    }
-
-    return true;
-}
-
-
 bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
+
+	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
+	if (!fLLMQActive2)
+		return true;
+
+
     if (tx.nType != TRANSACTION_PROVIDER_UPDATE_SERVICE) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
     }
@@ -245,11 +237,12 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
     }
 
-    if (ptx.nVersion == 0 || ptx.nVersion > CProRegTx::CURRENT_VERSION) {
+    if (ptx.nVersion == 0 || ptx.nVersion > CProUpServTx::CURRENT_VERSION) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
     }
 
     if (!CheckService(ptx.proTxHash, ptx, state)) {
+        // pass the state returned by the function above
         return false;
     }
 
@@ -275,11 +268,13 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
             }
         }
 
-        // we can only check the signature if pindexPrev != NULL and the MN is known
+        // we can only check the signature if pindexPrev != nullptr and the MN is known
         if (!CheckInputsHash(tx, ptx, state)) {
+            // pass the state returned by the function above
             return false;
         }
         if (!CheckHashSig(ptx, mn->pdmnState->pubKeyOperator.Get(), state)) {
+            // pass the state returned by the function above
             return false;
         }
     }
@@ -289,6 +284,10 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
 
 bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
+	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
+	if (!fLLMQActive2)
+		return true;
+
     if (tx.nType != TRANSACTION_PROVIDER_UPDATE_REGISTRAR) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
     }
@@ -298,7 +297,7 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
     }
 
-    if (ptx.nVersion == 0 || ptx.nVersion > CProRegTx::CURRENT_VERSION) {
+    if (ptx.nVersion == 0 || ptx.nVersion > CProUpRegTx::CURRENT_VERSION) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
     }
     if (ptx.nMode != 0) {
@@ -351,16 +350,19 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
                 return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-key");
             }
         }
-        if (pindexPrev->nHeight > Params().GetConsensus().DIP0003EnforcementHeight) {
+
+        if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
             if (dmn->pdmnState->keyIDOwner != ptx.keyIDVoting) {
                 return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }
         }
 
         if (!CheckInputsHash(tx, ptx, state)) {
+            // pass the state returned by the function above
             return false;
         }
         if (!CheckHashSig(ptx, dmn->pdmnState->keyIDOwner, state)) {
+            // pass the state returned by the function above
             return false;
         }
     }
@@ -370,6 +372,10 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
 
 bool CheckProUpRevTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
+	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
+	if (!fLLMQActive2)
+		return true;
+
     if (tx.nType != TRANSACTION_PROVIDER_UPDATE_REVOKE) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
     }
@@ -379,7 +385,7 @@ bool CheckProUpRevTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
     }
 
-    if (ptx.nVersion == 0 || ptx.nVersion > CProRegTx::CURRENT_VERSION) {
+    if (ptx.nVersion == 0 || ptx.nVersion > CProUpRevTx::CURRENT_VERSION) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
     }
 
@@ -395,41 +401,17 @@ bool CheckProUpRevTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
         if (!dmn)
             return state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
 
-        if (!CheckInputsHash(tx, ptx, state))
+        if (!CheckInputsHash(tx, ptx, state)) {
+            // pass the state returned by the function above
             return false;
-        if (!CheckHashSig(ptx, dmn->pdmnState->pubKeyOperator.Get(), state))
+        }
+        if (!CheckHashSig(ptx, dmn->pdmnState->pubKeyOperator.Get(), state)) {
+            // pass the state returned by the function above
             return false;
+        }
     }
 
     return true;
-}
-
-std::string CNonFinancialTx::MakeSignString() const
-{
-	// This will have all the elements we normally include in the CPK or a prayer or an IPFS pointer or a DSQL pointer 
-	// And is designed to prevent replay attacks
-    std::string s;
-	s = sNonce + "|" + proTxHash.GetHex();
-	s += ::SerializeHash(*this).ToString();
-	return s;
-}
-
-void CNonFinancialTx::ToJson(UniValue& obj) const
-{
-    obj.clear();
-    obj.setObject();
-    obj.push_back(Pair("version", nVersion));
-    obj.push_back(Pair("protxhash", proTxHash.ToString()));
-    obj.push_back(Pair("inputsHash", inputsHash.ToString()));
-	obj.push_back(Pair("nonce", sNonce));
-	obj.push_back(Pair("objectType", sObjectType));
-	obj.push_back(Pair("key", sKey));
-	obj.push_back(Pair("value", sValue));
-	obj.push_back(Pair("dsqlHash", dsqlHash.ToString()));
-	obj.push_back(Pair("signer", sSigner));
-	obj.push_back(Pair("objectsize", iObjectSize));
-	obj.push_back(Pair("extra_payload", sExtraPayload));
-	obj.push_back(Pair("timestamp", nTimestamp));
 }
 
 std::string CProRegTx::MakeSignString() const
@@ -439,18 +421,17 @@ std::string CProRegTx::MakeSignString() const
     // We only include the important stuff in the string form...
 
     CTxDestination destPayout;
-    CBitcoinAddress addrPayout;
     std::string strPayout;
-    if (ExtractDestination(scriptPayout, destPayout) && addrPayout.Set(destPayout)) {
-        strPayout = addrPayout.ToString();
+    if (ExtractDestination(scriptPayout, destPayout)) {
+        strPayout = EncodeDestination(destPayout);
     } else {
         strPayout = HexStr(scriptPayout.begin(), scriptPayout.end());
     }
 
     s += strPayout + "|";
     s += strprintf("%d", nOperatorReward) + "|";
-    s += CBitcoinAddress(keyIDOwner).ToString() + "|";
-    s += CBitcoinAddress(keyIDVoting).ToString() + "|";
+    s += EncodeDestination(keyIDOwner) + "|";
+    s += EncodeDestination(keyIDVoting) + "|";
 
     // ... and also the full hash of the payload as a protection agains malleability and replays
     s += ::SerializeHash(*this).ToString();
@@ -463,33 +444,11 @@ std::string CProRegTx::ToString() const
     CTxDestination dest;
     std::string payee = "unknown";
     if (ExtractDestination(scriptPayout, dest)) {
-        payee = CBitcoinAddress(dest).ToString();
+        payee = EncodeDestination(dest);
     }
 
     return strprintf("CProRegTx(nVersion=%d, collateralOutpoint=%s, addr=%s, nOperatorReward=%f, ownerAddress=%s, pubKeyOperator=%s, votingAddress=%s, scriptPayout=%s)",
-        nVersion, collateralOutpoint.ToStringShort(), addr.ToString(), (double)nOperatorReward / 100, CBitcoinAddress(keyIDOwner).ToString(), pubKeyOperator.ToString(), CBitcoinAddress(keyIDVoting).ToString(), payee);
-}
-
-void CProRegTx::ToJson(UniValue& obj) const
-{
-    obj.clear();
-    obj.setObject();
-    obj.push_back(Pair("version", nVersion));
-    obj.push_back(Pair("collateralHash", collateralOutpoint.hash.ToString()));
-    obj.push_back(Pair("collateralIndex", (int)collateralOutpoint.n));
-    obj.push_back(Pair("service", addr.ToString(false)));
-    obj.push_back(Pair("ownerAddress", CBitcoinAddress(keyIDOwner).ToString()));
-    obj.push_back(Pair("votingAddress", CBitcoinAddress(keyIDVoting).ToString()));
-
-    CTxDestination dest;
-    if (ExtractDestination(scriptPayout, dest)) {
-        CBitcoinAddress bitcoinAddress(dest);
-        obj.push_back(Pair("payoutAddress", bitcoinAddress.ToString()));
-    }
-    obj.push_back(Pair("pubKeyOperator", pubKeyOperator.ToString()));
-    obj.push_back(Pair("operatorReward", (double)nOperatorReward / 100));
-
-    obj.push_back(Pair("inputsHash", inputsHash.ToString()));
+        nVersion, collateralOutpoint.ToStringShort(), addr.ToString(), (double)nOperatorReward / 100, EncodeDestination(keyIDOwner), pubKeyOperator.ToString(), EncodeDestination(keyIDVoting), payee);
 }
 
 std::string CProUpServTx::ToString() const
@@ -497,26 +456,11 @@ std::string CProUpServTx::ToString() const
     CTxDestination dest;
     std::string payee = "unknown";
     if (ExtractDestination(scriptOperatorPayout, dest)) {
-        payee = CBitcoinAddress(dest).ToString();
+        payee = EncodeDestination(dest);
     }
 
     return strprintf("CProUpServTx(nVersion=%d, proTxHash=%s, addr=%s, operatorPayoutAddress=%s)",
         nVersion, proTxHash.ToString(), addr.ToString(), payee);
-}
-
-void CProUpServTx::ToJson(UniValue& obj) const
-{
-    obj.clear();
-    obj.setObject();
-    obj.push_back(Pair("version", nVersion));
-    obj.push_back(Pair("proTxHash", proTxHash.ToString()));
-    obj.push_back(Pair("service", addr.ToString(false)));
-    CTxDestination dest;
-    if (ExtractDestination(scriptOperatorPayout, dest)) {
-        CBitcoinAddress bitcoinAddress(dest);
-        obj.push_back(Pair("operatorPayoutAddress", bitcoinAddress.ToString()));
-    }
-    obj.push_back(Pair("inputsHash", inputsHash.ToString()));
 }
 
 std::string CProUpRegTx::ToString() const
@@ -524,41 +468,15 @@ std::string CProUpRegTx::ToString() const
     CTxDestination dest;
     std::string payee = "unknown";
     if (ExtractDestination(scriptPayout, dest)) {
-        payee = CBitcoinAddress(dest).ToString();
+        payee = EncodeDestination(dest);
     }
 
     return strprintf("CProUpRegTx(nVersion=%d, proTxHash=%s, pubKeyOperator=%s, votingAddress=%s, payoutAddress=%s)",
-        nVersion, proTxHash.ToString(), pubKeyOperator.ToString(), CBitcoinAddress(keyIDVoting).ToString(), payee);
-}
-
-void CProUpRegTx::ToJson(UniValue& obj) const
-{
-    obj.clear();
-    obj.setObject();
-    obj.push_back(Pair("version", nVersion));
-    obj.push_back(Pair("proTxHash", proTxHash.ToString()));
-    obj.push_back(Pair("votingAddress", CBitcoinAddress(keyIDVoting).ToString()));
-    CTxDestination dest;
-    if (ExtractDestination(scriptPayout, dest)) {
-        CBitcoinAddress bitcoinAddress(dest);
-        obj.push_back(Pair("payoutAddress", bitcoinAddress.ToString()));
-    }
-    obj.push_back(Pair("pubKeyOperator", pubKeyOperator.ToString()));
-    obj.push_back(Pair("inputsHash", inputsHash.ToString()));
+        nVersion, proTxHash.ToString(), pubKeyOperator.ToString(), EncodeDestination(keyIDVoting), payee);
 }
 
 std::string CProUpRevTx::ToString() const
 {
     return strprintf("CProUpRevTx(nVersion=%d, proTxHash=%s, nReason=%d)",
         nVersion, proTxHash.ToString(), nReason);
-}
-
-void CProUpRevTx::ToJson(UniValue& obj) const
-{
-    obj.clear();
-    obj.setObject();
-    obj.push_back(Pair("version", nVersion));
-    obj.push_back(Pair("proTxHash", proTxHash.ToString()));
-    obj.push_back(Pair("reason", (int)nReason));
-    obj.push_back(Pair("inputsHash", inputsHash.ToString()));
 }

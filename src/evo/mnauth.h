@@ -1,12 +1,12 @@
-// Copyright (c) 2019 The Dash Core developers
+// Copyright (c) 2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_MNAUTH_H
-#define DASH_MNAUTH_H
+#ifndef BIBLEPAY_MNAUTH_H
+#define BIBLEPAY_MNAUTH_H
 
-#include "bls/bls.h"
-#include "serialize.h"
+#include <bls/bls.h>
+#include <serialize.h>
 
 class CConnman;
 class CDataStream;
@@ -29,7 +29,7 @@ class UniValue;
  * This is fine as we only use this mechanism for DoS protection. It allows us to keep masternode connections open for
  * a very long time without evicting the connections when inbound connection limits are hit (non-MNs will then be evicted).
  *
- * If we ever want to add transfer of sensible data, THIS AUTHENTICATION MECHANISM IS NOT ENOUGH!! We'd need to implement
+ * If we ever want to add transfer of sensitive data, THIS AUTHENTICATION MECHANISM IS NOT ENOUGH!! We'd need to implement
  * proper encryption for these connections first.
  */
 
@@ -55,4 +55,4 @@ public:
 };
 
 
-#endif //DASH_MNAUTH_H
+#endif //BIBLEPAY_MNAUTH_H

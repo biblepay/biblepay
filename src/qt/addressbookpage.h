@@ -8,8 +8,6 @@
 #include <QDialog>
 
 class AddressTableModel;
-class OptionsModel;
-class PlatformStyle;
 
 namespace Ui {
     class AddressBookPage;
@@ -20,7 +18,6 @@ class QItemSelection;
 class QMenu;
 class QModelIndex;
 class QSortFilterProxyModel;
-class QTableView;
 QT_END_NAMESPACE
 
 /** Widget that shows a list of sending or receiving addresses.
@@ -40,7 +37,7 @@ public:
         ForEditing  /**< Open address book for editing */
     };
 
-    explicit AddressBookPage(const PlatformStyle *platformStyle, Mode mode, Tabs tab, QWidget *parent);
+    explicit AddressBookPage(Mode mode, Tabs tab, QWidget* parent);
     ~AddressBookPage();
 
     void setModel(AddressTableModel *model);

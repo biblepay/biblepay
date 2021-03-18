@@ -6,8 +6,9 @@
 #ifndef BITCOIN_SCRIPT_SCRIPT_H
 #define BITCOIN_SCRIPT_SCRIPT_H
 
-#include "crypto/common.h"
-#include "prevector.h"
+#include <crypto/common.h>
+#include <prevector.h>
+#include <serialize.h>
 
 #include <assert.h>
 #include <climits>
@@ -30,10 +31,12 @@ static const int MAX_PUBKEYS_PER_MULTISIG = 20;
 // Maximum script length in bytes
 static const int MAX_SCRIPT_SIZE = 10000;
 
+// Maximum number of values on script interpreter stack
+static const int MAX_STACK_SIZE = 1000;
+
 // Threshold for nLockTime: below this value it is interpreted as block number,
 // otherwise as UNIX timestamp.
 static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
-std::string ExtractXMLValue(std::string XMLdata, std::string key, std::string key_end);
 
 template <typename T>
 std::vector<unsigned char> ToByteVector(const T& in)
@@ -187,6 +190,9 @@ enum opcodetype
 
     OP_INVALIDOPCODE = 0xff,
 };
+
+// Maximum value that an opcode can be
+static const unsigned int MAX_OPCODE = OP_NOP10;
 
 const char* GetOpName(opcodetype opcode);
 
@@ -371,6 +377,12 @@ private:
     int64_t m_value;
 };
 
+/**
+ * We use a prevector for the script to reduce the considerable memory overhead
+ *  of vectors in cases where they normally contain a small number of small elements.
+ * Tests in October 2015 showed use of this reduced dbcache memory usage by 23%
+ *  and made an initial sync 13% faster.
+ */
 typedef prevector<28, unsigned char> CScriptBase;
 
 /** Serialized script, used inside transaction inputs and outputs */
@@ -399,8 +411,16 @@ public:
     CScript(std::vector<unsigned char>::const_iterator pbegin, std::vector<unsigned char>::const_iterator pend) : CScriptBase(pbegin, pend) { }
     CScript(const unsigned char* pbegin, const unsigned char* pend) : CScriptBase(pbegin, pend) { }
 
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(static_cast<CScriptBase&>(*this));
+    }
+
     CScript& operator+=(const CScript& b)
     {
+        reserve(size() + b.size());
         insert(end(), b.begin(), b.end());
         return *this;
     }
@@ -485,7 +505,7 @@ public:
     bool GetOp(iterator& pc, opcodetype& opcodeRet)
     {
          const_iterator pc2 = pc;
-         bool fRet = GetOp2(pc2, opcodeRet, NULL);
+         bool fRet = GetOp2(pc2, opcodeRet, nullptr);
          pc = begin() + (pc2 - begin());
          return fRet;
     }
@@ -497,7 +517,7 @@ public:
 
     bool GetOp(const_iterator& pc, opcodetype& opcodeRet) const
     {
-        return GetOp2(pc, opcodeRet, NULL);
+        return GetOp2(pc, opcodeRet, nullptr);
     }
 
     bool GetOp2(const_iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>* pvchRet) const
@@ -544,7 +564,7 @@ public:
             if (end() - pc < 0 || (unsigned int)(end() - pc) < nSize)
                 return false;
             if (pvchRet)
-                pvchRet->assign(pc, pc + nSize);
+                assign_to(pc, pc + nSize, *pvchRet);
             pc += nSize;
         }
 
@@ -643,17 +663,9 @@ public:
 
     void clear()
     {
-        // The default std::vector::clear() does not release memory.
-        CScriptBase().swap(*this);
-    }
-
-    template<typename Stream>
-    void Serialize(Stream& s) const {
-        s << *(CScriptBase*)this;
-    }
-    template<typename Stream>
-    void Unserialize(Stream& s) {
-        s >> *(CScriptBase*)this;
+        // The default prevector::clear() does not release memory
+        CScriptBase::clear();
+        shrink_to_fit();
     }
 };
 

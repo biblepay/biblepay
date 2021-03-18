@@ -4,7 +4,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "email.h"
-#include "base58.h"
 #include "clientversion.h"
 #include "net.h"
 #include "pubkey.h"
@@ -28,6 +27,7 @@
 
 using namespace std;
 
+class CEmail;
 CCriticalSection cs_mapEmails;
 
 void CEmailRequest::SetNull()
@@ -164,6 +164,7 @@ CEmail CEmail::getEmailByHash(const uint256 &hash)
 
 double CEmail::getMemoryUsage()
 {
+	/*
 	int iCount = 0;
 	double iSize = 0;
 	for (auto item : mapEmails) 
@@ -176,6 +177,8 @@ double CEmail::getMemoryUsage()
 		
 	}
 	return iSize;
+	*/
+	return 0;
 }
 
 std::string CEmail::GetFileName()
@@ -197,7 +200,7 @@ int CEmail::EDeserialize(uint256 Hash)
 
 	std::vector<char> bEmail = ReadAllBytesFromFile(sSource.c_str());
 	std::string data = std::string(bEmail.begin(), bEmail.end());
-	bool fDebuggingEmail = cdbl(GetArg("-debuggingemail", "0"), 0) == 1;
+	bool fDebuggingEmail = cdbl(gArgs.GetArg("-debuggingemail", "0"), 0) == 1;
 
 	Deserialize1(data);
 	int64_t nElapsed = GetAdjustedTime() - nTime;
@@ -238,7 +241,7 @@ bool CEmail::IsMine()
 	if (fExpired || Body.empty() || FromEmail.empty() || ToEmail.empty() || nVersion < 2 || nVersion > 3)
 		return false;
 
-	if (nVersion == 3)
+	if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos && nVersion == 3 && !msMyInternalEmailAddress.empty())
 	{
 		// Check for decryption
 		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
@@ -264,9 +267,9 @@ bool CEmail::IsMine()
 		// Mail to all
 		return true;
 	}
-	else if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos && nVersion == 2)
+	else if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos && nVersion == 2 && !msMyInternalEmailAddress.empty())
 	{
-			return true;
+		return true;
 	}
 	return false;
 }

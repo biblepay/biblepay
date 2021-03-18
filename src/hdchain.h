@@ -1,11 +1,10 @@
-// Copyright (c) 2014-2018 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
-#ifndef DAC_HDCHAIN_H
-#define DAC_HDCHAIN_H
+#ifndef BIBLEPAY_HDCHAIN_H
+#define BIBLEPAY_HDCHAIN_H
 
-#include "key.h"
-#include "sync.h"
+#include <key.h>
+#include <sync.h>
 
 /* hd account data model */
 class CHDAccount
@@ -148,4 +147,4 @@ public:
     std::string GetKeyPath() const;
 };
 
-#endif // DAC_HDCHAIN_H
+#endif // BIBLEPAY_HDCHAIN_H
