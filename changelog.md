@@ -3,7 +3,7 @@ Changelog
 R Andrews
 BiblePay
 
-Changes between 1.5.2.9-1.5.4.3:
+Changes between 1.5.2.9-1.5.4.4:
 1.5.3.1:
 - Add User Edit Page UI Page (QT -> User Record)
 - Add Chat Dialog for encrypted, non encrypted, 1:1 & 1:many chat
@@ -113,3 +113,9 @@ Changes between 1.5.2.9-1.5.4.3:
 1.5.4.2-Mandatory Upgrade
 
 - Bump version to 1542 for ID
+1.5.4.4 - Mandatory Upgrade for Entire Network
+
+- Add scripture reference to Final Exam - Learn Mode (In answer textbox)
+- Enforce 3meg email limit
+- Bump version and cutover height for prod
+- Decrease quorum size to be more reflective of our Paid-sponsorship-orphan sanctuary model
