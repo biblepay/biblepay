@@ -1277,27 +1277,6 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
     }
 }
 
-// Open CSS when configured
-QString loadLegacyStyleSheet()
-{
-    QString styleSheet;
-    QSettings settings;
-    QString cssName;
-  
-    cssName = QString(":/css/Bezaleel");  
-    
-    QFile qFile(cssName);      
-    if (qFile.open(QFile::ReadOnly)) {
-        styleSheet = QLatin1String(qFile.readAll());
-    }
-	//std::string sTest = FromQS(styleSheet);
-	LogPrintf("\nstylesheetsize %f ", (int)styleSheet.length());
-
-        
-    return styleSheet;
-}
-
-
 FontFamily fontFamilyFromString(const QString& strFamily)
 {
     if (strFamily == "SystemDefault") {

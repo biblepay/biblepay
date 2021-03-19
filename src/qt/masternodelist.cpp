@@ -50,7 +50,7 @@ MasternodeList::MasternodeList(QWidget* parent) :
 
     int columnAddressWidth = 200;
     int columnStatusWidth = 80;
-    int columnPoSeScoreWidth = 80;
+    int columnPoSeScoreWidth = 90;
     int columnRegisteredWidth = 80;
     int columnLastPaidWidth = 80;
     int columnNextPaymentWidth = 100;
@@ -407,7 +407,7 @@ void MasternodeList::navigateToChild_clicked()
 	int row = ui->tableWidgetMasternodesDIP3->selectionModel()->currentIndex().row();
     if (row > -1)
     {
-		QString Url = ui->tableWidgetMasternodesDIP3->item(row, 8)->text();
+		QString Url = ui->tableWidgetMasternodesDIP3->item(row, 11)->text();
 		QUrl pUrl(Url);
 		QDesktopServices::openUrl(pUrl);
 	}

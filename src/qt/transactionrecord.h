@@ -99,10 +99,8 @@ public:
 		GSCPayment,
 		SuperBlockPayment,
 		GSCTransmission,
-		WhaleStake,
-		WhaleReward,
-		BiblePayStake,
-		BiblePayReward
+		UTXOStake,
+		UTXOReward
     };
 
     /** Number of confirmation recommended for accepting a transaction */
@@ -156,8 +154,8 @@ public:
     /** Whether the transaction was sent/received with a watch-only address */
     bool involvesWatchAddress;
 
-	/** If this is a Dynamic Whale Reward */
-	bool IsWhaleReward;
+	/** If this is a UTXO Reward */
+	bool IsUTXOReward;
 	
 	/** If this is a UTXO Stake */
 	bool IsUTXOStake;

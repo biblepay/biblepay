@@ -193,9 +193,6 @@ namespace GUIUtil
     // Browse backup folder
     void showBackups();
 
-	QString loadLegacyStyleSheet();
-
-
     // Replace invalid default fonts with known good ones
     void SubstituteFonts(const QString& language);
 

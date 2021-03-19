@@ -293,20 +293,12 @@ public:
 		return false;
     }
 
-	bool IsWhaleReward() const
+	bool IsUTXOReward() const
 	{
 		double nWhaleReward = (double)GetValueOut()/COIN;
 		double nWholePart = floor(nWhaleReward);
 		double nDecPart = nWhaleReward - nWholePart;
 		return (nDecPart == 1527);
-	}
-
-	bool IsDashReward() const
-	{
-		double nWhaleReward = (double)GetValueOut()/COIN;
-		double nWholePart = floor(nWhaleReward);
-		double nDecPart = nWhaleReward - nWholePart;
-		return (nDecPart == 1528);
 	}
 
 	bool IsSuperblockPayment() const

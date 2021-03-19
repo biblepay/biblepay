@@ -126,6 +126,9 @@
            <property name="sortingEnabled">
             <bool>true</bool>
            </property>
+           <property name="columnCount">
+            <number>14</number>
+           </property>
            <attribute name="horizontalHeaderStretchLastSection">
             <bool>true</bool>
            </attribute>
@@ -171,9 +174,26 @@
            </column>
            <column>
             <property name="text">
+             <string>Collateral</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Owner</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Voting</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
              <string>Child Biography URL</string>
             </property>
            </column>
+           <column/>
+           <column/>
           </widget>
          </item>
         </layout>

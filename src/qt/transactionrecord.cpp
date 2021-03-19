@@ -68,11 +68,9 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 
 				sub.IsGSCPayment = wtx.tx->IsGSCPayment();
 				sub.IsSuperblockPayment = wtx.tx->IsSuperblockPayment();
-				//sub.IsABN = wtx.tx->IsABN();
 				sub.IsUTXOStake = wtx.tx->IsUTXOStake();
-				//sub.IsBiblePayStake = wtx.tx->IsBiblePayStake();
 				std::string sAmount = RoundToString((double)wtx.tx->vout[i].nValue/COIN, 4);
-				sub.IsWhaleReward = Contains(sAmount, ".1527");
+				sub.IsUTXOReward = Contains(sAmount, ".1527");
 				
                 if (ExtractDestination(txout.scriptPubKey, address) && IsMine(*wallet, address))
                 {
@@ -91,9 +89,9 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 if (wtx.IsCoinBase())
                 {
                     // Check if one of our DAC subtypes
-					if (sub.IsWhaleReward && i != 0)
+					if (sub.IsUTXOReward && i != 0)
 					{
-						sub.type = TransactionRecord::WhaleReward;
+						sub.type = TransactionRecord::UTXOReward;
 					}
 					else if (sub.IsGSCPayment && i != 0)
 					{
@@ -216,9 +214,9 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 				if (wtx.tx->IsGSCTransmission())
 					sub.type = TransactionRecord::GSCTransmission;
 				if (wtx.tx->IsUTXOStake())
-					sub.type = TransactionRecord::WhaleStake;
-				if (wtx.tx->IsWhaleReward())
-					sub.type = TransactionRecord::WhaleReward;
+					sub.type = TransactionRecord::UTXOStake;
+				if (wtx.tx->IsUTXOReward())
+					sub.type = TransactionRecord::UTXOReward;
 		
 
             }
@@ -282,7 +280,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 					}
 					else if (wtx.tx->IsUTXOStake())
 					{
-						sub.type = TransactionRecord::WhaleStake;
+						sub.type = TransactionRecord::UTXOStake;
 					}
             
                 }

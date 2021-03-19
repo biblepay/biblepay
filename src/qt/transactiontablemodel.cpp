@@ -404,10 +404,9 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
         return tr("Received from");
     case TransactionRecord::RecvWithPrivateSend:
         return tr("Received via PrivateSend");
-
-	case TransactionRecord::BiblePayStake:
+	case TransactionRecord::UTXOStake:
 		return tr("UTXO Stake");
-	case TransactionRecord::BiblePayReward:
+	case TransactionRecord::UTXOReward:
 		return tr("UTXO Reward");
 	case TransactionRecord::GSCTransmission:
 		return tr("GSC Transmission");
@@ -448,30 +447,30 @@ QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx
 
 	switch(wtx->type)
     {
-		case TransactionRecord::BiblePayReward:
-			return QIcon(":/icons/whale3232");
-		case TransactionRecord::BiblePayStake:
-			return QIcon(":/icons/whale3232");
+		case TransactionRecord::UTXOReward:
+			return QIcon(":/images/reward232");
+		case TransactionRecord::UTXOStake:
+			return QIcon(":/images/utxo_lock_closed");
 		case TransactionRecord::SuperBlockPayment:
-			return QIcon(":/icons/account32");
+			return QIcon(":/images/account32");
 		case TransactionRecord::GSCPayment:
-			return QIcon(":/icons/donation32");
+			return QIcon(":/images/donation32");
 		case TransactionRecord::CPKAssociation:
-			return QIcon(":/icons/cross3232");
+			return QIcon(":/images/cross3232");
 		case TransactionRecord::GSCTransmission:
-			return QIcon(":/icons/donation32");
+			return QIcon(":/images/donation32");
 	    case TransactionRecord::Generated:
-		    return QIcon(":/icons/tx_mined");
+		    return QIcon(":/images/tx_mined");
 		case TransactionRecord::RecvWithPrivateSend:
 		case TransactionRecord::RecvWithAddress:
 		case TransactionRecord::RecvFromOther:
-			return QIcon(":/icons/tx_input");
+			return QIcon(":/images/tx_input");
 		case TransactionRecord::PrivateSend:
 		case TransactionRecord::SendToAddress:
 		case TransactionRecord::SendToOther:
-			return QIcon(":/icons/tx_output");
+			return QIcon(":/images/tx_output");
 		default:
-			return QIcon(":/icons/tx_inout");
+			return QIcon(":/images/tx_inout");
     }
 
     return QVariant();

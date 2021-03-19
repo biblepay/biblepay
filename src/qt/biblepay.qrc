@@ -58,6 +58,14 @@
         <file alias="Montserrat-ThinItalic">res/fonts/Montserrat/Montserrat-ThinItalic.otf</file>
     </qresource>
     <qresource prefix="/images">
+    	<file alias="cross3232">res/images/cross3232.png</file>
+	<file alias="donation32">res/images/donation32.png</file>
+    	<file alias="reward232">res/images/reward232.png</file>
+        <file alias="account32">res/images/account32.png</file>
+    	<file alias="tx_mined">res/images/tx_mined.png</file>
+    	<file alias="tx_input">res/images/tx_input.png</file>
+    	<file alias="tx_output">res/images/tx_output.png</file>
+        <file alias="utxo_lock_closed">res/images/utxo_lock_closed.png</file>
         <file alias="bezaleel_downArrow">res/images/bezaleel_downArrow.png</file>
         <file alias="rg">res/images/rg.png</file>
         <file alias="walletFrame_bg">res/images/walletFrame_bg.png</file>
