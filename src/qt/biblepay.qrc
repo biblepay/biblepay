@@ -21,10 +21,17 @@
         <file alias="eye_plus">res/icons/eye_plus.png</file>
         <file alias="editpaste">res/icons/editpaste.png</file>
         <file alias="editcopy">res/icons/editcopy.png</file>
+        <file alias="account32">res/icons/account32.png</file>
+        <file alias="cross3232">res/icons/cross3232.png</file>
+        <file alias="reward232">res/icons/reward232.png</file>
+        <file alias="tx_mined">res/icons/tx_mined.png</file>
+        <file alias="tx_inout">res/icons/tx_inout.png</file>
+        <file alias="donation32">res/icons/donation32.png</file>
         <file alias="synced">res/icons/synced.png</file>
         <file alias="remove">res/icons/remove.png</file>
         <file alias="lock_closed">res/icons/lock_closed.png</file>
         <file alias="lock_open">res/icons/lock_open.png</file>
+        <file alias="utxo_lock_closed">res/icons/utxo_lock_closed.png</file>
         <file alias="verify">res/icons/verify.png</file>
         <file alias="hd_enabled">res/icons/hd_enabled.png</file>
         <file alias="fontbigger">res/icons/fontbigger.png</file>
@@ -58,13 +65,13 @@
         <file alias="Montserrat-ThinItalic">res/fonts/Montserrat/Montserrat-ThinItalic.otf</file>
     </qresource>
     <qresource prefix="/images">
-    	<file alias="cross3232">res/images/cross3232.png</file>
-	<file alias="donation32">res/images/donation32.png</file>
-    	<file alias="reward232">res/images/reward232.png</file>
+    	  <file alias="cross3232">res/images/cross3232.png</file>
+     	  <file alias="donation32">res/images/donation32.png</file>
+    	  <file alias="reward232">res/images/reward232.png</file>
         <file alias="account32">res/images/account32.png</file>
-    	<file alias="tx_mined">res/images/tx_mined.png</file>
-    	<file alias="tx_input">res/images/tx_input.png</file>
-    	<file alias="tx_output">res/images/tx_output.png</file>
+    	  <file alias="tx_mined">res/images/tx_mined.png</file>
+    	  <file alias="tx_input">res/images/tx_input.png</file>
+    	  <file alias="tx_output">res/images/tx_output.png</file>
         <file alias="utxo_lock_closed">res/images/utxo_lock_closed.png</file>
         <file alias="bezaleel_downArrow">res/images/bezaleel_downArrow.png</file>
         <file alias="rg">res/images/rg.png</file>

@@ -448,29 +448,29 @@ QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx
 	switch(wtx->type)
     {
 		case TransactionRecord::UTXOReward:
-			return QIcon(":/images/reward232");
+			return GUIUtil::getIcon("reward232", GUIUtil::ThemedColor::RED);
 		case TransactionRecord::UTXOStake:
-			return QIcon(":/images/utxo_lock_closed");
+			return GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED);
 		case TransactionRecord::SuperBlockPayment:
-			return QIcon(":/images/account32");
+			return GUIUtil::getIcon("account32", GUIUtil::ThemedColor::RED);
 		case TransactionRecord::GSCPayment:
-			return QIcon(":/images/donation32");
+			return GUIUtil::getIcon("reward232", GUIUtil::ThemedColor::RED);
 		case TransactionRecord::CPKAssociation:
-			return QIcon(":/images/cross3232");
+			return GUIUtil::getIcon("cross3232", GUIUtil::ThemedColor::RED);
 		case TransactionRecord::GSCTransmission:
-			return QIcon(":/images/donation32");
+			return GUIUtil::getIcon("account32", GUIUtil::ThemedColor::RED);
 	    case TransactionRecord::Generated:
-		    return QIcon(":/images/tx_mined");
+			return GUIUtil::getIcon("tx_mined", GUIUtil::ThemedColor::RED);
 		case TransactionRecord::RecvWithPrivateSend:
 		case TransactionRecord::RecvWithAddress:
 		case TransactionRecord::RecvFromOther:
-			return QIcon(":/images/tx_input");
+			return GUIUtil::getIcon("tx_input", GUIUtil::ThemedColor::RED);
 		case TransactionRecord::PrivateSend:
 		case TransactionRecord::SendToAddress:
 		case TransactionRecord::SendToOther:
-			return QIcon(":/images/tx_output");
+			return GUIUtil::getIcon("tx_output", GUIUtil::ThemedColor::RED);
 		default:
-			return QIcon(":/images/tx_inout");
+			return GUIUtil::getIcon("tx_inout", GUIUtil::ThemedColor::RED);
     }
 
     return QVariant();
