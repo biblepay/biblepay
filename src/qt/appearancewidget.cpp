@@ -107,7 +107,7 @@ void AppearanceWidget::updateTheme(const QString& theme)
 {
     QString newValue = theme.isEmpty() ? ui->theme->currentData().toString() : theme;
     if (GUIUtil::getActiveTheme() != newValue) {
-        QSettings().setValue("theme", newValue);
+        QSettings().setValue("bbptheme", newValue);
         // Force loading the theme
         GUIUtil::loadTheme(nullptr, true);
     }

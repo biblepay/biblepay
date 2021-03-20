@@ -205,13 +205,13 @@ static const std::map<ThemedStyle, QString> themedDarkStyles = {
 
 QColor getThemedQColor(ThemedColor color)
 {
-    QString theme = QSettings().value("theme", "").toString();
+    QString theme = QSettings().value("bbptheme", "").toString();
     return theme.startsWith(darkThemePrefix) ? themedDarkColors.at(color) : themedColors.at(color);
 }
 
 QString getThemedStyleQString(ThemedStyle style)
 {
-    QString theme = QSettings().value("theme", "").toString();
+    QString theme = QSettings().value("bbptheme", "").toString();
     return theme.startsWith(darkThemePrefix) ? themedDarkStyles.at(style) : themedStyles.at(style);
 }
 
@@ -1112,7 +1112,7 @@ void migrateQtSettings()
     // Migration (12.1)
     QSettings settings;
     if(!settings.value("fMigrationDone121", false).toBool()) {
-        settings.remove("theme");
+        settings.remove("bbptheme");
         settings.remove("nWindowPos");
         settings.remove("nWindowSize");
         settings.setValue("fMigrationDone121", true);
@@ -1815,11 +1815,11 @@ QString getActiveTheme()
 {
     QSettings settings;
 	tryagain:
-	QString theme1 = settings.value("theme", defaultTheme).toString();
+	QString theme1 = settings.value("bbptheme", defaultTheme).toString();
 	if (theme1 == "bezaleel" || theme1 == "dark")
 	{
 		// retired
-		settings.setValue("theme", "Dark");
+		settings.setValue("bbptheme", "Dark");
 		goto tryagain;
     }
 	return theme1;
@@ -1828,7 +1828,7 @@ QString getActiveTheme()
 bool biblepayThemeActive()
 {
     QSettings settings;
-    QString theme = settings.value("theme", "").toString();
+    QString theme = settings.value("bbptheme", "").toString();
     return theme != traditionalTheme;
 }
 

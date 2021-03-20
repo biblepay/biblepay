@@ -83,8 +83,8 @@ void OptionsModel::Init(bool resetSettings)
     strThirdPartyTxUrls = settings.value("strThirdPartyTxUrls", "").toString();
 
     // Appearance
-    if (!settings.contains("theme"))
-        settings.setValue("theme", GUIUtil::getDefaultTheme());
+    if (!settings.contains("bbptheme"))
+        settings.setValue("bbptheme", GUIUtil::getDefaultTheme());
 
     if (!settings.contains("fontFamily"))
         settings.setValue("fontFamily", GUIUtil::fontFamilyToString(GUIUtil::getFontFamilyDefault()));
@@ -361,7 +361,7 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return settings.value("digits");
 #endif // ENABLE_WALLET
         case Theme:
-            return settings.value("theme");
+            return settings.value("bbptheme");
         case FontFamily:
             return settings.value("fontFamily");
         case FontScale:
@@ -698,8 +698,8 @@ void OptionsModel::checkAndMigrate()
     }
 
     // Make sure there is a valid theme set in the options.
-    QString strActiveTheme = settings.value("theme", GUIUtil::getDefaultTheme()).toString();
+    QString strActiveTheme = settings.value("bbptheme", GUIUtil::getDefaultTheme()).toString();
     if (!GUIUtil::isValidTheme(strActiveTheme)) {
-        settings.setValue("theme", GUIUtil::getDefaultTheme());
+        settings.setValue("bbptheme", GUIUtil::getDefaultTheme());
     }
 }
