@@ -1207,12 +1207,11 @@ bool AppInitParameterInteraction()
     sOS="WIN";
 #endif
     
-    LogPrintf("***************************************** DAC - DECENTRALIZED AUTONOMOUS CHARITY *************************************************** \n");
+    LogPrintf("***************************************** BIBLEPAY - DECENTRALIZED AUTONOMOUS CHARITY (DAC) *************************************************** \n");
     LogPrintf("ProdMode: Prod %f",(double)fProd);
     LogPrintf("Core Wallet Version %s (%s)\n", FormatFullVersion().c_str(), CLIENT_NAME.c_str());
     LogPrintf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
-
-
+	
     // ********************************************************* Step 3: parameter-to-internal-flags
     if (gArgs.IsArgSet("-debug")) {
         // Special-case: if -debug=0/-nodebug is set, turn off debugging messages

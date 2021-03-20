@@ -100,49 +100,56 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
     progressDialog(0),
     appMenuBar(0),
     overviewAction(0),
+	sendCoinsAction(0),
+    sendCoinsMenuAction(0),
+    privateSendCoinsAction(0),
+    privateSendCoinsMenuAction(0),
+	receiveCoinsAction(0),
+    receiveCoinsMenuAction(0),
     historyAction(0),
     masternodeAction(0),
-    quitAction(0),
-    sendCoinsAction(0),
-    privateSendCoinsAction(0),
-    sendCoinsMenuAction(0),
-    privateSendCoinsMenuAction(0),
-    usedSendingAddressesAction(0),
-    usedReceivingAddressesAction(0),
-    signMessageAction(0),
-    verifyMessageAction(0),
-    aboutAction(0),
+    webAction(0),
+	leaderboardAction(0),
+    proposalListAction(0),
 	orphanAction(0),
 	exchangeAction(0),
-	webAction(0),
-	OneClickMiningAction(0),
+	quitAction(0),
  	sinnerAction(0),
     TheLordsPrayerAction(0),
     TheApostlesCreedAction(0),
     TheNiceneCreedAction(0),
-    ReadBibleAction(0),
-    TheTenCommandmentsAction(0),
+	TheTenCommandmentsAction(0),
     JesusConciseCommandmentsAction(0),
-	proposalListAction(0),
-	proposalAddMenuAction(0),
-	userEditMenuAction(0),
-	memorizeScriptureMenuAction(0),
+	ReadBibleAction(0),
+	OneClickMiningAction(0),
 	openChatGeneralAction(0),
     openChatPMAction(0),
 	openChatPMEncryptedAction(0),
 	univAction(0),
-    leaderboardAction(0),
-    receiveCoinsAction(0),
-    receiveCoinsMenuAction(0),
+	proposalAddMenuAction(0),
+	userEditMenuAction(0),
+	memorizeScriptureMenuAction(0),
+	aboutAction(0),
     optionsAction(0),
     toggleHideAction(0),
     encryptWalletAction(0),
     backupWalletAction(0),
     changePassphraseAction(0),
-    aboutQtAction(0),
-    openRPCConsoleAction(0),
+	unlockWalletAction(0),
+	lockWalletAction(0),
+	signMessageAction(0),
+    verifyMessageAction(0),
+	openInfoAction(0),
+	openRPCConsoleAction(0),
+	openGraphAction(0),
+	openPeersAction(0),
+	openRepairAction(0),
+	openConfEditorAction(0),
+	showBackupsAction(0),
+	usedSendingAddressesAction(0),
+    usedReceivingAddressesAction(0),
     openAction(0),
-    showHelpMessageAction(0),
+	showHelpMessageAction(0),
     showPrivateSendHelpAction(0),
     trayIcon(0),
     trayIconMenu(0),
@@ -164,6 +171,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 		LogPrintf("\nBitcoinGUI::Launch Failed to restore geometry - centering %f", 03162021);
         move(QApplication::desktop()->availableGeometry().center() - frameGeometry().center());
     }
+	std::cout << ".\nUI20" << std::endl;
 
 	static bool fDebugged = false;
 	if (!fDebugged)
@@ -173,6 +181,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 		LogPrintf("\nBIBLEPAY::loadStyleSheet::Using QT settings file location %s \n", sMySettings);
 	}
 
+	std::cout << ".\nUI21" << std::endl;
 
 
     QString windowTitle = tr(PACKAGE_NAME) + " - ";
@@ -447,7 +456,8 @@ void BitcoinGUI::createActions()
     privateSendCoinsAction->setStatusTip(tr("PrivateSend coins to a BiblePay address"));
     privateSendCoinsAction->setToolTip(privateSendCoinsAction->statusTip());
     privateSendCoinsAction->setCheckable(false);
-  
+    //tabGroup->addButton(privateSendCoinsAction);
+
     privateSendCoinsMenuAction = new QAction(privateSendCoinsAction->text(), this);
     privateSendCoinsMenuAction->setStatusTip(privateSendCoinsAction->statusTip());
     privateSendCoinsMenuAction->setToolTip(privateSendCoinsMenuAction->statusTip());
@@ -1087,7 +1097,7 @@ void BitcoinGUI::removeAllWallets()
 void BitcoinGUI::setWalletActionsEnabled(bool enabled)
 {
 
-	std::cout << "UI.." << std::endl;
+	std::cout << "\nUI1.." << std::endl;
 
     overviewAction->setEnabled(enabled);
     sendCoinsAction->setEnabled(enabled);

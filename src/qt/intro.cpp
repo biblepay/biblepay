@@ -23,7 +23,7 @@
 
 static const uint64_t GB_BYTES = 1000000000LL;
 /* Minimum free space (in GB) needed for data directory */
-static const uint64_t BLOCK_CHAIN_SIZE = 10;
+static const uint64_t BLOCK_CHAIN_SIZE = 5;
 /* Minimum free space (in GB) needed for data directory when pruned; Does not include prune target */
 static const uint64_t CHAIN_STATE_SIZE = 1;
 /* Total required space (in GB) depending on user choice (prune, not prune) */
@@ -123,6 +123,7 @@ Intro::Intro(QWidget *parent) :
     ui->setupUi(this);
     ui->welcomeLabel->setText(ui->welcomeLabel->text().arg(tr(PACKAGE_NAME)));
     ui->storageLabel->setText(ui->storageLabel->text().arg(tr(PACKAGE_NAME)));
+	std::cout << ".\nUI 5.1" << std::endl;
 
     ui->lblExplanation1->setText(ui->lblExplanation1->text()
         .arg(tr(PACKAGE_NAME))
@@ -151,6 +152,8 @@ Intro::Intro(QWidget *parent) :
         storageRequiresMsg.arg(requiredSpace) + " " +
         tr("The wallet will also be stored in this directory.")
     );
+	std::cout << ".\nUI 5.2" << std::endl;
+
     startThread();
 }
 
@@ -189,9 +192,13 @@ QString Intro::getDefaultDataDirectory()
 
 bool Intro::pickDataDirectory()
 {
+	std::cout << ".\nUI 6.000" << std::endl;
+
     QSettings settings;
     /* If data directory provided on command line, no need to look at settings
        or show a picking dialog */
+	std::cout << ".\nUI 6.01" << std::endl;
+
     if(!gArgs.GetArg("-datadir", "").empty())
         return true;
     /* 1) Default data directory for operating system */
@@ -206,9 +213,12 @@ bool Intro::pickDataDirectory()
         /* Let the user choose one */
         Intro intro;
         GUIUtil::disableMacFocusRect(&intro);
+		std::cout << ".\nUI 6.2" << std::endl;
+
         GUIUtil::loadStyleSheet(&intro);
         intro.setDataDirectory(dataDirDefaultCurrent);
         intro.setWindowIcon(QIcon(":icons/bitcoin"));
+		std::cout << ".\nUI 6.3" << std::endl;
 
         while(true)
         {

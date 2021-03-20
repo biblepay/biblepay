@@ -244,7 +244,7 @@ min-width:300px;
 margin-right:5px;
 margin-left:0;
 margin-top:0;
-/*xbackground-image: url(':/images/bezaleel/biblepay_logo_horizontal');
+/*xbackground-image: url(':/images/biblepay_logo_horizontal');
 background-repeat:none;
 */
 }
@@ -982,19 +982,19 @@ height:10px;
 }
 
 QScrollBar:up-arrow {
-background-image: url(':/images/bezaleel/bezaleel_upArrow_small');
+background-image: url(':/images/bezaleel_upArrow_small');
 }
 
 QScrollBar:down-arrow {
-background-image: url(':/images/bezaleel/bezaleel_downArrow_small');
+background-image: url(':/images/bezaleel_downArrow_small');
 }
 
 QScrollBar:left-arrow {
-background-image: url(':/images/bezaleel/bezaleel_leftArrow_small');
+background-image: url(':/images/bezaleel_leftArrow_small');
 }
 
 QScrollBar:right-arrow {
-background-image: url(':/images/bezaleel/bezaleel_rightArrow_small');
+background-image: url(':/images/bezaleel_rightArrow_small');
 }
 */
 
