@@ -1164,9 +1164,6 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
     AssertLockNotHeld(cs_css);
     LOCK(cs_css);
 	QString qActive = getActiveTheme();
-	std::cout << ".\nUI 8.01" << FROMQS(qActive) << std::endl;
-    
-
     static std::unique_ptr<QString> stylesheet;
     static std::set<QWidget*> setWidgets;
 
@@ -1175,20 +1172,14 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
 
     if (stylesheet == nullptr || fForceUpdate || fDebugCustomStyleSheets) 
 	{
-		std::cout << ".\nUI 8.02" << std::endl;
-
         auto hasModified = [](const std::vector<QString>& vecFiles) -> bool 
 		{
-			std::cout << ".\nUI 8.03" << std::endl;
-
             static std::map<const QString, QDateTime> mapLastModified;
 
             bool fModified = false;
             for (auto file = vecFiles.begin(); file != vecFiles.end() && !fModified; ++file) 
 			{
                 QFileInfo info(*file);
-				std::cout << ".\nUI 8.04" << std::endl;
-
                 QDateTime lastModified = info.lastModified(), prevLastModified;
                 auto it = mapLastModified.emplace(std::make_pair(*file, lastModified));
                 prevLastModified = it.second ? QDateTime() : it.first->second;
@@ -1208,16 +1199,11 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
 
             for (const auto& file : vecFiles) 
 			{
-				std::cout << ".\nUI 8.0561 " << FROMQS(file) << std::endl;
-
                 QFile qFile(file);
                 if (!qFile.open(QFile::ReadOnly)) {
                     throw std::runtime_error(strprintf("%s: Failed to open file: %s", __func__, file.toStdString()));
                 }
-				std::cout << ".\nUI 8.0571 " << std::endl;
-				
                 QString strStyle = QLatin1String(qFile.readAll());
-				std::cout << ".\nUI 8.058" << std::endl;
 
                 // Process all <os=...></os> groups in the stylesheet first
                 QRegularExpressionMatch osStyleMatch;
@@ -1229,7 +1215,6 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
                         "$");
                 osStyleExp.setPatternOptions(QRegularExpression::MultilineOption);
                 QRegularExpressionMatchIterator it = osStyleExp.globalMatch(strStyle);
-								std::cout << ".\nUI 8.059" << std::endl;
 
                 // For all <os=...></os> sections
                 while (it.hasNext() && (osStyleMatch = it.next()).isValid()) 
@@ -1253,16 +1238,11 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
                         }
                     }
                 }
-								std::cout << ".\nUI 8.060" << std::endl;
-
                 stylesheet->append(strStyle);
-								std::cout << ".\nUI 8.061" << std::endl;
-
             }
             return true;
         };
 
-		std::cout << ".\nUI 8.06" << std::endl;
 
         auto pathToFile = [&](const QString& file) -> QString {
             return stylesheetDirectory + "/" + file + (isStyleSheetDirectoryCustom() ? ".css" : "");
@@ -1272,29 +1252,23 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
         // If light/dark theme is used load general styles first
         if (biblepayThemeActive()) 
 		{
-			std::cout << ".\nUI 8.07" << std::endl;
 
             vecFiles.push_back(pathToFile("general"));
-			std::cout << ".\nUI 8.08 " << FROMQS(pathToFile("general")) << std::endl;
 
         }
-		std::cout << ".\nUI 8.09" << std::endl;
 
         vecFiles.push_back(pathToFile(getActiveTheme()));
-		std::cout << ".\nUI 8.11 " << FROMQS(pathToFile(getActiveTheme())) << " " << FROMQS(getActiveTheme()) << std::endl;
 
         fStyleSheetChanged = loadFiles(vecFiles);
     }
 
     bool fUpdateStyleSheet = fForceUpdate || (fDebugCustomStyleSheets && fStyleSheetChanged);
 
-	std::cout << ".\nUI 8.12" << std::endl;
 
     if (widget) {
         setWidgets.insert(widget);
         widget->setStyleSheet(*stylesheet);
     }
-	std::cout << ".\nUI 8.13" << std::endl;
 
 
     QWidgetList allWidgets = QApplication::allWidgets();
@@ -1309,7 +1283,6 @@ void loadStyleSheet(QWidget* widget, bool fForceUpdate)
         }
         ++it;
     }
-	std::cout << ".\nUI 8.14" << std::endl;
 
     if (!ShutdownRequested() && fDebugCustomStyleSheets && !fForceUpdate) {
         QTimer::singleShot(200, [] { loadStyleSheet(); });

@@ -519,7 +519,7 @@ void BitcoinGUI::createActions()
     
 	proposalListAction = new QToolButton(this);
 	//proposalListAction->setIcon(QIcon(":/icons/addressbook"));
-	proposalListAction->setText(tr("&Show Proposals"));
+	proposalListAction->setText(tr("&Proposals"));
 	proposalListAction->setStatusTip(tr("Show Proposals"));
 	proposalListAction->setToolTip(proposalListAction->statusTip());
 	proposalListAction->setCheckable(true);
@@ -1668,12 +1668,15 @@ void BitcoinGUI::updateWidth()
     // Add 30 per button as padding and use minimum 980 which is the minimum required to show all tab's contents
     // Use nButtonsVisible + 1 <- for the biblepay logo
     int nWidth = std::max<int>(980, (nWidthWidestButton + 30) * (nButtonsVisible + 1));
-	// This is a nagging issue!  I found if the user sets a montserrat font size that is bigger than medium, the minimum width of the wallet is huge.  We have to figure out how to deal with this.
-	if (nWidth > 1500)
-		nWidth = 1500;
-	LogPrintf("\nBitcoinGui::UpdateWidth %f", nWidth);
+	// This is a nagging and frustrating issue!  I found if the user sets a montserrat font size that is bigger than medium, the minimum width of the wallet is huge.  We have to figure out how to deal with this.
+	if (nWidth > 1200)
+		nWidth = 1200;
     setMinimumWidth(nWidth);
-	int nHeight = height() - 200;
+	int nHeight = height();
+	if (nHeight > 800)
+		nHeight = 800;
+	LogPrintf("\nBitcoinGui::UpdateWidth and height %f x %f", nWidth, nHeight);
+
     resize(nWidth, nHeight);
 }
 

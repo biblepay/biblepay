@@ -192,13 +192,9 @@ QString Intro::getDefaultDataDirectory()
 
 bool Intro::pickDataDirectory()
 {
-	std::cout << ".\nUI 6.000" << std::endl;
-
     QSettings settings;
     /* If data directory provided on command line, no need to look at settings
        or show a picking dialog */
-	std::cout << ".\nUI 6.01" << std::endl;
-
     if(!gArgs.GetArg("-datadir", "").empty())
         return true;
     /* 1) Default data directory for operating system */
@@ -213,13 +209,9 @@ bool Intro::pickDataDirectory()
         /* Let the user choose one */
         Intro intro;
         GUIUtil::disableMacFocusRect(&intro);
-		std::cout << ".\nUI 6.2" << std::endl;
-
         GUIUtil::loadStyleSheet(&intro);
         intro.setDataDirectory(dataDirDefaultCurrent);
         intro.setWindowIcon(QIcon(":icons/bitcoin"));
-		std::cout << ".\nUI 6.3" << std::endl;
-
         while(true)
         {
             if(!intro.exec())

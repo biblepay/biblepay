@@ -627,7 +627,6 @@ int main(int argc, char *argv[])
     QTranslator qtTranslatorBase, qtTranslator, translatorBase, translator;
     initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
     translationInterface.Translate.connect(Translate);
-	std::cout << ".\nUI3" << std::endl;
 
     if (gArgs.IsArgSet("-printcrashinfo")) {
         auto crashInfo = GetCrashInfoStrFromSerializedStr(gArgs.GetArg("-printcrashinfo", ""));
@@ -635,7 +634,6 @@ int main(int argc, char *argv[])
         QMessageBox::critical(0, QObject::tr(PACKAGE_NAME), QString::fromStdString(crashInfo));
         return EXIT_SUCCESS;
     }
-	std::cout << ".\nUI3.5" << std::endl;
 
     // Show help message immediately after parsing command-line options (for "-lang") and setting locale,
     // but before showing splash screen.
@@ -645,13 +643,11 @@ int main(int argc, char *argv[])
         help.showOrPrint();
         return EXIT_SUCCESS;
     }
-		std::cout << ".\nUI3.7" << std::endl;
 
     /// 5. Now that settings and translations are available, ask user for data directory
     // User language is set up: pick a data directory
     if (!Intro::pickDataDirectory())
         return EXIT_SUCCESS;
-	std::cout << ".\nUI3.8" << std::endl;
 
     /// 6. Determine availability of data directory and parse biblepay.conf
     /// - Do not call GetDataDir(true) before this step finishes
@@ -668,7 +664,6 @@ int main(int argc, char *argv[])
                               QObject::tr("Error: Cannot parse configuration file: %1. Only use key=value syntax.").arg(e.what()));
         return EXIT_FAILURE;
     }
-	std::cout << ".\nUI4" << std::endl;
 
     /// 7. Determine network (and switch to network specific options)
     // - Do not call Params() before this step
@@ -687,7 +682,6 @@ int main(int argc, char *argv[])
     // Parse URIs on command line -- this can affect Params()
     PaymentServer::ipcParseCommandLine(argc, argv);
 #endif
-	std::cout << ".\nUI5" << std::endl;
 
     QScopedPointer<const NetworkStyle> networkStyle(NetworkStyle::instantiate(QString::fromStdString(Params().NetworkIDString())));
     assert(!networkStyle.isNull());
@@ -695,7 +689,6 @@ int main(int argc, char *argv[])
     // QApplication::setApplicationName(networkStyle->getAppName()); // moved to NetworkStyle::NetworkStyle
     // Re-initialize translations after changing application name (language in network-specific settings can be different)
     initTranslations(qtTranslatorBase, qtTranslator, translatorBase, translator);
-	std::cout << ".\nUI6" << std::endl;
 
 #ifdef ENABLE_WALLET
     /// 8. URI IPC sending
@@ -711,7 +704,6 @@ int main(int argc, char *argv[])
     // biblepay: links repeatedly have their payment requests routed to this process:
     app.createPaymentServer();
 #endif
-	std::cout << ".\nUI7" << std::endl;
 
     /// 9. Main GUI initialization
     // Install global event filter that makes sure that long tooltips can be word-wrapped
@@ -737,8 +729,6 @@ int main(int argc, char *argv[])
                               QObject::tr("Error: Failed to load application fonts."));
         return EXIT_FAILURE;
     }
-
-	std::cout << ".\nUI8" << std::endl;
 
     // Validate/set font family
     if (gArgs.IsArgSet("-font-family")) {
@@ -818,8 +808,6 @@ int main(int argc, char *argv[])
                                   QObject::tr("Error: %1 CSS file(s) missing in -custom-css-dir path.").arg(vecRequiredFiles.size()) + "\n\n" + strMissingFiles);
             return EXIT_FAILURE;
         }
-		std::cout << ".\nUI11" << std::endl;
-
         GUIUtil::setStyleSheetDirectory(strCustomDir);
     }
     // Validate -debug-ui
@@ -838,11 +826,7 @@ int main(int argc, char *argv[])
     int rv = EXIT_SUCCESS;
     try
     {
-		std::cout << ".\nUI12" << std::endl;
-
         app.createWindow(networkStyle.data());
-		std::cout << ".\nUI13" << std::endl;
-
         // Perform base initialization before spinning up initialization/shutdown thread
         // This is acceptable because this function only contains steps that are quick to execute,
         // so the GUI thread won't be held up.
