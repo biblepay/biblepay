@@ -158,9 +158,9 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
 
     // Basic checks that don't depend on any context
     if (!allowEmptyTxInOut && tx.vin.empty())
-        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
+        return state.DoS(3, false, REJECT_INVALID, "bad-txns-vin-empty");
     if (!allowEmptyTxInOut && tx.vout.empty())
-        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vout-empty");
+        return state.DoS(4, false, REJECT_INVALID, "bad-txns-vout-empty");
     // Size limits
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_LEGACY_BLOCK_SIZE)
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
@@ -202,7 +202,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
     {
         for (const auto& txin : tx.vin)
             if (txin.prevout.IsNull())
-                return state.DoS(10, false, REJECT_INVALID, "bad-txns-prevout-null");
+                return state.DoS(6, false, REJECT_INVALID, "bad-txns-prevout-null");
     }
 
     return true;

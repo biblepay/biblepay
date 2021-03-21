@@ -22,9 +22,19 @@ bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVali
     if (tx.nVersion != 3 || tx.nType == TRANSACTION_NORMAL)
         return true;
 
-    if (pindexPrev && pindexPrev->nHeight + 1 < Params().GetConsensus().DIP0003Height) {
-        return state.DoS(10, false, REJECT_INVALID, "bad-tx-type");
-    }
+	if (false)
+	{
+		// We have some of these BBP
+		if (pindexPrev->nHeight < Params().GetConsensus().LLMQHeight)
+		{
+			return true;
+		}
+		if (pindexPrev && pindexPrev->nHeight + 1 < Params().GetConsensus().DIP0003Height) 
+		{
+			LogPrintf("\nBadTxType %f ", pindexPrev->nHeight + 1);
+			return state.DoS(1, false, REJECT_INVALID, "bad-tx-type");
+		}
+	}
 
     try {
         switch (tx.nType) {
@@ -46,7 +56,8 @@ bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVali
         return state.DoS(100, false, REJECT_INVALID, "failed-check-special-tx");
     }
 
-    return state.DoS(10, false, REJECT_INVALID, "bad-tx-type-check");
+	LogPrintf("\nBad-tx-Type-Check %f", pindexPrev->nHeight);
+    return state.DoS(11, false, REJECT_INVALID, "bad-tx-type-check");
 }
 
 bool ProcessSpecialTx(const CTransaction& tx, const CBlockIndex* pindex, CValidationState& state)

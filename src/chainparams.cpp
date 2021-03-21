@@ -551,7 +551,6 @@ public:
 		consensus.F13000_CUTOVER_HEIGHT = 100; 
 		consensus.ANTI_GPU_HEIGHT = 28010;
 		consensus.RANDOMX_HEIGHT = 28003;
-		consensus.ABNHeight = 5000;
 		int BLOCKS_PER_DAY = 205;
 		consensus.F9000_CUTOVER_HEIGHT= 100;
 		consensus.F11000_CUTOVER_HEIGHT= 1;
@@ -592,16 +591,15 @@ public:
         consensus.BIP65Height = 2431; 
         consensus.BIP66Height = 2075; 
         consensus.DIP0001Height = 7000;
-		
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 8400;
 
 		//LLMQ:
         consensus.BIP34Hash = uint256S("0x0");
-		consensus.BIP34Height = 77000;
-		consensus.DIP0003Height = 77000; 
-		consensus.LLMQHeight = 77000;
-    	consensus.DIP0003EnforcementHeight = 77000;
-		consensus.HARVEST_HEIGHT = 77000;  // Go live height for BiblePay-Harvest
+		consensus.BIP34Height = 73000;
+		consensus.DIP0003Height = 73000; 
+		consensus.LLMQHeight = 73000;
+    	consensus.DIP0003EnforcementHeight = 73000;
+		consensus.HARVEST_HEIGHT = 73000;  // Go live height for BiblePay-Harvest
 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day

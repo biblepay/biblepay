@@ -712,7 +712,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         if (GetTransaction(conflictLock->txid, txConflict, chainparams.GetConsensus(), hashBlock)) {
             GetMainSignals().NotifyInstantSendDoubleSpendAttempt(tx, *txConflict);
         }
-        return state.DoS(10, error("AcceptToMemoryPool : Transaction %s conflicts with locked TX %s",
+        return state.DoS(19, error("AcceptToMemoryPool : Transaction %s conflicts with locked TX %s",
                                    hash.ToString(), conflictLock->txid.ToString()),
                          REJECT_INVALID, "tx-txlock-conflict");
     }
@@ -2113,7 +2113,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
 
     if (pindex->pprev && pindex->phashBlock && llmq::chainLocksHandler->HasConflictingChainLock(pindex->nHeight, pindex->GetBlockHash())) {
-        return state.DoS(10, error("%s: conflicting with chainlock", __func__), REJECT_INVALID, "bad-chainlock");
+        return state.DoS(22, error("%s: conflicting with chainlock", __func__), REJECT_INVALID, "bad-chainlock");
     }
 
     // verify that the view's current state corresponds to the previous block
@@ -2416,7 +2416,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                 // The node which relayed this should switch to correct chain.
                 // TODO: relay instantsend data/proof.
                 LOCK(cs_main);
-                return state.DoS(10, error("ConnectBlock(BIBLEPAY): transaction %s conflicts with transaction lock %s", tx->GetHash().ToString(), conflictLock->txid.ToString()),
+                return state.DoS(9, error("ConnectBlock(BIBLEPAY): transaction %s conflicts with transaction lock %s", tx->GetHash().ToString(), conflictLock->txid.ToString()),
                                  REJECT_INVALID, "conflict-tx-lock");
             }
         }
@@ -2445,7 +2445,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     LogPrint(BCLog::BENCHMARK, "      - IsBlockValueValid: %.2fms [%.2fs (%.2fms/blk)]\n", MICRO * (nTime5_3 - nTime5_2), nTimeValueValid * MICRO, nTimeValueValid * MILLI / nBlocksTotal);
 
     if (!IsBlockPayeeValid(*block.vtx[0], pindex->nHeight, blockReward)) {
-        return state.DoS(0, error("ConnectBlock(BIBLEPAY): couldn't find masternode or superblock payments"),
+        return state.DoS(0, error("[3] ConnectBlock(BIBLEPAY): couldn't find masternode or superblock payments"),
                                 REJECT_INVALID, "bad-cb-payee");
     }
 
@@ -3628,7 +3628,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 		if (nHeight < 1000 || nHeight > 33400 && nHeight < 33500)
 			fGrandfather = true;
 		if (!fGrandfather)
-			return state.DoS(20, false, REJECT_INVALID, "bad-diffbits", false, strprintf("incorrect proof of work at %d", nHeight));
+			return state.DoS(21, false, REJECT_INVALID, "bad-diffbits", false, strprintf("incorrect proof of work at %d", nHeight));
 	}
 
     // Check against checkpoints
@@ -3714,7 +3714,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     unsigned int nSigOps = 0;
     for (const auto& tx : block.vtx) {
         if (!IsFinalTx(*tx, nHeight, nLockTimeCutoff)) {
-            return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false, "non-final transaction");
+            return state.DoS(8, false, REJECT_INVALID, "bad-txns-nonfinal", false, "non-final transaction");
         }
         if (!ContextualCheckTransaction(*tx, state, consensusParams, pindexPrev)) {
             return false;
@@ -3752,7 +3752,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 		// RandomX Pools:
 		int64_t nBlockAge = GetAdjustedTime() - block.GetBlockTime();
 		double nVersion = GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage);
-		if (nHeight > consensusParams.TRIBULATION_HEIGHT && nVersion > 1000 && nVersion < 1531)
+		if (nHeight > consensusParams.HARVEST_HEIGHT && nVersion > 1000 && nVersion < 1601)
 		{
 			LogPrintf("\r\nContextualCheckBlock::ERROR - Block Rejected - Node spamming new blocks after mandatory upgrade %f", nVersion);
 			return false;
@@ -3826,7 +3826,7 @@ bool CChainState::AcceptBlockHeader(const CBlockHeader& block, CValidationState&
         CBlockIndex* pindexPrev = nullptr;
         BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
         if (mi == mapBlockIndex.end())
-            return state.DoS(10, error("%s: prev block not found", __func__), 0, "prev-blk-not-found");
+            return state.DoS(6, error("%s: prev block not found", __func__), 0, "prev-blk-not-found");
         pindexPrev = (*mi).second;
         assert(pindexPrev);
 
@@ -3843,7 +3843,7 @@ bool CChainState::AcceptBlockHeader(const CBlockHeader& block, CValidationState&
 
         if (pindexPrev->nStatus & BLOCK_CONFLICT_CHAINLOCK)
             // it's ok-ish, the other node is probably missing the latest chainlock
-            return state.DoS(10, error("%s: prev block %s conflicts with chainlock", __func__, block.hashPrevBlock.ToString()), REJECT_INVALID, "bad-prevblk-chainlock");
+            return state.DoS(14, error("%s: prev block %s conflicts with chainlock", __func__, block.hashPrevBlock.ToString()), REJECT_INVALID, "bad-prevblk-chainlock");
 
         if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
             return error("%s: Consensus::ContextualCheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
@@ -3867,7 +3867,7 @@ bool CChainState::AcceptBlockHeader(const CBlockHeader& block, CValidationState&
             if (pindex == nullptr) {
                 AddToBlockIndex(block, BLOCK_CONFLICT_CHAINLOCK);
             }
-            return state.DoS(10, error("%s: header %s conflicts with chainlock", __func__, hash.ToString()), REJECT_INVALID, "bad-chainlock");
+            return state.DoS(15, error("%s: header %s conflicts with chainlock", __func__, hash.ToString()), REJECT_INVALID, "bad-chainlock");
         }
     }
     if (pindex == nullptr)
@@ -4050,7 +4050,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
 
     uint256 hash = block.GetHash();
     if (llmq::chainLocksHandler->HasConflictingChainLock(pindexPrev->nHeight + 1, hash)) {
-        return state.DoS(10, error("%s: conflicting with chainlock", __func__), REJECT_INVALID, "bad-chainlock");
+        return state.DoS(16, error("%s: conflicting with chainlock", __func__), REJECT_INVALID, "bad-chainlock");
     }
 
     CCoinsViewCache viewNew(pcoinsTip.get());
