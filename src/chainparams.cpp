@@ -341,10 +341,9 @@ public:
 		consensus.DIP0003Height = 133000;
 		// September 2020 Go-Live (POOS)
 		consensus.POOS_HEIGHT = 217000; // Sept 2020 Mandatory Upgrade height
-		consensus.LLMQHeight = 580000; // The first attempt at llmq quorums that conform to voting out bad quorum members
 		consensus.TRIBULATION_HEIGHT = 255000;  // Go Live for BiblePay Mandatory 1.5.4.4 - March 1st, 2021
 		consensus.HARVEST_HEIGHT = 300000;  // Go live height for BiblePay-Harvest
-
+		consensus.LLMQHeight = 580000; // The first attempt at llmq quorums that conform to voting out bad quorum members
 		consensus.DIP0003EnforcementHeight = 580000;
 		// Mission Critical to do: verify each switch in getblockchaininfo (dip activation):
 		// consensus.DIP0008Height = 582000;
@@ -572,8 +571,7 @@ public:
 		consensus.nBudgetPaymentsStartBlock = 2002;
 		consensus.QTHeight = 5000;
 		consensus.TRIBULATION_HEIGHT = 58000;
-		consensus.HARVEST_HEIGHT = 90000;  // Go live height for BiblePay-Harvest
-
+		
 		consensus.nBudgetPaymentsCycleBlocks = 50;
 		consensus.nBudgetPaymentsWindowBlocks = 10;
 		consensus.nSuperblockStartBlock = 4007; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPaymentsStartBlock
@@ -593,21 +591,17 @@ public:
         consensus.nDCCSuperblockCycle = BLOCKS_PER_DAY; // Daily
         consensus.BIP65Height = 2431; 
         consensus.BIP66Height = 2075; 
-
         consensus.DIP0001Height = 7000;
-
 		consensus.DIP0003Height = 30000; 
 
 		// Note the following two lines: DIP8 is earlier:
 		consensus.LLMQHeight = 57000;
-
-		consensus.DIP0008Height = 58000;
-		consensus.DIP0003EnforcementHeight = 57500;
-		consensus.DIP0003HeightPhase2 = 57500;
 		consensus.BIP34Height = 57500;
-
         consensus.BIP34Hash = uint256S("0x0");
       
+		consensus.DIP0003EnforcementHeight = 90000;
+		consensus.HARVEST_HEIGHT = 90000;  // Go live height for BiblePay-Harvest
+
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 8400;
 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
