@@ -599,11 +599,11 @@ public:
 		consensus.DIP0003Height = 30000; 
 
 		// Note the following two lines: DIP8 is earlier:
-		//consensus.LLMQHeight = 57000;
+		consensus.LLMQHeight = 57000;
 
-		//consensus.DIP0008Height = 58000;
+		consensus.DIP0008Height = 58000;
 		consensus.DIP0003EnforcementHeight = 57500;
-		//consensus.DIP0003HeightPhase2 = 57500;
+		consensus.DIP0003HeightPhase2 = 57500;
 		consensus.BIP34Height = 57500;
 
         consensus.BIP34Hash = uint256S("0x0");
@@ -681,7 +681,9 @@ public:
 
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        
+    
+
+
         // Testnet DAC addresses start with 'y'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
         // Testnet DAC script addresses start with '8' or '9'
