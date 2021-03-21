@@ -592,17 +592,16 @@ public:
         consensus.BIP65Height = 2431; 
         consensus.BIP66Height = 2075; 
         consensus.DIP0001Height = 7000;
-		consensus.DIP0003Height = 30000; 
-
-		// Note the following two lines: DIP8 is earlier:
-		consensus.LLMQHeight = 57000;
-		consensus.BIP34Height = 57500;
-        consensus.BIP34Hash = uint256S("0x0");
-      
-		consensus.DIP0003EnforcementHeight = 90000;
-		consensus.HARVEST_HEIGHT = 90000;  // Go live height for BiblePay-Harvest
-
+		
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 8400;
+		consensus.BIP34Height = 50000;
+
+		//LLMQ:
+		consensus.DIP0003Height = 77000; 
+		consensus.LLMQHeight = 77000;
+        consensus.BIP34Hash = uint256S("0x0");
+    	consensus.DIP0003EnforcementHeight = 77000;
+		consensus.HARVEST_HEIGHT = 77000;  // Go live height for BiblePay-Harvest
 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day
