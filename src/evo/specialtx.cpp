@@ -22,18 +22,15 @@ bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVali
     if (tx.nVersion != 3 || tx.nType == TRANSACTION_NORMAL)
         return true;
 
-	if (false)
+	// We have some of these BBP
+	if (pindexPrev->nHeight < Params().GetConsensus().LLMQHeight)
 	{
-		// We have some of these BBP
-		if (pindexPrev->nHeight < Params().GetConsensus().LLMQHeight)
-		{
-			return true;
-		}
-		if (pindexPrev && pindexPrev->nHeight + 1 < Params().GetConsensus().DIP0003Height) 
-		{
-			LogPrintf("\nBadTxType %f ", pindexPrev->nHeight + 1);
-			return state.DoS(1, false, REJECT_INVALID, "bad-tx-type");
-		}
+		return true;
+	}
+	if (pindexPrev && pindexPrev->nHeight + 1 < Params().GetConsensus().DIP0003Height) 
+	{
+		LogPrintf("\nBadTxType %f ", pindexPrev->nHeight + 1);
+		return state.DoS(1, false, REJECT_INVALID, "bad-tx-type");		
 	}
 
     try {
