@@ -484,9 +484,13 @@ UniValue protx_register(const JSONRPCRequest& request)
     }
 
     if (request.params[paramIdx].get_str() != "") {
-        if (!Lookup(request.params[paramIdx].get_str().c_str(), ptx.addr, Params().GetDefaultPort(), false)) {
-            throw std::runtime_error(strprintf("invalid network address %s", request.params[paramIdx].get_str()));
-        }
+		// Allow the underlying code to throw the error 
+		if (false)
+		{
+			if (!Lookup(request.params[paramIdx].get_str().c_str(), ptx.addr, Params().GetDefaultPort(), false)) {
+				throw std::runtime_error(strprintf("invalid network address %s", request.params[paramIdx].get_str()));
+			}
+		}
     }
 
     CKey keyOwner = ParsePrivKey(pwallet, request.params[paramIdx + 1].get_str(), true);

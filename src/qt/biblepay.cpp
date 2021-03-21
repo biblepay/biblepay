@@ -602,11 +602,7 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
 
-	std::cout << "\nUI1" << std::endl;
-
     BitcoinApplication app(argc, argv);
-	std::cout << ".\nUI2" << std::endl;
-
     // Register meta types used for QMetaObject::invokeMethod
     qRegisterMetaType< bool* >();
     //   Need to pass name here as CAmount is a typedef (see http://qt-project.org/doc/qt-5/qmetatype.html#qRegisterMetaType)
@@ -763,7 +759,6 @@ int main(int argc, char *argv[])
         }
         GUIUtil::setFontWeightBold(weight);
     }
-	std::cout << ".\nUI10" << std::endl;
 
     // Validate/set font scale
     if (gArgs.IsArgSet("-font-scale")) {

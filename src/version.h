@@ -20,10 +20,11 @@ static const int INIT_PROTO_VERSION = 209;
 static const int GETHEADERS_VERSION = 70077;
 
 //! disconnect from peers older than this proto version
-static const int MIN_PEER_PROTO_VERSION = 70210;
+static const int MIN_PEER_PROTO_VERSION = 70700;
+static const int MIN_PEER_PROTO_TESTNET_VERSION = 70700;
 
 //! minimum proto version of masternode to accept in DKGs
-static const int MIN_MASTERNODE_PROTO_VERSION = 70210;
+static const int MIN_MASTERNODE_PROTO_VERSION = 70700;
 // remove static const int MIN_PEER_PROTO_VERSION_DIP3 = 70756;
 
 //! nTime field added to CAddress, starting with this version;

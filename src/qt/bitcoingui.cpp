@@ -171,8 +171,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 		LogPrintf("\nBitcoinGUI::Launch Failed to restore geometry - centering %f", 03162021);
         move(QApplication::desktop()->availableGeometry().center() - frameGeometry().center());
     }
-	std::cout << ".\nUI20" << std::endl;
-
 	static bool fDebugged = false;
 	if (!fDebugged)
 	{
@@ -180,9 +178,6 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 		std::string sMySettings = settings.fileName().toUtf8().constData();
 		LogPrintf("\nBIBLEPAY::loadStyleSheet::Using QT settings file location %s \n", sMySettings);
 	}
-
-	std::cout << ".\nUI21" << std::endl;
-
 
     QString windowTitle = tr(PACKAGE_NAME) + " - ";
 #ifdef ENABLE_WALLET
