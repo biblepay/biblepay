@@ -11,6 +11,7 @@
 #include <primitives/block.h>
 #include <uint256.h>
 #include "rpcpog.h"
+#include "kjv.h"
 
 #include <math.h>
 
@@ -316,12 +317,56 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
         return false;
 	// RandomX performance:
 	int64_t nElapsed = GetAdjustedTime() - nPrevBlockTime;
-	if (bLoadingBlockIndex || (nElapsed > (60 * 60 * 24 * 7)))
+	if ((nElapsed > (60 * 60 * 8) && bLoadingBlockIndex) || (nElapsed > (60 * 60 * 24)))
 		return true;
 
-	if (nPrevHeight > params.POOM_PHASEOUT_HEIGHT)
+    if (nPrevHeight < params.EVOLUTION_CUTOVER_HEIGHT)
 	{
-		// RandomX Era
+		bool f_7000;
+		bool f_8000;
+		bool f_9000; 
+		bool fTitheBlocksActive;
+		GetMiningParams(nPrevHeight, f_7000, f_8000, f_9000, fTitheBlocksActive);
+		uint256 uBibleHashClassic = BibleHashClassic(hash, nBlockTime, nPrevBlockTime, true, nPrevHeight, NULL, false, f_7000, f_8000, f_9000, fTitheBlocksActive, nNonce, params);
+		if (UintToArith256(uBibleHashClassic) > bnTarget && nPrevBlockTime > 0) 
+		{
+			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[0] height %f, nonce %f", nPrevHeight, nNonce);
+			return false;
+		}
+	}
+	else if (nPrevHeight >= params.EVOLUTION_CUTOVER_HEIGHT && nPrevHeight < params.RANDOMX_HEIGHT)
+	{
+		// Anti-GPU check:
+		bool fNonce = CheckNonce(true, nNonce, nPrevHeight, nPrevBlockTime, nBlockTime, params);
+		if (!fNonce)
+		{
+				LogPrintf("\nCheckBlockHeader::ERROR-FAILED[3] height %f, nonce %f", nPrevHeight, nNonce);
+  
+			return error("CheckProofOfWork: ERROR: High Nonce, PrevTime %f, Time %f, Nonce %f ", (double)nPrevBlockTime, (double)nBlockTime, (double)nNonce);
+		}
+		
+		
+		uint256 uBibleHash = BibleHashV2(hash, nBlockTime, nPrevBlockTime, true, nPrevHeight, sHeaderHex, uRXKey, pindexPrev->GetBlockHash(), iThreadID);
+		if (UintToArith256(uBibleHash) > bnTarget && nPrevBlockTime > 0) 
+		{
+			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[1] height %f, nonce %f", nPrevHeight, nNonce);
+ 			return false;
+		}
+	}
+	else if (nPrevHeight >= params.RANDOMX_HEIGHT && nPrevHeight <= params.POOM_PHASEOUT_HEIGHT)
+	{
+		// RandomX Era:
+		uint256 rxhash = GetRandomXHash(sHeaderHex, uRXKey, pindexPrev->GetBlockHash(), iThreadID);
+		if (UintToArith256(ComputeRandomXTarget(rxhash, nPrevBlockTime, nBlockTime)) > bnTarget) 
+		{
+			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[2] height %f, nonce %f", nPrevHeight, nNonce);
+			return error("CheckProofOfWork Failed:ERROR: RandomX high-hash, Height %f, PrevTime %f, Time %f, Nonce %f ", (double)nPrevHeight, 
+				(double)nPrevBlockTime, (double)nBlockTime, (double)nNonce);
+		}
+	}
+	else if (nPrevHeight > params.POOM_PHASEOUT_HEIGHT)
+	{
+		// RandomX Era (Phase II):
 		uint256 rxhash = GetRandomXHash2(sHeaderHex, uRXKey, pindexPrev->GetBlockHash(), iThreadID);
 		if (UintToArith256(ComputeRandomXTarget(rxhash, nPrevBlockTime, nBlockTime)) > bnTarget) 
 		{

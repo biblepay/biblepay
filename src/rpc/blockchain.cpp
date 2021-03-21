@@ -3888,6 +3888,15 @@ UniValue exec(const JSONRPCRequest& request)
 
 		}
 	}
+	else if (sItem == "pobh")
+	{
+		std::string sInput = request.params[1].get_str();
+		double d1 = cdbl(request.params[2].get_str(), 0);
+		uint256 hSource = uint256S("0x" + sInput);
+		uint256 h = BibleHashDebug(hSource, d1 == 1);
+		results.push_back(Pair("in-hash", hSource.GetHex()));
+		results.push_back(Pair("out-hash", h.GetHex()));
+	}
 	else if (sItem == "randomx")
 	{
 		std::string sHeader = request.params[1].get_str();
