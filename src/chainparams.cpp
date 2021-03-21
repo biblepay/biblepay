@@ -594,12 +594,12 @@ public:
         consensus.DIP0001Height = 7000;
 		
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 8400;
-		consensus.BIP34Height = 50000;
 
 		//LLMQ:
+        consensus.BIP34Hash = uint256S("0x0");
+		consensus.BIP34Height = 77000;
 		consensus.DIP0003Height = 77000; 
 		consensus.LLMQHeight = 77000;
-        consensus.BIP34Hash = uint256S("0x0");
     	consensus.DIP0003EnforcementHeight = 77000;
 		consensus.HARVEST_HEIGHT = 77000;  // Go live height for BiblePay-Harvest
 
