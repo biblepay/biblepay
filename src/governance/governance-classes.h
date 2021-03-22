@@ -149,7 +149,7 @@ public:
 
 
 	static void GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuperblockRet, int& nNextSuperblockRet);
-    static CAmount GetPaymentsLimit(int nBlockHeight);
+    static CAmount GetPaymentsLimit(int nBlockHeight, bool fIncludeWhale = false);
 
     int GetStatus() { return nStatus; }
     void SetStatus(int nStatusIn) { nStatus = nStatusIn; }

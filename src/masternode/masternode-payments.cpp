@@ -96,7 +96,7 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
     LogPrint(BCLog::MNPAYMENTS, "(2) block.vtx[0]->GetValueOut() %lld <= blockReward %lld\n", block.vtx[0]->GetValueOut()/COIN, blockReward/COIN);
 	bool fSuperblock = CSuperblock::IsValidBlockHeight(nBlockHeight) || CSuperblock::IsDCCSuperblock(nBlockHeight) || CSuperblock::IsSmartContract(nBlockHeight);
 
-    CAmount nSuperblockMaxValue =  blockReward + CSuperblock::GetPaymentsLimit(nBlockHeight);
+    CAmount nSuperblockMaxValue =  blockReward + CSuperblock::GetPaymentsLimit(nBlockHeight, true);
     bool isSuperblockMaxValueMet = (block.vtx[0]->GetValueOut() <= nSuperblockMaxValue);
 
 	if (nBlockHeight < consensusParams.PODC2_CUTOVER_HEIGHT && fSuperblock)

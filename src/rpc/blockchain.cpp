@@ -3231,9 +3231,9 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("required_votes", iRequiredVotes));
 		results.push_back(Pair("last_superblock", iLastSuperblock));
 		results.push_back(Pair("next_superblock", iNextSuperblock));
-		CAmount nLastLimit = CSuperblock::GetPaymentsLimit(iLastSuperblock);
+		CAmount nLastLimit = CSuperblock::GetPaymentsLimit(iLastSuperblock, true);
 		results.push_back(Pair("last_payments_limit", (double)nLastLimit/COIN));
-		CAmount nNextLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock);
+		CAmount nNextLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, true);
 		results.push_back(Pair("next_payments_limit", (double)nNextLimit/COIN));
 		bool fOverBudget = IsOverBudget(iNextSuperblock, GetAdjustedTime(), sAmounts);
 		results.push_back(Pair("overbudget", fOverBudget));
@@ -4048,7 +4048,7 @@ UniValue exec(const JSONRPCRequest& request)
 		const Consensus::Params& consensusParams = Params().GetConsensus();
 		int nBits = 486585255;
 		int nHeight = cdbl(request.params[1].get_str(), 0);
-		CAmount nLimit = CSuperblock::GetPaymentsLimit(nHeight);
+		CAmount nLimit = CSuperblock::GetPaymentsLimit(nHeight, true);
 		CAmount nReward = GetBlockSubsidy(nBits, nHeight, consensusParams, false);
 		CAmount nRewardGov = GetBlockSubsidy(nBits, nHeight, consensusParams, true);
 		CAmount nSanc = GetMasternodePayment(nHeight, nReward);

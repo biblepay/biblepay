@@ -2471,7 +2471,7 @@ std::string GetPOGBusinessObjectList(std::string sType1, std::string sFields)
 	int iNextSuperblock = 0;
 	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
     std::string sData;  
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, false);
 	nPaymentsLimit -= MAX_BLOCK_SUBSIDY * COIN;
 		
 	std::string sContract = GetGSCContract(iNextSuperblock, false);
@@ -4629,7 +4629,7 @@ double CalculateUTXOReward(int nStakeCount)
 	int iNextSuperblock = 0;
 	double UTXO_GSC_PCT = .95;  // Healing is 5%; Ensure this is dynamic in the future
 	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock) * UTXO_GSC_PCT;
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, false) * UTXO_GSC_PCT;
 	double nTotal = SumUTXO();
 	double nBTCPrice = GetCryptoPrice("btc");
 	double nBBPPrice = GetCryptoPrice("bbp");

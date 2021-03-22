@@ -151,45 +151,6 @@ bool VerifyChild(std::string childID, std::string sCharity)
 	return false;
 }
 
-double GetProminenceCap(std::string sCampaignName, double nPoints, double nProminence)
-{
-	boost::to_upper(sCampaignName);
-
-	if (sCampaignName != "CAMEROON-ONE" && sCampaignName != "KAIROS")
-		return nProminence;
-
-	double nMonthlyRate = GetSporkDouble(sCampaignName + "monthlyrate", 40);
-
-	double nDailyCharges = nMonthlyRate / 30;
-	if (nDailyCharges <= .01)
-		return 0;
-	double nUSDSpent = nPoints / 1000;  // Amount user spent in one day on children
-	double nChildrenSponsored = nUSDSpent / nDailyCharges;
-	// Cap @ Coin Exchange Rate * Child Count
-	double nPrice = GetCoinPrice();
-	if (nPrice <= 0)
-	{
-		nPrice = .0004; // Guess
-	}
-	int nNextSuperblock = 0;
-	int nLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, nNextSuperblock);
-	CAmount nBudget = CSuperblock::GetPaymentsLimit(nNextSuperblock);
-	if (nBudget < 1)
-		return 0;
-	double nPaymentsLimit = (nBudget / COIN);
-	double nUserReward = nPaymentsLimit * nProminence;
-	double nRewardUSD = nUserReward * nPrice;
-	if (nRewardUSD > nUSDSpent)
-	{
-		// Cap is in effect, so reverse engineer the payment to the actual market value
-		double nProjectedAmount = nUSDSpent / nPrice;
-		double nProjectedProminence = nProjectedAmount / nPaymentsLimit;
-		nProminence = nProjectedProminence;
-	}
-	return nProminence;
-}
-
-
 //////////////////////////////////////////////////////////////////////////////// Watchman-On-The-Wall /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //								                          			DAC's version of The Sentinel, March 31st, 2019                                                                                                  //
 //                                                                                                                                                                                                                   //
@@ -326,7 +287,7 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	std::vector<std::pair<double, uint256> > vProposalsInBudget;
 	vProposalsInBudget.reserve(objs.size() + 1);
     
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nNextSuperblock);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nNextSuperblock, false);
 	CAmount nSpent = 0;
 	for (auto item : vProposalsSortedByVote)
     {
@@ -737,7 +698,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 
 	LogPrintf("\nAssessBlocks Height %f ", nHeight);
 
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, false);
 
 	nPaymentsLimit -= MAX_BLOCK_SUBSIDY * COIN;
 
@@ -886,9 +847,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 			
 			double nPreProminence = (mCPKCampaignPoints[sKey].nPoints / nCampaignPoints) * nCampaignPercentage;
 			// Verify we did not exceed the cap
-			double nCap = GetProminenceCap(sCampaignName, mCPKCampaignPoints[sKey].nPoints, nPreProminence);
-			mCPKCampaignPoints[sKey].nProminence = nCap;
-
+			mCPKCampaignPoints[sKey].nProminence = nPreProminence;
 			std::string sLCN = sCampaignName == "WCG" && !Members.second.cpid.empty() ? sCampaignName + "-" + Members.second.cpid : sCampaignName;
 			std::string sRow = sLCN + "|" + Members.second.sAddress + "|" + RoundToString(mCPKCampaignPoints[sKey].nPoints, 0) + "|" 
 				+ RoundToString(mCPKCampaignPoints[sKey].nProminence, 8) + "|" + Members.second.sNickName + "|" + 
@@ -1070,7 +1029,7 @@ std::vector<std::pair<int64_t, uint256>> GetGSCSortedByGov(int nHeight, uint256 
 
 bool IsOverBudget(int nHeight, int64_t nTime, std::string sAmounts)
 {
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, true);
 	if (sAmounts.empty()) return false;
 	std::vector<std::string> vPayments = Split(sAmounts.c_str(), "|");
 	double dTotalPaid = 0;
@@ -1368,7 +1327,7 @@ void GetGovObjDataByPamHash(int nHeight, uint256 hPamHash, std::string& out_Data
 
 bool GetContractPaymentData(std::string sContract, int nBlockHeight, int nTime, std::string& sPaymentAddresses, std::string& sAmounts)
 {
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nBlockHeight);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nBlockHeight, true);
 	sPaymentAddresses = ExtractXML(sContract, "<ADDRESSES>", "</ADDRESSES>");
 	sAmounts = ExtractXML(sContract, "<PAYMENTS>", "</PAYMENTS>");
 	std::vector<std::string> vPayments = Split(sAmounts.c_str(), "|");
@@ -1462,7 +1421,7 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 	if (nHeight == 0) 
 		return NullUniValue;
       
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight);
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, false);
 	nPaymentsLimit -= MAX_BLOCK_SUBSIDY * COIN;
 
 	std::string sContract = GetGSCContract(nHeight, false);

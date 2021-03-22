@@ -521,7 +521,7 @@ void CSuperblock::GetNearestSuperblocksHeights(int nBlockHeight, int& nLastSuper
     }
 }
 
-CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight)
+CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight, bool fIncludeWhale)
 {
 	if (nBlockHeight < 1) return 0;
 
@@ -589,7 +589,7 @@ CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight)
     CAmount nSuperblockPartOfSubsidy = GetBlockSubsidy(nBits, nAssessmentHeight, consensusParams, true);
 	CAmount nPaymentsLimit = nSuperblockPartOfSubsidy * nSuperblockCycle * nBudgetFactor;
 	static CAmount LEGACY_WHALE_STAKES = 7000000 * COIN;
-	if (nBlockHeight < consensusParams.HARVEST_HEIGHT)
+	if (nBlockHeight < consensusParams.HARVEST_HEIGHT && fIncludeWhale)
 	{
 		// Add in the Legacy DWS Whale Stakes
 		nPaymentsLimit += LEGACY_WHALE_STAKES;
@@ -733,7 +733,7 @@ bool CSuperblock::IsValid(const CTransaction& txNew, int nBlockHeight, CAmount b
 
     // payments should not exceed limit
     CAmount nPaymentsTotalAmount = GetPaymentsTotalAmount();
-    CAmount nPaymentsLimit = GetPaymentsLimit(nBlockHeight);
+    CAmount nPaymentsLimit = GetPaymentsLimit(nBlockHeight, true);
     if (nPaymentsTotalAmount > nPaymentsLimit) {
         LogPrintf("CSuperblock::IsValid -- ERROR: Block invalid, payments limit exceeded: payments %lld, limit %lld\n", nPaymentsTotalAmount, nPaymentsLimit);
         return false;
