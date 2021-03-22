@@ -3812,6 +3812,19 @@ UniValue exec(const JSONRPCRequest& request)
 		newRequest.params.setArray();
 		// Pro-tx-register_prepare preparation format: protx register_prepare 1.55mm_collateralHash 1.55mm_index_collateralIndex ipv4:port_ipAndPort home_voting_address_ownerKeyAddr blsPubKey_operatorPubKey delegate_or_home_votingKeyAddr 0_pctOf_operatorReward payout_address_payoutAddress optional_(feeSourceAddress_of_Pro_tx_fee)
 
+		/*
+		            + GetHelpString(1, "collateralHash")
+            + GetHelpString(2, "collateralIndex")
+            + GetHelpString(3, "ipAndPort")
+            + GetHelpString(4, "ownerAddress")
+            + GetHelpString(5, "operatorPubKey_register")
+            + GetHelpString(6, "votingAddress_register")
+            + GetHelpString(7, "operatorReward")
+            + GetHelpString(8, "payoutAddress_register")
+            + GetHelpString(9, "feeSourceAddress") +
+
+			*/
+
 		newRequest.params.push_back("register_prepare");
 		newRequest.params.push_back(sCollateralTXID);
 		newRequest.params.push_back(sCollateralTXIDOrdinal);
@@ -3823,6 +3836,8 @@ UniValue exec(const JSONRPCRequest& request)
 
 		newRequest.params.push_back("0");             // Pct of rewards to share with Operator (This is the amount of reward we want to share with a Sanc Operator - IE a hosting company)
 		newRequest.params.push_back(sPayAddress);     // Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
+		newRequest.params.push_back(sPayAddress);
+
 		// 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
 		UniValue rProReg = protx(newRequest);
 		std::string sProRegTxId = rProReg["tx"].getValStr();

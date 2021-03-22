@@ -1739,23 +1739,34 @@ std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::
 		return std::string();
 	}
 
-    CKeyID keyID;
-    CKey key;
-    if (!pwalletpog->GetKey(keyID, key))
+	CTxDestination dest = DecodeDestination(strAddress);
+	if (!IsValidDestination(dest)) 
 	{
-        sError = "Private key not available";
-	    return std::string();
-	}
+		   sError = "Invalid Address.";
+		   return std::string();
+    }
+        
+    const CKeyID *keyID = boost::get<CKeyID>(&dest);
+	if (!keyID) 
+	{
+			sError = "Address does not refer to key";
+			return std::string();
+    }
+	CKey key;
+	if (!pwalletpog->GetKey(*keyID, key)) 
+	{
+		sError = "Private key not available";
+		return std::string();
+    }
 
     CHashWriter ss(SER_GETHASH, 0);
-    ss << strMessageMagic;
-    ss << strMessage;
-
-    std::vector<unsigned char> vchSig;
-    if (!key.SignCompact(ss.GetHash(), vchSig))
+	ss << strMessageMagic;
+	ss << strMessage;
+	std::vector<unsigned char> vchSig;
+	if (!key.SignCompact(ss.GetHash(), vchSig))
 	{
-        sError = "Sign failed";
-		return std::string();
+           sError = "Sign failed";
+		   return std::string();
 	}
 
     return EncodeBase64(&vchSig[0], vchSig.size());

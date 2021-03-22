@@ -123,6 +123,7 @@ std::string WalletInit::GetHelpString(bool showDebug)
 
 bool WalletInit::ParameterInteraction()
 {
+	/*
     if (gArgs.IsArgSet("-masternodeblsprivkey") && gArgs.SoftSetBoolArg("-disablewallet", true)) {
         LogPrintf("%s: parameter interaction: -masternodeblsprivkey set -> setting -disablewallet=1\n", __func__);
     }
@@ -136,6 +137,8 @@ bool WalletInit::ParameterInteraction()
     } else if (gArgs.IsArgSet("-masternodeblsprivkey")) {
         return InitError(_("You can not start a masternode with wallet enabled."));
     }
+	*/
+
 
     gArgs.SoftSetArg("-wallet", "");
     const bool is_multiwallet = gArgs.GetArgs("-wallet").size() > 1;
