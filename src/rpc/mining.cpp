@@ -206,6 +206,27 @@ UniValue generatetoaddress(const JSONRPCRequest& request)
 }
 #endif // ENABLE_MINER
 
+
+UniValue getgenerate(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+            "getgenerate\n"
+            "\nReturn if the server is set to generate coins or not. The default is false.\n"
+            "It is set with the command line argument -gen (or " + std::string(GetConfFileName()) + " setting gen)\n"
+            "It can also be set with the setgenerate call.\n"
+            "\nResult\n"
+            "true|false      (boolean) If the server is set to generate coins or not\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getgenerate", "")
+            + HelpExampleRpc("getgenerate", "")
+        );
+
+    LOCK(cs_main);
+    return gArgs.GetBoolArg("-gen", DEFAULT_GENERATE);
+}
+
+
 UniValue getmininginfo(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)
@@ -240,11 +261,18 @@ UniValue getmininginfo(const JSONRPCRequest& request)
     obj.push_back(Pair("networkhashps",    getnetworkhashps(request)));
     obj.push_back(Pair("pooledtx",         (uint64_t)mempool.size()));
     obj.push_back(Pair("chain",            Params().NetworkIDString()));
-    if (IsDeprecatedRPCEnabled("getmininginfo")) {
-        obj.push_back(Pair("errors",       GetWarnings("statusbar")));
-    } else {
-        obj.push_back(Pair("warnings",     GetWarnings("statusbar")));
-    }
+	obj.push_back(Pair("errors",           GetWarnings("statusbar")));
+	obj.push_back(Pair("pooledtx",         (uint64_t)mempool.size()));
+	obj.push_back(Pair("chain",            Params().NetworkIDString()));
+	obj.push_back(Pair("genproclimit",     (int)gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS)));
+	obj.push_back(Pair("networkhashps",    getnetworkhashps(request)));
+	obj.push_back(Pair("hashps",           dHashesPerSec));
+	obj.push_back(Pair("minerstarttime",   TimestampToHRDate(nHPSTimerStart/1000)));
+	obj.push_back(Pair("hashcounter",      nHashCounter));
+	obj.push_back(Pair("pooledtx",         (uint64_t)mempool.size()));
+	obj.push_back(Pair("chain",            Params().NetworkIDString()));
+	obj.push_back(Pair("bbp-generate",getgenerate(request)));
+
     return obj;
 }
 
@@ -275,6 +303,45 @@ UniValue prioritisetransaction(const JSONRPCRequest& request)
 
     mempool.PrioritiseTransaction(hash, nAmount);
     return true;
+}
+
+UniValue setgenerate(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+            "setgenerate generate ( genproclimit )\n"
+            "\nSet 'generate' true or false to turn generation on or off.\n"
+            "Generation is limited to 'genproclimit' processors, -1 is unlimited.\n"
+            "See the getgenerate call for the current setting.\n"
+            "\nArguments:\n"
+            "1. generate         (boolean, required) Set to true to turn on generation, false to turn off.\n"
+            "2. genproclimit     (numeric, optional) Set the processor limit for when generation is on. Can be -1 for unlimited.\n"
+            "\nExamples:\n"
+            "\nSet the generation on with a limit of one processor\n"
+            + HelpExampleCli("setgenerate", "true 1") +
+            "\nCheck the setting\n"
+            + HelpExampleCli("getgenerate", "") +
+            "\nTurn off generation\n"
+            + HelpExampleCli("setgenerate", "false") +
+            "\nUsing json rpc\n"
+            + HelpExampleRpc("setgenerate", "true, 1")
+        );
+
+    bool fGenerate = true;
+    if (request.params.size() > 0)
+        fGenerate = request.params[0].get_str() == "true" ? true : false;
+
+    int nGenProcLimit = gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS);
+    if (request.params.size() > 1)
+    {
+        nGenProcLimit = (int)cdbl(request.params[1].get_str(), 0);
+        if (nGenProcLimit == 0)
+            fGenerate = false;
+    }
+    gArgs.ForceSetArg("-gen", (fGenerate ? "1" : "0"));
+	gArgs.ForceSetArg("-genproclimit", itostr(nGenProcLimit));
+    GenerateCoins(fGenerate, nGenProcLimit, Params());
+    return NullUniValue;
 }
 
 
@@ -1084,15 +1151,15 @@ static const CRPCCommand commands[] =
     { "mining",             "getmininginfo",          &getmininginfo,          {} },
     { "mining",             "prioritisetransaction",  &prioritisetransaction,  {"txid","fee_delta"} },
     { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
+   	{ "mining",             "getblockforstratum",     &getblockforstratum,     {"hexdata"} },
     { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
-
 #if ENABLE_MINER
     { "generating",         "generatetoaddress",      &generatetoaddress,      {"nblocks","address","maxtries"} },
 #endif // ENABLE_MINER
-
+	{ "generating",         "setgenerate",            &setgenerate,            {"yesno","threadcount" } },
+	{ "generating",         "getgenerate",            &getgenerate,            {"bool" } },
     { "util",               "estimatefee",            &estimatefee,            {"nblocks"} },
     { "util",               "estimatesmartfee",       &estimatesmartfee,       {"conf_target", "estimate_mode"} },
-
     { "hidden",             "estimaterawfee",         &estimaterawfee,         {"conf_target", "threshold"} },
 };
 

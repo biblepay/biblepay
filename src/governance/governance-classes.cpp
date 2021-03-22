@@ -306,6 +306,29 @@ bool CSuperblockManager::GetBestSuperblock(CSuperblock_sptr& pSuperblockRet, int
     return nYesCount > 0;
 }
 
+
+std::string GetQTPhaseXML(uint256 gObj)
+{
+	CGovernanceObject *myGov = governance.FindGovernanceObject(gObj);
+	if (myGov)
+	{
+		UniValue obj = myGov->GetJSONObject();
+		if (obj.size() > 0)
+		{
+			std::string sPrice = obj["price"].getValStr();
+			std::string sQTPhase = obj["qtphase"].getValStr();
+			std::string sBTC = obj["btcprice"].getValStr();
+			std::string sBBP = obj["bbpprice"].getValStr();
+			std::string sSporkData = obj["spork_data"].getValStr();
+			std::string sDACData = obj["dac_data"].getValStr();
+			std::string sXML = "<price>" + sPrice + "</price><bbpprice>" + sBBP + "</bbpprice><qtphase>" + sQTPhase + "</qtphase><btcprice>" + sBTC + "</btcprice>";
+			sXML += sSporkData + sDACData;
+			return sXML;
+		}
+	}
+	return "<price>-0.00</price><bbpprice>-0.00</bbpprice><qtphase>-0.00</qtphase><btcprice>-0</btcprice>";
+}
+
 /**
 *   Get Superblock Payments
 *
@@ -335,12 +358,21 @@ bool CSuperblockManager::GetSuperblockPayments(int nBlockHeight, std::vector<CTx
     //       Consider at least following limits:
     //          - max coinbase tx size
     //          - max "budget" available
+	bool bQTPhaseEmitted = false;
+
     for (int i = 0; i < pSuperblock->CountPayments(); i++) {
         CGovernancePayment payment;
         if (pSuperblock->GetPayment(i, payment)) {
             // SET COINBASE OUTPUT TO SUPERBLOCK SETTING
 
             CTxOut txout = CTxOut(payment.nAmount, payment.script);
+			// BIBLEPAY - QT
+			if (!bQTPhaseEmitted) 
+			{
+				txout.sTxOutMessage = GetQTPhaseXML(pSuperblock->GetGovernanceObject()->GetHash());
+				bQTPhaseEmitted = true;
+			}
+    
             voutSuperblockRet.push_back(txout);
 
             // PRINT NICE LOG OUTPUT FOR SUPERBLOCK PAYMENT

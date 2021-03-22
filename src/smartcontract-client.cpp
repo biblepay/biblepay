@@ -157,15 +157,6 @@ UniValue SentGSCCReport(int nHeight, std::string sMyCPK)
 }
 	
 
-
-double UserSetting(std::string sName, double dDefault)
-{
-	boost::to_lower(sName);
-	double dConfigSetting = cdbl(gArgs.GetArg("-" + sName, "0"), 4);
-	if (dConfigSetting == 0) 
-		dConfigSetting = dDefault;
-	return dConfigSetting;
-}
 	
 
 //////////////////////////////////////////////////////////////////////////// CAMPAIGN #1 - Created March 23rd, 2019 - PROOF-OF-GIVING /////////////////////////////////////////////////////////////////////////////
@@ -197,77 +188,3 @@ bool Enrolled(std::string sCampaignName, std::string& sError)
 	return true;
 }
 
-bool CreateAllGSCTransmissions(std::string& sError)
-{
-	std::map<std::string, std::string> mCampaigns = GetSporkMap("spork", "gsccampaigns");
-	std::string sErrorEnrolled;
-	// For each enrolled campaign:
-	for (auto s : mCampaigns)
-	{
-		if (Enrolled(s.first, sErrorEnrolled))
-		{
-			std::string sError1 = std::string();
-			std::string sWarning = std::string();
-			std::string TXID_OUT = std::string();
-			CreateGSCTransmission("", "", false, "", sError1, s.first, sWarning, TXID_OUT);
-			if (!sError1.empty())
-			{
-				LogPrintf("\nCreateAllGSCTransmissions %f, Campaign %s, Error [%s].\n", GetAdjustedTime(), s.first, sError1);
-			}
-			if (!sWarning.empty())
-				LogPrintf("\nWARNING [%s]", sWarning);
-		}
-	}
-}
-
-bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fForce, std::string sDiary, std::string& sError, std::string sSpecificCampaignName, std::string& sWarning, std::string& TXID_OUT)
-{
-	boost::to_upper(sSpecificCampaignName);
-	if (sSpecificCampaignName == "HEALING")
-	{
-		if (sDiary.length() < 10 || sDiary.empty())
-		{
-			sError = "Sorry, you have selected diary projects only, but we did not receive a diary entry.";
-			return false;
-		}
-	}
-
-	double nDisableClientSideTransmission = UserSetting("disablegsctransmission", 0);
-	if (nDisableClientSideTransmission == 1)
-	{
-		sError = "Client Side Transactions are disabled via disablegsctransmission.";
-		return false;
-	}
-				
-	double nDefaultCoinAgePercentage = GetSporkDouble(sSpecificCampaignName + "defaultcoinagepercentage", .10);
-	std::string sError1;
-	if (!Enrolled(sSpecificCampaignName, sError1) && sSpecificCampaignName != "COINAGEVOTE")
-	{
-		sError = "Sorry, CPK is not enrolled in project. [" + sError1 + "].  Error 795. ";
-		return false;
-	}
-
-	LogPrintf("\nSmartContract-Client::Creating Client side transaction for campaign %s ", sSpecificCampaignName);
-	std::string sXML;
-	CReserveKey reservekey(pwalletpog);
-	double nCoinAgePercentage = 0;
-	std::string sError2;
-	CAmount nFoundationDonation = 0;
-	CWalletTx wtx = CreateGSCClientTransmission(sGobjectID, sOutcome, sSpecificCampaignName, sDiary, chainActive.Tip(), nCoinAgePercentage, nFoundationDonation, reservekey, sXML, sError, sWarning);
-	LogPrintf("\nCreated client side transmission - %s [%s] with txid %s ", sXML, sError, wtx.tx->GetHash().GetHex());
-	// Bubble any error to getmininginfo - or clear the error
-	if (!sError.empty())
-	{
-		return false;
-	}
-	CValidationState state;
-	if (!pwalletpog->CommitTransaction(wtx, reservekey, g_connman.get(), state))
-	{
-			LogPrintf("\nCreateGSCTransmission::Unable to Commit transaction for campaign %s - %s", sSpecificCampaignName, wtx.tx->GetHash().GetHex());
-			sError = "GSC Commit failed " + sSpecificCampaignName;
-			return false;
-	}
-	TXID_OUT = wtx.GetHash().GetHex();
-
-	return true;
-}

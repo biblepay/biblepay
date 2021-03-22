@@ -1535,19 +1535,6 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 	return results;
 }
 
-void SendOutGSCs()
-{
-	// In PODC 2.0, we send all of the GSCs out at the height shown in 'exec rac' from the main wallet thread.  (In contrast to sending them at a given time from the miner thread).
-	// This is generally done once per day; but can be overridden with the key: dailygscfrequency=block_frequency
-	// Note that the GSCs are now funded with coin-age from the external purse address (Christian-Public-Key).
-	// As of November 2nd, 2019:  We have the campaigns:  WCG (PODC), HEALING, CAMEROON-ONE, and KAIROS.
-	std::string sError;
-	LogPrintf("\nSending out GSC Transmissions...%f\n", GetAdjustedTime());
-	bool fCreated = CreateAllGSCTransmissions(sError);
-	if (!fCreated)
-		LogPrintf("\nEGSCQP::SendOutGSCs::Unable to create client side GSC transaction. (See Log [%s]). ", sError);
-}
-
 std::string ExecuteGenericSmartContractQuorumProcess()
 {
 	if (!chainActive.Tip()) 
@@ -1559,11 +1546,6 @@ std::string ExecuteGenericSmartContractQuorumProcess()
 	int nFreq = (int)cdbl(gArgs.GetArg("-dailygscfrequency", RoundToString(BLOCKS_PER_DAY, 0)), 0);
 	if (nFreq < 50)
 		nFreq = 50; 
-	// Send out GSCs at midpoint of each day:
-	bool fGSCTime = (chainActive.Tip()->nHeight % nFreq == (BLOCKS_PER_DAY/2));
-
-	if (fGSCTime)
-		SendOutGSCs();
 
 	if (!fMasternodeMode)   
 		return "NOT_A_SANCTUARY";

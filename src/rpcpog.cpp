@@ -238,7 +238,7 @@ CPK GetCPK(std::string sData)
 		k.sVendorType = vDec[6];
 	if (vDec.size() >= 8)
 		k.sOptData = vDec[7];
-
+	AcquireWallet();
 	k.fValid = pwalletpog->CheckStakeSignature(sCPK, sSig, sSecurityHash, k.sError);
 	if (!k.fValid) 
 	{
@@ -397,6 +397,7 @@ CBlockIndex* FindBlockByHeight(int nHeight)
 
 std::string DefaultRecAddress(std::string sType)
 {
+	AcquireWallet();
 	if (!pwalletpog)
 	{
 		LogPrintf("\nDefaultRecAddress::ERROR %f No pwalletpog", 03142021);
@@ -442,7 +443,7 @@ std::string CreateBankrollDenominations(double nQuantity, CAmount denominationAm
 	CAmount nBankrollMask = .001 * COIN;
 
 	CAmount nTotal = denominationAmount * nQuantity;
-
+	AcquireWallet();
 	CAmount curBalance = pwalletpog->GetBalance();
 	if (curBalance < nTotal)
 	{
@@ -532,12 +533,14 @@ std::string PubKeyToAddress(const CScript& scriptPubKey)
 
 CAmount GetRPCBalance()
 {
+	AcquireWallet();
 	return pwalletpog->GetBalance();
 }
 
 
 bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nValue, bool fSubtractFeeFromAmount, CWalletTx& wtxNew, bool fUseInstantSend, std::string sOptionalData, double nCoinAge)
 {
+	AcquireWallet();
     CAmount curBalance = pwalletpog->GetBalance();
 
     // Check amount
@@ -731,6 +734,8 @@ bool VoteManyForGobject(std::string govobj, std::string strVoteSignal, std::stri
 		return false;
 	}
 
+	AcquireWallet();
+
 #ifdef ENABLE_WALLET	
     if (!pwalletpog)	
     {	
@@ -776,6 +781,8 @@ bool VoteManyForGobject(std::string govobj, std::string strVoteSignal, std::stri
 std::string CreateGovernanceCollateral(uint256 GovObjHash, CAmount caFee, std::string& sError)
 {
 	CWalletTx wtx;
+	AcquireWallet();
+
 	if(!pwalletpog->GetBudgetSystemCollateralTX(wtx, GovObjHash, caFee)) 
 	{
 		sError = "Error creating collateral transaction for governance object.  Please check your wallet balance and make sure your wallet is unlocked.";
@@ -1360,6 +1367,8 @@ bool CheckSporkSig(TxMessage t)
 {
 	std::string sError = "";
 	const CChainParams& chainparams = Params();
+	AcquireWallet();
+
 	bool fSigValid = pwalletpog->CheckStakeSignature(chainparams.GetConsensus().FoundationAddress, t.sSporkSig, t.sMessageValue + t.sNonce, sError);
     bool bValid = (fSigValid && t.fNonceValid);
 	if (!bValid)
@@ -1722,6 +1731,8 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 
 std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::string& sError)
 {
+	AcquireWallet();
+
     LOCK2(cs_main, pwalletpog->cs_wallet);
 	if (pwalletpog->IsLocked())
 	{
@@ -2190,6 +2201,7 @@ bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickNa
 	bool fForce, CAmount nFee, std::string sOptData, std::string &sError)
 {	
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	AcquireWallet();
 
 	boost::to_lower(sProjectId);
 
@@ -2342,6 +2354,7 @@ bool CheckAntiBotNetSignature(CTransactionRef tx, std::string sType, std::string
 	std::string sMessage = ExtractXML(sXML, "<abnmsg>", "</abnmsg>");
 	std::string sPPK = ExtractXML(sMessage, "<ppk>", "</ppk>");
 	double dCheckPoolSigs = GetSporkDouble("checkpoolsigs", 0);
+	AcquireWallet();
 
 	if (!sSolver.empty() && !sPPK.empty() && dCheckPoolSigs == 1)
 	{
@@ -3029,7 +3042,8 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 {
 	UTXOStake w;
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-	
+	AcquireWallet();
+
 	for (unsigned int i = 0; i < tx1->vout.size(); i++)
 	{
 		std::string sPK = PubKeyToAddress(tx1->vout[i].scriptPubKey);
@@ -3382,6 +3396,8 @@ uint256 ComputeRandomXTarget(uint256 dac_hash, int64_t nPrevBlockTime, int64_t n
 
 std::string GenerateFaucetCode()
 {
+	AcquireWallet();
+
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	std::string s1 = RoundToString(((double)(pwalletpog->GetBalance() / COIN) / 1000), 0);
 	std::string sXML = "<cpk>" + sCPK + "</cpk><s1>" + s1 + "</s1>";
@@ -3998,6 +4014,7 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	
 	boost::to_upper(sForeignTicker);
+	AcquireWallet();
 
 	bool fForeignTickerValid = false;
 	if (sForeignTicker == "DASH" || sForeignTicker == "BTC" || sForeignTicker == "DOGE" || sForeignTicker == "LTC" || sForeignTicker.empty())
@@ -4941,6 +4958,8 @@ bool VerifySigner(std::string sXML)
 	std::string sSigner = ExtractXML(sXML, "<signer>", "</signer>");
 	std::string sMessage = ExtractXML(sXML, "<message>", "</message>");
 	std::string sError;
+	AcquireWallet();
+
 	bool fValid = pwalletpog->CheckStakeSignature(sSigner, sSignature, sMessage, sError);
 	return fValid;
 }
@@ -4993,12 +5012,75 @@ int GetWCGMemberID(std::string sMemberName, std::string sAuthCode, double& nPoin
 	return iID;
 }
 
+double UserSetting(std::string sName, double dDefault)
+{
+	boost::to_lower(sName);
+	double dConfigSetting = cdbl(gArgs.GetArg("-" + sName, "0"), 4);
+	if (dConfigSetting == 0) 
+		dConfigSetting = dDefault;
+	return dConfigSetting;
+}
+
+
+
+bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fForce, std::string sDiary, std::string& sError, std::string sSpecificCampaignName, std::string& sWarning, std::string& TXID_OUT)
+{
+	boost::to_upper(sSpecificCampaignName);
+	if (sSpecificCampaignName == "HEALING")
+	{
+		if (sDiary.length() < 10 || sDiary.empty())
+		{
+			sError = "Sorry, you have selected diary projects only, but we did not receive a diary entry.";
+			return false;
+		}
+	}
+
+	double nDisableClientSideTransmission = UserSetting("disablegsctransmission", 0);
+	if (nDisableClientSideTransmission == 1)
+	{
+		sError = "Client Side Transactions are disabled via disablegsctransmission.";
+		return false;
+	}
+				
+	double nDefaultCoinAgePercentage = GetSporkDouble(sSpecificCampaignName + "defaultcoinagepercentage", .10);
+	std::string sError1;
+	if (!Enrolled(sSpecificCampaignName, sError1) && sSpecificCampaignName != "COINAGEVOTE")
+	{
+		sError = "Sorry, CPK is not enrolled in project. [" + sError1 + "].  Error 795. ";
+		return false;
+	}
+
+	LogPrintf("\nSmartContract-Client::Creating Client side transaction for campaign %s ", sSpecificCampaignName);
+	std::string sXML;
+	CReserveKey reservekey(pwalletpog);
+	double nCoinAgePercentage = 0;
+	std::string sError2;
+	CAmount nFoundationDonation = 0;
+	CWalletTx wtx = CreateGSCClientTransmission(sGobjectID, sOutcome, sSpecificCampaignName, sDiary, chainActive.Tip(), nCoinAgePercentage, nFoundationDonation, reservekey, sXML, sError, sWarning);
+	LogPrintf("\nCreated client side transmission - %s [%s] with txid %s ", sXML, sError, wtx.tx->GetHash().GetHex());
+	// Bubble any error to getmininginfo - or clear the error
+	if (!sError.empty())
+	{
+		return false;
+	}
+	CValidationState state;
+	if (!pwalletpog->CommitTransaction(wtx, reservekey, g_connman.get(), state))
+	{
+			LogPrintf("\nCreateGSCTransmission::Unable to Commit transaction for campaign %s - %s", sSpecificCampaignName, wtx.tx->GetHash().GetHex());
+			sError = "GSC Commit failed " + sSpecificCampaignName;
+			return false;
+	}
+	TXID_OUT = wtx.GetHash().GetHex();
+
+	return true;
+}
 
 
 CWalletTx CreateGSCClientTransmission(std::string sGobjectID, std::string sOutcome, std::string sCampaign, std::string sDiary, CBlockIndex* pindexLast, double nCoinAgePercentage, CAmount nFoundationDonation, 
 	CReserveKey& reservekey, std::string& sXML, std::string& sError, std::string& sWarning)
 {
 	CWalletTx wtx;
+	AcquireWallet();
 
 	if (sCampaign == "HEALING" && sDiary.empty())
 	{

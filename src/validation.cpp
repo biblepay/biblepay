@@ -1982,6 +1982,15 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
     LOCK(cs_main);
     int32_t nVersion = VERSIONBITS_TOP_BITS;
 
+	if (pindexPrev->nHeight < params.RANDOMX_HEIGHT)
+    {
+        nVersion = VERSIONBITS_TOP_BITS_LEGACY;
+    }
+    else if (pindexPrev->nHeight >= params.RANDOMX_HEIGHT)
+    {
+        nVersion = VERSIONBITS_TOP_BITS;
+    }
+
     for (int i = 0; i < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; i++) {
         Consensus::DeploymentPos pos = Consensus::DeploymentPos(i);
         ThresholdState state = VersionBitsState(pindexPrev, params, pos, versionbitscache);
