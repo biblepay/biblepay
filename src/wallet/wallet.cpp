@@ -2812,23 +2812,25 @@ CAmount CWallet::GetAvailableBalance(const CCoinControl* coinControl) const
     return balance;
 }
 
+
+bool IsMaskDenominated(CAmount nAmount)
+{
+	double dAmt = (double)nAmount / COIN;
+	std::string sAmt = RoundToString(dAmt, 4);
+	bool fPODCDenominated = Contains(sAmt, ".001");
+	return fPODCDenominated;
+}
+
 void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const CCoinControl *coinControl, const CAmount &nMinimumAmount, const CAmount &nMaximumAmount, 
 	const CAmount &nMinimumSumAmount, const uint64_t nMaximumCount, 
 	const int nMinDepth, const int nMaxDepth) const
 {
-	LogPrintf("%f", 70015);
-
     vCoins.clear();
     CoinType nCoinType = coinControl ? coinControl->nCoinType : CoinType::ALL_COINS;
-
     {
-		LogPrintf("%f", 70016);
-
         LOCK2(cs_main, cs_wallet);
 
         CAmount nTotal = 0;
-		LogPrintf("%f", 70017);
-
         for (auto pcoin : GetSpendableTXs()) {
             const uint256& wtxid = pcoin->GetHash();
 

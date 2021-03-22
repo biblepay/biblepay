@@ -519,7 +519,6 @@ std::string RetrieveMd5(std::string s1)
 	}
 }
 
-
 std::string PubKeyToAddress(const CScript& scriptPubKey)
 {
 	CTxDestination address1;

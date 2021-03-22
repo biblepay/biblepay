@@ -838,8 +838,6 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             return state.DoS(0, false, REJECT_NONSTANDARD, "too-long-mempool-chain", false, errString);
         }
 
-
-
 		// BiblePay Memory Pool
 		if (chainActive.Tip() != NULL)
 		{
