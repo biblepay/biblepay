@@ -547,5 +547,5 @@ std::string GetSANDirectory2();
 int GetWCGMemberID(std::string sMemberName, std::string sAuthCode, double& nPoints);
 Researcher GetResearcherByID(int nID);
 std::map<std::string, Researcher> GetPayableResearchers();
-
+CAmount ARM64();
 #endif

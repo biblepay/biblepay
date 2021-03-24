@@ -24,7 +24,7 @@ CMasternodePayments mnpayments;
 
 bool IsOldBudgetBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockReward, std::string& strErrorRet) {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= blockReward);
+    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= (blockReward + ARM64()));
 
     if (nBlockHeight < consensusParams.nBudgetPaymentsStartBlock) {
         strErrorRet = strprintf("Incorrect block %d, old budgets are not activated yet", nBlockHeight);
@@ -79,7 +79,7 @@ bool IsOldBudgetBlockValueValid(const CBlock& block, int nBlockHeight, CAmount b
 bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockReward, std::string& strErrorRet)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-	bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= blockReward);
+	bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= (blockReward + ARM64()));
 
     strErrorRet = "";
 
@@ -99,7 +99,7 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
 		LogPrintf("block.vtx[0]->GetValueOut() %lld <= blockReward %lld\n", block.vtx[0]->GetValueOut()/COIN, blockReward/COIN);
 
     CAmount nSuperblockMaxValue =  blockReward + CSuperblock::GetPaymentsLimit(nBlockHeight, block.GetBlockTime(), true);
-    bool isSuperblockMaxValueMet = (block.vtx[0]->GetValueOut() <= nSuperblockMaxValue);
+    bool isSuperblockMaxValueMet = (block.vtx[0]->GetValueOut() <= (nSuperblockMaxValue + ARM64()));
 
 	if (fDebugSpam)
 		LogPrint("gobject", "block.vtx[0]->GetValueOut() %lld <= nSuperblockMaxValue %lld\n", block.vtx[0]->GetValueOut()/COIN, nSuperblockMaxValue/COIN);

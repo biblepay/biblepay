@@ -1802,28 +1802,30 @@ void BitcoinGUI::detectShutdown()
 
 	// Governance - Check to see if we should submit a proposal
     nProposalModulus++;
-    if (nProposalModulus % 30 == 0 && !fLoadingIndex && fWarmBootFinished)
+    if (nProposalModulus % 60 == 0 && !fLoadingIndex && fWarmBootFinished)
     {
         nProposalModulus = 0;
 		// Chat - If someone is paging us...
-		UserRecord myRec = GetMyUserRecord();
+		// RAndrews - Only load user record in QT-GUI if actually needed (this should help avoid ui-lags in windows)
 
         if (mlPaged > 1 && !msPagedFrom.empty() && clientModel)
         {
-            mlPaged = 0;
-            ChatDialog *dlg = new ChatDialog(this, true, false, myRec.NickName, msPagedFrom);
-            dlg->setClientModel(this->clientModel);
-            dlg->show();
-            msPagedFrom = "";
+			mlPaged = 0;
+			UserRecord myRec = GetMyUserRecord();
+			ChatDialog *dlg = new ChatDialog(this, true, false, myRec.NickName, msPagedFrom);
+			dlg->setClientModel(this->clientModel);
+			dlg->show();
+			msPagedFrom = "";
         }
 
 		if (mlPagedEncrypted > 1 && !msPagedFrom.empty() && clientModel)
         {
-            mlPagedEncrypted = 0;
-            ChatDialog *dlg = new ChatDialog(this, true, true, myRec.NickName, msPagedFrom);
-            dlg->setClientModel(this->clientModel);
-            dlg->show();
-            msPagedFrom = "";
+			mlPagedEncrypted = 0;
+			UserRecord myRec = GetMyUserRecord();
+			ChatDialog *dlg = new ChatDialog(this, true, true, myRec.NickName, msPagedFrom);
+			dlg->setClientModel(this->clientModel);
+			dlg->show();
+			msPagedFrom = "";
         }
         
 		// Opening a web resource

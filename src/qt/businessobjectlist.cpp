@@ -66,11 +66,11 @@ void BusinessObjectList::UpdateObject(std::string objType)
 	{
 		sFields = "campaign,nickname,cpk,points,owed,prominence";
 		pString = GUIUtil::TOQS(GetPOGBusinessObjectList(sMode, sFields));
-        // Update once per seven minutes
+        // Avoid refreshing the UI (avoid UI-lags).  User can manually click on leaderboard to refresh it.
 		if (!bRefreshed)
 		{
 			bRefreshed = true;
-			QTimer::singleShot(700000, this, SLOT(RefreshPogLeaderboard()));
+			RefreshPogLeaderboard();
 		}
 	}
     QStringList pHeaders = GetHeaders(sFields);

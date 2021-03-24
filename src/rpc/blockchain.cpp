@@ -2838,6 +2838,11 @@ UniValue exec(const JSONRPCRequest& request)
 			results.push_back(Pair("error", "not found"));
 		}
 	}
+	else if (sItem == "arm64")
+	{
+		CAmount n = ARM64();
+		results.push_back(Pair("arm64", (double)n/COIN));
+	}
 	else if (sItem == "cpk")
 	{
 		std::string sError;
