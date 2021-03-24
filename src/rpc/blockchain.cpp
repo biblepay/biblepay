@@ -3180,6 +3180,11 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("Results", d.Response));
 
 	}
+	else if (sItem == "tgbv")
+	{
+		double nv = GetBlockVersion("v1601-Harvest");
+		results.push_back(Pair("version", nv));
+	}
 	else if (sItem == "testgscvote")
 	{
 		int iNextSuperblock = 0;

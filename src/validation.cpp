@@ -3756,15 +3756,15 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 
 	if (pindexPrev)
 	{
-		// RandomX Pools:
 		int64_t nBlockAge = GetAdjustedTime() - block.GetBlockTime();
 		double nVersion = GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage);
-		if (nHeight > consensusParams.HARVEST_HEIGHT && nVersion > 1000 && nVersion < 1601)
+		if (nHeight > consensusParams.HARVEST_HEIGHT && nVersion > 1000 && nVersion < 1602)
 		{
 			LogPrintf("\r\nContextualCheckBlock::ERROR - Block Rejected - Node spamming new blocks after mandatory upgrade %f", nVersion);
 			return false;
 		}
 
+		/*
 		if (nBlockAge < 86400)
 		{
 			double nDiff = GetDifficulty(pindexPrev);
@@ -3787,6 +3787,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 					}
 				}
 			}
+			*/
 
 		}
 
@@ -5289,13 +5290,13 @@ void SetOverviewStatus()
 		msGlobalStatus += "<br>APM: " + GetAPMNarrative();
 		std::string sPrayers = FormatHTML(sPrayer, 20, "<br>");
 		if (!sPrayer.empty())
-			msGlobalStatus2 = "<br><b>Prayer Requests:</b><br><font color='gold'><span style='font-size:165%'><b>" + sPrayer + "</font></b></span><br>&nbsp;";
+			msGlobalStatus2 = "<br>Prayer Requests:<br><font color='gold'><span style='font-size:125%'>" + sPrayer + "</font></span><br>&nbsp;";
 		// Diary entries (Healing campaign)
 		std::string sDiary;
 		GetDataList("DIARY", 7, miGlobalDiaryIndex, "", sDiary);
 		std::string sDiaries = FormatHTML(Caption(sDiary, 512), 20, "<br>");
 		if (!sDiary.empty())
-			msGlobalStatus2 += "<br><br><b>Healing Campaign Results:</b><br><font color='gold'><span style='font-size:165%'><b>" + sDiary + "</font></span></b><br>&nbsp;";
+			msGlobalStatus2 += "<br><br>Healing Campaign Results:<br><font color='gold'><span style='font-size:125%'>" + sDiary + "</font></span><br>&nbsp;";
 	}
 	catch (const std::exception& e) 
 	{

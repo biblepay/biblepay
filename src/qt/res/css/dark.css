@@ -696,11 +696,11 @@ QPushButton { /* Global Button Style */
 background-color:#971B20;
 border:0;
 color:#FAFBFC;
-font-weight:bold;
+/* font-weight:bold; */
 padding-left:22px;
 padding-right:22px;
 padding-top:5px;
-font-size: 50%;
+font-size: 40%;
 padding-bottom:5px;
 }
 

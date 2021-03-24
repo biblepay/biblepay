@@ -596,11 +596,11 @@ public:
 
 		//LLMQ:
         consensus.BIP34Hash = uint256S("0x0");
-		consensus.BIP34Height = 72495;
-		consensus.DIP0003Height = 72495; 
-		consensus.LLMQHeight = 72495;
-    	consensus.DIP0003EnforcementHeight = 72495;
-		consensus.HARVEST_HEIGHT = 72495;  // Go live height for BiblePay-Harvest
+		consensus.BIP34Height = 72855;
+		consensus.DIP0003Height = 72855; 
+		consensus.LLMQHeight = 72855;
+    	consensus.DIP0003EnforcementHeight = 72855;
+		consensus.HARVEST_HEIGHT = 72855;  // Go live height for BiblePay-Harvest
 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day

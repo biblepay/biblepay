@@ -1326,6 +1326,9 @@ double GetBlockVersion(std::string sXML)
 {
 	std::string sBlockVersion = ExtractXML(sXML,"<VER>","</VER>");
 	sBlockVersion = strReplace(sBlockVersion, ".", "");
+	sBlockVersion = strReplace(sBlockVersion, "v", "");
+	sBlockVersion = strReplace(sBlockVersion, "-", "");
+
 	if (sBlockVersion.length() == 3) sBlockVersion += "0"; 
 	double dBlockVersion = cdbl(sBlockVersion, 0);
 	return dBlockVersion;
