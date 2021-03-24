@@ -3787,9 +3787,9 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 					}
 				}
 			}
-			*/
-
+			
 		}
+		*/
 
 		bool bGSCSuperblock = CSuperblock::IsSmartContract(nHeight);
 		CAmount nPayments = block.vtx[0]->GetValueOut();
