@@ -5666,7 +5666,7 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	double nmaxspend = 101;
 	std::string sPayload = "<MT>UTXOSTAKE</MT><MK>" + sPK + "</MK><MV><utxostake><foreignticker>" + sForeignTicker + "</foreignticker><bbputxo>" + sBBPUTXO + "</bbputxo><height>" 
 			+ RoundToString(chainActive.Tip()->nHeight, 0) 
-			+ "2</height><foreignutxo>"+ sForeignUTXO + "</foreignutxo><cpk>" + sCPK + "</cpk><bbpsig>"+ sBBPSig + "</bbpsig><foreignsig>"+ sForeignSig 
+			+ "</height><foreignutxo>"+ sForeignUTXO + "</foreignutxo><cpk>" + sCPK + "</cpk><bbpsig>"+ sBBPSig + "</bbpsig><foreignsig>"+ sForeignSig 
 			+ "</foreignsig><time>" + RoundToString(GetAdjustedTime(), 0) + "</time>"
 			+ "<bbpamount>" + AmountToString(nBBPAmount) + "</bbpamount><bbpaddress>" + sBBPAddress + "</bbpaddress><foreignaddress>" + sForeignAddress + "</foreignaddress>"
 			+ "<foreignamount>" + AmountToString(s.nAmount) + "</foreignamount><bbpprice>"
