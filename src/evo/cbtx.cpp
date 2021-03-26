@@ -44,7 +44,7 @@ bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidatio
 
     if (pindexPrev) 
 	{
-		bool fDIP0008Active = pindexPrev->nHeight > chainparams.GetConsensus().DIP0008Height;
+		bool fDIP0008Active = pindexPrev->nHeight > Params().GetConsensus().DIP0008Height;
 	
         if (fDIP0008Active && cbTx.nVersion < 2) {
             return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-version");
