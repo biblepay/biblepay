@@ -308,10 +308,9 @@ public:
 		consensus.nBudgetPaymentsStartBlock = 21551; // This is when we change our block distribution to include PR, P2P, IT expenses
 		
 		consensus.nInstantSendConfirmationsRequired = 6;
-        consensus.nInstantSendKeepLock = 24;
+        consensus.nInstantSendKeepLock = 12;
         consensus.nBudgetPaymentsStartBlock = 21551; // actual historical value
         
-
 		consensus.nRuleChangeActivationThreshold = 21600; // Same as Masternode Payments Start block
 		consensus.nBudgetPaymentsCycleBlocks = 205 * 30; // Monthly
 		consensus.nBudgetPaymentsWindowBlocks = 100;
@@ -319,13 +318,15 @@ public:
 
 		consensus.nInstantSendConfirmationsRequired = 1;
 		consensus.nSuperblockStartBlock = 21710; // The first superblock
-
 		consensus.nSuperblockCycle = 205 * 30; // Monthly
 
 		consensus.nDCCSuperblockStartBlock = 33451; //F11000 CUTOVER HEIGHT + 11
+
 		consensus.nDCCSuperblockCycle = 205; // Daily
+
 		consensus.nGovernanceMinQuorum = 4;
 		consensus.nGovernanceFilterElements = 20000;
+
 		consensus.nSuperblockStartHash = uint256(); 
 		consensus.nMasternodeMinimumConfirmations = 7;
 		// BIP34, 65, 66 should match Evo cutover height
@@ -335,19 +336,21 @@ public:
 		consensus.BIP66Height = 123200; // 00000000000b1fa2dfa312863570e13fae9ca7b5566cb27e55422620b469aefa
 
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 
-
-		consensus.DIP0001Height = 580000;
-		// The correct DIP3 height in PROD (this is the height where sanctuaries are initially registered in DM mode)
-		consensus.DIP0003Height = 133000;
 		// September 2020 Go-Live (POOS)
 		consensus.POOS_HEIGHT = 217000; // Sept 2020 Mandatory Upgrade height
 		consensus.TRIBULATION_HEIGHT = 255000;  // Go Live for BiblePay Mandatory 1.5.4.4 - March 1st, 2021
+	
+		// Harvest
 		consensus.HARVEST_HEIGHT = 300000;  // Go live height for BiblePay-Harvest
-		consensus.LLMQHeight = 580000; // The first attempt at llmq quorums that conform to voting out bad quorum members
-		consensus.DIP0003EnforcementHeight = 580000;
+		consensus.DIP0001Height = 300000;
+		consensus.DIP0003Height = 300000;
+		consensus.LLMQHeight = 300000; // The first attempt at llmq quorums that conform to voting out bad quorum members
+		consensus.DIP0003EnforcementHeight = 300000;
 		// Mission Critical to do: verify each switch in getblockchaininfo (dip activation):
-		// consensus.DIP0008Height = 582000;
-		// End of September 2020 Go-Live (POOS)
+		// Chainlock enforcement:
+		consensus.DIP0008Height = 310000;
+		// End of Harvest
+
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 
 		consensus.QTHeight = 124000;  // Note to future forkers of DACs!  This height must be > (BLOCKS_PER_DAY * 32)!  Thank you for your support!
 		consensus.powLimit = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
@@ -601,6 +604,8 @@ public:
 		consensus.LLMQHeight = 72855;
     	consensus.DIP0003EnforcementHeight = 72855;
 		consensus.HARVEST_HEIGHT = 72855;  // Go live height for BiblePay-Harvest
+		// Chainlock Enforcement:
+		consensus.DIP0008Height = 74000;
 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day
@@ -691,7 +696,7 @@ public:
         nExtCoinType = 1;
 
         // long living quorum params
-	    consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
+	    //consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
         consensus.llmqs[Consensus::LLMQ_TEST] = llmq_test;
 		
 		consensus.llmqTypeChainLocks = Consensus::LLMQ_TEST;

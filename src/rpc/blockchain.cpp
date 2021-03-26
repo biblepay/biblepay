@@ -2601,7 +2601,7 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "testmask")
 	{
-		double nAmt = cdbl(request.params[1].get_str(), 8);
+		CAmount nAmt = cdbl(request.params[1].get_str(), 8) * COIN;
 		double nMask = cdbl(request.params[2].get_str(), 8);
 		results.push_back(Pair("n1", nAmt));
 		results.push_back(Pair("nMask", nMask));
@@ -3680,21 +3680,24 @@ UniValue exec(const JSONRPCRequest& request)
 		double dXMR = GetCryptoPrice("xmr");
 		double dDOGE = GetCryptoPrice("doge");
 		double dLTC = GetCryptoPrice("ltc");
-
+		double dETH = GetCryptoPrice("eth");
 		results.push_back(Pair(CURRENCY_TICKER + "/BTC", RoundToString(dDacPrice, 12)));
 		results.push_back(Pair("DASH/BTC", RoundToString(dDASH, 12)));
 		results.push_back(Pair("LTC/BTC", dLTC));
 		results.push_back(Pair("DOGE/BTC", dDOGE));
 		results.push_back(Pair("XMR/BTC", dXMR));
+		results.push_back(Pair("ETH/BTC", dETH));
 		results.push_back(Pair("BTC/USD", dBTC));
 		
 		double nPrice = GetCoinPrice();
 		double nDashPriceUSD = dBTC * dDASH;
 		double nXMRPriceUSD = dBTC * dXMR;
+		double nETHPriceUSD = dBTC * dETH;
 		std::string sAPM = GetAPMNarrative();
 		results.push_back(Pair("APM", sAPM));
 		results.push_back(Pair("DASH/USD", nDashPriceUSD));
 		results.push_back(Pair("XMR/USD", nXMRPriceUSD));
+		results.push_back(Pair("ETH/USD", nETHPriceUSD));
 		results.push_back(Pair(CURRENCY_TICKER + "/USD", nPrice));
 	}
 	else if (sItem == "revivesanc")

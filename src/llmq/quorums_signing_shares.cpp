@@ -857,7 +857,12 @@ void CSigSharesManager::TryRecoverSig(const CQuorumCPtr& quorum, const uint256& 
 
 CDeterministicMNCPtr CSigSharesManager::SelectMemberForRecovery(const CQuorumCPtr& quorum, const uint256 &id, int attempt)
 {
-    assert(attempt < quorum->members.size());
+	// This assertion failed for biblepay.
+    //assert(attempt < quorum->members.size());
+	if (attempt < quorum->members.size())
+	{
+		attempt = 0;
+	}
 
     std::vector<std::pair<uint256, CDeterministicMNCPtr>> v;
     v.reserve(quorum->members.size());

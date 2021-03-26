@@ -275,7 +275,7 @@ void CDKGSessionHandler::SleepBeforePhase(QuorumPhase curPhase,
     double phaseSleepTimePerMember = phaseSleepTime / params.size;
     // Don't expect perfect block times and thus reduce the phase time to be on the secure side (caller chooses factor)
     double adjustedPhaseSleepTimePerMember = phaseSleepTimePerMember * randomSleepFactor;
-
+	// RAndrews - Do we need to make this faster?
     int64_t sleepTime = (int64_t)(adjustedPhaseSleepTimePerMember * curSession->GetMyMemberIndex());
     int64_t endTime = GetTimeMillis() + sleepTime;
     int heightTmp{-1};

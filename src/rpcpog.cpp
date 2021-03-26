@@ -863,6 +863,11 @@ SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string 
 		sURL1 = "https://api.blockcypher.com";
 		sURL2 = "v1/doge/main/addrs/" + sAddress;
 	}
+	else if (sTicker == "ETH")
+	{
+		sURL1 = "https://api.blockcypher.com";
+		sURL2 = "v1/eth/main/addrs/" + sAddress;
+	}
 	else if (sTicker == "BBP")
 	{
 		CAmount nValue = 0;
@@ -892,7 +897,7 @@ SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string 
 		return s;
 	}
 
-	std::string sData = "{" + Mid(b.Response, i1 - 2, 100000);
+	std::string sData = "{" + Mid(b.Response, i1 - 2, 512000);
 	
     UniValue o(UniValue::VOBJ);
 	o.read(sData);
@@ -907,14 +912,25 @@ SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string 
 			std::string sTxId = o["txrefs"][i]["tx_hash"].getValStr();
 			int64_t nLockTime = HRDateToTimestamp(o["txrefs"][i]["confirmed"].getValStr());
 			bool fSpent = o["txrefs"][i]["spent"].getValStr() == "true";
-			double nValue = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12) / COIN;
-			CAmount caAmount = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12);
+			double nValue = 0;
+			CAmount caAmount = 0;
+			if (sTicker=="ETH")
+			{
+				nValue = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 18) / COIN / 10000000000;
+				caAmount = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 18) / 10000000000;
+			}
+			else
+			{			
+				nValue = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12) / COIN;
+				caAmount = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12);
+			}
+			std::string sAmount = o["txrefs"][i]["value"].getValStr();
 
-			
 			bool fLockTimeCheck = nLockTime > nTargetLockTime - nLockTimePad && nLockTime < nTargetLockTime + nLockTimePad; 
+			double nPin = AddressToPin(sAddress);
+
 			if (nValue > 0 && nOut >=0 && !fSpent && fLockTimeCheck)
 			{
-				double nPin = AddressToPin(sAddress);
 				bool fMask = CompareMask2(caAmount, nPin);
 
 				if (fReturnFirst && fMask)
@@ -940,8 +956,9 @@ SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string 
 					return s;
 				}
 			}
-
-			LogPrintf("\nQueryUTXO::TxRef %f %s, actual value %f, TargetAmount %f  ", nOut, sTxId, nValue, nTargetAmount);
+			if (false)
+				LogPrintf("\nQueryUTXO::TxRef Ticker %s, Address %s, pin %f, nOut=%f Txid=%s, actual value %f, TargetAmount %f, caAmount=%d, sAmount=%s, Spent=%f ", 
+					sTicker, sAddress, nPin, nOut, sTxId, nValue, nTargetAmount, caAmount, sAmount, fSpent);
 		 }
 	}
 
@@ -1284,11 +1301,17 @@ bool CompareMask(CAmount nValue, CAmount nMask)
 	return (s1 == s2);
 }
 
+std::string AmtToString(CAmount nAmount)
+{
+    std::string s = strprintf("%d", nAmount);
+	return s;
+}
+
 bool CompareMask2(CAmount nAmount, double nMask)
 {
 	if (nMask == 0)
 		return false;
-	std::string sFull = RoundToString((double)nAmount/COIN, 12);
+	std::string sFull = AmtToString(nAmount);
 	std::string sSec = RoundToString(nMask, 0);
 	bool fExists = Contains(sFull, sSec);
 	return fExists;
@@ -3128,8 +3151,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 				double nPin = AddressToPin(w.ForeignAddress);
 				bool fMask = CompareMask2(w.nForeignAmount, nPin);
 				if (!fMask)
-					LogPrintf("\nFT1 %s, Pin %f, Amount %s, Valid %f ", w.ForeignTicker, nPin, RoundToString((double)w.nForeignAmount/COIN, 12), fMask);
-
+					LogPrintf("\nGetUTXOStake::BadMask::FT1 %s, TXID %s, Pin %f, Amount %s, Valid %f ", w.ForeignTicker, w.TXID.GetHex(), nPin, RoundToString((double)w.nForeignAmount/COIN, 12), fMask);
 				w.ForeignSignatureValid = fMask;
 			}
 			w.SignatureValid = w.BBPSignatureValid && w.ForeignSignatureValid;
@@ -4030,12 +4052,12 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	AcquireWallet();
 
 	bool fForeignTickerValid = false;
-	if (sForeignTicker == "DASH" || sForeignTicker == "BTC" || sForeignTicker == "DOGE" || sForeignTicker == "LTC" || sForeignTicker.empty())
+	if (sForeignTicker == "DASH" || sForeignTicker == "BTC" || sForeignTicker == "DOGE" || sForeignTicker == "LTC" || sForeignTicker == "ETH" || sForeignTicker.empty())
 		fForeignTickerValid = true;
 
 	if (!fForeignTickerValid)
 	{
-		sError = "Foreign ticker must be DASH || BTC || LTC || DOGE.  ";
+		sError = "Foreign ticker must be DASH || BTC || LTC || DOGE || ETH.  ";
 		return false;
 	}
 
@@ -4113,14 +4135,13 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 			+ RoundToString(chainActive.Tip()->nHeight, 0) 
 			+ "</height><foreignutxo>"+ sForeignUTXO + "</foreignutxo><cpk>" + sCPK + "</cpk><bbpsig>"+ sBBPSig + "</bbpsig><foreignsig>"+ sForeignSig 
 			+ "</foreignsig><time>" + RoundToString(GetAdjustedTime(), 0) + "</time>"
-			+ "<bbpamount>" + RoundToString((double)nBBPAmount / COIN, 2) + "</bbpamount><bbpaddress>" + sBBPAddress + "</bbpaddress><foreignaddress>" + sForeignAddress + "</foreignaddress><foreignamount>" 
-			+ RoundToString((double)s.nAmount / COIN, 12) + "</foreignamount><bbpprice>"
+			+ "<bbpamount>" + AmountToString(nBBPAmount) + "</bbpamount><bbpaddress>" + sBBPAddress + "</bbpaddress><foreignaddress>" + sForeignAddress + "</foreignaddress>"
+			+ "<foreignamount>" + AmountToString(s.nAmount) + "</foreignamount><bbpprice>"
 			+ RoundToString(nBBPPrice, 12) + "</bbpprice><foreignprice>" + RoundToString(nForeignPrice, 12)
 			+ "</foreignprice><btcprice>"+ RoundToString(nBTCPrice, 12) + "</btcprice>"
 			+ "<bbpvalue>" + RoundToString(nBBPValueUSD, 2) + "</bbpvalue><foreignvalue>"
 			+ RoundToString(nForeignValueUSD, 2) + "</foreignvalue></utxostake><nmaxspend>" + RoundToString(nmaxspend, 0) + "</nmaxspend></MV>";
-	
-
+	LogPrintf("\nSendUTXOStake::%s", sPayload);
 	if (!ValidateAddress2(sCPK))
 	{
 		sError = "Invalid Return Address "+ sCPK;
@@ -4459,7 +4480,8 @@ int AssimilateUTXO(UTXOStake d)
 	{
 		// SPENT
 		nStatus = -1;
-		LogPrintf("\nAssimilateUTXO %s, to=%s, %f, SPENT=%s", d.TXID.GetHex(), sAddress, -1, sErr);
+		if (false)
+			LogPrintf("\nAssimilateUTXO %s, to=%s, %f, SPENT=%s", d.TXID.GetHex(), sAddress, -1, sErr);
 	}
 	else
 	{
@@ -5222,13 +5244,22 @@ bool AcquireWallet()
 	if (wallets.size() > 0)
 	{
 		pwalletpog = wallets[0];
-		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
 		return true;
 	}
 	else
 	{
 		pwalletpog = NULL;
-		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
 	}
 	return false;
+}
+
+CAmount ARM64()
+{
+	// If biblepay is compiled for ARM64, there is a floating point math problem that results in the block.vtx[0]->GetValueOut() being 1/10000000 satoshi higher than the block subsidy limit (for example actual=596050766864 vs limit=596050766863)
+	// To deal with this we are looking in biblepay.conf for the 'arm64=1' setting.
+	// If set, we pass a value back that is added to the blockReward for consensus purposes.
+	// We are passing back 1 * COIN to allow the Subsidy max to be greater than the value out.
+	double dARM = cdbl(gArgs.GetArg("-arm64", "0"), 0);
+	CAmount nARM = (dARM == 1) ? 1 * COIN : 0;
+	return nARM;
 }

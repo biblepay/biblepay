@@ -3424,10 +3424,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 						{
 							 email.RelayTo(pnode, *connman);
 						});
-
-						//						        connman->ForNode(nodeid, [connman](CNode* pfrom){
-
-
 					}
 				}
 			}
@@ -3449,7 +3445,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 					if (!email.IsNull())
 					{
 						email.RelayTo(pnode, *connman);
-						//LogPrintf("\r\nNetProcessing::ForwardedEmail %s", email.GetHash().GetHex());
 					}
 					else
 					{
@@ -3495,17 +3490,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     }
 
 
-
 	// End of BiblePay
-
-
-
-
-
-
-
-
-
 
     if (strCommand == NetMsgType::FILTERLOAD) {
         CBloomFilter filter;

@@ -421,7 +421,7 @@ CNode* CConnman::ConnectNode(CAddress addrConnect, const char *pszDest, bool fCo
         CNode* pnode = FindNode((CService)addrConnect);
         if (pnode)
         {
-            LogPrintf("Failed to open new connection, already connected\n");
+            LogPrint(BCLog::NET,"Failed to open new connection, already connected\n");
             return nullptr;
         }
     }
@@ -455,7 +455,7 @@ CNode* CConnman::ConnectNode(CAddress addrConnect, const char *pszDest, bool fCo
             if (pnode)
             {
                 pnode->MaybeSetAddrName(std::string(pszDest));
-                LogPrintf("Failed to open new connection, already connected\n");
+                LogPrint(BCLog::NET,"Failed to open new connection, already connected\n");
                 return nullptr;
             }
         }
@@ -989,7 +989,7 @@ size_t CConnman::SocketSendData(CNode *pnode) EXCLUSIVE_LOCKS_REQUIRED(pnode->cs
                 int nErr = WSAGetLastError();
                 if (nErr != WSAEWOULDBLOCK && nErr != WSAEMSGSIZE && nErr != WSAEINTR && nErr != WSAEINPROGRESS)
                 {
-                    LogPrintf("socket send glitch %s (peer=%d)\n", NetworkErrorString(nErr), pnode->GetId());
+                    LogPrint(BCLog::NET,"socket send glitch %s (peer=%d)\n", NetworkErrorString(nErr), pnode->GetId());
                     pnode->fDisconnect = true;
                 }
             }
@@ -1197,7 +1197,7 @@ void CConnman::AcceptConnection(const ListenSocket& hListenSocket) {
     {
         int nErr = WSAGetLastError();
         if (nErr != WSAEWOULDBLOCK)
-            LogPrintf("socket error accept failed: %s\n", NetworkErrorString(nErr));
+            LogPrint(BCLog::NET,"socket error accept failed: %s\n", NetworkErrorString(nErr));
         return;
     }
 
@@ -1209,14 +1209,14 @@ void CConnman::AcceptConnection(const ListenSocket& hListenSocket) {
     }
 
     if (!fNetworkActive) {
-        LogPrintf("%s: not accepting new connections\n", strDropped);
+        LogPrint(BCLog::NET,"%s: not accepting new connections\n", strDropped);
         CloseSocket(hSocket);
         return;
     }
 
     if (!IsSelectableSocket(hSocket))
     {
-        LogPrintf("%s: non-selectable socket\n", strDropped);
+        LogPrint(BCLog::NET,"%s: non-selectable socket\n", strDropped);
         CloseSocket(hSocket);
         return;
     }
@@ -1331,10 +1331,10 @@ void CConnman::DisconnectNodes()
                 }
 
                 if (fLogIPs) {
-                    LogPrintf("ThreadSocketHandler -- removing node: peer=%d addr=%s nRefCount=%d fInbound=%d fMasternode=%d\n",
+                    LogPrint(BCLog::NET,"ThreadSocketHandler -- removing node: peer=%d addr=%s nRefCount=%d fInbound=%d fMasternode=%d\n",
                           pnode->GetId(), pnode->addr.ToString(), pnode->GetRefCount(), pnode->fInbound, pnode->fMasternode);
                 } else {
-                    LogPrintf("ThreadSocketHandler -- removing node: peer=%d nRefCount=%d fInbound=%d fMasternode=%d\n",
+                    LogPrint(BCLog::NET,"ThreadSocketHandler -- removing node: peer=%d nRefCount=%d fInbound=%d fMasternode=%d\n",
                           pnode->GetId(), pnode->GetRefCount(), pnode->fInbound, pnode->fMasternode);
                 }
 
@@ -1418,17 +1418,17 @@ void CConnman::InactivityCheck(CNode *pnode)
         }
         else if (nTime - pnode->nLastSend > TIMEOUT_INTERVAL)
         {
-            LogPrintf("socket sending timeout: %is\n", nTime - pnode->nLastSend);
+            LogPrint(BCLog::NET,"socket sending timeout: %is\n", nTime - pnode->nLastSend);
             pnode->fDisconnect = true;
         }
         else if (nTime - pnode->nLastRecv > (pnode->nVersion > BIP0031_VERSION ? TIMEOUT_INTERVAL : 90*60))
         {
-            LogPrintf("socket receive timeout: %is\n", nTime - pnode->nLastRecv);
+            LogPrint(BCLog::NET,"socket receive timeout: %is\n", nTime - pnode->nLastRecv);
             pnode->fDisconnect = true;
         }
         else if (pnode->nPingNonceSent && pnode->nPingUsecStart + TIMEOUT_INTERVAL * 1000000 < GetTimeMicros())
         {
-            LogPrintf("ping timeout: %fs\n", 0.000001 * (GetTimeMicros() - pnode->nPingUsecStart));
+            LogPrint(BCLog::NET,"ping timeout: %fs\n", 0.000001 * (GetTimeMicros() - pnode->nPingUsecStart));
             pnode->fDisconnect = true;
         }
         else if (!pnode->fSuccessfullyConnected)
@@ -1601,7 +1601,7 @@ void CConnman::SocketEventsSelect(std::set<SOCKET> &recv_set, std::set<SOCKET> &
     if (nSelect == SOCKET_ERROR)
     {
         int nErr = WSAGetLastError();
-        LogPrintf("socket select error %s\n", NetworkErrorString(nErr));
+        LogPrint(BCLog::NET,"socket select error %s\n", NetworkErrorString(nErr));
         for (unsigned int i = 0; i <= hSocketMax; i++)
             FD_SET(i, &fdsetRecv);
         FD_ZERO(&fdsetSend);
@@ -2866,7 +2866,7 @@ void Discover(boost::thread_group& threadGroup)
             for (const CNetAddr &addr : vaddr)
             {
                 if (AddLocal(addr, LOCAL_IF))
-                    LogPrintf("%s: %s - %s\n", __func__, pszHostName, addr.ToString());
+                    LogPrint(BCLog::NET,"DISCOVER::%s: %s - %s\n", __func__, pszHostName, addr.ToString());
             }
         }
     }
@@ -2886,14 +2886,14 @@ void Discover(boost::thread_group& threadGroup)
                 struct sockaddr_in* s4 = (struct sockaddr_in*)(ifa->ifa_addr);
                 CNetAddr addr(s4->sin_addr);
                 if (AddLocal(addr, LOCAL_IF))
-                    LogPrintf("%s: IPv4 %s: %s\n", __func__, ifa->ifa_name, addr.ToString());
+                    LogPrint(BCLog::NET,"DISCOVER::GETIFADDRS::%s: IPv4 %s: %s\n", __func__, ifa->ifa_name, addr.ToString());
             }
             else if (ifa->ifa_addr->sa_family == AF_INET6)
             {
                 struct sockaddr_in6* s6 = (struct sockaddr_in6*)(ifa->ifa_addr);
                 CNetAddr addr(s6->sin6_addr);
                 if (AddLocal(addr, LOCAL_IF))
-                    LogPrintf("%s: IPv6 %s: %s\n", __func__, ifa->ifa_name, addr.ToString());
+                    LogPrintf("DISCOVER2::%s: IPv6 %s: %s\n", __func__, ifa->ifa_name, addr.ToString());
             }
         }
         freeifaddrs(myaddrs);

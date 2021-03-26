@@ -1666,6 +1666,9 @@ std::string GetSymbolFromAddress(std::string sAddress)
 		return "N/A";
 	}
 	std::string sPrefix = sAddress.substr(0, 1);
+	std::string sPrefixEth = sAddress.substr(0, 2);
+	boost::to_upper(sPrefixEth);
+
 	if (sPrefix == "B")
 	{
 		sSymbol = "BBP";
@@ -1685,6 +1688,10 @@ std::string GetSymbolFromAddress(std::string sAddress)
 	else if (sPrefix == "1")
 	{
 		sSymbol = "BTC";
+	}
+	else if (sPrefixEth == "0X" && sAddress.length() == 42)
+	{
+		sSymbol = "ETH";
 	}
 	else
 	{
@@ -1754,12 +1761,13 @@ UniValue easystake(const JSONRPCRequest& request)
 	results.push_back(Pair("Foreign Value USD", p.nForeignValueUSD));
 	results.push_back(Pair("BBP Value USD", p.nBBPValueUSD));
 	results.push_back(Pair("DWU", nDWU * 100));
+	results.push_back(Pair("Foreign Address", sForeignAddress));
 
 	double nPin = AddressToPin(sForeignAddress);
 	results.push_back(Pair("Pin", nPin));
 	bool fValid = CompareMask2(s.nAmount, nPin);
 	if (!fValid)
-		sError = "The pin is not valid for this receive address.";
+		sError = "The pin is not valid for this receive address. [Address=" + sForeignAddress + "]";
 	results.push_back(Pair("pin_valid", fValid));
 	results.push_back(Pair("Error", sError));
 	std::string sTXID;
@@ -1992,7 +2000,8 @@ UniValue listexpenses(const JSONRPCRequest& request)
 UniValue getpin(const JSONRPCRequest& request)
 {
 	if (request.fHelp || (request.params.size() != 1))
-		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, etc. \r\n");
+		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, or ERC-20: ETH, etc. \r\n");
+
 	UniValue results(UniValue::VOBJ);
 	std::string s2 = request.params[0].get_str();
 	if (s2.length() != 34 && s2.length() != 42)
@@ -2168,6 +2177,14 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 					mapAmounts[d.ReportTicker] += d.ReportTicker == "BBP" ? d.nBBPAmount : d.nForeignAmount;
 				}
 			}
+		}
+		else
+		{
+				std::string sSigs = "Sigs: " + d.SignatureNarr;
+				std::string sRow = "#" + RoundToString(i+1, 0) + ":  TXID=" + d.TXID.GetHex() + ", Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
+						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
+						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
+				LogPrintf("\nlistutxostakes::Skipping %s", sRow);
 		}
 		if (nSpentType == 3)
 		{

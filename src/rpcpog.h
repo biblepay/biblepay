@@ -477,5 +477,6 @@ boost::filesystem::path GetDeterministicConfigFile();
 boost::filesystem::path GetMasternodeConfigFile();
 bool AcquireWallet();
 bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fForce, std::string sDiary, std::string& sError, std::string sSpecificCampaignName, std::string& sWarning, std::string& TXID_OUT);
+CAmount ARM64();
 
 #endif

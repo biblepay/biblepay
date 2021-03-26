@@ -481,8 +481,10 @@ void OverviewPage::privateSendStatus(bool fForce)
         return;
     }
 
+	/*
     bool fIsEnabled = privateSendClient.fEnablePrivateSend;
     ui->framePrivateSend->setVisible(fIsEnabled);
+
     if (!fIsEnabled) {
         SetupTransactionList(NUM_ITEMS_DISABLED);
         if (timer != nullptr) {
@@ -490,6 +492,7 @@ void OverviewPage::privateSendStatus(bool fForce)
         }
         return;
     }
+	*/
 
     if (timer != nullptr && !timer->isActive()) {
         timer->start(1000);
@@ -718,3 +721,4 @@ void OverviewPage::DisablePrivateSendCompletely() {
     }
     privateSendClient.fPrivateSendRunning = false;
 }
+

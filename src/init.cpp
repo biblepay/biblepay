@@ -2305,6 +2305,16 @@ bool AppInitMain()
         return false;
     }
 
+	double dDisableSMTP = cdbl(gArgs.GetArg("-disablesmtp", "0"), 0);
+	double dDisablePOP3 = cdbl(gArgs.GetArg("-disablepop3", "0"), 0);
+
+	LogPrintf("\nPop3 %f SMTP %f Servers ", dDisableSMTP, dDisablePOP3);
+
+	if (dDisableSMTP != 1)
+		threadGroup.create_thread(boost::bind(&ThreadSMTP, boost::ref(connman)));
+	if (dDisablePOP3 != 1)
+		threadGroup.create_thread(boost::bind(&ThreadPOP3, boost::ref(connman)));
+
     // ********************************************************* Step 12: start node
 
     int chain_active_height;
