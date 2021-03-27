@@ -3759,7 +3759,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 	{
 		int64_t nBlockAge = GetAdjustedTime() - block.GetBlockTime();
 		double nVersion = GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage);
-		if (nHeight > consensusParams.HARVEST_HEIGHT && nVersion > 1000 && nVersion < 1602)
+		if (nHeight > consensusParams.HARVEST_HEIGHT && nVersion > 1000 && nVersion < 1603)
 		{
 			LogPrintf("\r\nContextualCheckBlock::ERROR - Block Rejected - Node spamming new blocks after mandatory upgrade %f", nVersion);
 			return false;

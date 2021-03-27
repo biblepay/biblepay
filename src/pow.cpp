@@ -150,9 +150,13 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 	{
 		_nTargetTimespan = CountBlocks * 310;
 	}
-	else if (pindexLast->nHeight >= params.F13000_CUTOVER_HEIGHT)
+	else if (pindexLast->nHeight >= params.F13000_CUTOVER_HEIGHT && pindexLast->nHeight < params.HARVEST_HEIGHT)
 	{
 		_nTargetTimespan = CountBlocks * 296;
+	}
+	else if (pindexLast->nHeight >= params.HARVEST_HEIGHT)
+	{
+		_nTargetTimespan = CountBlocks * 370;
 	}
 	
 	if (!fProdChain)
@@ -165,11 +169,11 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 		{
 			_nTargetTimespan = 30; // 30 second blocks 
 		}
-		else if (pindexLast->nHeight >= 5000)
+		else if (pindexLast->nHeight >= 5000 && pindexLast->nHeight < (params.HARVEST_HEIGHT + 200))
 		{
 			_nTargetTimespan = CountBlocks * 300;  // 7 minute blocks in testnet
 		}
-		else if (pindexLast->nHeight >= (params.HARVEST_HEIGHT + 15))
+		else if (pindexLast->nHeight >= (params.HARVEST_HEIGHT + 65))
 		{
 			// We had to do this because we found that LLMQ actually requires a relatively accurate clock, due to the signing process (and the sleep estimator and the timeouts).
 			_nTargetTimespan = CountBlocks * (3 * 60);  // 3 minute blocks in testnet
