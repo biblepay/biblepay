@@ -149,7 +149,8 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CV
         LogPrint(BCLog::BENCHMARK, "        - CheckCbTxMerkleRoots: %.2fms [%.2fs]\n", 0.001 * (nTime5 - nTime4), nTimeMerkle * 0.000001);
     } catch (const std::exception& e) {
         LogPrintf("%s -- failed: %s\n", __func__, e.what());
-        return state.DoS(100, false, REJECT_INVALID, "failed-procspectxsinblock");
+		// This occurs when the map is empty; dont see a reason to ddos here
+        return state.DoS(0, false, REJECT_INVALID, "failed-procspectxsinblock");
     }
 
     return true;

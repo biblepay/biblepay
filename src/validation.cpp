@@ -2725,6 +2725,8 @@ void static UpdateTip(const CBlockIndex *pindexNew, const CChainParams& chainPar
     if (!warningMessages.empty())
         strMessage += strprintf(" warning='%s'", boost::algorithm::join(warningMessages, ", "));
     LogPrintf("%s\n", strMessage);
+
+
 }
 
 /** Disconnect chainActive's tip.
@@ -3709,8 +3711,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 
     bool fDIP0001Active_context = nHeight >= consensusParams.DIP0001Height;
     bool fDIP0003Active_context = nHeight >= consensusParams.DIP0003Height;
-	bool fDIP0003Enforced       = nHeight >= consensusParams.LLMQHeight;  // The gray area between deterministic-sancs-height and LLMQ-height
-
+	
     // Size limits
     unsigned int nMaxBlockSize = MaxBlockSize(fDIP0001Active_context);
     if (block.vtx.empty() || block.vtx.size() > nMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > nMaxBlockSize)
@@ -3745,7 +3746,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
         }
     }
 
-    if (fDIP0003Active_context && fDIP0003Enforced) {
+    if (fDIP0003Active_context) {
         if (block.vtx[0]->nType != TRANSACTION_COINBASE) {
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-type", false, "coinbase is not a CbTx");
         }

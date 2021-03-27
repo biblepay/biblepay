@@ -346,6 +346,9 @@ public:
 		consensus.DIP0003Height = 300000;
 		consensus.LLMQHeight = 300000; // The first attempt at llmq quorums that conform to voting out bad quorum members
 		consensus.DIP0003EnforcementHeight = 300000;
+		// ToDo : set this to the actual LLMQ go live height
+        consensus.DIP0003EnforcementHash = uint256S("0x0");
+
 		// Mission Critical to do: verify each switch in getblockchaininfo (dip activation):
 		// Chainlock enforcement:
 		consensus.DIP0008Height = 310000;
@@ -371,9 +374,6 @@ public:
         consensus.nGovernanceFilterElements = 20000;
         consensus.nMasternodeMinimumConfirmations = 15;
        
-		// ToDo : set this to the actual LLMQ go live height
-		consensus.DIP0003EnforcementHeight = 1047200;
-        consensus.DIP0003EnforcementHash = uint256S("0x0");
 
         consensus.fPowAllowMinDifficultyBlocks = false;
         
@@ -599,11 +599,11 @@ public:
 
 		//LLMQ:
         consensus.BIP34Hash = uint256S("0x0");
-		consensus.BIP34Height = 72855;
-		consensus.DIP0003Height = 72855; 
-		consensus.LLMQHeight = 72855;
-    	consensus.DIP0003EnforcementHeight = 72855;
-		consensus.HARVEST_HEIGHT = 72855;  // Go live height for BiblePay-Harvest
+		consensus.BIP34Height = 72860;
+		consensus.DIP0003Height = 72860; 
+		consensus.LLMQHeight = 72860;
+    	consensus.DIP0003EnforcementHeight = 72860;
+		consensus.HARVEST_HEIGHT = 72860;  // Go live height for BiblePay-Harvest
 		// Chainlock Enforcement:
 		consensus.DIP0008Height = 74000;
 

@@ -544,7 +544,6 @@ bool CDeterministicMNManager::ProcessBlock(const CBlock& block, const CBlockInde
     CDeterministicMNListDiff diff;
 
     int nHeight = pindex->nHeight;
-	bool fDIP0003Enforced       = nHeight >= consensusParams.LLMQHeight;  // The gray area between deterministic-sancs-height and LLMQ-height
 
     try {
         LOCK(cs);
@@ -578,18 +577,9 @@ bool CDeterministicMNManager::ProcessBlock(const CBlock& block, const CBlockInde
         diff.nHeight = pindex->nHeight;
         mnListDiffsCache.emplace(pindex->GetBlockHash(), diff);
     } catch (const std::exception& e) {
-		// Another squirrely condition for Prod - we have DMs running in non-llmq mode
 		// We need to process the block for MN diff changes; but we cant ddos the node until after the llmq height
 		LogPrintf("CDeterministicMNManager::%s -- internal error: %s\n", __func__, e.what());
-	
-		if (fDIP0003Enforced)
-		{
-			return _state.DoS(100, false, REJECT_INVALID, "failed-dmn-block");
-		}
-		else
-		{
-			return true;
-		}
+		return _state.DoS(100, false, REJECT_INVALID, "failed-dmn-block");
 	}
 
     // Don't hold cs while calling signals
@@ -689,7 +679,6 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
 
     DecreasePoSePenalties(newList);
 	
-	bool fDIP0003Enforced = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
     // we skip the coinbase
     for (int i = 1; i < (int)block.vtx.size(); i++) {
         const CTransaction& tx = *block.vtx[i];
@@ -770,16 +759,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
             CDeterministicMNCPtr dmn = newList.GetMN(proTx.proTxHash);
             if (!dmn) 
 			{
-				// Squirrely 
-				if (fDIP0003Enforced)
-				{
-				     return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
-				}
-				else
-				{
-					return false;
-				}
-
+			     return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
             }
             auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
             newState->addr = proTx.addr;
@@ -812,14 +792,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
 
             CDeterministicMNCPtr dmn = newList.GetMN(proTx.proTxHash);
             if (!dmn) {
-				if (fDIP0003Enforced)
-				{
 					return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
-				}
-				else
-				{
-					return false;
-				}
             }
             auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
             if (newState->pubKeyOperator.Get() != proTx.pubKeyOperator) {
@@ -845,14 +818,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
 
             CDeterministicMNCPtr dmn = newList.GetMN(proTx.proTxHash);
             if (!dmn) {
-				if (fDIP0003Enforced)
-				{
-                     return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
-				}
-				else
-				{
-					return false;
-				}
+                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
             }
             auto newState = std::make_shared<CDeterministicMNState>(*dmn->pdmnState);
             newState->ResetOperatorFields();
