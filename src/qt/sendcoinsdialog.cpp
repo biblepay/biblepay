@@ -369,6 +369,23 @@ bool SendCoinsDialog::ConfirmUTXO(QList<SendCoinsRecipient> recipients, CAmount&
 	return true;
 }
 
+bool AcquireWallet5()
+{
+	std::vector<CWallet*> wallets = GetWallets();
+	if (wallets.size() > 0)
+	{
+		pwalletpog = wallets[0];
+		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
+		return true;
+	}
+	else
+	{
+		pwalletpog = NULL;
+		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
+	}
+	return false;
+}
+
 void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 {
     // prepare transaction for getting txFee earlier
@@ -409,7 +426,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 			std::string sTXID;
 			std::string sError;
 			CAmount nReturnAmount = 0;
-			bool fWallet = AcquireWallet();
+			bool fWallet = AcquireWallet5();
 			std::string sUTXO = pwalletpog->GetBestUTXO(nUTXOAmount, .01, sBBPAddress, nReturnAmount);
 			if (sUTXO.empty() || sBBPAddress.empty())
 			{

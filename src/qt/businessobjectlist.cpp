@@ -202,7 +202,15 @@ void BusinessObjectList::cellDoubleClicked(int Y, int X)
 		if (!sSumm.empty())
 		{
 			std::string sTitle = "My Portfolio - " + sCPK;
-			QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Ok, QMessageBox::Ok);
+			QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Information, QMessageBox::Information);
+			/*
+			QMessageBox msgBox;
+			msgBox.setWindowTitle(GUIUtil::TOQS(sTitle));
+			msgBox.setText(GUIUtil::TOQS(sSumm));
+			msgBox.setStandardButtons(QMessageBox::Ok);
+			msgBox.setStyleSheet("QLabel{xmin-height: 800px;background-color:black;color:silver;}");
+			int r = msgBox.exec();
+			*/
 		}
 	}
 }

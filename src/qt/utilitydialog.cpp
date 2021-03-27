@@ -248,11 +248,11 @@ You retain control of your money at all times.<hr> \
 <ol type=\"1\"> \
 <li>PrivateSend begins by breaking your transaction inputs down into standard denominations. \
 These denominations are 0.001 BIBLEPAY, 0.01 BIBLEPAY, 0.1 BIBLEPAY, 1 BIBLEPAY and 10 BIBLEPAY -- sort of like the paper money you use every day.</li> \
-<li>Your wallet then sends requests to specially configured software nodes on the network, called \"masternodes.\" \
-These masternodes are informed then that you are interested in mixing a certain denomination. \
-No identifiable information is sent to the masternodes, so they never know \"who\" you are.</li> \
+<li>Your wallet then sends requests to specially configured software nodes on the network, called \"sanctuaries.\" \
+These sanctuaries are informed then that you are interested in mixing a certain denomination. \
+No identifiable information is sent to the sanctuaries, so they never know \"who\" you are.</li> \
 <li>When two or more other people send similar messages, indicating that they wish to mix the same denomination, a mixing session begins. \
-The masternode mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. \
+The sanctuary mixes up the inputs and instructs all three users' wallets to pay the now-transformed input back to themselves. \
 Your wallet pays that denomination directly to itself, but in a different address (called a change address).</li> \
 <li>In order to fully obscure your funds, your wallet must repeat this process a number of times with each denomination. \
 Each time the process is completed, it's called a \"round.\" Each round of PrivateSend makes it exponentially more difficult to determine where your funds originated.</li> \

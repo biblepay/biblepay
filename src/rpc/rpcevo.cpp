@@ -2197,7 +2197,9 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 	}
 	results.push_back(Pair("Total Foreign", AmountToString(nTotalForeignAmount)));
     results.push_back(Pair("Total Hybrid BBP", AmountToString(nTotalAmount)));
-    
+   	double nDWU = CalculateUTXOReward(1) * 1.5 * 100;
+	results.push_back(Pair("DWU", nDWU));
+
 	return results;
 }
 

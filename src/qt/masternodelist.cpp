@@ -50,16 +50,17 @@ MasternodeList::MasternodeList(QWidget* parent) :
 
     int columnAddressWidth = 200;
     int columnStatusWidth = 80;
-    int columnPoSeScoreWidth = 90;
-    int columnRegisteredWidth = 80;
+    int columnPoSeScoreWidth = 100;
+    int columnRegisteredWidth = 86;
     int columnLastPaidWidth = 80;
-    int columnNextPaymentWidth = 100;
+    int columnNextPaymentWidth = 107;
     int columnPayeeWidth = 130;
+	// Hide
     int columnOperatorRewardWidth = 130;
     int columnCollateralWidth = 130;
     int columnOwnerWidth = 130;
     int columnVotingWidth = 130;
-    int columnURLWidth = 160;
+    int columnURLWidth = 175;
     ui->tableWidgetMasternodesDIP3->setColumnWidth(0, columnAddressWidth);
     ui->tableWidgetMasternodesDIP3->setColumnWidth(1, columnStatusWidth);
     ui->tableWidgetMasternodesDIP3->setColumnWidth(2, columnPoSeScoreWidth);
@@ -76,7 +77,12 @@ MasternodeList::MasternodeList(QWidget* parent) :
     // TODO use a proper table model for the MN list
     ui->tableWidgetMasternodesDIP3->insertColumn(12);
     ui->tableWidgetMasternodesDIP3->setColumnHidden(12, true);
-
+	// To allow users to see the orphan bio, hide 7-10
+	ui->tableWidgetMasternodesDIP3->setColumnHidden(7, true);
+	ui->tableWidgetMasternodesDIP3->setColumnHidden(8, true);
+	ui->tableWidgetMasternodesDIP3->setColumnHidden(9, true);
+	ui->tableWidgetMasternodesDIP3->setColumnHidden(10, true);
+	
     ui->tableWidgetMasternodesDIP3->setContextMenuPolicy(Qt::CustomContextMenu);
 
 #if QT_VERSION >= 0x040700

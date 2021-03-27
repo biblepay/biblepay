@@ -2491,8 +2491,7 @@ std::string GetPOGBusinessObjectList(std::string sType1, std::string sFields)
 	if (chainActive.Tip()->nHeight < consensusParams.EVOLUTION_CUTOVER_HEIGHT) 
 		return "";
 	
-	LogPrintf("\nGetPogBusinessObjectList Rec %s ", sType1);
-
+	
 	CPK myCPK = GetMyCPK("cpk");
 	int iNextSuperblock = 0;
 	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
@@ -2504,11 +2503,10 @@ std::string GetPOGBusinessObjectList(std::string sType1, std::string sFields)
 	std::string s1 = ExtractXML(sContract, "<DATA>", "</DATA>");
 	std::string sDetails = ExtractXML(sContract, "<DETAILS>", "</DETAILS>");
 	std::string sSplitBy = (sType1 == "pog") ? s1 : sDetails;
-
 	std::vector<std::string> vData = Split(sSplitBy.c_str(), "\n");
-	LogPrintf("\nGetPogBusinessObjectList Rec %s ", sType1);
+	
 
-
+	LogPrintf("\nGetPogBusinessObjectList Rec %s ", sSplitBy);
 
 	//	Detail Row Format: sCampaignName + "|" + CPKAddress + "|" + nPoints + "|" + nProminence + "|" + Members.second.sNickName 
 	//	Leaderboard Fields: "campaign,nickname,cpk,points,owed,prominence";
@@ -2530,7 +2528,7 @@ std::string GetPOGBusinessObjectList(std::string sType1, std::string sFields)
 			std::string sNickName = Caption(vRow[4], 10);
 			if (sNickName.empty())
 				sNickName = "N/A";
-			double nOwed = (sType1 == "pog_leaderboard") ?  cdbl(vRow[5], 4) : dLimit * nProminence / 100;
+			double nOwed = (sType1 == "pog") ?  cdbl(vRow[5], 4) : dLimit * nProminence / 100;
 			if (sCPK == myCPK.sAddress)
 				nMyPoints += nPoints;
 			std::string sRow = sCampaign + "<col>" + sNickName + "<col>" + sCPK + "<col>" + RoundToString(nPoints, 2) 
@@ -4582,19 +4580,26 @@ std::string GetUTXOSummary(std::string sCPK)
 	sTickers = Mid(sTickers, 0, sTickers.length()-2);
 	sForeignQuants = Mid(sForeignQuants, 0, sForeignQuants.length()-2);
 	sBBPQuants = Mid(sBBPQuants, 0, sBBPQuants.length()-2);
-	std::string sSummary = "<html><br>Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0) 
+	// DWU
+	double nDWU = CalculateUTXOReward(1);
+	double nForeignPortfolioPctg = nForeignStakeWeight / (nBBPStakeWeight+.01);
+	double nBBPPctg = 1.0 - nForeignPortfolioPctg;
+	double nDWU1 = nForeignPortfolioPctg * nDWU * 2;
+	double nDWU2 = nBBPPctg * nDWU;
+	double nDWUAvg = nDWU1 + nDWU2 / 2;
+
+	std::string sSummary = "Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0) 
 		+ "<br>Total BBP Amount: " + RoundToString((double)nBBPQuantity/COIN, 2) + " BBP"
 		+ "<br>Total BBP Value: $" + RoundToString(nBBPValue, 2) 
 		+ "<br>Total BBP Count: " + RoundToString(nBBPCount, 0)
-		+ "<br>Total BBP Stake Weight: " + RoundToString(nBBPStakeWeight, 2) + "</br>"
-		+ "<br>BBP Quantities: " + sBBPQuants
-		+ "<br>Total Foreign Amount: " + AmountToString(nForeignQuantity)
+		+ "<br>Total BBP Stake Weight: " + RoundToString(nBBPStakeWeight, 2) + " (" + RoundToString(nBBPPctg * 100, 2) + " %)";
+	sSummary += "<br>BBP Quantities: " + sBBPQuants + "<br>Total Foreign Amount: " + AmountToString(nForeignQuantity)
 		+ "<br>Total Foreign Value: $" + RoundToString(nForeignValue, 2) 
 		+ "<br>Total Foreign Count: " + RoundToString(nForeignCount, 0)
-		+ "<br>Total Foreign Stake Weight: " + RoundToString(nForeignStakeWeight, 2)
-		+ "<br>Foreign Quantities: " + sForeignQuants
-		+ "<br>Total USD Value: $" + RoundToString(nTotal, 2) + "<br>"
-		+ "<br>Total Stake Weight: " + RoundToString(nTotalStakeWeight, 2) + "</br></html>";
+		+ "<br>Total Foreign Stake Weight: " + RoundToString(nForeignStakeWeight, 2) + " (" + RoundToString(nForeignPortfolioPctg * 100, 2) + " %)";
+	sSummary += "<br>Foreign Quantities: " + sForeignQuants + "</br>" + "<br>Total USD Value: $" + RoundToString(nTotal, 2) + "</br>"
+		+ "<br>Total Stake Weight: " + RoundToString(nTotalStakeWeight, 2) + "</br><br>Portfolio DWU: " + RoundToString(nDWUAvg * 100, 2) + "</br>";
+	
 	return sSummary;
 }
 

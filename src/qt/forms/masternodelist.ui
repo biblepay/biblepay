@@ -42,7 +42,7 @@
        </property>
        <widget class="QWidget" name="tabDIP3Masternodes">
         <attribute name="title">
-         <string>DIP3 Sanctuaries</string>
+         <string>Sanctuaries</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="0">
@@ -127,7 +127,7 @@
             <bool>true</bool>
            </property>
            <property name="columnCount">
-            <number>14</number>
+            <number>12</number>
            </property>
            <attribute name="horizontalHeaderStretchLastSection">
             <bool>true</bool>
@@ -192,8 +192,6 @@
              <string>Child Biography URL</string>
             </property>
            </column>
-           <column/>
-           <column/>
           </widget>
          </item>
         </layout>

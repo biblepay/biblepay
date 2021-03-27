@@ -258,10 +258,10 @@
           <item>
            <widget class="QCheckBox" name="showMasternodesTab">
             <property name="toolTip">
-             <string>Show additional tab listing all your masternodes in first sub-tab&lt;br/&gt;and all masternodes on the network in second sub-tab.</string>
+             <string>Show additional tab listing all your sanctuaries in first sub-tab&lt;br/&gt;and all sanctuaries on the network in second sub-tab.</string>
             </property>
             <property name="text">
-             <string>Show Masternodes Tab</string>
+             <string>Show Sanctuaries Tab</string>
             </property>
            </widget>
           </item>
@@ -349,7 +349,7 @@
          <item>
           <widget class="QLabel" name="lblPrivateSendRoundsText">
            <property name="toolTip">
-            <string>This setting determines the amount of individual masternodes that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</string>
+            <string>This setting determines the amount of individual sanctuaries that an input will be mixed through.&lt;br/&gt;More rounds of mixing gives a higher degree of privacy, but also costs more in fees.</string>
            </property>
            <property name="text">
             <string>PrivateSend rounds to use</string>

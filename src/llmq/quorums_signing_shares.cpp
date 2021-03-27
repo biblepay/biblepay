@@ -859,13 +859,14 @@ CDeterministicMNCPtr CSigSharesManager::SelectMemberForRecovery(const CQuorumCPt
 {
 	// This assertion failed for biblepay.
     //assert(attempt < quorum->members.size());
-	if (attempt < quorum->members.size())
+	if (!(attempt < quorum->members.size()))
 	{
 		attempt = 0;
+		LogPrintf("\nLLMQ::SelectMemberForRecovery::ERROR::Emergency!! %f", attempt);
 	}
 
     std::vector<std::pair<uint256, CDeterministicMNCPtr>> v;
-    v.reserve(quorum->members.size());
+    v.reserve(quorum->members.size() + 1);
     for (const auto& dmn : quorum->members) {
         auto h = ::SerializeHash(std::make_pair(dmn->proTxHash, id));
         v.emplace_back(h, dmn);

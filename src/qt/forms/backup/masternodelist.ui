@@ -61,17 +61,17 @@
          <item>
           <widget class="QLineEdit" name="filterLineEditDIP3">
            <property name="toolTip">
-            <string>Filter masternode list</string>
+            <string>Filter sanctuary list</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="checkBoxMyMasternodesOnly">
            <property name="toolTip">
-            <string>Show only masternodes this wallet has keys for.</string>
+            <string>Show only sanctuaries this wallet has keys for.</string>
            </property>
            <property name="text">
-            <string>My masternodes only</string>
+            <string>My Sanctuaries only</string>
            </property>
           </widget>
          </item>
