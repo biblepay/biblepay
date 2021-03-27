@@ -169,14 +169,21 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 		{
 			_nTargetTimespan = CountBlocks * 300;  // 7 minute blocks in testnet
 		}
+		else if (pindexLast->nHeight >= (params.HARVEST_HEIGHT + 15))
+		{
+			// We had to do this because we found that LLMQ actually requires a relatively accurate clock, due to the signing process (and the sleep estimator and the timeouts).
+			_nTargetTimespan = CountBlocks * (3 * 60);  // 3 minute blocks in testnet
+		}
 	}
 	// BPL
-
+	/*
 	if (pindexLast->nHeight > params.POOM_PHASEOUT_HEIGHT)
 	{
 		if (nAvgBlockSize > BPL_TRIGGER_SIZE)
 			_nTargetTimespan = CountBlocks * 20;
 	}
+	*/
+	
 
     if (nActualTimespan < _nTargetTimespan / 2)
         nActualTimespan = _nTargetTimespan / 2;

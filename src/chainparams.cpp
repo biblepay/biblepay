@@ -609,7 +609,7 @@ public:
 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day
-        consensus.nPowTargetSpacing = 1 * 60; // DAC: 1 minutes
+        consensus.nPowTargetSpacing = 3 * 60; // 3 minutes in testnet (after harvest height) - for LLMQ
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 1; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
