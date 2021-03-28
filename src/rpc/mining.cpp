@@ -377,7 +377,7 @@ UniValue getblockforstratum(const JSONRPCRequest& request)
 	std::unique_lock<std::mutex> lock(cs_mining);
 
 	if (request.fHelp)
-		throw std::runtime_error("getblockforstratum::Generates a block for p2pool/stratum with or without ABN support.  Returns block hex.  Pass getblockforstratum receiveaddress, randomxkey, randomxheader as hex.  Returns 'ERROR' populated with an error.");
+		throw std::runtime_error("getblockforstratum::Generates a randomx block for pool miners.  Returns block hex.  Pass getblockforstratum receiveaddress, randomxkey, randomxheader as hex.  Returns 'ERROR' populated with an error.");
 	std::string sError;
 	std::string sHexDifficulty;
 	int nBits = 0;

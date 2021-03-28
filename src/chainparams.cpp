@@ -330,8 +330,6 @@ public:
 		consensus.nSuperblockStartHash = uint256(); 
 		consensus.nMasternodeMinimumConfirmations = 7;
 		// BIP34, 65, 66 should match Evo cutover height
-		consensus.BIP34Height = 123200;
-		consensus.BIP34Hash = uint256();
 		consensus.BIP65Height = 123200; // 00000000000076d8fcea02ec0963de4abfd01e771fec0863f960c2c64fe6f357
 		consensus.BIP66Height = 123200; // 00000000000b1fa2dfa312863570e13fae9ca7b5566cb27e55422620b469aefa
 
@@ -341,6 +339,11 @@ public:
 		consensus.TRIBULATION_HEIGHT = 255000;  // Go Live for BiblePay Mandatory 1.5.4.4 - March 1st, 2021
 	
 		// Harvest
+		//consensus.BIP34Height = 123200;  // Unable to create duplicate coinbases (tx-malleability protection)
+		// BiblePay had this activated since 123200, but the BIP34+DIP3 rule (bad-cb-height) stops harvest from syncing in prod @ height 134041
+		consensus.BIP34Height = 300000;
+		consensus.BIP34Hash = uint256();
+		
 		consensus.HARVEST_HEIGHT = 300000;  // Go live height for BiblePay-Harvest
 		consensus.DIP0001Height = 300000;
 		consensus.DIP0003Height = 300000;
