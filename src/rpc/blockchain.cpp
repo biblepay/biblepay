@@ -1716,7 +1716,11 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
         BIP9SoftForkDescPushBack(bip9_softforks, consensusParams, static_cast<Consensus::DeploymentPos>(pos));
     }
     obj.push_back(Pair("softforks",             softforks));
+	/*
+	BiblePay has csv, dip1, bip147, dip3, and dip8 heights hardcoded in the code
+	In the next rebase, I think we should bitshift these switches in the block version to make us fully compatible.
     obj.push_back(Pair("bip9_softforks", bip9_softforks));
+	*/
 
     obj.push_back(Pair("warnings", GetWarnings("statusbar")));
     return obj;

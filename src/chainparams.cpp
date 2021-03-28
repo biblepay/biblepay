@@ -346,6 +346,8 @@ public:
 		consensus.DIP0003Height = 300000;
 		consensus.LLMQHeight = 300000; // The first attempt at llmq quorums that conform to voting out bad quorum members
 		consensus.DIP0003EnforcementHeight = 300000;
+		consensus.HARVEST_HEIGHT2 = 300000; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
+
 		// ToDo : set this to the actual LLMQ go live height
         consensus.DIP0003EnforcementHash = uint256S("0x0");
 
@@ -604,6 +606,7 @@ public:
 		consensus.LLMQHeight = 72860;
     	consensus.DIP0003EnforcementHeight = 72860;
 		consensus.HARVEST_HEIGHT = 72860;  // Go live height for BiblePay-Harvest
+		consensus.HARVEST_HEIGHT2 = 73500; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
 		// Chainlock Enforcement:
 		consensus.DIP0008Height = 74000;
 

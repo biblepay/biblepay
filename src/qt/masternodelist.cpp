@@ -50,10 +50,10 @@ MasternodeList::MasternodeList(QWidget* parent) :
 
     int columnAddressWidth = 200;
     int columnStatusWidth = 80;
-    int columnPoSeScoreWidth = 100;
-    int columnRegisteredWidth = 86;
+    int columnPoSeScoreWidth = 110;
+    int columnRegisteredWidth = 95;
     int columnLastPaidWidth = 80;
-    int columnNextPaymentWidth = 107;
+    int columnNextPaymentWidth = 115;
     int columnPayeeWidth = 130;
 	// Hide
     int columnOperatorRewardWidth = 130;

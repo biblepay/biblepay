@@ -545,9 +545,21 @@ CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight, bool fIncludeWhale)
 	if (IsValidBlockHeight(nBlockHeight))
 	{
 		// Active - Monthly
+
 		nSuperblockCycle = consensusParams.nSuperblockCycle;
-		nBudgetFactor = .30;
 		nType = 0;
+
+		if (nBlockHeight > 0 && nBlockHeight <= consensusParams.HARVEST_HEIGHT2)
+		{
+			// 8.75% monthly budget (of coinbase)
+			nBudgetFactor = .30;
+		}
+		else if (nBlockHeight > consensusParams.HARVEST_HEIGHT2)
+		{
+			// 5% monthly budget (of coinbase)
+			nBudgetFactor = .10;
+		}
+
 	}
 	else if (IsDCCSuperblock(nBlockHeight))
 	{

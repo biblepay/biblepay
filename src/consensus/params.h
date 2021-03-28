@@ -175,6 +175,7 @@ struct Params {
 	int POOS_HEIGHT;
 	int TRIBULATION_HEIGHT;
 	int HARVEST_HEIGHT;
+	int HARVEST_HEIGHT2;
 	int nSanctuaryPaymentsPhaseIIHeight;
 
 	int LLMQHeight;

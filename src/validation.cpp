@@ -1261,19 +1261,23 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 
 	double dGovernancePercent = 0;
 
-	if (nPrevHeight > consensusParams.POOS_HEIGHT)
+	if (nPrevHeight > 0 && nPrevHeight <= consensusParams.nSanctuaryPaymentsPhaseIIHeight)
 	{
-		dGovernancePercent = .3625;
+		dGovernancePercent = .485;
 	}
 	else if (nPrevHeight > consensusParams.nSanctuaryPaymentsPhaseIIHeight && nPrevHeight <= consensusParams.POOS_HEIGHT)
 	{
 		dGovernancePercent = .45;
 	}
-	else
+	else if (nPrevHeight > consensusParams.POOS_HEIGHT && nPrevHeight <= consensusParams.HARVEST_HEIGHT2)
 	{
-		dGovernancePercent = .485;
+		dGovernancePercent = .3625;
 	}
-
+	else if (nPrevHeight > consensusParams.HARVEST_HEIGHT2)
+	{
+		dGovernancePercent = .50;
+	}
+	
 	CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy * dGovernancePercent : 0;
 	CAmount nNetSubsidy = nSubsidy - nSuperblockPart;
 	// APM (Automatic Price Mooning)
@@ -1312,9 +1316,14 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
 	{
 		ret = .64 * blockValue;
 	}
-	else
+	else if (nHeight > consensusParams.POOM_PHASEOUT_HEIGHT && nHeight <= consensusParams.HARVEST_HEIGHT2)
 	{
 		ret = .50 * blockValue;
+	}
+	else if (nHeight > consensusParams.HARVEST_HEIGHT2)
+	{
+		// Sanctuaries are now are required to sponsor one orphan; however daily UTXO staking rewards pay the 'investor' component, therefore we are decreasing the sanc reward to 20% of the coinbase
+		ret = .20 * blockValue;
 	}
 
 	return ret;

@@ -1767,7 +1767,16 @@ UniValue easystake(const JSONRPCRequest& request)
 	results.push_back(Pair("Pin", nPin));
 	bool fValid = CompareMask2(s.nAmount, nPin);
 	if (!fValid)
-		sError = "The pin is not valid for this receive address. [Address=" + sForeignAddress + "]";
+	{
+		if (s.nAmount == 0)
+		{
+			sError = "Unable to find foreign UTXO.  (Ensure it is at least 1 block deep in the foreign chain). ";
+		}
+		else
+		{
+			sError = "The pin is not valid for this receive address. [Address=" + sForeignAddress + "]";
+		}
+	}
 	results.push_back(Pair("pin_valid", fValid));
 	results.push_back(Pair("Error", sError));
 	std::string sTXID;
@@ -1789,6 +1798,7 @@ UniValue easystake(const JSONRPCRequest& request)
 		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, "", sCPK, false, ds);
 		if (!fSent || !sError.empty())
 		{
+			
 			results.push_back(Pair("Error (Not Sent)", sError));
 		}
 		else
