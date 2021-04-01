@@ -51,72 +51,6 @@ std::string GetTxCPK(CTransactionRef tx, std::string& sCampaignName)
 	return sCPK;
 }
 
-static double N_MAX = 9999999999;
-double GetRequiredCoinAgeForPODC(double nRAC, double nTeamID)
-{
-	// Todo for Prod Release:  Make sporks here
-	// We currently require RAC ^ 1.3 in coin-age
-	// Any CPIDs with RAC <= 250 are unbanked (they require 0 coin age).
-
-	// This poll: https://forum.b i b l e pay.org/index.php?topic=476.0
-	// sets our model to require ^1.6 for GRC and ^1.3 for Bible Pay
-	double nExponent = 0;
-	double nConfiguration = GetSporkDouble("PODCTeamConfiguration", 0);
-	// Config 0 = Exp=1.3 for Bible-Pay, All non bible-pay teams are 1.6
-	// Config 1 = Exp=1.3 for Bible-Pay, GRC = 1.6, All other teams not welcome
-	// Config 2 = Exp=1.3 for Bible-Pay, All other teams not welcome
-	if (nConfiguration == 0)
-	{
-		if (nTeamID == 35006)
-		{
-			nExponent = 1.3;
-		}
-		else 
-		{
-			nExponent = 1.6;
-		}
-	}
-	else if (nConfiguration == 1)
-	{
-		if (nTeamID == 35006)
-		{
-			nExponent = 1.3;
-		}
-		else if (nTeamID == 30513)
-		{
-			// GRC
-			nExponent = 1.6;
-		}
-		else
-		{
-			return N_MAX;
-		}
-	}
-	else if (nConfiguration == 2)
-	{
-		if (nTeamID == 35006)
-		{
-			nExponent = 1.3;
-		}
-		else
-		{
-			return N_MAX;
-		}
-	}
-	else
-	{
-		return N_MAX;
-	}
-
-	double nUnbankedThreshhold = GetSporkDouble("PODCUNBANKEDTHRESHHOLD", 250);
-	double nAgeRequired = pow(nRAC, nExponent);
-	if (nRAC <= nUnbankedThreshhold && nTeamID == 35006)
-	{
-		// Mark the researcher as Unbanked here:
-		nAgeRequired = 0;
-	}
-	return nAgeRequired;
-}
 
 //////////////////////////////////////////////////////////////////////////////// Cameroon-One & Kairos  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -578,24 +512,6 @@ bool NickNameExists(std::string sProjectName, std::string sNickName, bool& fIsMi
 	return false;
 }
 
-std::string GetCPIDByCPK(std::string sCPK)
-{
-	std::string sData = ReadCache("CPK-WCG", sCPK);
-	std::vector<std::string> vP = Split(sData.c_str(), "|");
-	if (vP.size() < 10)
-		return std::string();
-	std::string cpid = vP[8];
-	return cpid;
-}
-
-std::string GetCPIDElementByData(std::string sData, int iElement)
-{
-	std::vector<std::string> vP = Split(sData.c_str(), "|");
-	if (vP.size() < 10)
-		return std::string();
-	return vP[iElement];
-}
-
 std::string GetStringElement(std::string sData, std::string sDelimiter, int iElement)
 {
 	std::vector<std::string> vP = Split(sData.c_str(), sDelimiter);
@@ -695,95 +611,19 @@ double CalculateAPM(int nHeight)
 
 std::string AssessBlocks(int nHeight, bool fCreatingContract)
 {
-
-	LogPrintf("\nAssessBlocks Height %f ", nHeight);
+	LogPrintf("\nAssessBlocks Height %f time=%f", nHeight, GetAdjustedTime());
 
 	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, false);
 
 	nPaymentsLimit -= MAX_BLOCK_SUBSIDY * COIN;
-
-	if (!chainActive.Tip()) 
-		return std::string();
-	if (nHeight > chainActive.Tip()->nHeight)
-		nHeight = chainActive.Tip()->nHeight - 1;
-
-	int nMaxDepth = nHeight;
-	int nMinDepth = nMaxDepth - BLOCKS_PER_DAY;
-	if (nMinDepth < 1) 
-		return std::string();
-	CBlockIndex* pindex = FindBlockByHeight(nMinDepth);
-	const Consensus::Params& consensusParams = Params().GetConsensus();
 	std::map<std::string, CPK> mPoints;
 	std::map<std::string, double> mCampaignPoints;
 	std::map<std::string, CPK> mCPKCampaignPoints;
 	std::map<std::string, double> mCampaigns;
 	double dDebugLevel = cdbl(gArgs.GetArg("-debuglevel", "0"), 0);
-	std::string sDiaries;
 	std::string sAnalyzeUser = ReadCache("analysis", "user");
 	std::string sAnalysisData1;
-	while (pindex && pindex->nHeight < nMaxDepth)
-	{
-		if (pindex->nHeight < chainActive.Tip()->nHeight) 
-			pindex = chainActive.Next(pindex);
-		CBlock block;
-		if (ReadBlockFromDisk(block, pindex, consensusParams)) 
-		{
-			for (unsigned int n = 0; n < block.vtx.size(); n++)
-			{
-				if (block.vtx[n]->IsGSCTransmission() && CheckAntiBotNetSignature(block.vtx[n], "gsc", ""))
-				{
-					std::string sCampaignName;
-					std::string sCPK = GetTxCPK(block.vtx[n], sCampaignName);
-					CPK localCPK = GetCPKFromProject("cpk", sCPK);
-					double nCoinAge = 0;
-					CAmount nDonation = 0;
-					GetTransactionPoints(pindex, block.vtx[n], nCoinAge, nDonation);
-					if (CheckCampaign(sCampaignName) && !sCPK.empty())
-					{
-						std::string sDiary = ExtractXML(block.vtx[n]->GetTxMessage(), "<diary>", "</diary>");
-						double nPoints = CalculatePoints(sCampaignName, sDiary, nCoinAge, nDonation, sCPK);
-
-						if (nPoints > 0)
-						{
-							// CPK 
-							CPK c = mPoints[sCPK];
-							c.sCampaign = sCampaignName;
-							c.sAddress = sCPK;
-							c.sNickName = localCPK.sNickName;
-							c.nPoints += nPoints;
-							mCampaignPoints[sCampaignName] += nPoints;
-							mPoints[sCPK] = c;
-							
-							// CPK-Campaign
-							CPK cCPKCampaignPoints = mCPKCampaignPoints[sCPK + sCampaignName];
-							cCPKCampaignPoints.sAddress = sCPK;
-							cCPKCampaignPoints.sNickName = c.sNickName;
-							cCPKCampaignPoints.nPoints += nPoints;
-							mCPKCampaignPoints[sCPK + sCampaignName] = cCPKCampaignPoints;
-							if (dDebugLevel == 1)
-								LogPrintf("\nUser %s , NN %s, Diary %s, height %f, TXID %s, nn %s, Points %f, Campaign %s, coinage %f, donation %f, usertotal %f ",
-									c.sAddress, localCPK.sNickName, sDiary, pindex->nHeight, block.vtx[n]->GetHash().GetHex(), localCPK.sNickName, 
-									(double)nPoints, c.sCampaign, (double)nCoinAge, 
-									(double)nDonation/COIN, (double)c.nPoints);
-							if (!sAnalyzeUser.empty() && sAnalyzeUser == c.sNickName)
-							{
-								std::string sInfo = "User: " + c.sAddress + ", Diary: " + sDiary + ", Height: " + RoundToString(pindex->nHeight, 2)
-									+ ", TXID: " + block.vtx[n]->GetHash().GetHex() + ", NickName: " 
-									+ localCPK.sNickName + ", Points: " + RoundToString(nPoints, 2) 
-									+ ", Campaign: " + c.sCampaign + ", CoinAge: " + RoundToString(nCoinAge, 4) 
-									+ ", Donation: " + RoundToString(nDonation/COIN, 4) + ", UserTotal: " + RoundToString(c.nPoints, 2) + "\n";
-									sAnalysisData1 += sInfo;
-							}
-							if (c.sCampaign == "HEALING" && !sDiary.empty())
-							{
-								sDiaries += "\n" + sCPK + "|" + localCPK.sNickName + "|" + sDiary;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+	std::string sDiaries;
 
 
 	// UTXO STAKING
@@ -824,8 +664,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		}
 	}
 	// End of UTXO Staking
-
-	
+		
 	
 	std::string sData;
 	std::string sGenData;
@@ -845,11 +684,10 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		{
 			std::string sKey = Members.second.sAddress + sCampaignName;
 			
-			double nPreProminence = (mCPKCampaignPoints[sKey].nPoints / nCampaignPoints) * nCampaignPercentage;
-			// Verify we did not exceed the cap
-			mCPKCampaignPoints[sKey].nProminence = nPreProminence;
-			std::string sLCN = sCampaignName == "WCG" && !Members.second.cpid.empty() ? sCampaignName + "-" + Members.second.cpid : sCampaignName;
-			std::string sRow = sLCN + "|" + Members.second.sAddress + "|" + RoundToString(mCPKCampaignPoints[sKey].nPoints, 0) + "|" 
+			double nP = (mCPKCampaignPoints[sKey].nPoints / nCampaignPoints) * nCampaignPercentage;
+			mCPKCampaignPoints[sKey].nProminence = nP;
+			
+			std::string sRow = sCampaignName + "|" + Members.second.sAddress + "|" + RoundToString(mCPKCampaignPoints[sKey].nPoints, 0) + "|" 
 				+ RoundToString(mCPKCampaignPoints[sKey].nProminence, 8) + "|" + Members.second.sNickName + "|" + 
 				RoundToString(nCampaignPoints, 0) + "\n";
 			if (!sAnalyzeUser.empty() && sAnalyzeUser == Members.second.sNickName)
@@ -962,8 +800,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		+ RoundToString(nPaymentsLimit/COIN, 4) + "</LIMIT><TOTALPROMINENCE>" + RoundToString(nTotalProminence, 2) + "</TOTALPROMINENCE><TOTALPAYOUT>" + RoundToString(nTotalPayments, 2) 
 		+ "</TOTALPAYOUT><TOTALPOINTS>" + RoundToString(nTotalPoints, 2) + "</TOTALPOINTS><DIARIES>" 
 		+ sDiaries + "</DIARIES><DETAILS>" + sDetails + "</DETAILS>" + sSporks + QTData + sProminenceExport;
-	if (dDebugLevel == 1)
-		LogPrintf("XML %s", sData);
+	LogPrintf("XML %s, time %f", sData, GetAdjustedTime());
 	return sData;
 }
 

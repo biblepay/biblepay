@@ -243,6 +243,8 @@ void CoinControlDialog::buttonSelectAllClicked()
 void CoinControlDialog::buttonToggleLockClicked()
 {
     QTreeWidgetItem *item;
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
+
     // Works in list-mode only
     if(ui->radioListMode->isChecked()){
         ui->treeWidget->setEnabled(false);
@@ -253,16 +255,36 @@ void CoinControlDialog::buttonToggleLockClicked()
             if (coinControl()->IsUsingPrivateSend() && !fHideAdditional && !model->isFullyMixed(outpt)) {
                 continue;
             }
-            if (model->isLockedCoin(uint256S(item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), item->data(COLUMN_ADDRESS, VOutRole).toUInt())){
+
+			std::string sUTXO = item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString() + "-" + RoundToString(item->data(COLUMN_ADDRESS, VOutRole).toUInt(), 0);
+			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO);
+
+            if (model->isLockedCoin(uint256S(item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), item->data(COLUMN_ADDRESS, VOutRole).toUInt()))
+			{
                 model->unlockCoin(outpt);
                 item->setDisabled(false);
                 item->setIcon(COLUMN_CHECKBOX, QIcon());
             }
-            else{
+            else
+			{
                 model->lockCoin(outpt);
                 item->setDisabled(true);
                 item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("lock_closed", GUIUtil::ThemedColor::RED));
             }
+
+			if (u1.found)
+			{
+				if (u1.nCommitment > 0)
+				{
+		      		item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
+				}
+				else
+				{
+	           		item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
+				}
+			}
+			
+
             updateLabelLocked();
         }
         ui->treeWidget->setEnabled(true);
@@ -365,11 +387,26 @@ void CoinControlDialog::lockCoin()
 // context menu action: unlock coin
 void CoinControlDialog::unlockCoin()
 {
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
+
     COutPoint outpt(uint256S(contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toUInt());
     model->unlockCoin(outpt);
     contextMenuItem->setDisabled(false);
     contextMenuItem->setIcon(COLUMN_CHECKBOX, QIcon());
     updateLabelLocked();
+	std::string sUTXO = contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString() + "-" + RoundToString(contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toUInt(), 0);
+	UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO);
+	if (u1.found)
+	{
+		if (u1.nCommitment > 0)
+		{
+	   		contextMenuItem->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
+		}
+		else
+		{
+	   		contextMenuItem->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
+		}
+	}
 }
 
 // copy label "Quantity" to clipboard
@@ -910,10 +947,19 @@ void CoinControlDialog::updateView()
             }
 
 			std::string sUTXO = txhash.GetHex() + "-" + RoundToString(out.i, 0);
-			bool fUTXO = IsDuplicateUTXO(uStakes, sUTXO);
-			if (fUTXO)
+			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO);
+			if (u1.found)
 			{
-				itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
+			    COutPoint outpt(txhash, out.i);
+				if (u1.nCommitment > 0)
+				{
+		       		itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
+				}
+				else
+				{
+	            	itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
+				}
+				coinControl()->UnSelect(outpt);
 				nTotalUTXOCoins += out.tx->tx->vout[out.i].nValue;
 			}
 

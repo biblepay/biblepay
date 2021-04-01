@@ -259,7 +259,7 @@ bool WalletModel::validateAddress(const QString &address)
     return IsValidDestinationString(address.toStdString());
 }
 
-WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction &transaction, const CCoinControl& coinControl)
+WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction &transaction, const CCoinControl& coinControl, CAmount& nPenalty)
 {
     CAmount total = 0;
     bool fSubtractFeeFromAmount = false;
@@ -362,7 +362,6 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 			{
 				CAmount aTitheAmount = rcp.amount * .10;
 				CScript spkFoundation = GetScriptForDestination(DecodeDestination(consensusParams.FoundationAddress));
-
 				CRecipient recFoundation = {spkFoundation, aTitheAmount, rcp.fSubtractFeeFromAmount};
 				recFoundation.txtMessage = GUIUtil::FROMQS(rcp.txtMessage);
 				std::string sAddrF = PubKeyToAddress(spkFoundation);
@@ -379,19 +378,11 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 
 			// End of BiblePay
 
-
-
-
-
-
             total += rcp.amount;
         }
     }
 
-
-
-
-
+	
 
 	// Biblepay - DAC Donate Process
 	if (fDonate)
@@ -414,9 +405,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 				{
 					iPos++;
 					bool fSubFee = vecSend[0].fSubtractFeeFromAmount;
-					
 					CScript spkDAC = GetScriptForDestination(DecodeDestination(sAllocatedCharity));
-					
 					CAmount nTithe = nAllocationAmount * COIN;
 					CRecipient recDAC = {spkDAC, nTithe, fSubFee};
 					std::string sAddrF = PubKeyToAddress(spkDAC);
@@ -488,6 +477,8 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
     CAmount nValueOut = 0;
     size_t nVinSize = 0;
     bool fCreated;
+	const CChainParams& chainparams = Params();
+	
     std::string strFailReason;
     {
         LOCK2(cs_main, mempool.cs);
@@ -501,7 +492,22 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         CReserveKey *keyChange = transaction.getPossibleKeyChange();
 		
         fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, nChangePosRet, strFailReason, coinControl, true, 0, sOptPrayer);
-        transaction.setTransactionFee(nFeeRequired);
+		// 4-1-2021 - High Yield UTXO Staking
+		CAmount nAmountBurned = 0;
+		double nPenaltyPercentage = 0;
+		nPenalty = GetUTXOPenalty(*newTx->tx, nPenaltyPercentage, nAmountBurned);
+		if (nPenalty > 0)
+		{
+			CScript spkBA = GetScriptForDestination(DecodeDestination(chainparams.GetConsensus().BurnAddress));
+			CRecipient recPenalty = {spkBA, nPenalty, false};
+			std::string sAddrF = PubKeyToAddress(spkBA);
+			setAddress.insert(GUIUtil::TOQS(sAddrF));
+			++nAddresses;
+			vecSend.push_back(recPenalty);
+			newTx = transaction.getTransaction();
+			fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, nChangePosRet, strFailReason, coinControl, true, 0, sOptPrayer);
+		}
+		transaction.setTransactionFee(nFeeRequired);
         if (fSubtractFeeFromAmount && fCreated)
             transaction.reassignAmounts();
 

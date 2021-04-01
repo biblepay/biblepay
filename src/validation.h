@@ -214,6 +214,8 @@ static const int GSC_MIN_CONFIRMS = 5;
 static const double GSC_DUST = .01;
 static const int MAX_EMAIL_AGE = 60 * 60 * 24 * 30;
 
+extern std::string msQuestion;
+extern std::string msQuestionAnswer;
 extern std::string msPagedFrom;
 extern int mlPaged;
 extern int mlPagedEncrypted;

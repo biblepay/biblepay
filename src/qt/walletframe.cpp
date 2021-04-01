@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <qt/walletframe.h>
+#include <util.h>
 
 #include <qt/bitcoingui.h>
 #include <qt/walletview.h>
@@ -45,6 +46,7 @@ bool WalletFrame::addWallet(const QString& name, WalletModel *walletModel)
 
     WalletView* walletView = new WalletView(this);
     walletView->setBitcoinGUI(gui);
+	walletView->myWalletFrame = this;
     walletView->setClientModel(clientModel);
     walletView->setWalletModel(walletModel);
     walletView->showOutOfSyncWarning(bOutOfSync);
@@ -144,11 +146,26 @@ void WalletFrame::gotoBusinessObjectListPage()
         i.value()->gotoBusinessObjectListPage();
 }
 
+void WalletFrame::gotoNFTListPage()
+{
+    QMap<QString, WalletView*>::const_iterator i;
+    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
+        i.value()->gotoNFTListPage();
+}
+
+
 void WalletFrame::gotoProposalAddPage()
 {
     QMap<QString, WalletView*>::const_iterator i;
     for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
         i.value()->gotoProposalAddPage();
+}
+
+void WalletFrame::gotoNFTAddPage(std::string sAction, uint256 h)
+{
+    QMap<QString, WalletView*>::const_iterator i;
+    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
+        i.value()->gotoNFTAddPage(sAction, h);
 }
 
 void WalletFrame::gotoUserEditPage()

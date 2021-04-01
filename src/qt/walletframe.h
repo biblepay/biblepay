@@ -7,13 +7,14 @@
 
 #include <QFrame>
 #include <QMap>
+#include "guiutil.h"
+#include "uint256.h"
 
 class BitcoinGUI;
 class ClientModel;
 class SendCoinsRecipient;
 class WalletModel;
 class WalletView;
-
 QT_BEGIN_NAMESPACE
 class QStackedWidget;
 QT_END_NAMESPACE
@@ -72,9 +73,11 @@ public Q_SLOTS:
 
 	/** Switch to Business Object List page */
 	void gotoBusinessObjectListPage();
-
+	
 	/** Switch to Proposal Add Page */
 	void gotoProposalAddPage();
+	void gotoNFTAddPage(std::string sAction, uint256 h);
+	void gotoNFTListPage();
 	void gotoUserEditPage();
 	void gotoMemorizeScripturePage();
 	void gotoProposalListPage();

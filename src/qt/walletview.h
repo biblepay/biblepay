@@ -10,6 +10,7 @@
 
 #include <QStackedWidget>
 #include "rpcpog.h"
+#include "walletframe.h"
 
 class BitcoinGUI;
 class ClientModel;
@@ -23,6 +24,8 @@ class AddressBookPage;
 class PlatformStyle;
 class BusinessObjectList;
 class ProposalAddDialog;
+class NFTAddDialog;
+class GenericTableDialog;
 class Proposals;
 class UserDialog;
 class MemorizeScriptureDialog;
@@ -46,7 +49,8 @@ class WalletView : public QStackedWidget
 public:
     explicit WalletView(QWidget* parent);
     ~WalletView();
-
+	WalletFrame *myWalletFrame;
+    
     void setBitcoinGUI(BitcoinGUI *gui);
     /** Set the client model.
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
@@ -66,8 +70,7 @@ public:
 private:
     ClientModel *clientModel;
     WalletModel *walletModel;
-
-    OverviewPage *overviewPage;
+	OverviewPage *overviewPage;
     QWidget *transactionsPage;
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
@@ -78,12 +81,12 @@ private:
 
     TransactionView *transactionView;
 	ProposalAddDialog *proposalAddPage;
-	
+	NFTAddDialog *nftAddPage;
 	UserDialog *userEditPage;
 	MemorizeScriptureDialog *memorizeScripturePage;
 	Proposals *proposalListPage;
 	BusinessObjectList *businessObjectListPage;
-
+	GenericTableDialog *nftListPage;
     QProgressDialog *progressDialog;
     QLabel *transactionSum;
 	const PlatformStyle *platformStyle;
@@ -101,6 +104,8 @@ public Q_SLOTS:
 
 	/** Switch to Proposal Add Page */
 	void gotoProposalAddPage();
+	void gotoNFTAddPage(std::string sAction, uint256 hash);
+	void gotoNFTListPage();
 	void gotoUserEditPage();
 	void gotoMemorizeScripturePage();
 	void gotoProposalListPage();

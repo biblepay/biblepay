@@ -33,10 +33,11 @@
 
 #include "proposals.h"
 #include "businessobjectlist.h"
+#include "generictabledialog.h"
 #include "proposaladddialog.h"
+#include "nftadddialog.h"
 #include "userdialog.h"
 #include "memorizescripturedialog.h"
-#include "businessobjectlist.h"
 #include "secdialog.h"
 
 WalletView::WalletView(QWidget* parent) :
@@ -88,11 +89,13 @@ WalletView::WalletView(QWidget* parent) :
 
 	// BiblePay
 	proposalAddPage = new ProposalAddDialog(platformStyle);
+	nftAddPage = new NFTAddDialog(platformStyle);
 	userEditPage = new UserDialog(platformStyle);
 	
 	memorizeScripturePage = new MemorizeScriptureDialog(platformStyle);
 	proposalListPage = new Proposals(platformStyle);
     businessObjectListPage = new BusinessObjectList(platformStyle);
+	nftListPage = new GenericTableDialog(platformStyle);
 
     addWidget(overviewPage);
     addWidget(transactionsPage);
@@ -105,6 +108,8 @@ WalletView::WalletView(QWidget* parent) :
 	addWidget(businessObjectListPage);
 	addWidget(userEditPage);
 	addWidget(proposalAddPage);
+	addWidget(nftAddPage);
+	addWidget(nftListPage);
 
     QSettings settings;
     if (settings.value("fShowMasternodesTab").toBool()) {
@@ -269,10 +274,26 @@ void WalletView::gotoBusinessObjectListPage()
 	businessObjectListPage->UpdateObject(0);
 }
 
+void WalletView::gotoNFTListPage()
+{
+	setCurrentWidget(nftListPage);
+	nftListPage->myWalletFrame = myWalletFrame;
+	nftListPage->UpdateDisplay("nft");
+
+}
+
 void WalletView::gotoProposalAddPage()
 {
 	setCurrentWidget(proposalAddPage);
 	proposalAddPage->UpdateDisplay();
+}
+
+void WalletView::gotoNFTAddPage(std::string sAction, uint256 hash)
+{
+	setCurrentWidget(nftAddPage);
+	LogPrintf("\nAction %s", sAction);
+
+	nftAddPage->UpdateDisplay(sAction, hash);
 }
 
 void WalletView::gotoUserEditPage()

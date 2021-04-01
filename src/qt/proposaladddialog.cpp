@@ -11,12 +11,8 @@
 #include "util.h"
 #include "optionsmodel.h"
 #include "timedata.h"
-//#include "platformstyle.h"
 #include "receiverequestdialog.h"
 #include "recentrequeststablemodel.h"
-//#include "governance.h"
-//#include "governance-vote.h"
-//#include "governance-classes.h"
 #include "governance/governance-object.h"
 
 #include "walletmodel.h"
@@ -37,13 +33,6 @@ ProposalAddDialog::ProposalAddDialog(const PlatformStyle *platformStyle, QWidget
     platformStyle(platformStyle)
 {
     ui->setupUi(this);
-    
-    //if (!platformStyle->getImagesOnButtons()) {
-     //   ui->btnSubmit->setIcon(QIcon());
-    //} else {
-     //   ui->btnSubmit->setIcon(QIcon(":/icons/receiving_addresses"));
-    //}
-
 	ui->cmbExpenseType->clear();
  	ui->cmbExpenseType->addItem("Charity");
 	ui->cmbExpenseType->addItem("PR");
@@ -154,11 +143,24 @@ void ProposalAddDialog::clear()
 	ui->txtAddress->setText("");
 }
 
+bool AcquireWallet6()
+{
+	std::vector<CWallet*> wallets = GetWallets();
+	if (wallets.size() > 0)
+	{
+		pwalletpog = wallets[0];
+		return true;
+	}
+	else
+	{
+		pwalletpog = NULL;
+	}
+	return false;
+}
+
 
 void ProposalAddDialog::on_btnSubmit_clicked()
 {
-    if(!model || !model->getOptionsModel())
-        return;
 	std::string sName = GUIUtil::FROMQS(ui->txtName->text());
 	std::string sAddress = GUIUtil::FROMQS(ui->txtAddress->text());
 	std::string sAmount = GUIUtil::FROMQS(ui->txtAmount->text());
@@ -180,8 +182,11 @@ void ProposalAddDialog::on_btnSubmit_clicked()
 	if (nBalance < (2501*COIN)) 
 		sError += "Sorry balance too low to create proposal collateral. ";
 
-	 if (model->getEncryptionStatus() == WalletModel::Locked)
-		 sError += "Sorry, wallet must be unlocked. ";
+	AcquireWallet6();
+	if (pwalletpog->IsLocked())
+	{
+		sError += "Sorry, wallet must be unlocked.";
+	}
        
 	std::string sPrepareTxId;
 	std::string sHex;

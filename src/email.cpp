@@ -241,7 +241,7 @@ bool CEmail::IsMine()
 	if (fExpired || Body.empty() || FromEmail.empty() || ToEmail.empty() || nVersion < 2 || nVersion > 3)
 		return false;
 
-	if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos && nVersion == 3 && !msMyInternalEmailAddress.empty())
+	if (findStringCaseInsensitive(ToEmail, msMyInternalEmailAddress) && nVersion == 3 && !msMyInternalEmailAddress.empty())
 	{
 		// Check for decryption
 		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
@@ -262,12 +262,12 @@ bool CEmail::IsMine()
 	if (!fScan)
 		return false;
 
-	if (ToEmail.find("all@biblepay.core") != std::string::npos && nVersion == 2)
+	if (findStringCaseInsensitive(ToEmail, "all@biblepay.core") && nVersion == 2)
 	{
 		// Mail to all
 		return true;
 	}
-	else if (ToEmail.find(msMyInternalEmailAddress) != std::string::npos && nVersion == 2 && !msMyInternalEmailAddress.empty())
+	else if (findStringCaseInsensitive(ToEmail, msMyInternalEmailAddress) && nVersion == 2 && !msMyInternalEmailAddress.empty())
 	{
 		return true;
 	}

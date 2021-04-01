@@ -15,12 +15,16 @@
 #include "validation.h"
 #include <univalue.h>
 #include "base58.h"
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
+#include <boost/algorithm/string/trim.hpp>
 
 class CWallet;
 
 static CWallet* pwalletpog;
 
 std::string RetrieveMd5(std::string s1);
+uint256 CoordToUint256(int row, int col);
+std::string RoundToString(double d, int place);
 
 struct UserVote
 {
@@ -30,6 +34,65 @@ struct UserVote
 	int nTotalYesWeight = 0;
 	int nTotalNoWeight = 0;
 	int nTotalAbstainWeight = 0;
+};
+
+struct NFT
+{
+	std::string sCPK;
+	std::string sName;
+	std::string sDescription;
+	std::string sURL;
+	std::string sType;
+	std::string sXML;
+	CAmount nMinimumBidAmount = 0;
+	bool fMarketable = false;
+	bool found = false;
+	uint256 TXID;
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sURL1 = sURL;
+		boost::to_lower(sURL1);
+		boost::algorithm::trim(sURL1);
+	    std::vector<unsigned char> vchURL = std::vector<unsigned char>(sURL1.begin(), sURL1.end());
+		sha256.Write(&vchURL[0], vchURL.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+	
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("Type", sType));
+		obj.push_back(Pair("CPK", sCPK));
+		obj.push_back(Pair("Name", sName));
+		obj.push_back(Pair("Description", sDescription));
+	    obj.push_back(Pair("URL", sURL));
+		obj.push_back(Pair("TXID", TXID.GetHex()));
+		obj.push_back(Pair("Hash", GetHash().GetHex()));
+		obj.push_back(Pair("MinimumBidAmount", (double)nMinimumBidAmount/COIN));
+		obj.push_back(Pair("Marketable", fMarketable));
+    }
+};
+
+struct DataTable
+{
+	int Rows = 0;
+	int Cols = 0;
+	std::string TableName;
+	std::string TableDescription;
+	std::map<uint256, std::string> Values;
+	void Set(int nRow, int nCol, std::string sData)
+	{
+		Values[CoordToUint256(nRow, nCol)] = sData;
+	}
+	std::string Get(int nRow, int nCol)
+	{
+		std::string sKey = RoundToString(nRow,0) + "-" + RoundToString(nCol,0);
+		return Values[CoordToUint256(nRow,nCol)];
+	}
 };
 
 struct CPK
@@ -43,7 +106,6 @@ struct CPK
   std::string sError;
   std::string sChildId;
   std::string sOptData;
-  std::string cpid;
   double nProminence = 0;
   double nPoints = 0;
   bool fValid = false;
@@ -141,23 +203,6 @@ struct QueuedProposal
 	int SubmissionCount = 0;
 };
 
-struct Researcher
-{
-	std::string nickname;
-	int teamid = 0;
-	std::string country;
-	int64_t creationtime = 0;
-	double totalcredit = 0;
-	double wcgpoints = 0;
-	double rac = 0;
-	int id = 0;
-	std::string cpid;
-	bool found = false;
-	bool unbanked = false;
-	double CoinAge = 0;
-	std::string CPK;
-};
-
 struct CoinAgeVotingDataStruct
 {
 	std::map<int, std::map<std::string, int>> mapsVoteCount;
@@ -230,6 +275,7 @@ struct UTXOStake
 	double nBBPValueUSD = 0;
 	double nForeignValueUSD = 0;
 	double nValue = 0;
+	double nCommitment = 0;
 	bool BBPSignatureValid = false;
 	bool ForeignSignatureValid = false;
 	bool SignatureValid = false;
@@ -298,7 +344,6 @@ struct DACProposal
 };
 
 
-std::string RoundToString(double d, int place);
 std::string QueryBibleHashVerses(uint256 hash, uint64_t nBlockTime, uint64_t nPrevBlockTime, int nPrevHeight, CBlockIndex* pindexPrev);
 CAmount GetDailyMinerEmissions(int nHeight);
 std::string CreateBankrollDenominations(double nQuantity, CAmount denominationAmount, std::string& sError);
@@ -383,18 +428,11 @@ DACResult GetDecentralizedURL();
 std::string BIPFS_Payment(CAmount nAmount, std::string sTXID, std::string sXML);
 DACResult DSQL_ReadOnlyQuery(std::string sXMLSource);
 DACResult DSQL_ReadOnlyQuery(std::string sEndpoint, std::string sXML);
-int LoadResearchers();
 std::string TeamToName(int iTeamID);
-std::string GetResearcherCPID(std::string sSearch);
-bool VerifyMemoryPoolCPID(CTransaction tx);
 std::string GetEPArg(bool fPublic);
 CoinVin GetCoinVIN(COutPoint o, int64_t nTxTime);
 bool GetTxDAC(uint256 txid, CTransactionRef& tx1);
-std::string GetCPKByCPID(std::string sCPID);
-int GetNextPODCTransmissionHeight(int height);
 std::string SearchChain(int nBlocks, std::string sDest);
-std::string GetResDataBySearch(std::string sSearch);
-int GetWCGIdByCPID(std::string sSearch);
 uint256 ComputeRandomXTarget(uint256 hash, int64_t nPrevBlockTime, int64_t nBlockTime);
 std::string ReverseHex(std::string const & src);
 uint256 GetRandomXHash(std::string sHeaderHex, uint256 key, uint256 hashPrevBlock, int iThreadID);
@@ -420,7 +458,7 @@ std::string FormatURL(std::string URL, int iPart);
 void SyncSideChain(int nHeight);
 std::string GetUTXO(std::string sHash, int nOrdinal, CAmount& nValue, std::string& sError);
 bool IsDuplicateUTXO(std::string UTXO);
-bool IsDuplicateUTXO(std::vector<UTXOStake>& utxoStakes, std::string UTXO);
+UTXOStake GetUTXOStakeByUTXO2(std::vector<UTXOStake>& utxoStakes, std::string UTXO);
 void SendChat(CChat chat);
 UserRecord GetUserRecord(std::string sSourceCPK);
 RSAKey GetMyRSAKey();
@@ -432,12 +470,11 @@ bool PayEmailFees(CEmail email);
 void SendEmail(CEmail email);
 double GetDACDonationsByRange(int nStartHeight, int nRange);
 UserRecord GetMyUserRecord();
-bool VerifyDACDonation(CTransactionRef tx, std::string& sError);
 bool WriteDataToFile(std::string sPath, std::string data);
 std::vector<char> ReadAllBytesFromFile(char const* filename);
 SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst = false);
 bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
-	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake);
+	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake, int nCommitmentDays);
 std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
 int AssimilateUTXO(UTXOStake d);
 UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
@@ -445,8 +482,8 @@ int GetUTXOStatus(uint256 txid);
 std::string GetUTXOSummary(std::string sCPK);
 std::string ScanBlockForNewUTXO(const CBlock& block);
 double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bool fDebug);
-double CalculateUTXOReward(int nStakeCount);
-std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr);
+double CalculateUTXOReward(int nStakeCount, int nDays);
+std::string strReplace(std::string str_input, std::string str_to_find, std::string str_to_replace_with);
 double AddressToPin(std::string sAddress);
 bool CompareMask2(CAmount nAmount, double nMask);
 std::vector<DACResult> GetDataListVector(std::string sType, int nDaysLimit);
@@ -459,16 +496,12 @@ bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string&
 double GetCryptoPrice(std::string sURL);
 bool VerifySigner(std::string sXML);
 double GetPBase(double& out_BTC, double& out_BBP);
-std::string GetCPID();
 bool GetTransactionTimeAndAmount(uint256 txhash, int nVout, int64_t& nTime, CAmount& nAmount);
 std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, int nSign, std::string sExtraPayload, std::string& sError);
 std::string ToYesNo(bool bValue);
 bool VoteForGobject(uint256 govobj, std::string sVoteOutcome, std::string& sError);
 int64_t GetDCCFileAge();
 std::string GetSANDirectory2();
-int GetWCGMemberID(std::string sMemberName, std::string sAuthCode, double& nPoints);
-Researcher GetResearcherByID(int nID);
-std::map<std::string, Researcher> GetPayableResearchers();
 CWalletTx CreateGSCClientTransmission(std::string sGobjectID, std::string sOutcome, std::string sCampaign, std::string sDiary, CBlockIndex* pindexLast, double nCoinAgePercentage, CAmount nFoundationDonation, 
 	CReserveKey& reservekey, std::string& sXML, std::string& sError, std::string& sWarning);
 bool ValidateAddress2(std::string sAddress);
@@ -478,5 +511,15 @@ boost::filesystem::path GetMasternodeConfigFile();
 bool AcquireWallet();
 bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fForce, std::string sDiary, std::string& sError, std::string sSpecificCampaignName, std::string& sWarning, std::string& TXID_OUT);
 CAmount ARM64();
+std::vector<NFT> GetNFTs(bool fIncludeMemoryPool);
+bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nBuyPrice, bool fDryRun, std::string& sError);
+NFT GetNFT(CTransactionRef tx1);
+NFT GetSpecificNFT(uint256 txid);
+bool IsDuplicateNFT(NFT& nft);
+CAmount GetAmountPaidToRecipient(CTransactionRef tx1, std::string sRecipient);
+bool ApproveUTXOSpendTransaction(CTransaction tx);
+double GetHighDWURewardPercentage(double dCommitment);
+CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAmountBurned);
+void LockUTXOStakes();
 
 #endif

@@ -8,11 +8,9 @@
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
-
 #include <univalue.h>
 
 
 std::string GetGithubVersion();
-void LockUTXOStakes();
 
 #endif

@@ -335,7 +335,7 @@ bool SendCoinsDialog::ConfirmUTXO(QList<SendCoinsRecipient> recipients, CAmount&
 	questionString.append(BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nUTXOAmount));
 	questionString.append("</span> ");
 	questionString.append(tr(" added as a UTXO Stake"));
-	double nDWU = CalculateUTXOReward(1);
+	double nDWU = CalculateUTXOReward(1, 0);
 	std::string sQuote = "<br>UTXO approximate DWU " + RoundToString(nDWU * 100, 4) + "%<br>";
 	questionString.append(QString::fromStdString(sQuote));
     questionString.append("<hr />");
@@ -401,7 +401,8 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 
     ctrl.UsePrivateSend(fPrivateSend);
 
-    prepareStatus = model->prepareTransaction(currentTransaction, ctrl);
+	CAmount nPenalty = 0;
+    prepareStatus = model->prepareTransaction(currentTransaction, ctrl, nPenalty);
 
 
 	// BIBLEPAY - If this was a diary entry, dont send real Coins after the entry is stored.
@@ -444,7 +445,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 			{
 				std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 				UTXOStake ux;
-				fSent = SendUTXOStake(0, "", sTXID, sError, sBBPAddress, sUTXO, "", "", sBBPSig, "", sCPK, false, ux);
+				fSent = SendUTXOStake(0, "", sTXID, sError, sBBPAddress, sUTXO, "", "", sBBPSig, "", sCPK, false, ux, 0);
 				if (!fSent || !sError.empty())
 				{
 					sNarr = "Unable to send UTXO stake: " + sError;
@@ -487,7 +488,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 		if (rcp.fTithe)
 			nTitheAmount += rcp.amount * .10;
     
-        // generate monospace address string
+	    // generate monospace address string
         QString address = "<span style='font-family: monospace;'>" + rcp.address;
         address.append("</span>");
 
@@ -530,6 +531,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
         }
     }
 
+    
     QString questionString = tr("Are you sure you want to send?");
     questionString.append("<br /><br />");
     questionString.append(formatted.join("<br />"));
@@ -549,6 +551,16 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
         questionString.append("</span>");
     }
 
+	if (nPenalty > 0)
+	{
+		// This is a premature spend of a high yield UTXO stake
+		// First verify the user will approve to pay for this
+		std::string sNarr = "<hr><font color=red>!ATTENTION!</font><br><br>You are attempting to spend locked coins from a high-risk UTXO stake that is not fulfilled.  <font color=gold>BiblePay will charge a <b>" 
+			+ RoundToString((double)nPenalty/COIN, 2) + "</b> BBP fee for this transaction.</font>  "
+			+ " The fee will go directly to our burn address, which will help us pay for other participants staking fees.  "
+			+ " Do you approve this additional transaction fee to be SPENT? Clicking Yes means BIBLEPAY will spend this additional amount. <br> <hr>";
+		questionString.append(GUIUtil::TOQS(sNarr));
+	}
     
     if(txFee > 0)
     {
@@ -602,7 +614,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 
     // add total amount in all subdivision units
     questionString.append("<hr />");
-    CAmount totalAmount = currentTransaction.getTotalTransactionAmount() + txFee + nTitheAmount;
+    CAmount totalAmount = currentTransaction.getTotalTransactionAmount() + txFee + nTitheAmount + nPenalty;
     QStringList alternativeUnits;
     for (BitcoinUnits::Unit u : BitcoinUnits::availableUnits())
     {

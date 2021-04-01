@@ -3751,19 +3751,11 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes."));
 
 	}
-	else if (sItem == "diagnosewcgpoints")
+	else if (sItem == "testhy")
 	{
-		// This diagnosis command simply checks the cpid's WCG point level from the WCG API for debug purposes
-		std::string sSearch = request.params[1].get_str();
-		if (sSearch.empty())
-			throw std::runtime_error("empty cpid");
-
-		int nID = GetWCGIdByCPID(sSearch);
-		if (nID == 0)
-			throw std::runtime_error("unknown cpid");
-
-		results.push_back(Pair("wcg_id", nID));
-		results.push_back(Pair("cpid", sSearch));
+		double nAmount = cdbl(request.params[1].get_str(), 2);
+		double nP = GetHighDWURewardPercentage(nAmount);
+		results.push_back(Pair("hy", nP));
 	}
 	else if (sItem == "upgradesanc")
 	{

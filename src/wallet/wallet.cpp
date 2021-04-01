@@ -222,45 +222,6 @@ CPubKey CWallet::GenerateNewKey(WalletBatch &batch, uint32_t nAccountIndex, bool
     return pubkey;
 }
 
-/*
-bool CWallet::FindExternalKey(std::string sAddress, CKey& keyOut) const
-{
-	if (sAddress.empty() || sAddress.length() < 8)
-	{
-		LogPrintf("Unable to find external key %f.\n", 781);
-		return false;
-	}
-
-	std::string sPrivFile = GetEPArg(false);
-	std::string sPubFile = GetEPArg(true);
-	
-	if (sPubFile.empty() || sPrivFile.empty()) 
-	{
-		LogPrintf("ExternalPurse storage key empty. %f.\n", 782);
-		return false;
-	}
-	if (sAddress == sPubFile)
-	{
-		CBitcoinSecret vchSecret;
-		bool fGood = vchSecret.SetString(sPrivFile);
-		if (!fGood)
-		{
-			LogPrintf("Bad private key (boinc) %f", 783);
-			return false;
-		}
-		keyOut = vchSecret.GetKey();
-		if (!keyOut.IsValid()) 
-		{
-			LogPrintf("Unable to retrieve secret key material (boinc) %f", 784);
-			return false;
-		}
-		return true;
-	}
-	return false;
-}
-*/
-
-
 void CWallet::DeriveNewChildKey(WalletBatch &batch, const CKeyMetadata& metadata, CKey& secretRet, uint32_t nAccountIndex, bool fInternal)
 {
     CHDChain hdChainTmp;
@@ -3679,8 +3640,8 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 			if (nAmount >= MIN_UTXO_AMOUNT && nAmount <= MAX_UTXO_AMOUNT && nAmount > nMinimumAmount)
 			{
 				sUTXO = pcoin->tx->GetHash().GetHex() + "-" + RoundToString(out.i, 0);
-				bool fDuplicate = IsDuplicateUTXO(uStakes, sUTXO);
-				if (!fDuplicate)
+				UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO);
+				if (!u1.found)
 				{
 					sAddress = sRecip;
 					nReturnAmount = nAmount;

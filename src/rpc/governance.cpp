@@ -505,6 +505,7 @@ UniValue VoteWithMasternodes(const std::map<uint256, CKey>& keys,
     UniValue returnObj(UniValue::VOBJ);
     returnObj.push_back(Pair("overall", strprintf("Voted successfully %d time(s) and failed %d time(s).", nSuccessful, nFailed)));
     returnObj.push_back(Pair("detail", resultsObj));
+	returnObj.push_back(Pair("success_count", nSuccessful));
 
     return returnObj;
 }

@@ -29,38 +29,4 @@ std::string GetGithubVersion()
 	return sV;
 }
 
-COutPoint OutPointFromUTXO(std::string sUTXO)
-{
-	std::vector<std::string> vU = Split(sUTXO.c_str(), "-");
-	COutPoint c;
-	if (vU.size() < 2)
-		return c;
-
-	std::string sHash = vU[0];
-	int nOrdinal = (int)cdbl(vU[1], 0);
-	c = COutPoint(uint256S(sHash), nOrdinal);
-	return c;
-}
-
-void LockUTXOStakes()
-{
-	if (!pwalletpog)
-		return;
-
-	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
-    LOCK(pwalletpog->cs_wallet);
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
-	for (int i = 0; i < uStakes.size(); i++)
-	{
-		UTXOStake d = uStakes[i];
-		if (d.found)
-		{
-			COutPoint c = OutPointFromUTXO(d.BBPUTXO);
-			if (d.CPK == sCPK)
-			{
-				pwalletpog->LockCoin(c);
-			}
-		}
-	}
-}
 

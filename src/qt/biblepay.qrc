@@ -32,6 +32,7 @@
         <file alias="lock_closed">res/icons/lock_closed.png</file>
         <file alias="lock_open">res/icons/lock_open.png</file>
         <file alias="utxo_lock_closed">res/icons/utxo_lock_closed.png</file>
+        <file alias="utxo_lock_hiyield">res/icons/locked_hiyield.png</file>
         <file alias="verify">res/icons/verify.png</file>
         <file alias="hd_enabled">res/icons/hd_enabled.png</file>
         <file alias="fontbigger">res/icons/fontbigger.png</file>

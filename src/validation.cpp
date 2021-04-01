@@ -227,6 +227,8 @@ std::string msMyInternalEmailAddress;
 bool fEnforceSanctuaryPort = false;
 bool fLoadingIndex = false;
 std::string msPagedFrom;
+std::string msQuestion;
+std::string msQuestionAnswer;
 int mlPaged = 0;
 int mlPagedEncrypted = 0;
 int PRAYER_MODULUS = 0;
@@ -844,10 +846,18 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 			// Verify Sanctuary Revival Txes
 			if (false && !ApproveSanctuaryRevivalTransaction(tx))
 			{
-				LogPrintf("\nAcceptToMemoryPool::Sanctuary Revival Tx Rejected %s\n", tx.GetHash().GetHex());
+				LogPrintf("\nAcceptToMemoryPool::REJECTED::Sanctuary Revival Tx %s\n", tx.GetHash().GetHex());
+				return false;
+			}
+			// Verify UTXO Stake penalties
+			if (!ApproveUTXOSpendTransaction(tx))
+			{
+				// If the UTXO is being spent early, it must include the penalty fee and this fee must be burned
+				LogPrintf("\nAcceptToMemoryPool::REJECTED::UTXO Spend Tx %s\n", tx.GetHash().GetHex());
 				return false;
 			}
 		}
+		// End of BiblePay Memory Pool
 
         // check special TXs after all the other checks. If we'd do this before the other checks, we might end up
         // DoS scoring a node for non-critical errors, e.g. duplicate keys because a TX is received that was already

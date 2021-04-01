@@ -1629,7 +1629,6 @@ UniValue sendgscc(const JSONRPCRequest& request)
  	return results;
 }
 
-
 UniValue datalist(const JSONRPCRequest& request)
 {
 	if (request.fHelp || (request.params.size() != 1 && request.params.size() != 2))
@@ -1700,27 +1699,41 @@ std::string GetSymbolFromAddress(std::string sAddress)
 	return sSymbol;
 }
 
+std::string GetHighYieldWarning(int nDays)
+{
+	if (nDays < 31)
+		return "";
+	std::string sNarr = "When you promise to lock up your coins for an additional " + RoundToString(nDays, 0) + " days for an additional high yield reward, "
+		+ " you hereby AGREE that you may be PENALIZED by 200% of the TOTAL reward amount if you decide to spend your UTXO early!  "
+		+ " Use caution when selecting the high risk option.  This condition can cause you to lose up to 100% of your staked collateral to network fees.  "
+		+ " If you do not fulfill your obligation, your original UTXO will have a certain amount of burn fees deducted from it, and these fees will be burned.  "
+		+ " You will be UNABLE to send this UTXO back to your own address for spending.  EXAMPLE:  You have a 100,000 BBP coin.  You decide to lock it for an extra high risk reward for 30 days for a 60% DWU.  On the 15th day you try to spend the coin (breaking your obligation).  You will be penalized 60%*2=120% of your original UTXO, which is MORE THAN THE ORIGINAL VALUE.  Therefore due to our 99% cap, we will charge you a 99% BURN FEE to spend the coin.  Note that our conservative UTXO staking option does not carry this risk.  If you want conservative staking, select 0 days for the commitment length.  Thank you for using BIBLEPAY.  ";
+	return sNarr;
+}
+
 UniValue easystake(const JSONRPCRequest& request)
 {
 	// Jan 20, 2021 - Easy Stake - R ANDREWS - BIBLEPAY
 		
-	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real  [Optional `Ticker`=Override Foreign Ticker]";
+	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount commitment_days[0=conservative,30-365=high-risk] 0=dry_run/1=real  [Optional `Ticker`=Override Foreign Ticker]";
 	std::string sError;
-	if (request.fHelp || (request.params.size() != 4 && request.params.size() != 5))
+	if (request.fHelp || (request.params.size() != 5 && request.params.size() != 6))
 		throw std::runtime_error(sHelp.c_str());
-		
-	double nMin = cdbl(request.params[0].getValStr(), 2);
-	std::string sTickerOverride;
-	if (request.params.size() > 4)
-		sTickerOverride = request.params[4].getValStr();
-
+	
 	std::string sBBPAddress;
+	std::string sTickerOverride;
 	CAmount nBBPReturnAmount = 0;
-	bool fWallet = AcquireWallet();
 	AcquireWallet3();
-
+	
+	double nMin = cdbl(request.params[0].getValStr(), 2);
+	std::string sForeignAddress = request.params[1].getValStr();
+	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
+	double nDays = cdbl(request.params[3].getValStr(), 2);
+	bool fDryRun = cdbl(request.params[4].getValStr(), 0) == 0;
+	if (request.params.size() > 5)
+		sTickerOverride = request.params[5].getValStr();
+	
 	std::string sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
-
 	if (sBBPUTXO.empty())
 	{
 		// They dont have one with 1+ day of age; try one without age
@@ -1737,14 +1750,11 @@ UniValue easystake(const JSONRPCRequest& request)
 	results.push_back(Pair("BBP UTXO", sBBPUTXO));
 	results.push_back(Pair("BBP Address", sBBPAddress));
 	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
-	std::string sForeignAddress = request.params[1].getValStr();
 	std::string sForeignTicker = GetSymbolFromAddress(sForeignAddress);
 	if (!sTickerOverride.empty())
 		sForeignTicker = sTickerOverride;
 	boost::to_upper(sForeignTicker);
 		
-	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
-	bool fDryRun = cdbl(request.params[3].getValStr(), 0) == 0;
 	bool fReturnFirst = (nForeignAmount == -1);
 	// Find the UTXO by amount
 	SimpleUTXO s = QueryUTXO(GetAdjustedTime(), nForeignAmount, sForeignTicker, sForeignAddress, "", 0, sError, fReturnFirst);
@@ -1755,12 +1765,16 @@ UniValue easystake(const JSONRPCRequest& request)
 	results.push_back(Pair("Foreign Ordinal", s.nOrdinal));
 	
 	int nStakeCount = sForeignTicker.empty() ? 1 : 2;
-	double nDWU = CalculateUTXOReward(nStakeCount);
+	double nDWU = CalculateUTXOReward(nStakeCount, nDays);
 	PriceQuote p = GetPriceQuote(sForeignTicker, nBBPReturnAmount, s.nAmount);
 
 	results.push_back(Pair("Foreign Value USD", p.nForeignValueUSD));
 	results.push_back(Pair("BBP Value USD", p.nBBPValueUSD));
 	results.push_back(Pair("DWU", nDWU * 100));
+	std::string sWarning = GetHighYieldWarning(nDays);
+	if (!sWarning.empty())
+		results.push_back(Pair("!WARNING!", sWarning));
+
 	results.push_back(Pair("Foreign Address", sForeignAddress));
 
 	double nPin = AddressToPin(sForeignAddress);
@@ -1795,10 +1809,9 @@ UniValue easystake(const JSONRPCRequest& request)
 		LockUTXOStakes();
 		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 		std::string sForeignUTXO = s.TXID + "-" + RoundToString(s.nOrdinal, 0);
-		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, "", sCPK, false, ds);
+		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, "", sCPK, false, ds, nDays);
 		if (!fSent || !sError.empty())
 		{
-			
 			results.push_back(Pair("Error (Not Sent)", sError));
 		}
 		else
@@ -1825,22 +1838,24 @@ UniValue easystake(const JSONRPCRequest& request)
 
 UniValue easybbpstake(const JSONRPCRequest& request)
 {
-	std::string sHelp = "You must specify easybbpstake minimum_bbp_amount 0=dry_run/1=real";
+	std::string sHelp = "You must specify easybbpstake minimum_bbp_amount commitment_days[0=conservative,30-365=high_risk] 0=dry_run/1=real";
 	std::string sError;
-	if (request.fHelp || (request.params.size() != 2))
+	if (request.fHelp || (request.params.size() != 3))
 		throw std::runtime_error(sHelp.c_str());
 	double nMin = cdbl(request.params[0].getValStr(), 2);
+	double nDays = cdbl(request.params[1].getValStr(), 2);
+	if (nDays > 0 && (nDays < 30 || nDays > 365))
+	{
+		sError = "Commitment days must be between 30 and 365 if specified. ";
+		throw std::runtime_error(sError);
+	}
+	bool fDryRun = cdbl(request.params[2].getValStr(), 0) == 0;
+
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
 	bool fWallet = AcquireWallet3();
 
 	std::string sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
-	if (sBBPUTXO.empty())
-	{
-		// They dont have one with 1+ day of age; try one without age
-		LogPrintf("\nEasyBBPStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
-		sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
-	}
 	
 	if (sBBPUTXO.empty())
 	{
@@ -1851,10 +1866,12 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 	results.push_back(Pair("BBP UTXO", sBBPUTXO));
 	results.push_back(Pair("BBP Address", sBBPAddress));
 	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
-	double nDWU = CalculateUTXOReward(1);
+	results.push_back(Pair("Commitment Days", nDays));
+	double nDWU = CalculateUTXOReward(1, nDays);
 	results.push_back(Pair("DWU", nDWU * 100));
-	
-	bool fDryRun = cdbl(request.params[1].getValStr(), 0) == 0;
+	std::string sWarning = GetHighYieldWarning(nDays);
+	if (!sWarning.empty())
+		results.push_back(Pair("!WARNING!", sWarning));
 
 	PriceQuote p = GetPriceQuote("bbp", nBBPReturnAmount, 0);
 
@@ -1875,7 +1892,7 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 		LockUTXOStakes();
 		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 		std::string sForeignUTXO = "";
-		bool fSent = SendUTXOStake(0, "", sTXID, sError, sBBPAddress, sBBPUTXO, "", sForeignUTXO, sBBPSig, "", sCPK, false, ds);
+		bool fSent = SendUTXOStake(0, "", sTXID, sError, sBBPAddress, sBBPUTXO, "", sForeignUTXO, sBBPSig, "", sCPK, false, ds, nDays);
 		if (!fSent || !sError.empty())
 		{
 			results.push_back(Pair("Error (Not Sent)", sError));
@@ -1907,18 +1924,14 @@ UniValue utxostake(const JSONRPCRequest& request)
 	// To create a signature, from DASH type:  signmessage dash_public_key DASH-UTXO-ORDINAL <enter>.  Copy the Dash signature into the BiblePay 'dashstake' command.
 
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-		
 	std::string sHelp = "You must specify utxostake BBP_ADDRESS BBP_UTXO-ORDINAL I_AGREE=Authorize [Optional: FOREIGN_TICKER FOREIGN_ADDRESS FOREIGN_UTXO-ORDINAL FOREIGN_CURRENCY_SIGNATURE]\n" + GetHowey(true, false);
-	
 	if (request.fHelp || (request.params.size() != 7 && request.params.size() != 3))
 		throw std::runtime_error(sHelp.c_str());
 		
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-
 	std::string sBBPAddress = request.params[0].get_str();
 	std::string sBBPUTXO = request.params[1].get_str();
 	std::string sAuth = request.params[2].get_str();
-
 	std::string sForeignTicker, sForeignAddress, sForeignUTXO, sForeignSig;
 
 	if (request.params.size() > 3)
@@ -1930,7 +1943,6 @@ UniValue utxostake(const JSONRPCRequest& request)
 	}
 
 	std::string sError;
-
 	std::string sBBPSig = pwalletpog->SignBBPUTXO(sBBPUTXO, sError);
 	UniValue results(UniValue::VOBJ);
 
@@ -1946,7 +1958,7 @@ UniValue utxostake(const JSONRPCRequest& request)
 	{
 		LockUTXOStakes();
 
-		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, sForeignSig, sCPK, false, ds);
+		bool fSent = SendUTXOStake(0, sForeignTicker, sTXID, sError, sBBPAddress, sBBPUTXO, sForeignAddress, sForeignUTXO, sBBPSig, sForeignSig, sCPK, false, ds, 0);
 		if (!fSent || !sError.empty())
 		{
 			results.push_back(Pair("Error (Not Sent)", sError));
@@ -2164,6 +2176,8 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
 	CAmount nTotalForeignAmount = 0;
 	CAmount nTotalAmount = 0;
+	double nCommitmentQuantity = 0;
+	double nCommitmentPctg = 0;
 	std::map<std::string, CAmount> mapAmounts;
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
@@ -2177,6 +2191,8 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 			{
 				if (nStatus != -1 || nSpentType == 1)
 				{
+					if (d.nCommitment > 0)
+						nCommitmentQuantity++;
 					std::string sSigs = "Sigs: " + d.SignatureNarr;
 					std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
 						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
@@ -2205,16 +2221,73 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 	{
 		results.push_back(Pair("Total " + kv.first, AmountToString(kv.second)));
 	}
+	nCommitmentPctg = nCommitmentQuantity / (uStakes.size()+.01);
+
 	results.push_back(Pair("Total Foreign", AmountToString(nTotalForeignAmount)));
     results.push_back(Pair("Total Hybrid BBP", AmountToString(nTotalAmount)));
-   	double nDWU = CalculateUTXOReward(1) * 1.5 * 100;
+	results.push_back(Pair("High Risk Pctg", nCommitmentPctg));
+   	double nDWU = CalculateUTXOReward(1, 0) * (nCommitmentPctg+1) * 1.5 * 100;
 	results.push_back(Pair("DWU", nDWU));
 
 	return results;
 }
 
+UniValue buynft(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 3) 
+		throw std::runtime_error("You may specify buynft new_owner_bbpaddress nftid amount");
+	UniValue results(UniValue::VOBJ);
+	std::string sNewOwnerAddress = request.params[0].get_str();
+	uint256 nftid = ParseHashV(request.params[1], "nftid");
+	CAmount nAmount = cdbl(request.params[2].get_str(), 2) * COIN;
+	
+	NFT n = GetSpecificNFT(nftid);
+	if (!n.found)
+	{
+		throw std::runtime_error("NFT not found.");
+	}
+	std::string sError;
+	bool fCreated = ProcessNFT(n, "BUY", sNewOwnerAddress, nAmount, false, sError);
+	if (!sError.empty())
+	{
+		results.push_back(Pair("Error", sError));
+	}
+	else
+	{
+		results.push_back(Pair("Result", "Success"));
+		results.push_back(Pair("NOTE", "Please wait a few blocks to see your new NFT in listnfts."));
+	}
+	return results;
+}
 
 
+UniValue listnfts(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2) 
+		throw std::runtime_error("You may specify listnfts 0=mine/1=all 0=marketable(for sale)/1=all");
+	UniValue results(UniValue::VOBJ);
+	double nMineType = cdbl(request.params[0].get_str(), 0);
+	double nMarketableType = cdbl(request.params[0].get_str(), 0);
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
+	std::vector<NFT> uNFTs = GetNFTs(false);
+	for (int i = 0; i < uNFTs.size(); i++)
+	{
+		NFT n = uNFTs[i];
+		if (n.found)
+		{
+			if ((nMineType == 0 && sCPK == n.sCPK) || nMineType != 0)
+			{
+				if (nMarketableType == 1 || (nMarketableType == 0 && n.fMarketable))
+				{
+				    UniValue o(UniValue::VOBJ);
+					n.ToJson(o);
+					results.push_back(Pair(n.GetHash().GetHex(), o));
+				}
+			}
+		}
+	}
+	return results;
+}
 
 
 static const CRPCCommand commands[] =
@@ -2224,6 +2297,7 @@ static const CRPCCommand commands[] =
     { "evo",                "protx",                        &protx,              {}  },
 	{ "evo",                "bookname",                     &bookname,           {}  },
 	{ "evo",                "books",                        &books,              {}  },
+	{ "evo",                "buynft",                       &buynft,             {}  },
 	{ "evo",                "datalist",                     &datalist,           {}  },
 	{ "evo",                "dashpay",                      &dashpay,            {}  },
 	{ "evo",                "give",                         &give,               {}  },
@@ -2232,6 +2306,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "listutxostakes",               &listutxostakes,     {}  },
 	{ "evo",                "listdacdonations",             &listdacdonations,   {}  },
 	{ "evo",                "listexpenses",                 &listexpenses,       {}  },
+	{ "evo",                "listnfts",                     &listnfts,           {}  },
 	{ "evo",                "easybbpstake",                 &easybbpstake,       {}  },
 	{ "evo",                "utxostake",                    &utxostake,          {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase, {}  },

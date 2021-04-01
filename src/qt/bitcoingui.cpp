@@ -21,7 +21,9 @@
 #include "chatdialog.h"
 #include "utilitydialog.h"
 #include "businessobjectlist.h"
+#include "generictabledialog.h"
 #include "rpcpog.h"
+#include "sendcoinsdialog.h"
 
 #ifdef ENABLE_WALLET
 #include <privatesend/privatesend-client.h>
@@ -127,6 +129,8 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 	openChatPMEncryptedAction(0),
 	univAction(0),
 	proposalAddMenuAction(0),
+	nftAddMenuAction(0),
+	listNFTMenuAction(0),
 	userEditMenuAction(0),
 	memorizeScriptureMenuAction(0),
 	aboutAction(0),
@@ -633,6 +637,15 @@ void BitcoinGUI::createActions()
     proposalAddMenuAction->setStatusTip(tr("Add Proposal"));
     proposalAddMenuAction->setEnabled(false);
 
+	nftAddMenuAction = new QAction(QIcon(":/icons/address-book"), tr("NFT &Add"), this);
+    nftAddMenuAction->setStatusTip(tr("Add NFT"));
+    nftAddMenuAction->setEnabled(false);
+
+	listNFTMenuAction = new QAction(QIcon(":/icons/address-book"), tr("List My NFTs"), this);
+    listNFTMenuAction->setStatusTip(tr("List My NFTs"));
+    listNFTMenuAction->setEnabled(false);
+
+
 	// User Edit Action
 
     userEditMenuAction = new QAction(QIcon(":/icons/address-book"), tr("My User Record"), this);
@@ -749,6 +762,9 @@ void BitcoinGUI::createActions()
     connect(JesusConciseCommandmentsAction, SIGNAL(triggered()), this, SLOT(JesusConciseCommandmentsClicked()));
 	connect(proposalListAction, SIGNAL(triggered()), this, SLOT(gotoProposalListPage()));
 	connect(proposalAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoProposalAddPage()));
+	connect(nftAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoNFTAddPage()));
+	connect(listNFTMenuAction, SIGNAL(triggered()), this, SLOT(gotoNFTListPage()));
+
 	connect(userEditMenuAction, SIGNAL(triggered()), this, SLOT(gotoUserEditPage()));
 	connect(memorizeScriptureMenuAction, SIGNAL(triggered()), this, SLOT(gotoMemorizeScripturePage()));
 
@@ -864,6 +880,10 @@ void BitcoinGUI::createMenuBar()
 		//proposals->addAction(proposalListAction);
 		proposals->addAction(proposalAddMenuAction);
 
+		QMenu *nfts = appMenuBar->addMenu(tr("&NFTs"));
+		nfts->addAction(nftAddMenuAction);
+		nfts->addAction(listNFTMenuAction);
+
 		QMenu *useredit = appMenuBar->addMenu(tr("User Record"));
 		useredit->addAction(userEditMenuAction);
 		useredit->addAction(userEditMenuAction);
@@ -879,6 +899,7 @@ void BitcoinGUI::createMenuBar()
 
 		QMenu *menuUniv = appMenuBar->addMenu(tr("&BBP University"));
 		menuUniv->addAction(univAction);
+
 
 
 		QMenu *help = appMenuBar->addMenu(tr("&Help"));
@@ -1131,6 +1152,9 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     JesusConciseCommandmentsAction->setEnabled(enabled);
 
 	proposalAddMenuAction->setEnabled(enabled);
+	nftAddMenuAction->setEnabled(enabled);
+	listNFTMenuAction->setEnabled(enabled);
+
 	userEditMenuAction->setEnabled(enabled);
 	memorizeScriptureMenuAction->setEnabled(enabled);
 	univAction->setEnabled(enabled);
@@ -1375,6 +1399,25 @@ void BitcoinGUI::gotoProposalAddPage()
 		return;
     proposalAddMenuAction->setChecked(true);
     if (walletFrame) walletFrame->gotoProposalAddPage();
+}
+
+void BitcoinGUI::gotoNFTAddPage()
+{
+	if (!clientModel)
+		return;
+    nftAddMenuAction->setChecked(true);
+    if (walletFrame)
+		walletFrame->gotoNFTAddPage("CREATE", uint256S("0x0"));
+}
+
+void BitcoinGUI::gotoNFTListPage()
+{
+	if (!clientModel)
+		return;
+	listNFTMenuAction->setChecked(true);
+	
+	if (walletFrame)
+		walletFrame->gotoNFTListPage();
 }
 
 void BitcoinGUI::gotoProposalListPage()
@@ -2224,9 +2267,19 @@ void BitcoinGUI::detectShutdown()
 
 	// Governance - Check to see if we should submit a proposal
     nProposalModulus++;
-    if (nProposalModulus % 60 == 0 && fWarmBootFinished)
+    if (nProposalModulus % 10 == 0 && fWarmBootFinished)
     {
         nProposalModulus = 0;
+		if (!msQuestion.empty())
+		{
+			// Display message box
+			SendConfirmationDialog confirmationDialog(tr("Please Confirm"), GUIUtil::TOQS(msQuestion), 3, this);
+			msQuestion = "";
+			confirmationDialog.exec();
+			QMessageBox::StandardButton retval = (QMessageBox::StandardButton)confirmationDialog.result();
+			msQuestionAnswer = (retval == QMessageBox::Yes) ? "1" : "0";
+	    }
+
 		// Chat - If someone is paging us...
 
         if (mlPaged > 1 && !msPagedFrom.empty() && clientModel)

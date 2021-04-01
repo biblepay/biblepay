@@ -525,7 +525,8 @@ border-image: url(':/images/bezaleel_downArrow') 0 0 0 0 stretch stretch;
 }
 
 QComboBox:checked {
-background:#2d2d2e;
+/*background:#2d2d2e;*/
+background-color:#971B20;
 }
 
 QComboBox::item:alternate {
@@ -534,14 +535,18 @@ background:#black;
 
 QComboBox::item:selected {
 border:0px solid transparent;
-background:#2d2d2e;
+/*background:#2d2d2e;*/
+background-color:#971B20;
 }
 
 QComboBox QListView {
-background:#fff;
-border:1px solid #333;
+/*background:#fff;*/
+/*background:black;*/
+background-color:#2d2d2e;
+border:1px solid #971B20;
 padding-right:1px;
 padding-left:1px;
+min-height:75px;
 }
 
 

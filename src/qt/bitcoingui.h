@@ -19,6 +19,7 @@
 #include <QPushButton>
 #include <QSystemTrayIcon>
 #include "menudialog.h"
+#include "generictabledialog.h"
 
 #ifdef Q_OS_MAC
 #include <qt/macos_appnap.h>
@@ -132,6 +133,8 @@ private:
 	QAction *openChatPMAction;
 	QAction *openChatPMEncryptedAction;
 	QAction *proposalAddMenuAction;
+	QAction *nftAddMenuAction;
+	QAction *listNFTMenuAction;
 	QAction *userEditMenuAction;
 	QAction *memorizeScriptureMenuAction;
 	QToolButton *proposalListAction;
@@ -166,6 +169,8 @@ private:
     RPCConsole *rpcConsole;
     HelpMessageDialog *helpMessageDialog;
 	MenuDialog *menuDialog;
+	GenericTableDialog *genericTableDialog;
+
     ModalOverlay *modalOverlay;
     QButtonGroup *tabGroup;
 
@@ -298,6 +303,8 @@ private Q_SLOTS:
 
 	/** Switch to Proposal Add page */
 	void gotoProposalAddPage();
+	void gotoNFTAddPage();
+	void gotoNFTListPage();
 	void gotoUserEditPage();
 	void gotoMemorizeScripturePage();
 	void gotoProposalListPage();

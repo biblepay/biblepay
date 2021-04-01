@@ -54,11 +54,13 @@ QT_FORMS_UI = \
   qt/forms/transactiondescdialog.ui \
   qt/forms/chatdialog.ui \
   qt/forms/proposaladddialog.ui \
+  qt/forms/nftadddialog.ui \
   qt/forms/userdialog.ui \
   qt/forms/memorizescripturedialog.ui \
   qt/forms/proposals.ui \
   qt/forms/secdialog.ui \
   qt/forms/businessobjectlist.ui \
+  qt/forms/generictable.ui \
   qt/forms/finalexamdialog.ui 
  
 
@@ -114,10 +116,12 @@ QT_MOC_CPP = \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp \
   qt/moc_proposaladddialog.cpp \
+  qt/moc_nftadddialog.cpp \
   qt/moc_userdialog.cpp \
   qt/moc_memorizescripturedialog.cpp \
   qt/moc_finalexamdialog.cpp \
   qt/moc_businessobjectlist.cpp \
+  qt/moc_generictabledialog.cpp \
   qt/moc_chatdialog.cpp \
   qt/moc_secdialog.cpp \
   qt/moc_proposals.cpp 
@@ -200,6 +204,7 @@ BITCOIN_QT_H = \
   qt/utilitydialog.h \
   qt/menudialog.h \
   qt/proposaladddialog.h \
+  qt/nftadddialog.h \
   qt/userdialog.h \
   qt/memorizescripturedialog.h \
   qt/finalexamdialog.h \
@@ -211,6 +216,7 @@ BITCOIN_QT_H = \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
   qt/businessobjectlist.h \
+  qt/generictabledialog.h \
   qt/winshutdownmonitor.h
 
 RES_ICONS = \
@@ -303,12 +309,14 @@ BITCOIN_QT_WALLET_CPP = \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
   qt/proposaladddialog.cpp \
+  qt/nftadddialog.cpp \
   qt/userdialog.cpp \
   qt/memorizescripturedialog.cpp \
   qt/finalexamdialog.cpp \
   qt/chatdialog.cpp \
   qt/secdialog.cpp \
   qt/businessobjectlist.cpp \
+  qt/generictabledialog.cpp \
   qt/proposals.cpp 
   
 
