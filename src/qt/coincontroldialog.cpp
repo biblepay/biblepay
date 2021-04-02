@@ -257,7 +257,7 @@ void CoinControlDialog::buttonToggleLockClicked()
             }
 
 			std::string sUTXO = item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString() + "-" + RoundToString(item->data(COLUMN_ADDRESS, VOutRole).toUInt(), 0);
-			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO);
+			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO, false);
 
             if (model->isLockedCoin(uint256S(item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), item->data(COLUMN_ADDRESS, VOutRole).toUInt()))
 			{
@@ -272,6 +272,7 @@ void CoinControlDialog::buttonToggleLockClicked()
                 item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("lock_closed", GUIUtil::ThemedColor::RED));
             }
 
+			/*
 			if (u1.found)
 			{
 				if (u1.nCommitment > 0)
@@ -283,6 +284,7 @@ void CoinControlDialog::buttonToggleLockClicked()
 	           		item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
 				}
 			}
+			*/
 			
 
             updateLabelLocked();
@@ -392,10 +394,12 @@ void CoinControlDialog::unlockCoin()
     COutPoint outpt(uint256S(contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toUInt());
     model->unlockCoin(outpt);
     contextMenuItem->setDisabled(false);
-    contextMenuItem->setIcon(COLUMN_CHECKBOX, QIcon());
+    //contextMenuItem->setIcon(COLUMN_CHECKBOX, QIcon());
     updateLabelLocked();
+	/*
 	std::string sUTXO = contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString() + "-" + RoundToString(contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toUInt(), 0);
-	UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO);
+	
+	UTXOStake u1 = (uStakes, sUTXO, false);
 	if (u1.found)
 	{
 		if (u1.nCommitment > 0)
@@ -407,6 +411,8 @@ void CoinControlDialog::unlockCoin()
 	   		contextMenuItem->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
 		}
 	}
+	*/
+
 }
 
 // copy label "Quantity" to clipboard
@@ -548,6 +554,8 @@ void CoinControlDialog::on_hideButton_clicked()
     CoinControlDialog::updateLabels(model, this);
 }
 
+static bool fWarned1 = false;
+
 void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 {
     if (!model)
@@ -593,7 +601,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
         if (model->isSpent(outpt))
         {
             coinControl()->UnSelect(outpt);
-            fUnselectedSpent = true;
+		    fUnselectedSpent = true;
             continue;
         }
 
@@ -740,10 +748,14 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
         label->setVisible(nChange < 0);
 
     // Warn about unselected coins
-    if (fUnselectedSpent) {
-        QMessageBox::warning(dialog, "CoinControl",
+    if (fUnselectedSpent) 
+	{
+		if (!fWarned1)
+		{
+			QMessageBox::warning(dialog, "CoinControl",
             tr("Some coins were unselected because they were spent."),
             QMessageBox::Ok, QMessageBox::Ok);
+		}
     } else if (fUnselectedNonMixed) {
         QMessageBox::warning(dialog, "CoinControl",
             tr("Some coins were unselected because they do not have enough mixing rounds."),
@@ -947,7 +959,7 @@ void CoinControlDialog::updateView()
             }
 
 			std::string sUTXO = txhash.GetHex() + "-" + RoundToString(out.i, 0);
-			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO);
+			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO, false);
 			if (u1.found)
 			{
 			    COutPoint outpt(txhash, out.i);
@@ -959,10 +971,17 @@ void CoinControlDialog::updateView()
 				{
 	            	itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
 				}
-				coinControl()->UnSelect(outpt);
 				nTotalUTXOCoins += out.tx->tx->vout[out.i].nValue;
 			}
 
+			COutPoint outpt1(txhash, out.i);
+        
+	        if (model->isSpent(outpt1))
+		    {
+				itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("transaction_abandoned", GUIUtil::ThemedColor::RED));
+				itemOutput->setDisabled(true);
+            }
+       
             // set checkbox
             if (coinControl()->IsSelected(COutPoint(txhash, out.i))) {
                 itemOutput->setCheckState(COLUMN_CHECKBOX, Qt::Checked);

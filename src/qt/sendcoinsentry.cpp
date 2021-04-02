@@ -53,7 +53,7 @@ SendCoinsEntry::SendCoinsEntry(QWidget* parent) :
 	connect(ui->chkDWS, SIGNAL(toggled(bool)), this, SLOT(updateBurnAddress()));
 	connect(ui->chkDiary, SIGNAL(toggled(bool)), this, SLOT(diaryEntry()));
 	// Anti-Censorship Features (ACF)
-	connect(ui->btnAttach, SIGNAL(clicked()), this, SLOT(attachFile()));
+	// connect(ui->btnAttach, SIGNAL(clicked()), this, SLOT(attachFile()));
 	ui->btnAttach->setVisible(false);
 	ui->lblIPFSFee->setVisible(false);
 	ui->txtFile->setVisible(false);

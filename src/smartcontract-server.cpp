@@ -381,7 +381,7 @@ std::map<std::string, double> DACEngine(std::map<std::string, Orphan>& mapOrphan
 		double npct = d.second / (nTotalMonthlyCommitments+.01);
 		std::string sCharity = d.first;
 		std::string sAddress = mapCharities[sCharity];
-		LogPrintf("\nSmartContractServer::DAC  Found charity %s with allocated amount %f to address %s and orphan count %f and TMC of %f ", sCharity, npct, sAddress, iOrphanCount, nTotalMonthlyCommitments);
+		LogPrint(BCLog::NET, "\nSmartContractServer::DAC  Found charity %s with allocated amount %f to address %s and orphan count %f and TMC of %f ", sCharity, npct, sAddress, iOrphanCount, nTotalMonthlyCommitments);
 		// If address is valid, and amount is > 0:
 		if (!sAddress.empty() && npct > 0)
 		{
@@ -611,7 +611,7 @@ double CalculateAPM(int nHeight)
 
 std::string AssessBlocks(int nHeight, bool fCreatingContract)
 {
-	LogPrintf("\nAssessBlocks Height %f time=%f", nHeight, GetAdjustedTime());
+	LogPrint(BCLog::NET, "\nAssessBlocks Height %f time=%f", nHeight, GetAdjustedTime());
 
 	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(nHeight, false);
 
@@ -800,7 +800,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		+ RoundToString(nPaymentsLimit/COIN, 4) + "</LIMIT><TOTALPROMINENCE>" + RoundToString(nTotalProminence, 2) + "</TOTALPROMINENCE><TOTALPAYOUT>" + RoundToString(nTotalPayments, 2) 
 		+ "</TOTALPAYOUT><TOTALPOINTS>" + RoundToString(nTotalPoints, 2) + "</TOTALPOINTS><DIARIES>" 
 		+ sDiaries + "</DIARIES><DETAILS>" + sDetails + "</DETAILS>" + sSporks + QTData + sProminenceExport;
-	LogPrintf("XML %s, time %f", sData, GetAdjustedTime());
+	LogPrint(BCLog::NET, "XML %s, time %f", sData, GetAdjustedTime());
 	return sData;
 }
 

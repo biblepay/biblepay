@@ -256,8 +256,12 @@ struct UTXOStake
 	CAmount nBBPAmount = 0;
 	CAmount nForeignAmount = 0;
 	int64_t Time = 0;
+	int64_t Age = 0;
+	double DaysElapsed = 0;
+	double CommitmentFulfilledPctg = 0;
 	int Height = 0;
 	int nType = 0;
+	bool fBBPSpent = false;
 	std::string CPK = std::string();
 	std::string SignatureNarr = std::string();
 	bool found = false;
@@ -458,7 +462,7 @@ std::string FormatURL(std::string URL, int iPart);
 void SyncSideChain(int nHeight);
 std::string GetUTXO(std::string sHash, int nOrdinal, CAmount& nValue, std::string& sError);
 bool IsDuplicateUTXO(std::string UTXO);
-UTXOStake GetUTXOStakeByUTXO2(std::vector<UTXOStake>& utxoStakes, std::string UTXO);
+UTXOStake GetUTXOStakeByUTXO2(std::vector<UTXOStake>& utxoStakes, std::string UTXO, bool fIncludeSpent);
 void SendChat(CChat chat);
 UserRecord GetUserRecord(std::string sSourceCPK);
 RSAKey GetMyRSAKey();
@@ -521,5 +525,6 @@ bool ApproveUTXOSpendTransaction(CTransaction tx);
 double GetHighDWURewardPercentage(double dCommitment);
 CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAmountBurned);
 void LockUTXOStakes();
+int64_t GetTxTime1(uint256 hash, int ordinal);
 
 #endif

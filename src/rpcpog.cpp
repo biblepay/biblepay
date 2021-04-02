@@ -3087,6 +3087,29 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 				w.found = true;
 			}
 
+			// High-yield staking
+			w.Time = GetTxTime1(tx1->GetHash(), 0);
+			w.Age = GetAdjustedTime() - w.Time;
+			w.DaysElapsed = w.Age / 86400;
+			if (!fProd)
+				w.DaysElapsed = (w.Age / 86400.01) * 24;
+			
+			w.CommitmentFulfilledPctg = w.DaysElapsed / (w.nCommitment + .01);
+			if (w.CommitmentFulfilledPctg > 1)
+				w.CommitmentFulfilledPctg = 1;
+
+			// BBP only spent test
+			CAmount nBBPAmountOut = 0;
+			std::string sErr1 = "";
+			std::string sBBPReturnAddress = GetUTXO(w.BBPUTXO, -1, nBBPAmountOut, sErr1);
+			w.fBBPSpent = false;
+			if (nBBPAmountOut <= 0)
+			{
+				w.fBBPSpent = true;
+			}
+
+			// End of High-yield staking
+
 			// Calculate weight, value, and signature here
 			w.BBPSignatureValid = pwalletpog->CheckStakeSignature(w.BBPAddress, w.BBPSignature, w.BBPUTXO, w.BBPSignature);
 			w.ForeignSignatureValid = true;
@@ -3105,8 +3128,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 				// Verify Pin here
 				double nPin = AddressToPin(w.ForeignAddress);
 				bool fMask = CompareMask2(w.nForeignAmount, nPin);
-				if (!fMask)
-					LogPrintf("\nGetUTXOStake::BadMask::FT1 %s, TXID %s, Pin %f, Amount %s, Valid %f ", w.ForeignTicker, w.TXID.GetHex(), nPin, RoundToString((double)w.nForeignAmount/COIN, 12), fMask);
+				
 				w.ForeignSignatureValid = fMask;
 			}
 			w.SignatureValid = w.BBPSignatureValid && w.ForeignSignatureValid;
@@ -3311,17 +3333,29 @@ bool IsDuplicateUTXO(std::string UTXO)
 	return false;
 }
 
-UTXOStake GetUTXOStakeByUTXO2(std::vector<UTXOStake>& utxoStakes, std::string UTXO)
+UTXOStake GetUTXOStakeByUTXO2(std::vector<UTXOStake>& utxoStakes, std::string UTXO, bool fIncludeSpent)
 {
 	UTXOStake e;
-
+	e.found = false;
 	if (UTXO.empty())
 		return e;
 	for (int i = 0; i < utxoStakes.size(); i++)
 	{
 		UTXOStake d = utxoStakes[i];
-		if (d.BBPUTXO == UTXO || d.ForeignUTXO == UTXO)
-			return d;
+		if (d.found)
+		{
+			if (d.BBPUTXO == UTXO || d.ForeignUTXO == UTXO)
+			{
+				if (fIncludeSpent)
+				{
+					return d;
+				}
+				if (!d.fBBPSpent)
+				{
+					return d;
+				}
+			}
+		}
 	}
 	return e;
 }
@@ -3626,36 +3660,24 @@ CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAm
 		std::string sBBPUTXO = tx.vin[i].prevout.hash.GetHex() + "-" + RoundToString(tx.vin[i].prevout.n, 0);
 		std::string sStake = ReadCache("utxo-commitment", sBBPUTXO);
 		std::string sBurnUTXO = ExtractXML(sStake, "<burnutxo>", "</burnutxo>");
-		double dCommitment = cdbl(ExtractXML(sStake, "<commitment>", "</commitment>"), 0);
-		//LogPrintf("\nApproveUTXOSpendTx %s, %s", sBBPUTXO, sBurnUTXO);
-		if (dCommitment > 0 && !sBurnUTXO.empty())
+		if (!sBurnUTXO.empty())
 		{
 			CAmount nAmountOriginallyStaked = GetTxAmount1(tx.vin[i].prevout.hash, tx.vin[i].prevout.n);
 			uint256 burnhash = uint256S("0x" + GetElement(sBurnUTXO, "-", 0));
 			int nburnOrdinal = (int)cdbl(GetElement(sBurnUTXO, "-", 1), 0);
-			int64_t nStakeTime = GetTxTime1(burnhash, nburnOrdinal);
-			int64_t nStakeAge = GetAdjustedTime() - nStakeTime;
-			int nDaysElapsed = nStakeAge / 86400;
-			if (!fProd)
+			UTXOStake u = GetUTXOStakeByHash(burnhash);
+			if (u.found && u.CommitmentFulfilledPctg < 1.0)
 			{
-				// In testnet, make one hour equal to a day
-				nDaysElapsed = nStakeAge / 86400 * 24;
-			}
-			if (nDaysElapsed < dCommitment)
-			{
-				// How much is being burned
-				UTXOStake u = GetUTXOStakeByHash(burnhash);
-				double nDWU = CalculateUTXOReward(u.nType, dCommitment); //nType contains stake-type (1=bbp only, 2=foreign+bbp)
+				double nDWU = CalculateUTXOReward(u.nType, u.nCommitment); //nType contains stake-type (1=bbp only, 2=foreign+bbp)
 				nPenaltyPercentage = nDWU * 1.75;
 				if (nPenaltyPercentage > .90)
 					nPenaltyPercentage = .90;
 				double nAmountRequired = nPenaltyPercentage * ((double)nAmountOriginallyStaked/COIN);
 				CAmount caAmountRequired = nAmountRequired * COIN;
-			
 				caTotalAmountRequired += caAmountRequired;
-				LogPrintf("\nApproveUTXOSpendTx AmountOriginallyStaked %f, bareDWU %f, ActualDWU %f, StakeType %f, Requires %f to be burned, found %f burned, TotalAmountRequired %f, DaysElapsed %f, DaysReq %f, StakeAge %f", 
+				LogPrintf("\nApproveUTXOSpendTx AmountOriginallyStaked %f, bareDWU %f, ActualDWU %f, StakeType %f, Requires %f to be burned, found %f burned, TotalAmountRequired %f, DaysElapsed %f, DaysReq %f", 
 							(double)nAmountOriginallyStaked/COIN, nDWU, nPenaltyPercentage, u.nType, (double)caAmountRequired/COIN, (double)nAmountBurned/COIN, 
-							(double)caTotalAmountRequired/COIN, nDaysElapsed, dCommitment, nStakeAge);
+							(double)caTotalAmountRequired/COIN, u.DaysElapsed, u.nCommitment);
 			}
 			
 		}

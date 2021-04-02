@@ -448,7 +448,7 @@ SOCKET CreateSocket(const CService &addrConnect)
     struct sockaddr_storage sockaddr;
     socklen_t len = sizeof(sockaddr);
     if (!addrConnect.GetSockAddr((struct sockaddr*)&sockaddr, &len)) {
-        LogPrintf("Cannot create socket for %s: unsupported network\n", addrConnect.ToString());
+        LogPrint(BCLog::NET,"Cannot create socket for %s: unsupported network\n", addrConnect.ToString());
         return INVALID_SOCKET;
     }
 
@@ -458,7 +458,7 @@ SOCKET CreateSocket(const CService &addrConnect)
 
     if (!IsSelectableSocket(hSocket)) {
         CloseSocket(hSocket);
-        LogPrintf("Cannot create connection: non-selectable socket created (fd >= FD_SETSIZE ?)\n");
+        LogPrint(BCLog::NET,"Cannot create connection: non-selectable socket created (fd >= FD_SETSIZE ?)\n");
         return INVALID_SOCKET;
     }
 
@@ -474,7 +474,7 @@ SOCKET CreateSocket(const CService &addrConnect)
     // Set to non-blocking
     if (!SetSocketNonBlocking(hSocket, true)) {
         CloseSocket(hSocket);
-        LogPrintf("ConnectSocketDirectly: Setting socket to non-blocking failed, error %s\n", NetworkErrorString(WSAGetLastError()));
+        LogPrint(BCLog::NET,"ConnectSocketDirectly: Setting socket to non-blocking failed, error %s\n", NetworkErrorString(WSAGetLastError()));
     }
     return hSocket;
 }
@@ -484,11 +484,11 @@ bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, i
     struct sockaddr_storage sockaddr;
     socklen_t len = sizeof(sockaddr);
     if (hSocket == INVALID_SOCKET) {
-        LogPrintf("Cannot connect to %s: invalid socket\n", addrConnect.ToString());
+        LogPrint(BCLog::NET,"Cannot connect to %s: invalid socket\n", addrConnect.ToString());
         return false;
     }
     if (!addrConnect.GetSockAddr((struct sockaddr*)&sockaddr, &len)) {
-        LogPrintf("Cannot connect to %s: unsupported network\n", addrConnect.ToString());
+        LogPrint(BCLog::NET,"Cannot connect to %s: unsupported network\n", addrConnect.ToString());
         return false;
     }
     if (connect(hSocket, (struct sockaddr*)&sockaddr, len) == SOCKET_ERROR)
@@ -516,18 +516,18 @@ bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, i
             }
             if (nRet == SOCKET_ERROR)
             {
-                LogPrintf("select() for %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
+                LogPrint(BCLog::NET,"select() for %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
                 return false;
             }
             socklen_t nRetSize = sizeof(nRet);
             if (getsockopt(hSocket, SOL_SOCKET, SO_ERROR, (sockopt_arg_type)&nRet, &nRetSize) == SOCKET_ERROR)
             {
-                LogPrintf("getsockopt() for %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
+                LogPrint(BCLog::NET,"getsockopt() for %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
                 return false;
             }
             if (nRet != 0)
             {
-                LogPrintf("connect() to %s failed after select(): %s\n", addrConnect.ToString(), NetworkErrorString(nRet));
+                LogPrint(BCLog::NET,"connect() to %s failed after select(): %s\n", addrConnect.ToString(), NetworkErrorString(nRet));
                 return false;
             }
         }
@@ -537,7 +537,7 @@ bool ConnectSocketDirectly(const CService &addrConnect, const SOCKET& hSocket, i
         else
 #endif
         {
-            LogPrintf("connect() to %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
+            LogPrint(BCLog::NET,"connect() to %s failed: %s\n", addrConnect.ToString(), NetworkErrorString(WSAGetLastError()));
             return false;
         }
     }
@@ -697,7 +697,7 @@ bool CloseSocket(SOCKET& hSocket)
     int ret = close(hSocket);
 #endif
     if (ret) {
-        LogPrintf("Socket close failed: %d. Error: %s\n", hSocket, NetworkErrorString(WSAGetLastError()));
+        LogPrint(BCLog::NET,"Socket close failed: %d. Error: %s\n", hSocket, NetworkErrorString(WSAGetLastError()));
     }
     hSocket = INVALID_SOCKET;
     return ret != SOCKET_ERROR;

@@ -1817,7 +1817,6 @@ UniValue easystake(const JSONRPCRequest& request)
 		else
 		{
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
-			LockUTXOStakes();
 			if (!sForeignTicker.empty())
 			{
 				results.push_back(Pair("Foreign Ticker", sForeignTicker));
@@ -1900,7 +1899,6 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 		else
 		{
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
-			LockUTXOStakes();
 			results.push_back(Pair("UTXO Value", ds.nValue));
 			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
 			results.push_back(Pair("TXID", sTXID));
@@ -1966,7 +1964,6 @@ UniValue utxostake(const JSONRPCRequest& request)
 		else
 		{
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
-			LockUTXOStakes();
 			results.push_back(Pair("BBP Value USD", ds.nBBPValueUSD));
 			results.push_back(Pair("BBP Amount", (double)ds.nBBPAmount/COIN));
 
@@ -2196,7 +2193,10 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 					std::string sSigs = "Sigs: " + d.SignatureNarr;
 					std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
 						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
-						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
+						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2)
+					    + ", Commitment: e" + RoundToString(d.DaysElapsed, 2) + "/c" + RoundToString(d.nCommitment, 0) + "=" + RoundToString(d.CommitmentFulfilledPctg * 100, 2) + "%"
+						+ ", Time: " + RoundToString(d.Time,0) + ", Age: " + RoundToString(d.Age, 2) + ", bbpspent: " + ToYesNo(d.fBBPSpent);
+
 					results.push_back(Pair(d.TXID.GetHex(), sRow));
 					nTotalAmount += d.nBBPAmount;
 					nTotalForeignAmount += d.nForeignAmount;
@@ -2210,7 +2210,7 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 				std::string sRow = "#" + RoundToString(i+1, 0) + ":  TXID=" + d.TXID.GetHex() + ", Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
 						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
 						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
-				LogPrintf("\nlistutxostakes::Skipping %s", sRow);
+				// LogPrintf("\nlistutxostakes::Skipping %s", sRow);
 		}
 		if (nSpentType == 3)
 		{
