@@ -45,7 +45,11 @@ DataTable GenericTableDialog::GetDataTable(std::string sType)
 		d.Set(0,1,"Name");
 		d.Set(0,2,"Description");
 		d.Set(0,3,"URL");
-		d.Cols = 2;
+		d.Set(0,4,"Min_Amount");
+		d.Set(0,5,"Marketable?");
+
+
+		d.Cols = 5;
 		std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
 		std::vector<NFT> uNFTs = GetNFTs(false);
 		for (int i = 0; i < uNFTs.size(); i++)
@@ -54,10 +58,14 @@ DataTable GenericTableDialog::GetDataTable(std::string sType)
 			if (n.found && sCPK == n.sCPK)
 			{
 				d.Rows++;
+
 				d.Set(d.Rows,0, n.GetHash().GetHex());
 				d.Set(d.Rows,1, n.sName);
 				d.Set(d.Rows,2, n.sDescription);
 				d.Set(d.Rows,3, n.sURL);
+				d.Set(d.Rows,4, RoundToString((double)n.nMinimumBidAmount/COIN,2));
+				d.Set(d.Rows,5, ToYesNo(n.fMarketable));
+				
 			}
 		}
 		ui->btn1->setVisible(false);
@@ -108,7 +116,7 @@ void GenericTableDialog::UpdateDisplay(std::string sType)
 			
 		   */
 			q->setData(Qt::DisplayRole, GUIUtil::TOQS(d.Get(r,c)));
-        	ui->table1->setItem(r, c, q);
+        	ui->table1->setItem(r - 1, c, q);
 		}
 	}
 	
@@ -120,9 +128,10 @@ void GenericTableDialog::UpdateDisplay(std::string sType)
 	// Column widths should be set 
 	for (int c = 0; c <= d.Cols; c++)
 	{
-		ui->table1->setColumnWidth(c, ui->table1->columnWidth(c) + 15);
+		ui->table1->setColumnWidth(c, (ui->table1->columnWidth(c)/2) + 15);
 	}
-	ui->table1->setColumnWidth(0,100); //Truncate ID column
+	ui->table1->setColumnWidth(0,100); // Truncate ID column
+	ui->table1->setColumnWidth(2,200); // Description is too wide
 
 }
 

@@ -64,6 +64,8 @@ void NFTAddDialog::UpdateDisplay(std::string sAction, uint256 nftHash)
 		ui->txtURL->setText(GUIUtil::TOQS(n.sURL));
 		ui->txtMinimumBidAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nMinimumBidAmount/COIN, 2)));
 		ui->chkMarketable->setChecked(n.fMarketable);
+		ui->cmbNFTType->setCurrentIndex(ui->cmbNFTType->findText(GUIUtil::TOQS(n.sType)));
+
 	}
 	std::string sInfo = "Note: It costs 100 BBP to create or edit an NFT.";
 	ui->txtInfo->setText(GUIUtil::TOQS(sInfo));
@@ -126,6 +128,7 @@ void NFTAddDialog::on_btnSubmit_clicked()
 		sError += "NFT Owner Address is invalid. ";
 	if (n.sURL.length() < 10) 
 		sError += "You must enter an asset URL. ";
+	//combobox->itemData(combobox->currentIndex())
 	n.sType = GUIUtil::FROMQS(ui->cmbNFTType->currentText());
 	if (n.sType.empty()) 
 		sError += "NFT Type must be chosen. ";

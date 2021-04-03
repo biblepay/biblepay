@@ -3169,6 +3169,7 @@ NFT GetNFT(CTransactionRef tx1)
 	w.sCPK = ExtractXML(w.sXML, "<cpk>", "</cpk>");
 	w.sName = ExtractXML(w.sXML, "<name>", "</name>");
 	w.sDescription = ExtractXML(w.sXML, "<description>", "</description>");
+	w.sType = ExtractXML(w.sXML, "<type>", "</type>");
 	w.sURL = ExtractXML(w.sXML, "<url>", "</url>");
 	w.fMarketable = cdbl(ExtractXML(w.sXML, "<marketable>", "</marketable>"), 0) == 1 ? true : false;
 	w.nMinimumBidAmount = cdbl(ExtractXML(w.sXML, "<minbidamount>", "</minbidamount>"), 2) * COIN;
@@ -5545,7 +5546,7 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 
 	std::string sPayload = "<MT>NFT</MT><MK>" + sPK + "</MK><MV><nft><cpk>" + sBuyerCPK + "</cpk><name>" + nft.sName + "</name><description>" + nft.sDescription + "</description><url>" 
 		+ nft.sURL + "</url><marketable>" + (nft.fMarketable ? "1" : "0")
-		+ "</marketable><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
+		+ "</marketable><type>" + nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
 		    + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
 
 

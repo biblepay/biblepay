@@ -1817,6 +1817,8 @@ UniValue easystake(const JSONRPCRequest& request)
 		else
 		{
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
+			LockUTXOStakes();
+
 			if (!sForeignTicker.empty())
 			{
 				results.push_back(Pair("Foreign Ticker", sForeignTicker));
@@ -1899,6 +1901,8 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 		else
 		{
 			ds = GetUTXOStakeByUTXO(sBBPUTXO);
+			LockUTXOStakes();
+
 			results.push_back(Pair("UTXO Value", ds.nValue));
 			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
 			results.push_back(Pair("TXID", sTXID));
@@ -2267,7 +2271,7 @@ UniValue listnfts(const JSONRPCRequest& request)
 		throw std::runtime_error("You may specify listnfts 0=mine/1=all 0=marketable(for sale)/1=all");
 	UniValue results(UniValue::VOBJ);
 	double nMineType = cdbl(request.params[0].get_str(), 0);
-	double nMarketableType = cdbl(request.params[0].get_str(), 0);
+	double nMarketableType = cdbl(request.params[1].get_str(), 0);
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
 	std::vector<NFT> uNFTs = GetNFTs(false);
 	for (int i = 0; i < uNFTs.size(); i++)
