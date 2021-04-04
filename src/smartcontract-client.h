@@ -14,7 +14,6 @@
 
 
 UniValue GetCampaigns();
-bool CheckCampaign(std::string sName);
 bool Enrolled(std::string sCampaignName, std::string& sError);
 CPK GetCPKFromProject(std::string sProjName, std::string sCPKPtr);
 CPK GetMyCPK(std::string sProjectName);

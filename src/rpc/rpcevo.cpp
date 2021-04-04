@@ -1441,7 +1441,7 @@ UniValue dashpay(const JSONRPCRequest& request)
 		throw std::runtime_error("Sorry, the mode must be 0 or 1.  0=Test.  1=Authorize.");
 	}
 
-	double nCoinUSDPrice = GetCoinPrice();
+	double nCoinUSDPrice = GetBBPUSDPrice();
 	double dDASH = GetCryptoPrice("dash"); // Dash->BTC price
 	double dBTC = GetCryptoPrice("btc");
 		
@@ -1608,8 +1608,6 @@ UniValue sendgscc(const JSONRPCRequest& request)
 		if (sDiary.length() < 10)
 			throw std::runtime_error("Diary entry incomplete (must be 10 chars or more).");
 	}
-	if (!CheckCampaign(sCampaignName))
-		throw std::runtime_error("Campaign does not exist.");
 	WriteCache("gsc", "errors", "", GetAdjustedTime());
 	std::string sError;
 	std::string sWarning;
@@ -2264,6 +2262,38 @@ UniValue buynft(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue price(const JSONRPCRequest& request)
+{
+    if (request.fHelp) 
+		throw std::runtime_error("You may specify price");
+	UniValue results(UniValue::VOBJ);
+
+	double dBBPPrice = GetCryptoPrice("bbp"); 
+	double dBTC = GetCryptoPrice("btc");
+	double dDASH = GetCryptoPrice("dash");
+	double dXMR = GetCryptoPrice("xmr");
+	double dDOGE = GetCryptoPrice("doge");
+	double dLTC = GetCryptoPrice("ltc");
+	double dETH = GetCryptoPrice("eth");
+	results.push_back(Pair(CURRENCY_TICKER + "/BTC", RoundToString(dBBPPrice, 12)));
+	results.push_back(Pair("DASH/BTC", RoundToString(dDASH, 12)));
+	results.push_back(Pair("LTC/BTC", dLTC));
+	results.push_back(Pair("DOGE/BTC", dDOGE));
+	results.push_back(Pair("XMR/BTC", dXMR));
+	results.push_back(Pair("ETH/BTC", dETH));
+	results.push_back(Pair("BTC/USD", dBTC));
+	double nPrice = GetBBPUSDPrice();
+	double nDashPriceUSD = dBTC * dDASH;
+	double nXMRPriceUSD = dBTC * dXMR;
+	double nETHPriceUSD = dBTC * dETH;
+	std::string sAPM = GetAPMNarrative();
+	results.push_back(Pair("APM", sAPM));
+	results.push_back(Pair("DASH/USD", nDashPriceUSD));
+	results.push_back(Pair("XMR/USD", nXMRPriceUSD));
+	results.push_back(Pair("ETH/USD", nETHPriceUSD));
+	results.push_back(Pair(CURRENCY_TICKER + "/USD", nPrice));
+	return results;
+}
 
 UniValue listnfts(const JSONRPCRequest& request)
 {
@@ -2315,6 +2345,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "utxostake",                    &utxostake,          {}  },
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase, {}  },
 	{ "evo",                "faucetcode",                   &faucetcode,         {}  },
+	{ "evo",                "price",                        &price,              {}  },
 	{ "evo",                "trackdashpay",                 &trackdashpay,       {}  },
 	{ "evo",                "versionreport",                &versionreport,      {}  },
 };

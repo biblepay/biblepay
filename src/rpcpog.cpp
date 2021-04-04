@@ -258,23 +258,6 @@ CPK GetCPK(std::string sData)
 	return k;
 } 
 
-std::map<std::string, CPK> GetChildMap(std::string sGSCObjType)
-{
-	std::map<std::string, CPK> mCPKMap;
-	boost::to_upper(sGSCObjType);
-	int i = 0;
-	for (auto ii : mvApplicationCache)
-	{
-		if (Contains(ii.first, sGSCObjType))
-		{
-			CPK k = GetCPK(ii.second.first);
-			i++;
-			mCPKMap.insert(std::make_pair(k.sAddress + "-" + RoundToString(i, 0), k));
-		}
-	}
-	return mCPKMap;
-}
-
 std::map<std::string, CPK> GetGSCMap(std::string sGSCObjType, std::string sSearch, bool fRequireSig)
 {
 	std::map<std::string, CPK> mCPKMap;
@@ -1393,7 +1376,6 @@ struct TxMessage
   int64_t     nTime;
 };
 
-
 bool CheckSporkSig(TxMessage t)
 {
 	std::string sError = "";
@@ -1425,7 +1407,6 @@ bool CheckBusinessObjectSig(TxMessage t)
 	}
 	return false;
 }
-
 
 TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime, int iPosition, std::string sTxId, double dAmount, double dFoundationDonation, int nHeight)
 {
@@ -2530,27 +2511,12 @@ double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bo
 	return (nTotalSpent >= nMinAmount) ? dTotal : 0;
 }
 
-
-double GetAntiBotNetWeight(int64_t nBlockTime, CTransactionRef tx, bool fDebug, std::string sSolver)
-{
-	double nCoinAge = GetVINCoinAge(nBlockTime, tx, fDebug);
-	bool fSigned = CheckAntiBotNetSignature(tx, "abn", sSolver);
-	if (!fSigned) 
-	{
-		if (nCoinAge > 0)
-			LogPrintf("antibotnetsignature failed on tx %s with purported coin-age of %f \n",tx->GetHash().GetHex(), nCoinAge);
-		return 0;
-	}
-	return nCoinAge;
-}
-
 std::string GetPOGBusinessObjectList(std::string sType1, std::string sFields)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	if (chainActive.Tip()->nHeight < consensusParams.EVOLUTION_CUTOVER_HEIGHT) 
 		return "";
-	
-	
+		
 	CPK myCPK = GetMyCPK("cpk");
 	int iNextSuperblock = 0;
 	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
@@ -2564,7 +2530,6 @@ std::string GetPOGBusinessObjectList(std::string sType1, std::string sFields)
 	std::string sSplitBy = (sType1 == "pog") ? s1 : sDetails;
 	std::vector<std::string> vData = Split(sSplitBy.c_str(), "\n");
 	
-
 	LogPrintf("\nGetPogBusinessObjectList Rec %s ", sSplitBy);
 
 	//	Detail Row Format: sCampaignName + "|" + CPKAddress + "|" + nPoints + "|" + nProminence + "|" + Members.second.sNickName 
@@ -2870,7 +2835,6 @@ std::string BIPFS_Payment(CAmount nAmount, std::string sTXID1, std::string sXML1
 	b.Response += "<TXID>" + sTXID + "</TXID>";
 	return b.Response;
 }
-
 
 std::string GetResElement(std::string data, int iElement)
 {
@@ -4238,8 +4202,6 @@ std::string GetHowey(bool fRPC, bool fBurn)
 	return sHowey;
 }
 
-
-
 bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
 	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake, int nCommitmentDays)
 {
@@ -4345,44 +4307,8 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 		return false;
 	}
 
-	bool fSubtractFee = false;
-	bool fInstantSend = false;
-	CWalletTx wtx;
-	// Dry Run step 1:
-	std::vector<CRecipient> vecDryRun;
-	int nChangePosRet = -1;
-	CScript scriptDryRun = GetScriptForDestination(DecodeDestination(consensusParams.BurnAddress));
-	CAmount nSend = 1 * COIN;
-	CRecipient recipientDryRun = {scriptDryRun, nSend, false, fSubtractFee};
-	vecDryRun.push_back(recipientDryRun);
-	double dMinCoinAge = 0;
-	CAmount nFeeRequired = 0;
-	CReserveKey reserveKey(pwalletpog);
-	LogPrintf("\nCreating contract %s", sPayload);
-
-	// Ensure the coin is worth less than nmaxspend(1-100 BBP):
-    CCoinControl coinControl;
-
-	bool fSent = pwalletpog->CreateTransaction(vecDryRun, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
-	
-	if (!fSent)
-	{
-		sError += "Unable to Create UTXO Stake Transaction.";
-		return false;
-	}
-		
-	if (!fDryRun)
-	{
-		CValidationState state;
-		if (!pwalletpog->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
-		{
-			sError += "UTXO-Stake-Commit failed.";
-			return false;
-		}
-	
-		sTXID = wtx.GetHash().GetHex();	
-	}
-	return true;
+	sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, fDryRun, sError, sPayload);
+	return (sError.empty());
 }
 
 std::string FormatURL(std::string URL, int iPart)
@@ -4457,8 +4383,6 @@ void SyncSideChain(int nHeight)
 		ProcessSidechainData(d.Response, nHeight);
 	}
 }
-
-
 
 RSAKey GetMyRSAKey()
 {
@@ -4895,7 +4819,6 @@ double ConvertHexToDouble2(std::string hex)
 
 double AddressToPin(std::string sAddress)
 {
-
 	if (sAddress.length() < 20)
 		return -1;
 
@@ -4984,7 +4907,6 @@ bool findStringCaseInsensitive(const std::string & strHaystack, const std::strin
   return (it != strHaystack.end() );
 }
 
-
 bool HashExistsInDataFile(std::string sDataStoreName, std::string sHash)
 {
 	std::string sSuffix = fProd ? "_prod" : "_testnet";
@@ -5065,9 +4987,6 @@ std::string GetPopUpVerses(std::string sRange)
 	return sTotalVerses;
 }
 
-
-
-
 std::string GetSANDirectory2()
 {
 	 std::string prefix = CURRENCY_NAME;
@@ -5090,8 +5009,6 @@ std::string ToYesNo(bool bValue)
 	std::string sYesNo = bValue ? "Yes" : "No";
 	return sYesNo;
 }
-
-
 
 std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, int nSign, std::string sExtraPayload, std::string& sError)
 {
@@ -5155,20 +5072,20 @@ std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, st
     return wtx.GetHash().GetHex().c_str();
 }
 
-
-
 double GetCryptoPrice(std::string sSymbol)
 {
 	if (sSymbol.empty())
 		return 0;
 
 	boost::to_lower(sSymbol);
-
+	std::string sSymbolUpper = sSymbol;
+	boost::to_upper(sSymbolUpper);
 	double nLast = cdbl(ReadCacheWithMaxAge("price", sSymbol, (60 * 30)), 12);
 	if (nLast > 0)
 		return nLast;
-	
-	std::string sC1 = Uplink(false, "", GetSporkValue("bms"), GetSporkValue("getbmscryptoprice" + sSymbol), SSL_PORT, 15, 1);
+	// Server?action=DOGE_PRICE_QUOTE
+	std::string sServer = "Server?action=" + sSymbolUpper + "_PRICE_QUOTE";
+	std::string sC1 = Uplink(false, "", GetSporkValue("bms"), sServer, SSL_PORT, 15, 1);
 	std::string sPrice = ExtractXML(sC1, "<MIDPOINT>", "</MIDPOINT>");
 	double dMid = cdbl(sPrice, 12);
 	WriteCache("price", sSymbol, RoundToString(dMid, 12), GetAdjustedTime());
@@ -5253,8 +5170,6 @@ double UserSetting(std::string sName, double dDefault)
 		dConfigSetting = dDefault;
 	return dConfigSetting;
 }
-
-
 
 bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fForce, std::string sDiary, std::string& sError, std::string sSpecificCampaignName, std::string& sWarning, std::string& TXID_OUT)
 {
@@ -5474,7 +5389,8 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 	std::string sSellerCPK;
 	CScript scriptDestination;
 	CAmount nSend = 100 * COIN;
-	
+	std::string sToAddress;
+
 	if (sAction == "EDIT")
 	{
 		bool bSigned = false;
@@ -5542,45 +5458,21 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		return false;
 	}
 
-	//minbidamount, marketable
-
 	std::string sPayload = "<MT>NFT</MT><MK>" + sPK + "</MK><MV><nft><cpk>" + sBuyerCPK + "</cpk><name>" + nft.sName + "</name><description>" + nft.sDescription + "</description><url>" 
 		+ nft.sURL + "</url><marketable>" + (nft.fMarketable ? "1" : "0")
 		+ "</marketable><type>" + nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
 		    + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
 
 
-	bool fSubtractFee = false;
-	bool fInstantSend = false;
-	CWalletTx wtx;
-	std::vector<CRecipient> vecRecips;
-	int nChangePosRet = -1;
-
-	CRecipient rec1 = {scriptDestination, nSend, false, fSubtractFee};
-	vecRecips.push_back(rec1);
-	double dMinCoinAge = 0;
-	CAmount nFeeRequired = 0;
-	CReserveKey reserveKey(pwalletpog);
-	LogPrintf("\nCreating contract %s", sPayload);
-	CCoinControl coinControl;
-	bool fSent = pwalletpog->CreateTransaction(vecRecips, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
-	
-	if (!fSent)
+	std::string sTXID = RPCSendMessage(nSend, sToAddress, false, sError, sPayload);
+	if (!sTXID.empty() && sError.empty())
 	{
-		sError += "Unable to instantiate or modify this NFT.";
-		return false;
+		nft.TXID = uint256S("0x" + sTXID);
+		return true;
 	}
-		
-	if (!fDryRun)
+	else
 	{
-		CValidationState state;
-		if (!pwalletpog->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
-		{
-			sError += "NFT-Commit failed.";
-			return false;
-		}
-	
-		nft.TXID = wtx.GetHash();
+		return false;
 	}
 	return true;
 }
@@ -5642,4 +5534,79 @@ void LockUTXOStakes()
 			}
 		}
 	}
+}
+
+std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload)
+{
+	// Returns the TXID, otherwise an error in sError&
+	std::string sTXID;
+	AcquireWallet();
+	bool fSubtractFee = false;
+	bool fInstantSend = false;
+	CWalletTx wtx;
+	// Dry Run step 1:
+	std::vector<CRecipient> vecDryRun;
+	int nChangePosRet = -1;
+	CScript scriptDryRun = GetScriptForDestination(DecodeDestination(sToAddress));
+	CAmount nSend = 1 * COIN;
+	CRecipient recipientDryRun = {scriptDryRun, nSend, false, fSubtractFee};
+	vecDryRun.push_back(recipientDryRun);
+	CAmount nFeeRequired = 0;
+	CReserveKey reserveKey(pwalletpog);
+    CCoinControl coinControl;
+	bool fSent = pwalletpog->CreateTransaction(vecDryRun, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
+	if (!fSent)
+	{
+		sError += "Unable to Create Transaction.";
+		return std::string();
+	}
+		
+	if (!fDryRun)
+	{
+		CValidationState state;
+		if (!pwalletpog->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
+		{
+			sError += "Commit failed.";
+			return std::string();
+		}
+	}
+	sTXID = wtx.GetHash().GetHex();	
+	return sTXID;
+}
+
+
+
+std::string SendReferralCode(std::string& sError)
+{
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	AcquireWallet();
+	std::string sSignature;
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	std::string sMsg = RoundToString(GetAdjustedTime(), 0);
+	std::string sPK = "REFERRALCODE-" + sCPK;
+	if (!ValidateAddress2(sCPK))
+	{
+		sError = "Invalid Referral Address " + sCPK;
+		return std::string();
+	}
+	bool bSigned = false;
+	bSigned = SignStake(sCPK, sMsg, sError, sSignature);
+	if (!bSigned)
+	{
+		sError = "Unabled to sign " + sCPK;
+		return std::string();
+	}
+	// Todo: Calculate portfolio level here:
+	// If they have no portfolio, reject the creation procedure.
+	// I suppose they can dynamically make their portfolio as big as they want after this point, so no need to be strict.  Just give them a code if they have a portfolio.
+	// People cannot use more than 10% of a portfolio anyway as we will dynamically check portfolios daily.
+
+	std::string sPayload = "<MT>REFERRALCODE</MT><MK>" + sPK + "</MK><MV><referralcode><height>" 
+			+ RoundToString(chainActive.Tip()->nHeight, 0) 
+			+ "</height><cpk>" + sCPK + "</cpk></referralcode>"
+			+ "<BOSIGNER>" + sCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" + sMsg + "</BOMSG></MV>";
+
+	std::string sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, false, sError, sPayload);
+
+	return sTXID;
 }

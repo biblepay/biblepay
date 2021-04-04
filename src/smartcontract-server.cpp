@@ -28,33 +28,9 @@
 #include <cmath>
 
 
-void GetTransactionPoints(CBlockIndex* pindex, CTransactionRef tx, double& nCoinAge, CAmount& nDonation)
-{
-	nCoinAge = GetVINCoinAge(pindex->GetBlockTime(), tx, false);
-	bool fSigned = CheckAntiBotNetSignature(tx, "gsc", "");
-	nDonation = GetTitheAmount(tx);
-	if (!fSigned) 
-	{
-		nCoinAge = 0;
-		nDonation = 0;
-		LogPrintf("antibotnetsignature failed on tx %s with purported coin-age of %f \n", tx->GetHash().GetHex(), nCoinAge);
-		return;
-	}
-	return;
-}
-
-std::string GetTxCPK(CTransactionRef tx, std::string& sCampaignName)
-{
-	std::string sMsg = GetTransactionMessage(tx);
-	std::string sCPK = ExtractXML(sMsg, "<abncpk>", "</abncpk>");
-	sCampaignName = ExtractXML(sMsg, "<gsccampaign>", "</gsccampaign>");
-	return sCPK;
-}
-
-
 //////////////////////////////////////////////////////////////////////////////// Cameroon-One & Kairos  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-double GetCoinPrice()
+double GetBBPUSDPrice()
 {
 	static int64_t nLastPriceCheck = 0;
 	int64_t nElapsed = GetAdjustedTime() - nLastPriceCheck;
@@ -72,18 +48,6 @@ double GetCoinPrice()
 	return nLastPrice;
 }
 
-bool VerifyChild(std::string childID, std::string sCharity)
-{
-	std::map<std::string, CPK> cp1 = GetChildMap("cpk|" + sCharity);
-	std::string sMyCPK = DefaultRecAddress("Christian-Public-Key");
-	for (std::pair<std::string, CPK> a : cp1)
-	{
-		std::string sChildID = a.second.sOptData;
-		if (childID == sChildID)
-			return true;
-	}
-	return false;
-}
 
 //////////////////////////////////////////////////////////////////////////////// Watchman-On-The-Wall /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //								                          			DAC's version of The Sentinel, March 31st, 2019                                                                                                  //
@@ -407,29 +371,6 @@ std::string GetGSCContract(int nHeight, bool fCreating)
 	return sContract;
 }
 
-
-double CalculatePoints(std::string sCampaign, std::string sDiary, double nCoinAge, CAmount nDonation, std::string sCPK)
-{
-	boost::to_upper(sCampaign);
-	double nPoints = 0;
-
-	if (sCampaign == "WCG")
-		return 0;
-	else if (sCampaign == "POG")
-		return 0;
-	else if (sCampaign == "HEALING")
-	{
-		double nMultiplier = sDiary.empty() ? 0 : 1;
-		nPoints = (nCoinAge * nMultiplier) / 1000;
-		return nPoints;
-	}
-	else if (sCampaign == "CAMEROON-ONE" || sCampaign == "KAIROS")
-	{
-		return 0;
-	}
-	return 0;
-}
-
 bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOutcome, std::string& sError)
 {
 
@@ -624,8 +565,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	std::string sAnalyzeUser = ReadCache("analysis", "user");
 	std::string sAnalysisData1;
 	std::string sDiaries;
-
-
+	
 	// UTXO STAKING
 	double dEnabled = GetSporkDouble("UTXOStakingEnabled", 0);
 	if (dEnabled == 1)
@@ -806,12 +746,11 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 
 int GetRequiredQuorumLevel(int nHeight)
 {
-	static int MINIMUM_QUORUM_PROD = 5;
-	static int MINIMUM_QUORUM_TESTNET = 2;
+	int nMinimumQuorum = 2;
 	int nCount = deterministicMNManager->GetListAtChainTip().GetValidMNsCount();
-	int nReq = nCount * .15;
-	int nMinimumQuorum = fProd ? MINIMUM_QUORUM_PROD : MINIMUM_QUORUM_TESTNET;
-	if (nReq < nMinimumQuorum) nReq = nMinimumQuorum;
+	int nReq = nCount * .10;
+	if (nReq < nMinimumQuorum)
+		nReq = nMinimumQuorum;
 	return nReq;
 }
 
@@ -1091,7 +1030,6 @@ bool DoesContractExist(int nHeight, uint256 uGovID)
 	GetGSCGovObjByHeight(nHeight, uGovID, out_votes, out_govobjhash, out_pa, out_paa, out_qt);
 	return uGovID == out_govobjhash;
 }
-
 
 void GetGSCGovObjByHeight(int nHeight, uint256 uOptFilter, int& out_nVotes, uint256& out_uGovObjHash, std::string& out_PaymentAddresses, std::string& out_PaymentAmounts, std::string& out_qtdata)
 {
