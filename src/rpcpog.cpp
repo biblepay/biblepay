@@ -1554,6 +1554,14 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 			LogPrintf("\nAcceptPrayer::CPKType %s, %s, %s, bosigvalid %f ", t.sMessageType, sMessage, t.sMessageValue, t.fBOSigValid);
 		t.fPassedSecurityCheck = true;
 	}
+	else if (t.sMessageType == "REFERRALCODE" || t.sMessageType == "CLAIMREFERRALCODE")
+	{
+		std::string sMsg = ExtractXML(t.sMessageValue, "<BOMSG>", "</BOMSG>");
+		std::string sError;
+		t.fBOSigValid = pwalletpog->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
+		t.fPassedSecurityCheck = t.fBOSigValid;
+		LogPrintf("\nAcceptPrayer::%s, %s, %s, %f ",t.sMessageType, t.sBOSigner, sMsg, (int)t.fBOSigValid);
+	}
 	else if (t.sMessageType == "NFT")
 	{
 		NFT n = GetNFT(tx1);
@@ -1637,11 +1645,15 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 	}
 	else
 	{
-		// We assume this is a business object
-		t.fBOSigValid = CheckBusinessObjectSig(t);
-		if (!t.fBOSigValid) 
-			t.sMessageValue = "";
-		t.fPassedSecurityCheck = t.fBOSigValid;
+		if (!t.sMessageType.empty())
+		{
+			// We assume this is a business object
+			t.fBOSigValid = CheckBusinessObjectSig(t);
+			if (!t.fBOSigValid) 
+				t.sMessageValue = "";
+			t.fPassedSecurityCheck = t.fBOSigValid;
+			LogPrintf("\nMemorizeBlockchainPrayers::UNHANDLED type %s, key %s, valid %f", t.sMessageType, t.sMessageKey, (int)t.fPassedSecurityCheck);
+		}
 	}
 
 	if (t.fPassedSecurityCheck && !t.sMessageType.empty() && !t.sMessageKey.empty() && !t.sMessageValue.empty())
@@ -2994,6 +3006,7 @@ int CalculateKeyType(std::string sForeignTicker)
 }
 
 
+
 UTXOStake GetUTXOStake(CTransactionRef tx1)
 {
 	UTXOStake w;
@@ -3007,7 +3020,6 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 		{
 			w.XML = tx1->vout[i].sTxOutMessage;
 			int nHeight = 0;
-			w.Time = (int)cdbl(ExtractXML(w.XML, "<time>", "</time>"), 0);
 			w.Height = (int)cdbl(ExtractXML(w.XML, "<height>", "</height>"), 0);
 			w.CPK = ExtractXML(w.XML, "<cpk>", "</cpk>");
 			w.nCommitment = cdbl(ExtractXML(w.XML, "<commitment>", "</commitment>"), 2);
@@ -3195,6 +3207,8 @@ std::vector<NFT> GetNFTs(bool fIncludeMemoryPool)
 	return uNFTs;
 }
 
+
+
 std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool)
 {
 	std::vector<UTXOStake> uStakes;
@@ -3244,6 +3258,7 @@ std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool)
 	}
 	return uStakes;
 }
+
 
 NFT GetSpecificNFT(uint256 txid)
 {
@@ -4626,7 +4641,7 @@ int AssimilateUTXO(UTXOStake d)
 	return nStatus;
 }
 
-std::string GetUTXOSummary(std::string sCPK)
+std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 {
 	if (sCPK.empty())
 		return "";
@@ -4636,7 +4651,6 @@ std::string GetUTXOSummary(std::string sCPK)
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
 	double nTotal = 0;
 	int nCount = 0;
-	CAmount nBBPQuantity = 0;
 	CAmount nForeignQuantity = 0;
 	double nForeignValue = 0;
 	double nBBPValue = 0;
@@ -5407,8 +5421,8 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 			sError = "Sorry, you cannot edit an NFT that is not yours.";
 			return false;
 		}
-		scriptDestination = GetScriptForDestination(DecodeDestination(consensusParams.BurnAddress));
-
+		sToAddress = consensusParams.BurnAddress;
+		
 	}
 	else if (sAction == "CREATE")
 	{
@@ -5418,8 +5432,8 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 			sError = "Sorry, this NFT already exists.";
 			return false;
 		}
-		scriptDestination = GetScriptForDestination(DecodeDestination(consensusParams.BurnAddress));
-	
+		sToAddress = consensusParams.BurnAddress;
+		
 	}
 	else if (sAction == "BUY")
 	{
@@ -5448,7 +5462,7 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 			sError = "Invalid seller Address " + sSellerCPK;
 			return false;
 		}
-		scriptDestination = GetScriptForDestination(DecodeDestination(sSellerCPK));
+		sToAddress = sSellerCPK;
 		nSend = nBuyPrice;
 	}
 
@@ -5462,8 +5476,7 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		+ nft.sURL + "</url><marketable>" + (nft.fMarketable ? "1" : "0")
 		+ "</marketable><type>" + nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
 		    + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
-
-
+	
 	std::string sTXID = RPCSendMessage(nSend, sToAddress, false, sError, sPayload);
 	if (!sTXID.empty() && sError.empty())
 	{
@@ -5540,22 +5553,28 @@ std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun
 {
 	// Returns the TXID, otherwise an error in sError&
 	std::string sTXID;
-	AcquireWallet();
 	bool fSubtractFee = false;
 	bool fInstantSend = false;
 	CWalletTx wtx;
 	// Dry Run step 1:
 	std::vector<CRecipient> vecDryRun;
 	int nChangePosRet = -1;
+	if (!ValidateAddress2(sToAddress))
+	{
+		sError = "Invalid destination address.";
+		return std::string();
+	}
 	CScript scriptDryRun = GetScriptForDestination(DecodeDestination(sToAddress));
 	CAmount nSend = 1 * COIN;
-	CRecipient recipientDryRun = {scriptDryRun, nSend, false, fSubtractFee};
-	vecDryRun.push_back(recipientDryRun);
+	CRecipient rec = {scriptDryRun, nSend, false, fSubtractFee};
+	vecDryRun.push_back(rec);
 	CAmount nFeeRequired = 0;
 	CReserveKey reserveKey(pwalletpog);
     CCoinControl coinControl;
-	bool fSent = pwalletpog->CreateTransaction(vecDryRun, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
-	if (!fSent)
+	AcquireWallet();
+	
+	bool fCre = pwalletpog->CreateTransaction(vecDryRun, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
+	if (!fCre)
 	{
 		sError += "Unable to Create Transaction.";
 		return std::string();
@@ -5564,17 +5583,74 @@ std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun
 	if (!fDryRun)
 	{
 		CValidationState state;
+		AcquireWallet();
+	
 		if (!pwalletpog->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
 		{
 			sError += "Commit failed.";
 			return std::string();
 		}
+		else
+		{
+			return wtx.GetHash().GetHex();
+		}
 	}
-	sTXID = wtx.GetHash().GetHex();	
-	return sTXID;
+	return std::string();
 }
 
+std::string GetTxMessages(uint256 hashTXID)
+{
+	CTransactionRef tx1;
+	std::string sData;
+	const Consensus::Params& consensusParams = Params().GetConsensus();
 
+    if (GetTxDAC(hashTXID, tx1))
+	{
+		for (unsigned int i = 0; i < tx1->vout.size(); i++)
+		{
+			std::string sPK = PubKeyToAddress(tx1->vout[i].scriptPubKey);
+			if (sPK == consensusParams.BurnAddress)
+			{
+				sData += tx1->vout[i].sTxOutMessage;
+			}
+		}
+		return sData;	
+	}
+	return std::string();
+}
+
+std::string ExtractCPKFromReferralCode(std::string sCode)
+{
+	if (sCode.empty())
+		return 0;
+	uint256 hashTXID = uint256S(sCode);
+	std::string sMsg = GetTxMessages(hashTXID);
+	std::string sXML = ExtractXML(sMsg, "<referralcode>", "</referralcode>");
+	std::string sCPK = ExtractXML(sMsg, "<BOSIGNER>", "</BOSIGNER>");
+	return sCPK;
+}
+
+CAmount CheckReferralCode(std::string sCode)
+{
+	if (sCode.empty())
+		return 0;
+	uint256 hashTXID = uint256S(sCode);
+	std::string sMsg = GetTxMessages(hashTXID);
+	std::string sXML = ExtractXML(sMsg, "<referralcode>", "</referralcode>");
+	std::string sCPK = ExtractXML(sMsg, "<BOSIGNER>", "</BOSIGNER>");
+	std::string sSig = ExtractXML(sMsg, "<BOSIG>", "</BOSIG>");
+	std::string sSigMsg = ExtractXML(sMsg, "<BOMSG>", "</BOMSG>");
+	AcquireWallet();
+	std::string sError;
+	bool fSigValid = pwalletpog->CheckStakeSignature(sCPK, sSig, sSigMsg, sError);
+	if (!fSigValid)
+		return 0;
+	CAmount nBBPQty = 0;
+	GetUTXOSummary(sCPK, nBBPQty);
+	double nPortfolio = (double)nBBPQty / COIN;
+	nPortfolio = nPortfolio * .10; // Eligible for up to 10% of foreign portfolio
+	return nPortfolio * COIN;
+}
 
 std::string SendReferralCode(std::string& sError)
 {
@@ -5596,17 +5672,170 @@ std::string SendReferralCode(std::string& sError)
 		sError = "Unabled to sign " + sCPK;
 		return std::string();
 	}
-	// Todo: Calculate portfolio level here:
+	CAmount nBBPQty = 0;
+	GetUTXOSummary(sCPK, nBBPQty);
+	if (nBBPQty < 1)
+	{
+		sError = "Sorry, you must have an established portfolio to generate a referral code.  You can create one with 'easybbpstake min_amount 0 1'.";
+		return std::string();
+	}
 	// If they have no portfolio, reject the creation procedure.
 	// I suppose they can dynamically make their portfolio as big as they want after this point, so no need to be strict.  Just give them a code if they have a portfolio.
 	// People cannot use more than 10% of a portfolio anyway as we will dynamically check portfolios daily.
-
 	std::string sPayload = "<MT>REFERRALCODE</MT><MK>" + sPK + "</MK><MV><referralcode><height>" 
-			+ RoundToString(chainActive.Tip()->nHeight, 0) 
-			+ "</height><cpk>" + sCPK + "</cpk></referralcode>"
-			+ "<BOSIGNER>" + sCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" + sMsg + "</BOMSG></MV>";
-
+			+ RoundToString(chainActive.Tip()->nHeight, 0) + "</height><cpk>" + sCPK + "</cpk>"
+			+ "<BOSIGNER>" + sCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" 
+			+ sMsg + "</BOMSG></MV></referralcode>";
 	std::string sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, false, sError, sPayload);
-
 	return sTXID;
+}
+
+std::string ClaimReferralCode(std::string sCode, std::string& sError)
+{
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	AcquireWallet();
+	std::string sSignature;
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	std::string sMsg = RoundToString(GetAdjustedTime(), 0);
+	std::string sPK = "CLAIMREFERRALCODE-" + sCPK + "-" + sCode;
+	if (!ValidateAddress2(sCPK))
+	{
+		sError = "Invalid Claim Address " + sCPK;
+		return std::string();
+	}
+	bool bSigned = false;
+	bSigned = SignStake(sCPK, sMsg, sError, sSignature);
+	if (!bSigned)
+	{
+		sError = "Unable to sign " + sCPK;
+		return std::string();
+	}
+	std::string sOriginatorCPK = ExtractCPKFromReferralCode(sCode);
+
+	if (sOriginatorCPK == sCode)
+	{
+		sError = "You may not use your own referral code for your own portfolio. ";
+		return std::string();
+	}
+
+	CAmount nBBPQty = 0;
+	GetUTXOSummary(sCPK, nBBPQty);
+	if (nBBPQty < 1)
+	{
+		sError = "Sorry, you must have an established portfolio to use a referral code.  You can create one with 'easybbpstake min_amount 0 1'.";
+		return std::string();
+	}
+	std::string sPayload = "<MT>CLAIMREFERRALCODE</MT><MK>" + sPK + "</MK><MV><claimreferralcode><height>" 
+			+ RoundToString(chainActive.Tip()->nHeight, 0) + "</height><cpk>" + sCPK + "</cpk>"
+			+ "<BOSIGNER>" + sCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><originatorcpk>" + sOriginatorCPK + "</originatorcpk><BOMSG>" 
+			+ sMsg + "</BOMSG></MV></claimreferralcode>";
+	std::string sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, false, sError, sPayload);
+	return sTXID;
+}
+
+double GetReferralCodeEffectivity(int nPortfolioTime)
+{
+	// This function applies a decay factor to provide the 'effecivity' of a referral code.
+	// Effectivity is based on the average portfolio age (not the age of the coupon).
+	// Referral codes start at 100% effective, and diminish by .0027% per portfolio day (meaning, that they decay fully in one year, based on your avg portfolio date). 
+	// This means that a brand new portfolio (IE new user) will start at 100% effective, but a user who has a 180 day old portfolio starts at the half-life of the referral code.
+	// At your portfolio-age half-life, a referral code is worth .50* (half) of its original effectivity.
+	// Referral codes only cover up to 10% of the size of the generators portfolio.
+	// Referral codes provide a 10% DWU edge for the portion of the portfolio covered.  On day 1 of a new portfolio, user receives a 10% edge.  On 180th day, 5%.  On the 364th day, .01%.
+	// As an example, let us pretend the referral generator portfolio is worth 1MM and your portfolio is worth 10MM.  The referral code will only be applied to 1MM of the positions in your portfolio because it is limited by the portfolio it was generated from.
+	// As a second example, if you have 1MM of positions, and the generator has 10MM, the code may be applied to your entire portfolio because the code has a large enough size.
+	
+	int64_t nPortfolioAgeSecs = GetAdjustedTime() - nPortfolioTime;
+	double nDays = nPortfolioAgeSecs / 86400;
+	double nDecay = .0027 * nDays;
+	if (nDecay > 1)
+		nDecay = 1;
+	if (nDecay < .01)
+		nDecay = .01;
+	double nDWUFactor = 1.0 - nDecay;
+	double nBonus = .10 * nDWUFactor;
+	if (nBonus < .01)
+		nBonus = 0;
+	if (nBonus > .10)
+		nBonus = .10;
+	return 1.0 + nBonus;
+}
+
+uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sCPK, CAmount& nBBPSize)
+{
+	double nAvg = 0;
+	double nTotal = 0;
+	int nCt = 0;
+	nBBPSize = 0;
+	for (auto uStake : uStakes)
+	{
+		if (uStake.found && uStake.Time > 0 && uStake.CPK == sCPK)
+		{
+			nTotal += uStake.Time;
+			nBBPSize += uStake.nBBPAmount;
+			nCt++;
+		}
+	}
+	nAvg = nTotal/(nCt+.01);
+	return (int64_t)nAvg;
+}
+
+
+std::vector<ReferralCode> GetReferralCodes()
+{
+	std::vector<ReferralCode> vRC;
+	for (auto ii : mvApplicationCache) 
+	{
+		if (Contains(ii.first, "CLAIMREFERRALCODE[-]"))
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			ReferralCode r;
+			std::string sID = GetElement(ii.first, "[-]", 1);
+			r.CPK = GetElement(sID, "-", 1);
+			r.Code = GetElement(sID, "-", 2);
+			r.Size = CheckReferralCode(r.Code);
+			r.OriginatorCPK = ExtractCPKFromReferralCode(r.Code);
+			r.found = true;
+			vRC.push_back(r);
+		}
+	}
+	return vRC;
+}
+
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::string sCPK)
+{
+	// Given a CPK (this is a pointer to a portfolio), assess the portfolio determining the impact of the collection of referral codes when applied.
+	// A user may have multiple referral codes cashed in.  Each one has a different max size based on the originators portfolio.
+	// Next the age of this users portfolio determines the effectiveness of each coupon.
+	// The coupon originator also gets a portfolio bonus for coupon utilization by others.
+	std::vector<ReferralCode> vRC = GetReferralCodes();
+	std::vector<UTXOStake> vU = GetUTXOStakes(false);
+	CAmount nBBPSize = 0;
+	ReferralCode r;
+
+	uint64_t nPortfolioTime = GetPortfolioTimeAndSize(vU, sCPK, nBBPSize);
+	r.ReferralEffectivity = GetReferralCodeEffectivity(nPortfolioTime);
+	for (auto rc : vRC)
+	{
+		// Case 1:  This is when a user has claimed a referral code:
+		if (rc.found && rc.CPK == sCPK)
+		{
+			r.TotalClaimed += rc.Size;
+		}
+		// Case 2:  This is when a user has used a referralcode and received a reward that the originator generated:
+		if (rc.found && rc.OriginatorCPK == sCPK)
+		{
+			CAmount nConsumerBBPSize = 0;
+			r.TotalEarned += rc.Size;
+		}
+	}
+	r.TotalReferralReward = r.TotalClaimed + r.TotalEarned;
+	if (r.TotalReferralReward > nBBPSize)
+		r.TotalReferralReward = nBBPSize;
+	r.PercentageAffected = (double)(r.TotalReferralReward/COIN) / (double)((nBBPSize+1)/COIN);
+	
+	// Calculate the Total ReferralRewards
+	r.ReferralRewards = r.PercentageAffected * r.ReferralEffectivity;
+
+	return r;
 }

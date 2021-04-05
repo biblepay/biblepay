@@ -196,8 +196,8 @@ void BusinessObjectList::cellDoubleClicked(int Y, int X)
 	if (item1)
 	{
 		std::string sCPK = GUIUtil::FROMQS(item1->text()); // CPK
-		
-		std::string sSumm = GetUTXOSummary(sCPK);
+		CAmount nBBPQty = 0;
+		std::string sSumm = GetUTXOSummary(sCPK, nBBPQty);
 		
 		if (!sSumm.empty())
 		{

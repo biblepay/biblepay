@@ -77,6 +77,21 @@ struct NFT
     }
 };
 
+struct ReferralCode
+{
+	std::string CPK;
+	std::string OriginatorCPK;
+	std::string Code;
+	CAmount Size = 0;
+	CAmount TotalClaimed = 0;
+	CAmount TotalEarned = 0;
+	CAmount TotalReferralReward = 0;
+	double ReferralEffectivity = 0;
+	double PercentageAffected = 0;
+	double ReferralRewards = 0;
+	bool found;
+};
+
 struct DataTable
 {
 	int Rows = 0;
@@ -481,7 +496,7 @@ std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
 int AssimilateUTXO(UTXOStake d);
 UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
 int GetUTXOStatus(uint256 txid);
-std::string GetUTXOSummary(std::string sCPK);
+std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQty);
 std::string ScanBlockForNewUTXO(const CBlock& block);
 double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bool fDebug);
 double CalculateUTXOReward(int nStakeCount, int nDays);
@@ -525,5 +540,7 @@ CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAm
 void LockUTXOStakes();
 int64_t GetTxTime1(uint256 hash, int ordinal);
 std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload);
-
+std::string SendReferralCode(std::string& sError);
+CAmount CheckReferralCode(std::string sCode);
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::string sCPK);
 #endif
