@@ -571,6 +571,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	if (dEnabled == 1)
 	{
 		std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+		std::vector<ReferralCode> uRC = GetReferralCodes();
 		std::string sThisCampaign = "UTXO";
 		for (int i = 0; i < uStakes.size(); i++)
 		{
@@ -588,7 +589,11 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 						c.sCampaign = sThisCampaign;
 						c.sAddress = d.CPK;
 						c.sNickName = u.NickName;
-						double nPoints = d.nValue;
+						// Referral codes
+						ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, d.CPK);
+
+						double nPoints = d.nValue * rc1.ReferralRewards;
+
 						c.nPoints += nPoints;
 						mCampaignPoints[sThisCampaign] += nPoints;
 						mPoints[d.CPK] = c;

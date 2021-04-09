@@ -160,6 +160,26 @@ UniValue importprivkey(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+UniValue acceptgift(const JSONRPCRequest& request)
+{
+	if (request.fHelp || request.params.size() < 1)
+        throw std::runtime_error(
+            "acceptgift \"gift phrase\"");
+	std::string sPhrase = request.params[0].get_str();
+	DACResult d = MakeDerivedKey(sPhrase);
+	UniValue results(UniValue::VOBJ);
+	results.push_back(Pair("Address", d.Address));
+	results.push_back(Pair("Note", "Your wallet will now rescan to reflect the gift balance!"));
+	JSONRPCRequest newRequest;
+	newRequest.params.setArray();
+	newRequest.params.push_back(d.SecretKey);
+	UniValue result2(UniValue::VOBJ);
+	result2 = importprivkey(newRequest);
+	results.push_back(Pair("Accept", result2));
+	return results;
+}
+
+
 UniValue abortrescan(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);

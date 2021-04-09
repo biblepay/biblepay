@@ -2435,35 +2435,6 @@ void ProcessBLSCommand(CTransactionRef tx)
 	}
 }
 
-bool CheckAntiBotNetSignature(CTransactionRef tx, std::string sType, std::string sSolver)
-{
-	std::string sXML = GetTransactionMessage(tx);
-	std::string sSig = ExtractXML(sXML, "<" + sType + "sig>", "</" + sType + "sig>");
-	std::string sMessage = ExtractXML(sXML, "<abnmsg>", "</abnmsg>");
-	std::string sPPK = ExtractXML(sMessage, "<ppk>", "</ppk>");
-	double dCheckPoolSigs = GetSporkDouble("checkpoolsigs", 0);
-	AcquireWallet();
-
-	if (!sSolver.empty() && !sPPK.empty() && dCheckPoolSigs == 1)
-	{
-		if (sSolver != sPPK)
-		{
-			LogPrintf("CheckAntiBotNetSignature::Pool public key != solver public key, signature %s \n", "rejected");
-			return false;
-		}
-	}
-	for (unsigned int i = 0; i < tx->vout.size(); i++)
-	{
-		const CTxOut& txout = tx->vout[i];
-		std::string sAddr = PubKeyToAddress(txout.scriptPubKey);
-		std::string sError;
-		bool fSigned = pwalletpog->CheckStakeSignature(sAddr, sSig, sMessage, sError);
-		if (fSigned)
-			return true;
-	}
-	return false;
-}
-
 double GetVINCoinAge(int64_t nBlockTime, CTransactionRef tx, bool fDebug)
 {
 	double dTotal = 0;
@@ -2936,7 +2907,6 @@ bool GetTxDAC(uint256 txid, CTransactionRef& tx1)
 	return GetTransaction(txid, tx1, Params().GetConsensus(), hashBlock1, true);
 }
 
-
 std::string GetUTXO(std::string sHash, int nOrdinal, CAmount& nValue, std::string& sError)
 {
 	nValue = 0;
@@ -3004,8 +2974,6 @@ int CalculateKeyType(std::string sForeignTicker)
 	}
 	return nKeyType;
 }
-
-
 
 UTXOStake GetUTXOStake(CTransactionRef tx1)
 {
@@ -3130,7 +3098,6 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 	return w;
 }
 
-
 NFT GetNFT(CTransactionRef tx1)
 {
 	NFT w;
@@ -3245,8 +3212,6 @@ std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool)
 
 	if (fIncludeMemoryPool)
 	{
-		//	BOOST_FOREACH(const CTxMemPoolEntry& e, mempool.mapTx)
-	
 		for (auto e : mempool.mapTx) 
 		{
 			const CTransaction& tx = e.GetTx();
@@ -3719,7 +3684,7 @@ bool ApproveSanctuaryRevivalTransaction(CTransaction tx)
 	}
 }
 
-bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& TXID_OUT, std::string& ERROR_OUT)
+bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& ERROR_OUT)
 {
 	bool fGood = false;
 	if (sOutcome == "YES" || sOutcome == "NO" || sOutcome == "ABSTAIN")
@@ -3732,18 +3697,13 @@ bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& 
 		ERROR_OUT = "Invalid outcome (Yes, No, Abstain).";
 		return false;
 	}
-	CreateGSCTransmission(sGobjectID, sOutcome, false, "", sError, "coinagevote", sWarning, TXID_OUT);
+	CreateLegacyGSCTransmission("coinagevote", sGobjectID, sOutcome, "", sError);
 	if (!sError.empty())
 	{
 		LogPrintf("\nVoteWithCoinAge::ERROR %f, WARNING %s, Campaign %s, Error [%s].\n", GetAdjustedTime(), "coinagevote", sError, sWarning);
 		ERROR_OUT = sError;
 		return false;
 	}
-	if (!sWarning.empty())
-	{
-		LogPrintf("\nVoteWithCoinAge::WARNING %s", sWarning);
-	}
-
 	return true;
 }
 
@@ -3863,7 +3823,6 @@ std::string GetAPMNarrative()
 	}
 	return std::string();
 }
-
 
 bool RelinquishSpace(std::string sPath)
 {
@@ -4287,7 +4246,6 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 			sError += "Foreign pin invalid. ";
 			return false;
 		}
-
 	}
 
 	bool fDuplicate = IsDuplicateUTXO(sBBPUTXO);
@@ -4386,7 +4344,6 @@ void ProcessSidechainData(std::string sData, int nSyncHeight)
 					nSideChainHeight = i.nHeight;
 			}
 		}
-		
 	}
 }
 
@@ -4641,14 +4598,38 @@ int AssimilateUTXO(UTXOStake d)
 	return nStatus;
 }
 
+CAmount GetBBPSizeFromPortfolio(std::string sCPK)
+{
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+
+	CAmount nSize = 0;
+	for (int i = 0; i < uStakes.size(); i++)
+	{
+		UTXOStake d = uStakes[i];
+		if (d.found && d.nValue > 0 && d.CPK == sCPK)
+		{
+			int nStatus = GetUTXOStatus(d.TXID);
+			if (nStatus > 0)
+			{
+				nSize += d.nBBPAmount;
+			}
+		}
+	}
+	return nSize;
+}
+
 std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 {
 	if (sCPK.empty())
 		return "";
 
 	std::map<std::string, std::string> mapTickers;
+	AcquireWallet();
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+	std::vector<ReferralCode> uRC = GetReferralCodes();
+	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, sCPK);
+
 	double nTotal = 0;
 	int nCount = 0;
 	CAmount nForeignQuantity = 0;
@@ -4728,8 +4709,8 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 	double nDWU1 = nForeignPortfolioPctg * nDWU * 2;
 	double nDWU2 = nBBPPctg * nDWU;
 	double nDWU3 = nDWU1 + nDWU2 / 2;
-	double nDWUAvg = nDWU3 * (1 + nHighRiskPctg);
-
+	double nDWUAvg = nDWU3 * (1 + nHighRiskPctg) * rc1.ReferralRewards;
+	
 	std::string sSummary = "Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0) 
 		+ "<br>Total BBP Amount: " + RoundToString((double)nBBPQuantity/COIN, 2) + " BBP"
 		+ "<br>Total BBP Value: $" + RoundToString(nBBPValue, 2) 
@@ -4740,7 +4721,8 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 		+ "<br>Total Foreign Count: " + RoundToString(nForeignCount, 0)
 		+ "<br>Total Foreign Stake Weight: " + RoundToString(nForeignStakeWeight, 2) + " (" + RoundToString(nForeignPortfolioPctg * 100, 2) + " %)";
 	sSummary += "<br>Foreign Quantities: " + sForeignQuants + "</br>" + "<br>Total USD Value: $" + RoundToString(nTotal, 2) + "</br>"
-		+ "<br>Total Stake Weight: " + RoundToString(nTotalStakeWeight, 2) + "</br><br>Portfolio High Risk %: " + RoundToString(nHighRiskPctg*100, 2) + "<br>Portfolio DWU: " + RoundToString(nDWUAvg * 100, 2) + "</br>";
+		+ "<br>Total Stake Weight: " + RoundToString(nTotalStakeWeight, 2) + "</br><br>Portfolio High Risk %: " + RoundToString(nHighRiskPctg*100, 2) 
+		+ "<br>Portfolio DWU: " + RoundToString(nDWUAvg * 100, 2) + "<br>Referral Rewards: " + RoundToString(rc1.ReferralRewards, 2) + "</br>";
 	
 	return sSummary;
 }
@@ -4773,7 +4755,6 @@ std::string ScanBlockForNewUTXO(const CBlock& block)
 	}
 	return std::string();
 }
-
 
 double SumUTXO()
 {
@@ -4982,7 +4963,6 @@ std::string GetPopUpVerses(std::string sRange)
 	if (sBook == "Corinthians")
 		sBook = "1 Corinthians";
 
-
 	std::string sShortBook = GetBookByName(sBook);
 
 	int iStart = 0;
@@ -5097,7 +5077,6 @@ double GetCryptoPrice(std::string sSymbol)
 	double nLast = cdbl(ReadCacheWithMaxAge("price", sSymbol, (60 * 30)), 12);
 	if (nLast > 0)
 		return nLast;
-	// Server?action=DOGE_PRICE_QUOTE
 	std::string sServer = "Server?action=" + sSymbolUpper + "_PRICE_QUOTE";
 	std::string sC1 = Uplink(false, "", GetSporkValue("bms"), sServer, SSL_PORT, 15, 1);
 	std::string sPrice = ExtractXML(sC1, "<MIDPOINT>", "</MIDPOINT>");
@@ -5155,7 +5134,6 @@ bool GetTransactionTimeAndAmount(uint256 txhash, int nVout, int64_t& nTime, CAmo
 	return false;
 }
 
-
 std::string rPad(std::string data, int minWidth)
 {
 	if ((int)data.length() >= minWidth) return data;
@@ -5185,115 +5163,21 @@ double UserSetting(std::string sName, double dDefault)
 	return dConfigSetting;
 }
 
-bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fForce, std::string sDiary, std::string& sError, std::string sSpecificCampaignName, std::string& sWarning, std::string& TXID_OUT)
+bool CreateLegacyGSCTransmission(std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError)
 {
-	boost::to_upper(sSpecificCampaignName);
-	if (sSpecificCampaignName == "HEALING")
-	{
-		if (sDiary.length() < 10 || sDiary.empty())
-		{
-			sError = "Sorry, you have selected diary projects only, but we did not receive a diary entry.";
-			return false;
-		}
-	}
+	std::string sSignature;
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
+	std::string sXML = "<MT>GSCTransmission</MT><gscsig>" + sSignature + "</gscsig><gobject>" + sGobjectID + "</gobject><outcome>" + sOutcome + "</outcome><abncpk>" 
+		+ sCPK + "</abncpk><gsccampaign>" 
+		+ sCampaign + "</gsccampaign><diary>" + sDiary + "</diary>";
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	std::string sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, false, sError, sXML);
 
-	double nDisableClientSideTransmission = UserSetting("disablegsctransmission", 0);
-	if (nDisableClientSideTransmission == 1)
-	{
-		sError = "Client Side Transactions are disabled via disablegsctransmission.";
-		return false;
-	}
-				
-	double nDefaultCoinAgePercentage = GetSporkDouble(sSpecificCampaignName + "defaultcoinagepercentage", .10);
-	std::string sError1;
-	if (!Enrolled(sSpecificCampaignName, sError1) && sSpecificCampaignName != "COINAGEVOTE")
-	{
-		sError = "Sorry, CPK is not enrolled in project. [" + sError1 + "].  Error 795. ";
-		return false;
-	}
-
-	LogPrintf("\nSmartContract-Client::Creating Client side transaction for campaign %s ", sSpecificCampaignName);
-	std::string sXML;
-	CReserveKey reservekey(pwalletpog);
-	double nCoinAgePercentage = 0;
-	std::string sError2;
-	CAmount nFoundationDonation = 0;
-	CWalletTx wtx = CreateGSCClientTransmission(sGobjectID, sOutcome, sSpecificCampaignName, sDiary, chainActive.Tip(), nCoinAgePercentage, nFoundationDonation, reservekey, sXML, sError, sWarning);
-	LogPrintf("\nCreated client side transmission - %s [%s] with txid %s ", sXML, sError, wtx.tx->GetHash().GetHex());
-	// Bubble any error to getmininginfo - or clear the error
 	if (!sError.empty())
 	{
 		return false;
 	}
-	CValidationState state;
-	if (!pwalletpog->CommitTransaction(wtx, reservekey, g_connman.get(), state))
-	{
-			LogPrintf("\nCreateGSCTransmission::Unable to Commit transaction for campaign %s - %s", sSpecificCampaignName, wtx.tx->GetHash().GetHex());
-			sError = "GSC Commit failed " + sSpecificCampaignName;
-			return false;
-	}
-	TXID_OUT = wtx.GetHash().GetHex();
-
 	return true;
-}
-
-
-CWalletTx CreateGSCClientTransmission(std::string sGobjectID, std::string sOutcome, std::string sCampaign, std::string sDiary, CBlockIndex* pindexLast, double nCoinAgePercentage, CAmount nFoundationDonation, 
-	CReserveKey& reservekey, std::string& sXML, std::string& sError, std::string& sWarning)
-{
-	CWalletTx wtx;
-	AcquireWallet();
-
-	if (sCampaign == "HEALING" && sDiary.empty())
-	{
-		sError = "Sorry, Diary entry must be populated to create a Healing transmission.";
-		return wtx;
-	}
-
-	CAmount nReqCoins = 0;
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-
-	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-
-	CScript spkCPKScript = GetScriptForDestination(DecodeDestination(sCPK));
-	CAmount nFeeRequired;
-	std::vector<CRecipient> vecSend;
-	int nChangePosRet = -1;
-	bool fSubtractFeeFromAmount = true;
-	CAmount nIndividualAmount = 1 * COIN;
-	CRecipient recipient = {spkCPKScript, nIndividualAmount, false, fSubtractFeeFromAmount};
-	vecSend.push_back(recipient); // This transmission is to Me
-    CScript spkFoundation = GetScriptForDestination(DecodeDestination(consensusParams.FoundationAddress));
-	std::string sMessage = GetRandHash().GetHex();
-	sXML += "<MT>GSCTransmission</MT><abnmsg>" + sMessage + "</abnmsg>";
-	std::string sSignature;
-	bool bSigned = SignStake(sCPK, sMessage, sError, sSignature);
-	if (!bSigned) 
-	{
-		sError = "SmartContractClient::CreateGSCTransmission::Failed to sign.";
-		return wtx;
-	}
-
-	sXML += "<gscsig>" + sSignature + "</gscsig><gobject>" + sGobjectID + "</gobject><outcome>" + sOutcome + "</outcome><abncpk>" + sCPK + "</abncpk><gsccampaign>" 
-		+ sCampaign + "</gsccampaign><diary>" + sDiary + "</diary>";
-	std::string strError;
-    CCoinControl coinControl;
-
-	bool fCreated = pwalletpog->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, strError, coinControl, true, 0, sXML);
-
-	if (!fCreated)    
-	{
-		sError = "CreateGSCTransmission::Fail::" + strError;
-		return wtx;
-	}
-	bool fChecked = CheckAntiBotNetSignature(wtx.tx, "gsc", "");
-	if (!fChecked)
-	{
-		sError = "CreateGSCTransmission::Fail::Signing Failed.";
-		return wtx;
-	}
-
-	return wtx;
 }
 
 bool ValidateAddress2(std::string sAddress)
@@ -5347,7 +5231,6 @@ bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string&
        return true;
 	 }
 }
-
 
 boost::filesystem::path GetDeterministicConfigFile()
 {
@@ -5557,23 +5440,22 @@ std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun
 	bool fInstantSend = false;
 	CWalletTx wtx;
 	// Dry Run step 1:
-	std::vector<CRecipient> vecDryRun;
+	std::vector<CRecipient> vec;
 	int nChangePosRet = -1;
 	if (!ValidateAddress2(sToAddress))
 	{
 		sError = "Invalid destination address.";
 		return std::string();
 	}
-	CScript scriptDryRun = GetScriptForDestination(DecodeDestination(sToAddress));
-	CAmount nSend = 1 * COIN;
-	CRecipient rec = {scriptDryRun, nSend, false, fSubtractFee};
-	vecDryRun.push_back(rec);
+	CScript scr = GetScriptForDestination(DecodeDestination(sToAddress));
+	CRecipient rec = {scr, nAmount, false, fSubtractFee};
+	vec.push_back(rec);
 	CAmount nFeeRequired = 0;
 	CReserveKey reserveKey(pwalletpog);
     CCoinControl coinControl;
 	AcquireWallet();
 	
-	bool fCre = pwalletpog->CreateTransaction(vecDryRun, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
+	bool fCre = pwalletpog->CreateTransaction(vec, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
 	if (!fCre)
 	{
 		sError += "Unable to Create Transaction.";
@@ -5645,8 +5527,7 @@ CAmount CheckReferralCode(std::string sCode)
 	bool fSigValid = pwalletpog->CheckStakeSignature(sCPK, sSig, sSigMsg, sError);
 	if (!fSigValid)
 		return 0;
-	CAmount nBBPQty = 0;
-	GetUTXOSummary(sCPK, nBBPQty);
+	CAmount nBBPQty = GetBBPSizeFromPortfolio(sCPK);
 	double nPortfolio = (double)nBBPQty / COIN;
 	nPortfolio = nPortfolio * .10; // Eligible for up to 10% of foreign portfolio
 	return nPortfolio * COIN;
@@ -5712,7 +5593,7 @@ std::string ClaimReferralCode(std::string sCode, std::string& sError)
 	}
 	std::string sOriginatorCPK = ExtractCPKFromReferralCode(sCode);
 
-	if (sOriginatorCPK == sCode)
+	if (sOriginatorCPK == sCPK)
 	{
 		sError = "You may not use your own referral code for your own portfolio. ";
 		return std::string();
@@ -5758,7 +5639,7 @@ double GetReferralCodeEffectivity(int nPortfolioTime)
 		nBonus = 0;
 	if (nBonus > .10)
 		nBonus = .10;
-	return 1.0 + nBonus;
+	return nBonus;
 }
 
 uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sCPK, CAmount& nBBPSize)
@@ -5769,21 +5650,26 @@ uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sC
 	nBBPSize = 0;
 	for (auto uStake : uStakes)
 	{
-		if (uStake.found && uStake.Time > 0 && uStake.CPK == sCPK)
+		if (uStake.found && uStake.Time > 0 && boost::iequals(uStake.CPK, sCPK))
 		{
-			nTotal += uStake.Time;
-			nBBPSize += uStake.nBBPAmount;
-			nCt++;
+			int nStatus = GetUTXOStatus(uStake.TXID);
+			if (nStatus > 0)
+			{
+				nBBPSize += uStake.nBBPAmount;
+				nTotal += uStake.Time;
+				nCt++;
+			}
+		
 		}
 	}
 	nAvg = nTotal/(nCt+.01);
 	return (int64_t)nAvg;
 }
 
-
 std::vector<ReferralCode> GetReferralCodes()
 {
 	std::vector<ReferralCode> vRC;
+	std::vector<UTXOStake> vU = GetUTXOStakes(false);
 	for (auto ii : mvApplicationCache) 
 	{
 		if (Contains(ii.first, "CLAIMREFERRALCODE[-]"))
@@ -5793,8 +5679,11 @@ std::vector<ReferralCode> GetReferralCodes()
 			std::string sID = GetElement(ii.first, "[-]", 1);
 			r.CPK = GetElement(sID, "-", 1);
 			r.Code = GetElement(sID, "-", 2);
-			r.Size = CheckReferralCode(r.Code);
+			CAmount nSize = 0;
 			r.OriginatorCPK = ExtractCPKFromReferralCode(r.Code);
+			// LogPrintf("\nGetReferralCodes cpk=%s, Size %f, Orig %s", r.CPK, (double)r.Size/COIN, r.OriginatorCPK);
+			GetPortfolioTimeAndSize(vU, r.OriginatorCPK, nSize);
+			r.Size = ((double)nSize/COIN) * .10 * COIN;
 			r.found = true;
 			vRC.push_back(r);
 		}
@@ -5802,40 +5691,103 @@ std::vector<ReferralCode> GetReferralCodes()
 	return vRC;
 }
 
-ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::string sCPK)
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK)
 {
 	// Given a CPK (this is a pointer to a portfolio), assess the portfolio determining the impact of the collection of referral codes when applied.
 	// A user may have multiple referral codes cashed in.  Each one has a different max size based on the originators portfolio.
 	// Next the age of this users portfolio determines the effectiveness of each coupon.
 	// The coupon originator also gets a portfolio bonus for coupon utilization by others.
-	std::vector<ReferralCode> vRC = GetReferralCodes();
-	std::vector<UTXOStake> vU = GetUTXOStakes(false);
 	CAmount nBBPSize = 0;
 	ReferralCode r;
-
 	uint64_t nPortfolioTime = GetPortfolioTimeAndSize(vU, sCPK, nBBPSize);
 	r.ReferralEffectivity = GetReferralCodeEffectivity(nPortfolioTime);
 	for (auto rc : vRC)
 	{
-		// Case 1:  This is when a user has claimed a referral code:
-		if (rc.found && rc.CPK == sCPK)
+		if (rc.found)
 		{
-			r.TotalClaimed += rc.Size;
-		}
-		// Case 2:  This is when a user has used a referralcode and received a reward that the originator generated:
-		if (rc.found && rc.OriginatorCPK == sCPK)
-		{
-			CAmount nConsumerBBPSize = 0;
-			r.TotalEarned += rc.Size;
+			// Case 1:  This is when a user has claimed a referral code:
+			if (rc.CPK == sCPK && rc.OriginatorCPK != sCPK)
+			{
+				r.TotalClaimed += rc.Size;
+			}
+			// Case 2:  This is when a user has used a referralcode and received a reward that the originator generated:
+			if (rc.CPK != sCPK && rc.OriginatorCPK != sCPK)
+			{
+				r.TotalEarned += rc.Size;
+			}
 		}
 	}
 	r.TotalReferralReward = r.TotalClaimed + r.TotalEarned;
 	if (r.TotalReferralReward > nBBPSize)
 		r.TotalReferralReward = nBBPSize;
 	r.PercentageAffected = (double)(r.TotalReferralReward/COIN) / (double)((nBBPSize+1)/COIN);
-	
+	if (r.PercentageAffected > 1)
+		r.PercentageAffected = 1;
 	// Calculate the Total ReferralRewards
-	r.ReferralRewards = r.PercentageAffected * r.ReferralEffectivity;
-
+	r.ReferralRewards = 1.0 + (r.PercentageAffected * r.ReferralEffectivity);
+	if (r.ReferralRewards < 1)
+		r.ReferralRewards = 1.0;
+	if (r.ReferralRewards > 1.5)
+		r.ReferralRewards = 1.5;
 	return r;
 }
+
+std::string SerializeDMAddress(DMAddress d)
+{
+	std::string sXML = "<Name>" + d.Name + "</Name><AddressLine1>" + d.AddressLine1 + "</AddressLine1><AddressLine2>" + d.AddressLine2 + "</AddressLine2><City>" + d.City + "</City><State>" + d.State + "</State><Zip>" + d.Zip + "</Zip>";
+	return sXML;
+}
+
+CAmount GetBBPValueUSD(double nUSD)
+{
+	double nBTCPrice = GetCryptoPrice("btc");
+	double nBBPPrice = GetCryptoPrice("bbp");
+	double nUSDBBP = nBTCPrice * nBBPPrice;
+	double nCost = nUSD/(nUSDBBP+.000001);
+	CAmount nOut = nCost * COIN;
+	return nOut;
+}
+
+DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun)
+{
+	std::string sTXID = "12345";
+	std::string sError;
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+
+	if (!fDryRun)
+	{
+		CAmount nCost = GetBBPValueUSD(1);
+		if (nCost > 250000)
+			nCost = 250000;
+		std::string sPayload = "<mail>" + RoundToString((double)nCost/COIN, 2) + "</mail>";
+		sTXID = RPCSendMessage(nCost, consensusParams.BurnAddress, fDryRun, sError, sPayload);
+	}
+	// Todo: Add the custom paragraph here, and the custom gift here
+	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	std::string sXML = "<cpk>" + sCPK + "</cpk><paragraph>" + dmTo.Paragraph + "</paragraph><from>" + SerializeDMAddress(dmFrom) + "</from><to>" 
+		+ SerializeDMAddress(dmTo) + "</to><dryrun>" + (fDryRun ? "1" : "0") + "</dryrun><txid>" + sTXID + "</txid>";
+	DACResult b = DSQL_ReadOnlyQuery("Server?action=MAIL", sXML);
+	return b;
+}
+
+DACResult MakeDerivedKey(std::string sPhrase)
+{
+	AcquireWallet();
+	WalletBatch dummyBatch(pwalletpog->GetDBHandle(), "r+", false);
+	dummyBatch.TxnBegin();
+	CPubKey dummyPubkey = pwalletpog->GenerateNewKey(dummyBatch, 0, false, sPhrase);
+	dummyBatch.TxnAbort();
+	DACResult d;
+	d.PublicKey = HexStr(dummyPubkey);
+	CKeyID keyID = dummyPubkey.GetID();
+	d.Address = EncodeDestination(keyID);
+	CKey vchSecret;
+	if (!pwalletpog->GetKey(keyID, vchSecret)) 
+	{
+		d.ErrorCode = "Private key for address is not known";
+		return d;
+	}
+	d.SecretKey = CBitcoinSecret(vchSecret).ToString();
+	return d;
+}
+

@@ -13,6 +13,8 @@
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
 
+#include <iostream>
+
 static secp256k1_context* secp256k1_context_sign = nullptr;
 
 /** These functions are taken from the libsecp256k1 distribution and are very ugly. */
@@ -163,6 +165,22 @@ void CKey::MakeNewKey(bool fCompressedIn) {
     fCompressed = fCompressedIn;
 }
 
+void GetNewKeyBytes(unsigned char* out, int num, std::string passphrase)
+{
+    assert(num <= 32);
+    CSHA512 hasher;
+	unsigned char buf[64] = {0x0};
+    hasher.Write((unsigned char*)passphrase.data(), passphrase.size());
+    hasher.Finalize(buf);
+    memcpy(out, buf, num);
+}
+
+void CKey::MakeNewDerivedKey(bool fCompressedIn, std::string sPhrase) 
+{
+    GetNewKeyBytes(keydata.data(), keydata.size(), sPhrase);
+    fValid = Check(keydata.data());
+	fCompressed = fCompressedIn;
+}
 
 bool CKey::SetPrivKey(const CPrivKey &privkey, bool fCompressedIn) {
     if (!ec_privkey_import_der(secp256k1_context_sign, (unsigned char*)begin(), &privkey[0], privkey.size()))

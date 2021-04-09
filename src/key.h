@@ -97,6 +97,7 @@ public:
 
     //! Generate a new private key using a cryptographic PRNG.
     void MakeNewKey(bool fCompressed);
+	void MakeNewDerivedKey(bool fCompressedIn, std::string sPhrase = "");
 
     /**
      * Convert the private key to a CPrivKey (serialized OpenSSL private key data).

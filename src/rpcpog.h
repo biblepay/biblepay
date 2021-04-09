@@ -92,6 +92,18 @@ struct ReferralCode
 	bool found;
 };
 
+struct DMAddress
+{
+	std::string Name;
+	std::string AddressLine1;
+	std::string AddressLine2;
+	std::string City;
+	std::string State;
+	std::string Zip;
+	std::string Paragraph;
+	CAmount Amount;
+};
+
 struct DataTable
 {
 	int Rows = 0;
@@ -201,6 +213,9 @@ struct DACResult
 	std::string TXID;
 	std::string ErrorCode;
 	std::string PrimaryKey;
+	std::string PublicKey;
+	std::string Address;
+	std::string SecretKey;
 	int64_t nTime = 0;
 	std::map<std::string, IPFSTransaction> mapResponses;
 	std::map<std::string, std::string> mapRegions;
@@ -422,7 +437,6 @@ std::map<std::string, std::string> GetSporkMap(std::string sPrimaryKey, std::str
 std::map<std::string, CPK> GetGSCMap(std::string sGSCObjType, std::string sSearch, bool fRequireSig);
 void WriteCacheDouble(std::string sKey, double dValue);
 double ReadCacheDouble(std::string sKey);
-bool CheckAntiBotNetSignature(CTransactionRef tx, std::string sType, std::string sSolver);
 double GetVINCoinAge(int64_t nBlockTime, CTransactionRef tx, bool fDebug);
 CAmount GetTitheAmount(CTransactionRef ctx);
 CPK GetCPK(std::string sData);
@@ -458,7 +472,7 @@ std::string GenerateFaucetCode();
 void WriteBinaryToFile(char const* filename, std::vector<char> data);
 std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey);
 bool ApproveSanctuaryRevivalTransaction(CTransaction tx);
-bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& TXID_OUT, std::string& ERROR_OUT);
+bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& ERROR_OUT);
 double GetCoinAge(std::string txid);
 CoinAgeVotingDataStruct GetCoinAgeVotingData(std::string sGobjectID);
 std::string GetAPMNarrative();
@@ -519,14 +533,12 @@ std::string ToYesNo(bool bValue);
 bool VoteForGobject(uint256 govobj, std::string sVoteOutcome, std::string& sError);
 int64_t GetDCCFileAge();
 std::string GetSANDirectory2();
-CWalletTx CreateGSCClientTransmission(std::string sGobjectID, std::string sOutcome, std::string sCampaign, std::string sDiary, CBlockIndex* pindexLast, double nCoinAgePercentage, CAmount nFoundationDonation, 
-	CReserveKey& reservekey, std::string& sXML, std::string& sError, std::string& sWarning);
+bool CreateLegacyGSCTransmission(std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError);
 bool ValidateAddress2(std::string sAddress);
 void InitUTXOWallet();
 boost::filesystem::path GetDeterministicConfigFile();
 boost::filesystem::path GetMasternodeConfigFile();
 bool AcquireWallet();
-bool CreateGSCTransmission(std::string sGobjectID, std::string sOutcome, bool fForce, std::string sDiary, std::string& sError, std::string sSpecificCampaignName, std::string& sWarning, std::string& TXID_OUT);
 CAmount ARM64();
 std::vector<NFT> GetNFTs(bool fIncludeMemoryPool);
 bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nBuyPrice, bool fDryRun, std::string& sError);
@@ -542,5 +554,14 @@ int64_t GetTxTime1(uint256 hash, int ordinal);
 std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload);
 std::string SendReferralCode(std::string& sError);
 CAmount CheckReferralCode(std::string sCode);
-ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::string sCPK);
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK);
+std::string ClaimReferralCode(std::string sCode, std::string& sError);
+double GetReferralCodeEffectivity(int nPortfolioTime);
+uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sCPK, CAmount& nBBPSize);
+std::vector<ReferralCode> GetReferralCodes();
+CAmount GetBBPSizeFromPortfolio(std::string sCPK);
+DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun);
+DACResult MakeDerivedKey(std::string sPhrase);
+CAmount GetBBPValueUSD(double nUSD);
+
 #endif

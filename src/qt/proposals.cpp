@@ -214,7 +214,7 @@ void Proposals::VerifyUserReallyWantsToVote(std::string sVotingType, std::string
 			std::string sGobjectID = GUIUtil::FROMQS(ui->tableWidget->item(row,0)->text());
 			std::string TXID_OUT;
 			std::string ERROR_OUT;
-			bool fVoted = VoteWithCoinAge(sGobjectID, sVotingAction, TXID_OUT, ERROR_OUT);
+			bool fVoted = VoteWithCoinAge(sGobjectID, sVotingAction, ERROR_OUT);
 			std::string sNarr;
 			QMessageBox msgOutcome;
 			msgOutcome.setWindowTitle(tr("Voting Outcome"));

@@ -28,6 +28,7 @@
 #include <masternode/masternode-payments.h>
 #include <masternode/masternode-sync.h>
 #include <validationinterface.h>
+#include "init.h"
 
 #include <evo/specialtx.h>
 #include <evo/cbtx.h>
@@ -768,17 +769,16 @@ recover:
 					if ((pblock->nNonce & 0xFF) == 0)
 					{
 						boost::this_thread::interruption_point();
+					    if (ShutdownRequested()) 
+							break;
+		
             			int64_t nElapsed = GetAdjustedTime() - nLastGUI;
 						if (nElapsed > 5)
 						{
 							nLastGUI = GetAdjustedTime();
 							UpdateHashesPerSec(nHashesDone);
-							//bool fNonce = CheckNonce(f9000, pblock->nNonce, pindexPrev->nHeight, pindexPrev->nTime, pblock->GetBlockTime(), consensusParams);
-							//i//f (!fNonce)
-							//{
-								// Make a new block
+							// Make a new block
 								pblock->nNonce = 0x9FFF;
-							//}
 						}
 						int64_t nElapsedLastMiningBreak = GetAdjustedTime() - nLastMiningBreak;
 						if (nElapsedLastMiningBreak > 60)
@@ -792,7 +792,9 @@ recover:
 				UpdateHashesPerSec(nHashesDone);
 				// Check for stop or if block needs to be rebuilt
 				boost::this_thread::interruption_point();
-			   
+			    if (ShutdownRequested()) 
+					break;
+
 				if (!PeersExist())
 					 break;
 

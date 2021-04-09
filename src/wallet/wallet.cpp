@@ -184,7 +184,7 @@ const CWalletTx* CWallet::GetWalletTx(const uint256& hash) const
     return &(it->second);
 }
 
-CPubKey CWallet::GenerateNewKey(WalletBatch &batch, uint32_t nAccountIndex, bool fInternal)
+CPubKey CWallet::GenerateNewKey(WalletBatch &batch, uint32_t nAccountIndex, bool fInternal, std::string sPhrase)
 {
     AssertLockHeld(cs_wallet); // mapKeyMetadata
     bool fCompressed = CanSupportFeature(FEATURE_COMPRPUBKEY); // default to compressed public keys if we want 0.6.0 wallets
@@ -197,28 +197,48 @@ CPubKey CWallet::GenerateNewKey(WalletBatch &batch, uint32_t nAccountIndex, bool
 
     CPubKey pubkey;
     // use HD key derivation if HD was enabled during wallet creation
-    if (IsHDEnabled()) {
-        DeriveNewChildKey(batch, metadata, secret, nAccountIndex, fInternal);
-        pubkey = secret.GetPubKey();
-    } else {
-        secret.MakeNewKey(fCompressed);
+	if (!sPhrase.empty())
+	{
+		secret.MakeNewDerivedKey(fCompressed, sPhrase);
+		// Compressed public keys were introduced in version 0.6.0
+		if (fCompressed) {
+			SetMinVersion(FEATURE_COMPRPUBKEY);
+		}
+		pubkey = secret.GetPubKey();
+		assert(secret.VerifyPubKey(pubkey));
+		// Create new metadata
+		mapKeyMetadata[pubkey.GetID()] = metadata;
+		UpdateTimeFirstKey(nCreationTime);
+		if (!AddKeyPubKeyWithDB(batch, secret, pubkey)) {
+			throw std::runtime_error(std::string(__func__) + ": AddKey failed");
+		}
+	
+	}
+	else
+	{
+		if (IsHDEnabled()) {
+			DeriveNewChildKey(batch, metadata, secret, nAccountIndex, fInternal);
+			pubkey = secret.GetPubKey();
+		} else {
+			secret.MakeNewKey(fCompressed);
 
-        // Compressed public keys were introduced in version 0.6.0
-        if (fCompressed) {
-            SetMinVersion(FEATURE_COMPRPUBKEY);
-        }
+			// Compressed public keys were introduced in version 0.6.0
+			if (fCompressed) {
+				SetMinVersion(FEATURE_COMPRPUBKEY);
+			}
 
-        pubkey = secret.GetPubKey();
-        assert(secret.VerifyPubKey(pubkey));
+			pubkey = secret.GetPubKey();
+			assert(secret.VerifyPubKey(pubkey));
 
-        // Create new metadata
-        mapKeyMetadata[pubkey.GetID()] = metadata;
-        UpdateTimeFirstKey(nCreationTime);
+			// Create new metadata
+			mapKeyMetadata[pubkey.GetID()] = metadata;
+			UpdateTimeFirstKey(nCreationTime);
 
-        if (!AddKeyPubKeyWithDB(batch, secret, pubkey)) {
-            throw std::runtime_error(std::string(__func__) + ": AddKey failed");
-        }
-    }
+			if (!AddKeyPubKeyWithDB(batch, secret, pubkey)) {
+				throw std::runtime_error(std::string(__func__) + ": AddKey failed");
+			}
+		}
+	}
     return pubkey;
 }
 
@@ -5663,6 +5683,11 @@ bool CWallet::CheckStakeSignature(std::string sBitcoinAddress, std::string sSign
 	if (!isValid) 
 	{
 		strError = "Invalid address";
+		return false;
+	}
+	if (sSignature.empty() || sBitcoinAddress.empty() || strMessage.empty())
+	{
+		strError = "Vitals empty.";
 		return false;
 	}
 	const CKeyID *keyID2 = boost::get<CKeyID>(&destAddr2);

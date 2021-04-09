@@ -1587,46 +1587,6 @@ UniValue bookname(const JSONRPCRequest& request)
 	return results;
 }
 
-UniValue sendgscc(const JSONRPCRequest& request)
-{
-	if (request.fHelp)
-		throw std::runtime_error(
-		"sendgscc"
-		"\nSends a generic smart contract campaign transmission."
-		"\nYou must specify sendgscc campaign_name [optional:diary_entry] : IE 'exec sendgscc healing [\"prayed for Jane Doe who had broken ribs, this happened\"].");
-	if (request.params.size() < 1 || request.params.size() > 3)
-		throw std::runtime_error("You must specify sendgscc campaign_name [foundation_donation_amount] [optional:diary_entry] : IE 'exec sendgscc healing [\"prayed for Jane Doe who had broken ribs, this happened\"].");
-	std::string sDiary;
-	std::string sCampaignName;
-	if (request.params.size() > 0)
-	{
-		sCampaignName = request.params[0].get_str();
-	}
-	if (request.params.size() > 1)
-	{
-		sDiary = request.params[1].get_str();
-		if (sDiary.length() < 10)
-			throw std::runtime_error("Diary entry incomplete (must be 10 chars or more).");
-	}
-	WriteCache("gsc", "errors", "", GetAdjustedTime());
-	std::string sError;
-	std::string sWarning;
-	std::string TXID_OUT;
-    UniValue results(UniValue::VOBJ);
-	bool fCreated = CreateGSCTransmission("", "", true, sDiary, sError, sCampaignName, sWarning, TXID_OUT);
-
-	if (!sError.empty())
-		results.push_back(Pair("Error!", sError));
-	std::string sFullError = ReadCache("gsc", "errors");
-	if (!sFullError.empty())
-		results.push_back(Pair("Error!", sFullError));
-	if (!sWarning.empty())
-		results.push_back(Pair("Warning!", sWarning));
-	if (fCreated)
-		results.push_back(Pair("Results", fCreated));
- 	return results;
-}
-
 UniValue datalist(const JSONRPCRequest& request)
 {
 	if (request.fHelp || (request.params.size() != 1 && request.params.size() != 2))
@@ -1713,10 +1673,14 @@ UniValue easystake(const JSONRPCRequest& request)
 {
 	// Jan 20, 2021 - Easy Stake - R ANDREWS - BIBLEPAY
 		
-	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount commitment_days[0=conservative,30-365=high-risk] 0=dry_run/1=real  [Optional `Ticker`=Override Foreign Ticker]";
+	std::string sHelp = "You must specify easystake minimum_bbp_amount foreign_address foreign_amount 0=dry_run/1=real [Optional `Ticker`=Override Foreign Ticker]";
 	std::string sError;
-	if (request.fHelp || (request.params.size() != 5 && request.params.size() != 6))
+	if (request.fHelp || (request.params.size() != 4 && request.params.size() != 5 && request.params.size() != 6))
 		throw std::runtime_error(sHelp.c_str());
+	
+	double nDays = 0;
+	if (request.params.size() > 5)
+		nDays = cdbl(request.params[5].getValStr(), 2);
 	
 	std::string sBBPAddress;
 	std::string sTickerOverride;
@@ -1726,10 +1690,10 @@ UniValue easystake(const JSONRPCRequest& request)
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sForeignAddress = request.params[1].getValStr();
 	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
-	double nDays = cdbl(request.params[3].getValStr(), 2);
-	bool fDryRun = cdbl(request.params[4].getValStr(), 0) == 0;
-	if (request.params.size() > 5)
-		sTickerOverride = request.params[5].getValStr();
+
+	bool fDryRun = cdbl(request.params[3].getValStr(), 0) == 0;
+	if (request.params.size() > 4)
+		sTickerOverride = request.params[4].getValStr();
 	
 	std::string sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	if (sBBPUTXO.empty())
@@ -1835,21 +1799,48 @@ UniValue easystake(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue highriskstake(const JSONRPCRequest& request)
+{
+	std::string sHelp = "You must specify highriskstake minimum_bbp_amount foreign_address foreign_amount commitment_days[0=conservative,30-365=high-risk] 0=dry_run/1=real [Optional `Ticker`=Override Foreign Ticker]";
+
+	std::string sError;
+	if (request.fHelp || (request.params.size() != 6 && request.params.size() != 5))
+		throw std::runtime_error(sHelp.c_str());
+	UniValue results(UniValue::VOBJ);
+
+    JSONRPCRequest newRequest;
+	newRequest.params.setArray();
+	newRequest.params.push_back(request.params[0].getValStr()); // min bbp
+	newRequest.params.push_back(request.params[1].getValStr()); // foreign addr
+	newRequest.params.push_back(request.params[2].getValStr()); // foreign amt
+	newRequest.params.push_back(request.params[4].getValStr()); // dry run
+	std::string sForeignTickerOverride;
+	if (request.params.size() > 5)
+		sForeignTickerOverride = request.params[5].getValStr();
+	newRequest.params.push_back(sForeignTickerOverride); // override
+	newRequest.params.push_back(request.params[3].getValStr()); // commitment Days
+	results = easystake(newRequest);
+	return results;
+}
+
 UniValue easybbpstake(const JSONRPCRequest& request)
 {
-	std::string sHelp = "You must specify easybbpstake minimum_bbp_amount commitment_days[0=conservative,30-365=high_risk] 0=dry_run/1=real";
+	std::string sHelp = "You must specify easybbpstake minimum_bbp_amount 0=dry_run/1=real";
 	std::string sError;
-	if (request.fHelp || (request.params.size() != 3))
+	if (request.fHelp || (request.params.size() != 2 && request.params.size() != 3))
 		throw std::runtime_error(sHelp.c_str());
 	double nMin = cdbl(request.params[0].getValStr(), 2);
-	double nDays = cdbl(request.params[1].getValStr(), 2);
+	bool fDryRun = cdbl(request.params[1].getValStr(), 0) == 0;
+	
+	double nDays = 0;
+	if (request.params.size() > 2)
+		nDays = cdbl(request.params[2].getValStr(), 2);
 	if (nDays > 0 && (nDays < 30 || nDays > 365))
 	{
 		sError = "Commitment days must be between 30 and 365 if specified. ";
 		throw std::runtime_error(sError);
 	}
-	bool fDryRun = cdbl(request.params[2].getValStr(), 0) == 0;
-
+	
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
 	bool fWallet = AcquireWallet3();
@@ -1911,6 +1902,17 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 		results.push_back(Pair("Dry Run Mode", fDryRun));
 	}
 
+	return results;
+}
+
+UniValue highriskbbpstake(const JSONRPCRequest& request)
+{
+	std::string sHelp = "You must specify highriskbbpstake minimum_bbp_amount 0=dry_run/1=real commitment_days[0=conservative,30-365=high_risk]";
+	std::string sError;
+	if (request.fHelp || (request.params.size() != 3))
+		throw std::runtime_error(sHelp.c_str());
+	UniValue results(UniValue::VOBJ);
+	results = easybbpstake(request);
 	return results;
 }
 
@@ -2262,6 +2264,27 @@ UniValue buynft(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue attachreferralcode(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+		throw std::runtime_error("You may specify attachreferralcode code\nThis allows you to attach a referral code to your portfolio.  You may use up to 10% of the size of the originators portfolio and you will receive 0-10% extra DWU depending on the age of your portfolio and scope of the code. ");
+	UniValue results(UniValue::VOBJ);
+	std::string sError;
+	std::string sCode = request.params[0].get_str();
+	std::string sResponse = ClaimReferralCode(sCode, sError);
+	// 4-6-2021
+
+	if (sError.empty())
+	{
+		results.push_back(Pair("Attached", sResponse));
+	}
+	else
+	{
+		results.push_back(Pair("Error", sError));
+	}
+	return results;
+}
+
 UniValue price(const JSONRPCRequest& request)
 {
     if (request.fHelp) 
@@ -2343,21 +2366,67 @@ UniValue generatereferralcode(const JSONRPCRequest& request)
 	return results;
 }
 
-UniValue getreferralcodeimpact(const JSONRPCRequest& request)
+UniValue listattachedreferralcodes(const JSONRPCRequest& request)
 {
     if (request.fHelp) 
-		throw std::runtime_error("You may specify getreferralcodeimpact");
+		throw std::runtime_error("You may specify listattachedreferralcodes\nShows a list of attached referral codes to your portfolio.  Shows the total impact to your portfolio from these codes. ");
 	UniValue results(UniValue::VOBJ);
 	
+	// Given a CPK (this is a pointer to a portfolio), assess the portfolio determining the impact of the collection of referral codes when applied.
+	// A user may have multiple referral codes cashed in.  Each one has a different max size based on the originators portfolio.
+	// Next the age of this users portfolio determines the effectiveness of each coupon.
+	// The coupon originator also gets a portfolio bonus for coupon utilization by others.
+	std::vector<ReferralCode> vRC = GetReferralCodes();
+	std::vector<UTXOStake> vU = GetUTXOStakes(false);
+	
+	CAmount nBBPSize = 0;
+	ReferralCode r;
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(vRC, vU, sCPK);
 
-	ReferralCode rc = GetTotalPortfolioImpactFromReferralCodes(sCPK);
-	results.push_back(Pair("Referral BBP Claimed", (double)rc.TotalClaimed/COIN));
-	results.push_back(Pair("Referral BBP Earned", (double)rc.TotalEarned/COIN));
-	results.push_back(Pair("Total BBP in Portfolio affected", (double)rc.TotalReferralReward/COIN));
-	results.push_back(Pair("Referral Code Effectivity %", rc.ReferralEffectivity * 100));
-	results.push_back(Pair("Total Portfolio Impact %", rc.ReferralRewards * 100));
+	uint64_t nPortfolioTime = GetPortfolioTimeAndSize(vU, sCPK, nBBPSize);
+	r.ReferralEffectivity = GetReferralCodeEffectivity(nPortfolioTime);
+	for (auto rc : vRC)
+	{
+		bool nType = 0;
+		std::string sType;
+		if (rc.found)
+		{
+			// Case 1:  This is when a user has claimed a referral code:
+			if (rc.CPK == sCPK && rc.OriginatorCPK != sCPK)
+			{
+				r.TotalClaimed += rc.Size;
+				sType = "Claimed";
+			}
+			// Case 2:  This is when a user has used a referralcode and received a reward that the originator generated:
+			if (rc.CPK != sCPK && rc.OriginatorCPK != sCPK)
+			{
+				r.TotalEarned += rc.Size;
+				sType = "Earned";
+			}
+		}
+		if (!sType.empty())
+		{
+			std::string sRow = RoundToString((double)rc.Size/COIN, 2);
+			results.push_back(Pair(rc.Code + "-" + sType, sRow));
+		}
+	}
+	r.TotalReferralReward = r.TotalClaimed + r.TotalEarned;
+	r.PercentageAffected = (double)(r.TotalReferralReward/COIN) / (double)((nBBPSize+1)/COIN);
+	if (r.PercentageAffected > 1)
+		r.PercentageAffected = 1;
+	// Calculate the Total ReferralRewards
+	r.ReferralRewards = (r.PercentageAffected * r.ReferralEffectivity);
+	results.push_back(Pair("Referral BBP Claimed", (double)r.TotalClaimed/COIN));
+	results.push_back(Pair("Referral BBP Earned", (double)r.TotalEarned/COIN));
+	results.push_back(Pair("Total BBP in Portfolio affected", (double)r.TotalReferralReward/COIN));
+	results.push_back(Pair("Portfolio % affected by rewards", r.PercentageAffected*100));
+	results.push_back(Pair("Referral Code Effectivity %", r.ReferralEffectivity * 100));
+	results.push_back(Pair("Total Portfolio DWU Impact %", r.ReferralRewards * 100));
+	results.push_back(Pair("Portfolio Rewards Modifier", rc1.ReferralRewards));
+
 	return results;
+
 }
 
 UniValue checkreferralcode(const JSONRPCRequest& request)
@@ -2365,7 +2434,6 @@ UniValue checkreferralcode(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 1)
 		throw std::runtime_error("You may specify checkreferralcode code");
 	UniValue results(UniValue::VOBJ);
-	AcquireWallet3();
 	std::string sCode = request.params[0].get_str();
 	CAmount nAmount = CheckReferralCode(sCode);
 	results.push_back(Pair("value", (double)nAmount/COIN));
@@ -2376,30 +2444,33 @@ UniValue checkreferralcode(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)
   //  --------------------- ------------------------  -----------------------
-    { "evo",                "bls",                          &_bls,                 {}  },
-    { "evo",                "protx",                        &protx,                {}  },
-	{ "evo",                "bookname",                     &bookname,             {}  },
-	{ "evo",                "books",                        &books,                {}  },
-	{ "evo",                "buynft",                       &buynft,               {}  },
-	{ "evo",                "checkreferralcode",            &checkreferralcode,    {}  },
-	{ "evo",                "datalist",                     &datalist,             {}  },
-	{ "evo",                "dashpay",                      &dashpay,              {}  },
-	{ "evo",                "give",                         &give,                 {}  },
-	{ "evo",                "getpin",                       &getpin,               {}  },
-	{ "evo",                "getreferralcodeimpact",        &getreferralcodeimpact,{}  },
-	{ "evo",                "easystake",                    &easystake,            {}  },
-	{ "evo",                "listutxostakes",               &listutxostakes,       {}  },
-	{ "evo",                "listdacdonations",             &listdacdonations,     {}  },
-	{ "evo",                "listexpenses",                 &listexpenses,         {}  },
-	{ "evo",                "listnfts",                     &listnfts,             {}  },
-	{ "evo",                "easybbpstake",                 &easybbpstake,         {}  },
-	{ "evo",                "utxostake",                    &utxostake,            {}  },
-	{ "evo",                "generatereferralcode",         &generatereferralcode, {} },
-	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,   {}  },
-	{ "evo",                "faucetcode",                   &faucetcode,           {}  },
-	{ "evo",                "price",                        &price,                {}  },
-	{ "evo",                "trackdashpay",                 &trackdashpay,         {}  },
-	{ "evo",                "versionreport",                &versionreport,        {}  },
+    { "evo",                "bls",                          &_bls,                     {}  },
+    { "evo",                "protx",                        &protx,                    {}  },
+	{ "evo",                "attachreferralcode",           &attachreferralcode,       {}  },
+	{ "evo",                "bookname",                     &bookname,                 {}  },
+	{ "evo",                "books",                        &books,                    {}  },
+	{ "evo",                "buynft",                       &buynft,                   {}  },
+	{ "evo",                "checkreferralcode",            &checkreferralcode,        {}  },
+	{ "evo",                "datalist",                     &datalist,                 {}  },
+	{ "evo",                "dashpay",                      &dashpay,                  {}  },
+	{ "evo",                "give",                         &give,                     {}  },
+	{ "evo",                "getpin",                       &getpin,                   {}  },
+	{ "evo",                "easystake",                    &easystake,                {}  },
+	{ "evo",                "highriskstake",                &highriskstake,            {}  },
+	{ "evo",                "highriskbbpstake",             &highriskbbpstake,         {}  },
+	{ "evo",                "listattachedreferralcodes",    &listattachedreferralcodes,{}  },
+	{ "evo",                "listutxostakes",               &listutxostakes,           {}  },
+	{ "evo",                "listdacdonations",             &listdacdonations,         {}  },
+	{ "evo",                "listexpenses",                 &listexpenses,             {}  },
+	{ "evo",                "listnfts",                     &listnfts,                 {}  },
+	{ "evo",                "easybbpstake",                 &easybbpstake,             {}  },
+	{ "evo",                "utxostake",                    &utxostake,                {}  },
+	{ "evo",                "generatereferralcode",         &generatereferralcode,     {}  },
+	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,       {}  },
+	{ "evo",                "faucetcode",                   &faucetcode,               {}  },
+	{ "evo",                "price",                        &price,                    {}  },
+	{ "evo",                "trackdashpay",                 &trackdashpay,             {}  },
+	{ "evo",                "versionreport",                &versionreport,            {}  },
 };
 
 void RegisterEvoRPCCommands(CRPCTable &tableRPC)
