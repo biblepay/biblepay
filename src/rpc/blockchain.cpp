@@ -2733,6 +2733,25 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("Address", d.Address));
 		results.push_back(Pair("Secret", d.SecretKey));
 	}
+	else if (sItem == "testreadacentry")
+	{
+		std::string sKey1 = request.params[1].get_str();
+		std::string sKey2 = request.params[2].get_str();
+
+		DACResult d = ReadAccountingEntry(sKey1, sKey2);
+		results.push_back(Pair("Amount", (double)d.nAmount/COIN));
+		results.push_back(Pair("Value", d.Response));
+	
+	}
+	else if (sItem == "testwriteacentry")
+	{
+		std::string sKey1 = request.params[1].get_str();
+		std::string sKey2 = request.params[2].get_str();
+		std::string sValue = request.params[3].get_str();
+		CAmount nAmount = 5 * COIN;
+		bool fResponse = WriteAccountingEntry(sKey1, sKey2, sValue, nAmount);
+		results.push_back(Pair("Results", fResponse));	
+	}
 	else if (sItem == "testmail")
 	{
 		std::string sHelp = "exec testmail \"Name,Address-1,City,State,Zip\" \"Your customized recipient paragraph\" bbp_gift_amount 0=dry/1=real";
@@ -2789,7 +2808,6 @@ UniValue exec(const JSONRPCRequest& request)
 				dmTo.City = vT[2];
 				dmTo.State = vT[3];
 				dmTo.Zip = vT[4];
-				dmTo.Paragraph = sParagraph;
 				dmTo.Amount = dAmount * COIN;
 				std::string sCode = dmTo.AddressLine1;
 
@@ -2813,12 +2831,12 @@ UniValue exec(const JSONRPCRequest& request)
 					std::string sTXID = RPCSendMessage(nAmount, d.Address, fDryRun, sError, sPayload);
 					results.push_back(Pair("Gift TXID", sTXID));
 					sParagraph += "<p><br>A gift of $" + RoundToString(dAmount, 2) + " [" + RoundToString((double)nAmount/COIN, 2) 
-						+ " BBP] has been sent to you!  Please use the code \"" + sCode + "\" to redeem your gift.<br>";
+						+ " BBP] has been sent to you!  Please use the code <span style='white-space: nowrap;'><font color=lime>\"" + sCode + "\"</font></span> to redeem your gift.<br>";
 				}
 	
 
 				results.push_back(Pair("Extra Paragraph", sParagraph));
-
+				dmTo.Paragraph = sParagraph;
 				results.push_back(Pair("Gift Amount", dAmount));
 				DACResult b = MailLetter(dmFrom, dmTo, true);
 				std::string sError = ExtractXML(b.Response, "<error>", "</error>");

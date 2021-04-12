@@ -1060,6 +1060,30 @@ bool CWallet::AccountMove(std::string strFrom, std::string strTo, CAmount nAmoun
     return true;
 }
 
+bool CWallet::AccountMove2(std::string strFrom, std::string strTo, CAmount nAmount, std::string strComment)
+{
+    WalletBatch batch(*database);
+    if (!batch.TxnBegin())
+        return false;
+
+    int64_t nNow = GetAdjustedTime();
+
+    // Debit
+    CAccountingEntry debit;
+    debit.nOrderPos = IncOrderPosNext(&batch);
+    debit.strAccount = strFrom;
+    debit.nCreditDebit = -nAmount;
+    debit.nTime = nNow;
+    debit.strOtherAccount = strTo;
+    debit.strComment = strComment;
+    AddAccountingEntry(debit, &batch);
+
+    if (!batch.TxnCommit())
+        return false;
+
+    return true;
+}
+
 bool CWallet::GetAccountDestination(CTxDestination &dest, std::string strAccount, bool bForceNew)
 {
     WalletBatch batch(*database);

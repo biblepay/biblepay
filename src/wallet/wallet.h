@@ -1065,6 +1065,8 @@ public:
     int64_t IncOrderPosNext(WalletBatch *batch = nullptr);
     DBErrors ReorderTransactions();
     bool AccountMove(std::string strFrom, std::string strTo, CAmount nAmount, std::string strComment = "");
+	bool AccountMove2(std::string strFrom, std::string strTo, CAmount nAmount, std::string strComment = "");
+
     bool GetAccountDestination(CTxDestination &dest, std::string strAccount, bool bForceNew = false);
 
     void MarkDirty();

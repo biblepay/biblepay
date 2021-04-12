@@ -5791,3 +5791,40 @@ DACResult MakeDerivedKey(std::string sPhrase)
 	return d;
 }
 
+bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount)
+{
+	AcquireWallet();
+    LOCK2(cs_main, pwalletpog->cs_wallet);
+
+    if (!pwalletpog->AccountMove2(sKey, sKey2, nAmount, sValue)) 
+	{
+		return false;
+    }
+    return true;
+}
+
+DACResult ReadAccountingEntry(std::string sKey, std::string sKey2)
+{
+	AcquireWallet();
+    LOCK2(cs_main, pwalletpog->cs_wallet);
+    std::string strAccount = "*";
+    const CWallet::TxItems & txOrdered = pwalletpog->wtxOrdered;
+	DACResult d;
+    for (CWallet::TxItems::const_reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it)
+    {
+        CWalletTx *const pwtx = (*it).second.first;
+        CAccountingEntry *const pacentry = (*it).second.second;
+        if (pacentry != nullptr)
+		{
+			// std::string sRow = "Key1 " + pacentry->strOtherAccount + "," + pacentry->strAccount + ",Value=" + pacentry->strComment + ",Amount=" + RoundToString((double)pacentry->nCreditDebit/COIN, 2);
+			// LogPrintf("\nReadAccountingEntry::%s", sRow);
+			if (sKey == pacentry->strOtherAccount && sKey2 == pacentry->strAccount)
+			{
+				d.Response = pacentry->strComment;
+				d.nAmount = pacentry->nCreditDebit;
+				return d;
+			}
+		}
+    }
+	return d;
+}

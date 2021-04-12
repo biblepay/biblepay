@@ -217,6 +217,7 @@ struct DACResult
 	std::string Address;
 	std::string SecretKey;
 	int64_t nTime = 0;
+	CAmount nAmount = 0;
 	std::map<std::string, IPFSTransaction> mapResponses;
 	std::map<std::string, std::string> mapRegions;
 };
@@ -563,5 +564,7 @@ CAmount GetBBPSizeFromPortfolio(std::string sCPK);
 DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun);
 DACResult MakeDerivedKey(std::string sPhrase);
 CAmount GetBBPValueUSD(double nUSD);
+DACResult ReadAccountingEntry(std::string sKey, std::string sKey2);
+bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount);
 
 #endif
