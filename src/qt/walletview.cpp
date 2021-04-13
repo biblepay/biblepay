@@ -36,6 +36,7 @@
 #include "generictabledialog.h"
 #include "proposaladddialog.h"
 #include "nftadddialog.h"
+#include "mailsenddialog.h"
 #include "userdialog.h"
 #include "memorizescripturedialog.h"
 #include "secdialog.h"
@@ -90,13 +91,14 @@ WalletView::WalletView(QWidget* parent) :
 	// BiblePay
 	proposalAddPage = new ProposalAddDialog(platformStyle);
 	nftAddPage = new NFTAddDialog(platformStyle);
+	mailSendPage = new MailSendDialog(platformStyle);
 	userEditPage = new UserDialog(platformStyle);
 	
 	memorizeScripturePage = new MemorizeScriptureDialog(platformStyle);
 	proposalListPage = new Proposals(platformStyle);
     businessObjectListPage = new BusinessObjectList(platformStyle);
 	nftListPage = new GenericTableDialog(platformStyle);
-
+	
     addWidget(overviewPage);
     addWidget(transactionsPage);
     addWidget(receiveCoinsPage);
@@ -109,6 +111,7 @@ WalletView::WalletView(QWidget* parent) :
 	addWidget(userEditPage);
 	addWidget(proposalAddPage);
 	addWidget(nftAddPage);
+	addWidget(mailSendPage);
 	addWidget(nftListPage);
 
     QSettings settings;
@@ -279,7 +282,12 @@ void WalletView::gotoNFTListPage()
 	setCurrentWidget(nftListPage);
 	nftListPage->myWalletFrame = myWalletFrame;
 	nftListPage->UpdateDisplay("nft");
+}
 
+void WalletView::gotoMailSendPage(std::string sAction)
+{
+	setCurrentWidget(mailSendPage);
+	mailSendPage->UpdateDisplay("Christmas");
 }
 
 void WalletView::gotoProposalAddPage()
@@ -291,8 +299,6 @@ void WalletView::gotoProposalAddPage()
 void WalletView::gotoNFTAddPage(std::string sAction, uint256 hash)
 {
 	setCurrentWidget(nftAddPage);
-	LogPrintf("\nAction %s", sAction);
-
 	nftAddPage->UpdateDisplay(sAction, hash);
 }
 

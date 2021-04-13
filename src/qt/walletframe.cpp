@@ -153,6 +153,12 @@ void WalletFrame::gotoNFTListPage()
         i.value()->gotoNFTListPage();
 }
 
+void WalletFrame::gotoMailSendPage(std::string sAction)
+{
+    QMap<QString, WalletView*>::const_iterator i;
+    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
+        i.value()->gotoMailSendPage(sAction);
+}
 
 void WalletFrame::gotoProposalAddPage()
 {

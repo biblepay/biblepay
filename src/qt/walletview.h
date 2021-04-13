@@ -25,6 +25,7 @@ class PlatformStyle;
 class BusinessObjectList;
 class ProposalAddDialog;
 class NFTAddDialog;
+class MailSendDialog;
 class GenericTableDialog;
 class Proposals;
 class UserDialog;
@@ -82,6 +83,7 @@ private:
     TransactionView *transactionView;
 	ProposalAddDialog *proposalAddPage;
 	NFTAddDialog *nftAddPage;
+	MailSendDialog *mailSendPage;
 	UserDialog *userEditPage;
 	MemorizeScriptureDialog *memorizeScripturePage;
 	Proposals *proposalListPage;
@@ -106,6 +108,7 @@ public Q_SLOTS:
 	void gotoProposalAddPage();
 	void gotoNFTAddPage(std::string sAction, uint256 hash);
 	void gotoNFTListPage();
+	void gotoMailSendPage(std::string sAction);
 	void gotoUserEditPage();
 	void gotoMemorizeScripturePage();
 	void gotoProposalListPage();

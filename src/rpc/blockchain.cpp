@@ -2755,102 +2755,77 @@ UniValue exec(const JSONRPCRequest& request)
 	else if (sItem == "testmail")
 	{
 		std::string sHelp = "exec testmail \"Name,Address-1,City,State,Zip\" \"Your customized recipient paragraph\" bbp_gift_amount 0=dry/1=real";
-
-		std::string sAddress = gArgs.GetArg("-myaddress", "");
-		std::vector<unsigned char> v = ParseHex(sAddress);
-		std::string sData(v.begin(), v.end());
-		std::vector<std::string> vD = Split(sData.c_str(), ",");
-		if (vD.size() < 5)
+		DMAddress dmFrom = DeserializeFrom();
+		results.push_back(Pair("From Name", dmFrom.Name));
+		results.push_back(Pair("From Address-line-1", dmFrom.AddressLine1));
+		results.push_back(Pair("From City", dmFrom.City));
+		results.push_back(Pair("From State", dmFrom.State));
+		results.push_back(Pair("From Zip", dmFrom.Zip));
+		std::string sData = request.params[1].get_str();
+		std::string sParagraph;
+		if (request.params.size() > 2)
+			sParagraph = request.params[2].get_str();
+		double dAmount = 0;
+		if (request.params.size() > 3)
+			dAmount = cdbl(request.params[3].get_str(), 2);
+		bool fDryRun = false;
+		if (request.params.size() > 4)
+			fDryRun = !(cdbl(request.params[4].get_str(), 0) == 1);
+		CAmount nAmount = GetBBPValueUSD(dAmount);
+		std::vector<std::string> vT = Split(sData.c_str(), ",");
+		if (vT.size() < 5)
 		{
-			results.push_back(Pair("Error", "From Address must be:  Name,Address-Line1,City,State,Zip.  Please set the address with exec setmyaddress."));
+			results.push_back(Pair("Error", "To Address must be:  Name,Address-Line1,City,State,Zip"));
 		}
 		else
 		{
-			DMAddress dmFrom;
-		
-			dmFrom.Name = vD[0];
-			dmFrom.AddressLine1 = vD[1];
-			dmFrom.City = vD[2];
-			dmFrom.State = vD[3];
-			dmFrom.Zip = vD[4];
-			results.push_back(Pair("From Name", dmFrom.Name));
-			results.push_back(Pair("From Address-line-1", dmFrom.AddressLine1));
-			results.push_back(Pair("From City", dmFrom.City));
-			results.push_back(Pair("From State", dmFrom.State));
-			results.push_back(Pair("From Zip", dmFrom.Zip));
-	
-			std::string sData = request.params[1].get_str();
-			std::string sParagraph;
-			if (request.params.size() > 2)
-				sParagraph = request.params[2].get_str();
-			double dAmount = 0;
-			if (request.params.size() > 3)
-				dAmount = cdbl(request.params[3].get_str(), 2);
-			bool fDryRun = false;
-			if (request.params.size() > 4)
-				fDryRun = !(cdbl(request.params[4].get_str(), 0) == 1);
-
-
-			CAmount nAmount = GetBBPValueUSD(dAmount);
-		
-
-			std::vector<std::string> vT = Split(sData.c_str(), ",");
-			if (vT.size() < 5)
+			DMAddress dmTo;
+			dmTo.Name = vT[0];
+			dmTo.AddressLine1 = vT[1];
+			dmTo.City = vT[2];
+			dmTo.State = vT[3];
+			dmTo.Zip = vT[4];
+			dmTo.Amount = dAmount * COIN;
+			std::string sCode = dmTo.AddressLine1;
+			results.push_back(Pair("To Name", dmTo.Name));
+			results.push_back(Pair("To Address-line-1", dmTo.AddressLine1));
+			results.push_back(Pair("To City", dmTo.City));
+			results.push_back(Pair("To State", dmTo.State));
+			results.push_back(Pair("To Zip", dmTo.Zip));
+				
+			if (dAmount > 0)
 			{
-				results.push_back(Pair("Error", "To Address must be:  Name,Address-Line1,City,State,Zip"));
+				DACResult d = MakeDerivedKey(sCode);
+				results.push_back(Pair("Gift Address", d.Address));
+				results.push_back(Pair("Gift Secret", d.SecretKey));
+				results.push_back(Pair("Gift Code", sCode));
+				results.push_back(Pair("Gift Amount USD", dAmount));
+				results.push_back(Pair("Gift Amount BBP", (double)nAmount/COIN));
+				std::string sError;
+				std::string sPayload = "<giftcard>" + RoundToString((double)nAmount/COIN, 2) + "</giftcard>";
+				std::string sTXID = RPCSendMessage(nAmount, d.Address, fDryRun, sError, sPayload);
+				results.push_back(Pair("Gift TXID", sTXID));
+				sParagraph += "<p><br>A gift of $" + RoundToString(dAmount, 2) + " [" + RoundToString((double)nAmount/COIN, 2) 
+						+ " BBP] has been sent to you!  Please use the code <span style='white-space: nowrap;'><font color=lime>\"" + sCode + "\"</font></span> to redeem your gift.<br>";
+			}
+	
+
+			results.push_back(Pair("Extra Paragraph", sParagraph));
+			dmTo.Paragraph = sParagraph;
+			results.push_back(Pair("Gift Amount", dAmount));
+			DACResult b = MailLetter(dmFrom, dmTo, true);
+			std::string sError = ExtractXML(b.Response, "<error>", "</error>");
+			std::string sPDF = ExtractXML(b.Response, "<pdf>", "</pdf>");
+			if (sError.empty())
+			{
+				results.push_back(Pair("Proof", sPDF));
 			}
 			else
 			{
-				DMAddress dmTo;
-
-				dmTo.Name = vT[0];
-				dmTo.AddressLine1 = vT[1];
-				dmTo.City = vT[2];
-				dmTo.State = vT[3];
-				dmTo.Zip = vT[4];
-				dmTo.Amount = dAmount * COIN;
-				std::string sCode = dmTo.AddressLine1;
-
-				results.push_back(Pair("To Name", dmTo.Name));
-				results.push_back(Pair("To Address-line-1", dmTo.AddressLine1));
-				results.push_back(Pair("To City", dmTo.City));
-				results.push_back(Pair("To State", dmTo.State));
-				results.push_back(Pair("To Zip", dmTo.Zip));
-				
-				if (dAmount > 0)
-				{
-					DACResult d = MakeDerivedKey(sCode);
-					results.push_back(Pair("Gift Address", d.Address));
-					results.push_back(Pair("Gift Secret", d.SecretKey));
-					results.push_back(Pair("Gift Code", sCode));
-					results.push_back(Pair("Gift Amount USD", dAmount));
-					results.push_back(Pair("Gift Amount BBP", (double)nAmount/COIN));
-					std::string sError;
-					std::string sPayload = "<giftcard>" + RoundToString((double)nAmount/COIN, 2) + "</giftcard>";
-	
-					std::string sTXID = RPCSendMessage(nAmount, d.Address, fDryRun, sError, sPayload);
-					results.push_back(Pair("Gift TXID", sTXID));
-					sParagraph += "<p><br>A gift of $" + RoundToString(dAmount, 2) + " [" + RoundToString((double)nAmount/COIN, 2) 
-						+ " BBP] has been sent to you!  Please use the code <span style='white-space: nowrap;'><font color=lime>\"" + sCode + "\"</font></span> to redeem your gift.<br>";
-				}
-	
-
-				results.push_back(Pair("Extra Paragraph", sParagraph));
-				dmTo.Paragraph = sParagraph;
-				results.push_back(Pair("Gift Amount", dAmount));
-				DACResult b = MailLetter(dmFrom, dmTo, true);
-				std::string sError = ExtractXML(b.Response, "<error>", "</error>");
-				std::string sPDF = ExtractXML(b.Response, "<pdf>", "</pdf>");
-				if (sError.empty())
-				{
-					results.push_back(Pair("Proof", sPDF));
-				}
-				else
-				{
-					results.push_back(Pair("Error", sError));
-				}
+				results.push_back(Pair("Error", sError));
 			}
 		}
+		
 	}
 	else if (sItem == "multisig1")
 	{
@@ -4335,5 +4310,20 @@ uint256 Sha256001(int nType, int nVersion, std::string data)
     return result;
 }
 
+DMAddress DeserializeFrom()
+{
+	std::string sAddress = gArgs.GetArg("-myaddress", "");
+	std::vector<unsigned char> v = ParseHex(sAddress);
+	std::string sData(v.begin(), v.end());
+	std::vector<std::string> vD = Split(sData.c_str(), ",");
+	DMAddress dmFrom;
 
-		
+	if (vD.size() < 5)
+		return dmFrom;
+	dmFrom.Name = vD[0];
+	dmFrom.AddressLine1 = vD[1];
+	dmFrom.City = vD[2];
+	dmFrom.State = vD[3];
+	dmFrom.Zip = vD[4];
+	return dmFrom;
+}

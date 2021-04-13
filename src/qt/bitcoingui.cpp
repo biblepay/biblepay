@@ -131,6 +131,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 	proposalAddMenuAction(0),
 	nftAddMenuAction(0),
 	listNFTMenuAction(0),
+	mailSendMenuAction(0),
 	userEditMenuAction(0),
 	memorizeScriptureMenuAction(0),
 	aboutAction(0),
@@ -645,6 +646,9 @@ void BitcoinGUI::createActions()
     listNFTMenuAction->setStatusTip(tr("List My NFTs"));
     listNFTMenuAction->setEnabled(false);
 
+	mailSendMenuAction = new QAction(QIcon(":/icons/address-book"), tr("Send Greeting Card"), this);
+    mailSendMenuAction->setStatusTip(tr("Send Greeting Card"));
+    mailSendMenuAction->setEnabled(false);
 
 	// User Edit Action
 
@@ -764,7 +768,7 @@ void BitcoinGUI::createActions()
 	connect(proposalAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoProposalAddPage()));
 	connect(nftAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoNFTAddPage()));
 	connect(listNFTMenuAction, SIGNAL(triggered()), this, SLOT(gotoNFTListPage()));
-
+	connect(mailSendMenuAction, SIGNAL(triggered()), this, SLOT(gotoMailSendPage()));
 	connect(userEditMenuAction, SIGNAL(triggered()), this, SLOT(gotoUserEditPage()));
 	connect(memorizeScriptureMenuAction, SIGNAL(triggered()), this, SLOT(gotoMemorizeScripturePage()));
 
@@ -883,6 +887,9 @@ void BitcoinGUI::createMenuBar()
 		QMenu *nfts = appMenuBar->addMenu(tr("&NFTs"));
 		nfts->addAction(nftAddMenuAction);
 		nfts->addAction(listNFTMenuAction);
+
+		QMenu *misc = appMenuBar->addMenu(tr("Misc."));
+		misc->addAction(mailSendMenuAction);
 
 		QMenu *useredit = appMenuBar->addMenu(tr("User Record"));
 		useredit->addAction(userEditMenuAction);
@@ -1154,6 +1161,7 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
 	proposalAddMenuAction->setEnabled(enabled);
 	nftAddMenuAction->setEnabled(enabled);
 	listNFTMenuAction->setEnabled(enabled);
+	mailSendMenuAction->setEnabled(enabled);
 
 	userEditMenuAction->setEnabled(enabled);
 	memorizeScriptureMenuAction->setEnabled(enabled);
@@ -1408,6 +1416,15 @@ void BitcoinGUI::gotoNFTAddPage()
     nftAddMenuAction->setChecked(true);
     if (walletFrame)
 		walletFrame->gotoNFTAddPage("CREATE", uint256S("0x0"));
+}
+
+void BitcoinGUI::gotoMailSendPage()
+{
+	if (!clientModel)
+		return;
+	mailSendMenuAction->setChecked(true);
+    if (walletFrame)
+		walletFrame->gotoMailSendPage("Christmas");
 }
 
 void BitcoinGUI::gotoNFTListPage()

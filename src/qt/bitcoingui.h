@@ -134,6 +134,7 @@ private:
 	QAction *openChatPMEncryptedAction;
 	QAction *proposalAddMenuAction;
 	QAction *nftAddMenuAction;
+	QAction *mailSendMenuAction;
 	QAction *listNFTMenuAction;
 	QAction *userEditMenuAction;
 	QAction *memorizeScriptureMenuAction;
@@ -304,6 +305,7 @@ private Q_SLOTS:
 	/** Switch to Proposal Add page */
 	void gotoProposalAddPage();
 	void gotoNFTAddPage();
+	void gotoMailSendPage();
 	void gotoNFTListPage();
 	void gotoUserEditPage();
 	void gotoMemorizeScripturePage();

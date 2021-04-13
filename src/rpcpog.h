@@ -566,5 +566,6 @@ DACResult MakeDerivedKey(std::string sPhrase);
 CAmount GetBBPValueUSD(double nUSD);
 DACResult ReadAccountingEntry(std::string sKey, std::string sKey2);
 bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount);
+DMAddress DeserializeFrom();
 
 #endif
