@@ -5663,7 +5663,7 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	LogPrintf(" CryptoPrice BBP %s , Foreign %s, ForeignValue %f  ", RoundToString(nBBPPrice, 12), RoundToString(nForeignPrice, 12), nForeignValueUSD);
 
 	std::string sPK = "UTXOSTAKE-" + sBBPUTXO;
-	double nmaxspend = 101;
+	double nmaxspend = 9999;
 	std::string sPayload = "<MT>UTXOSTAKE</MT><MK>" + sPK + "</MK><MV><utxostake><foreignticker>" + sForeignTicker + "</foreignticker><bbputxo>" + sBBPUTXO + "</bbputxo><height>" 
 			+ RoundToString(chainActive.Tip()->nHeight, 0) 
 			+ "</height><foreignutxo>"+ sForeignUTXO + "</foreignutxo><cpk>" + sCPK + "</cpk><bbpsig>"+ sBBPSig + "</bbpsig><foreignsig>"+ sForeignSig 
@@ -5706,13 +5706,13 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	CReserveKey reserveKey(pwalletMain);
 	LogPrintf("\nCreating contract %s", sPayload);
 
-	// Ensure the coin is worth less than nmaxspend(1-100 BBP):
+	// Ensure the coin is worth less than nmaxspend(1-nmaxspent BBP):
 
 	bool fSent = pwalletMain->CreateTransaction(vecDryRun, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, NULL, true, 
 				ALL_COINS, fInstantSend, 0, sPayload, dMinCoinAge, 0, 0, "");
 	if (!fSent)
 	{
-		sError += "Unable to Create UTXO Stake Transaction.";
+		sError += " Unable to Create UTXO Stake Transaction.  NOTE: In this version, you must have an extra unspent coin between 1bbp-9999bbp to pay for the UTXO stake lock (in addition to the UTXO itself).  So please type 'exec bankroll 5 10' and this will create 5 coins worth 10 bbp for you, then try the stake again.  Thank you for being with BIBLEPAY.  ";
 		return false;
 	}
 		

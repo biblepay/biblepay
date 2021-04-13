@@ -2242,6 +2242,219 @@ UniValue newuser(const JSONRPCRequest& request)
 	return results;
 }
 
+struct WhaleStakeReport
+{
+	double TotalBurned = 0;
+	double TotalOwed = 0;
+	double TotalStakes = 0;
+	double TotalPaid = 0;
+	double TotalPayments = 0;
+	std::string Details = "";
+};
+
+void InsertPayment(int height, std::map<std::string, WhaleStakeReport>& mapWhales, std::string sAddress, double nAmount)
+{
+	mapWhales[sAddress].TotalPaid += nAmount;
+	mapWhales[sAddress].TotalPayments++;
+	//https://forum.biblepay.org/index.php?topic=517.msg8880#msg8880
+	mapWhales[sAddress].Details += "[RR11182020] height: " + RoundToString(height, 0) + ", Amount: " + RoundToString(nAmount, 2) + "\r\n";
+}
+
+std::map<std::string, WhaleStakeReport> MemorizeWhaleStakePayments()
+{
+	// 150000- chainheight
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	std::map<std::string, WhaleStakeReport> mapWhales;
+
+	for (int i = 150000; i < chainActive.Tip()->nHeight; i++)
+	{
+		CBlockIndex* pindex = FindBlockByHeight(i);
+		if (pindex)
+		{
+			CBlock block;
+			std::string sMsg;
+			if (ReadBlockFromDisk(block, pindex, consensusParams)) 
+			{
+				double dFoundationDonation = 0;
+				for (unsigned int i = 0; i < block.vtx[0]->vout.size(); i++)
+				{
+					sMsg += block.vtx[0]->vout[i].sTxOutMessage;
+					double dAmount = (double)block.vtx[0]->vout[i].nValue / COIN;
+					std::string sAmt = AmtToString(block.vtx[0]->vout[i].nValue);
+					bool fWhaleReward = Contains(sAmt, "1527");
+					if (fWhaleReward)
+					{
+						std::string sPK = PubKeyToAddress(block.vtx[0]->vout[i].scriptPubKey);
+						mapWhales[sPK].TotalPaid += dAmount;
+						mapWhales[sPK].TotalPayments++;
+						std::string sRow = "height:" + RoundToString(i, 0) + ", amount: " + RoundToString(dAmount, 2) + "\r\n";
+						mapWhales[sPK].Details += sRow;
+					}
+				}
+			}
+		}
+	}
+	// NOTE:  Rob paid for all anomalies up to block 233640, so we need to cross those off this report for prod.
+	// Payment Round 2:  Paying BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8 5,342,000, Paying B7AuLcF2yYgPzhtPJXdwR8EjNLz4C7GLyH  1,207,000
+	InsertPayment(250000, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 5342000);
+	InsertPayment(250000, mapWhales, "B7AuLcF2yYgPzhtPJXdwR8EjNLz4C7GLyH", 1207000);
+	// Round 1	
+	InsertPayment(233640, mapWhales, "BPHr5ooeyin5gE4EvRaGLurmG2jaumUzjp", 308020.17);
+	InsertPayment(233640, mapWhales, "BLt1htJPLeQx62ufQ9xmRR5zsnSLbhNEWX", 141277.94);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 883177.69);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 857047.77);
+	InsertPayment(233640, mapWhales, "B65pLo4i5wirnkq7kB5nwrVfU3ho6WtdUq", 50158.15);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 202.15);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 309441.70);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 202.15);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 307487.34);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 58657.72);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 962162.51);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 3141.50);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 58665.72);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 13900.31);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "B7AuLcF2yYgPzhtPJXdwR8EjNLz4C7GLyH", 101195.69);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BMDb6Z4mmKmmKXDAhBCPW5XXpEqzT1Q1PV", 612.80);
+	InsertPayment(233640, mapWhales, "BMDb6Z4mmKmmKXDAhBCPW5XXpEqzT1Q1PV", 101.15);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BLpAqYhjuxJAfTC9yJBUxzUyNfDFfiduip", 105633.15);
+	InsertPayment(233640, mapWhales, "BNaUGAyKSSzo7DYTz5UYwxbzDJBXMWJgV3", 121317.58);
+	InsertPayment(233640, mapWhales, "BMDb6Z4mmKmmKXDAhBCPW5XXpEqzT1Q1PV", 99.90);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BBPmp88ueiAjhMnx3EXgxfpDJzG9PFXDjj", 50104.15);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 19.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 202.15);
+	InsertPayment(233640, mapWhales, "BNaUGAyKSSzo7DYTz5UYwxbzDJBXMWJgV3", 249898.94);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 911523.13);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 1007974.09);
+	InsertPayment(233640, mapWhales, "BQXj5kV9LVUZGF4ipFCRmkzBbZu366grJt", 519.70);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BNaUGAyKSSzo7DYTz5UYwxbzDJBXMWJgV3", 802471.68);
+	InsertPayment(233640, mapWhales, "B65pLo4i5wirnkq7kB5nwrVfU3ho6WtdUq", 50135.15);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 101191.70);
+	InsertPayment(233640, mapWhales, "B7gYGopY6JmPsFSRB4wSxxadRMZ6NLL3yb", 101411.15);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 1012853.15);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 48931.81);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 18.98);
+	InsertPayment(233640, mapWhales, "BMDb6Z4mmKmmKXDAhBCPW5XXpEqzT1Q1PV", 57.90);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 98932.96);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "B7gYGopY6JmPsFSRB4wSxxadRMZ6NLL3yb", 101469.15);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 202.15);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "B7gYGopY6JmPsFSRB4wSxxadRMZ6NLL3yb", 102295.98);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 52999.15);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 57739.33);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 202.15);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 309455.70);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 18.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 10.98);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 309450.70);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 202.15);
+	InsertPayment(233640, mapWhales, "B7AuLcF2yYgPzhtPJXdwR8EjNLz4C7GLyH", 729173.69);
+	InsertPayment(233640, mapWhales, "BNaUGAyKSSzo7DYTz5UYwxbzDJBXMWJgV3", 366029.33);
+	InsertPayment(233640, mapWhales, "BM2e5zvdEf8jcosQdhP6e7NRs8kEMqJy7U", 1004011.15);
+	InsertPayment(233640, mapWhales, "BQXj5kV9LVUZGF4ipFCRmkzBbZu366grJt", 1015130.15);
+	InsertPayment(233640, mapWhales, "BJgCwqKR24pLDTC8biLC3rjkmiMsanbdWa", 202.15);
+	InsertPayment(233640, mapWhales, "BNaUGAyKSSzo7DYTz5UYwxbzDJBXMWJgV3", 393496.58);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 675882.15);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 58665.72);
+	InsertPayment(233640, mapWhales, "BNaUGAyKSSzo7DYTz5UYwxbzDJBXMWJgV3", 121795.53);
+	InsertPayment(233640, mapWhales, "B7gYGopY6JmPsFSRB4wSxxadRMZ6NLL3yb", 5867.87);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 309450.70);
+	InsertPayment(233640, mapWhales, "BN1wgJYBL2VUCaCP3TYE6nHB9PNwFA2Gz8", 58670.72);
+	InsertPayment(233640, mapWhales, "BLENRYgVPwzfsrJoJNbvC537qMHsCVyeFU", 972290.79);
+	InsertPayment(233640, mapWhales, "B7gYGopY6JmPsFSRB4wSxxadRMZ6NLL3yb", 101278.15);
+	InsertPayment(233640, mapWhales, "BQXj5kV9LVUZGF4ipFCRmkzBbZu366grJt", 73359.49);
+
+
+
+
+	return mapWhales;
+}
+
+
+
+
+UniValue whalestakefinalreport(const JSONRPCRequest& request)
+{
+	// This report is designed to audit all whale stakes since inception, matching them up with payments 
+	// And will provide any discrepencies for final payment for use on the day DWS is retired
+
+	if (request.fHelp) 
+		throw std::runtime_error("You must specify whalestakefinalreport; 0=summary/1=details");
+	UniValue results(UniValue::VOBJ);
+	std::map<std::string, WhaleStakeReport> mapWhales;
+	std::vector<WhaleStake> w = GetDWS(true);
+	double dReportType = 0;
+	if (request.params.size() > 0)
+		dReportType = cdbl(request.params[0].get_str(), 0);
+
+	std::map<std::string, WhaleStakeReport> mapPayments = MemorizeWhaleStakePayments();
+
+	results.push_back(Pair("Total DWS Quantity", (int)w.size()));
+	double nTotalOwed = 0;
+	double nTotalPaid = 0;
+	for (int i = 0; i < w.size(); i++)
+	{
+		WhaleStake ws = w[i];
+		
+		std::string sRow = "Burned: " + RoundToString(ws.Amount, 2) + ", Owed: " + RoundToString(ws.TotalOwed, 2) + ", DWU: " 
+					+ RoundToString(ws.ActualDWU*100, 4) + ", Height: " + RoundToString(ws.BurnHeight, 0) 
+					+ ", RewardHeight: " + RoundToString(ws.MaturityHeight, 0) + ", ReturnAddress: " + ws.ReturnAddress;
+		
+		mapWhales[ws.ReturnAddress].TotalBurned += ws.Amount;
+		mapWhales[ws.ReturnAddress].TotalOwed += ws.TotalOwed;
+		mapWhales[ws.ReturnAddress].TotalStakes++;
+		mapWhales[ws.ReturnAddress].Details += sRow + "\r\n";
+		nTotalOwed += ws.TotalOwed;
+	}
+	for (const auto& kv : mapWhales) 
+	{
+		if (dReportType != 3)
+		{
+			results.push_back(Pair(kv.first + " burned", kv.second.TotalBurned));
+			results.push_back(Pair(kv.first + " owed", kv.second.TotalOwed));
+			results.push_back(Pair(kv.first + " paid", mapPayments[kv.first].TotalPaid));
+			results.push_back(Pair(kv.first + " stake-count", kv.second.TotalStakes));
+			results.push_back(Pair(kv.first + " payment-count", mapPayments[kv.first].TotalPayments));
+
+			if (dReportType == 1)
+			{
+				results.push_back(Pair(kv.first + " stake-details", kv.second.Details));
+				results.push_back(Pair(kv.first + " payment-details", mapPayments[kv.first].Details));
+			}
+		}
+		// Calculate outcome
+		double nOutcome = kv.second.TotalOwed - mapPayments[kv.first].TotalPaid;
+		nTotalPaid += mapPayments[kv.first].TotalPaid;
+		if (dReportType == 3 && nOutcome > 1)
+		{
+			results.push_back(Pair(kv.first + " owed", kv.second.TotalOwed));
+			results.push_back(Pair(kv.first + " paid", mapPayments[kv.first].TotalPaid));
+			results.push_back(Pair(kv.first + " net owed", nOutcome));
+		}
+		else
+		{
+			results.push_back(Pair(kv.first + " net owed", nOutcome));
+		}
+	}
+	results.push_back(Pair("Grand Owed", nTotalOwed));
+	results.push_back(Pair("Grand Paid", nTotalPaid));
+
+	return results;
+}
+
+
 UniValue dwsquote(const JSONRPCRequest& request)
 {
 	// Dynamic Whale Staking
@@ -2645,6 +2858,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "trackdashpay",                 &trackdashpay,                  false, {}  },
 	{ "evo",                "sendgscc",                     &sendgscc,                      false, {}  },
 	{ "evo",                "versionreport",                &versionreport,                 false, {}  },
+	{ "evo",                "whalestakefinalreport",        &whalestakefinalreport,         false, {}  },
 };
 
 void RegisterEvoRPCCommands(CRPCTable &tableRPC)

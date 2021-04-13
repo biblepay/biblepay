@@ -7,6 +7,7 @@
 
 #include <QFrame>
 #include <QMap>
+#include <qt/bitcoingui.h>
 
 class BitcoinGUI;
 class ClientModel;

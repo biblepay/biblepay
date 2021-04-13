@@ -548,4 +548,6 @@ int GetWCGMemberID(std::string sMemberName, std::string sAuthCode, double& nPoin
 Researcher GetResearcherByID(int nID);
 std::map<std::string, Researcher> GetPayableResearchers();
 CAmount ARM64();
+std::string AmtToString(CAmount nAmount);
+
 #endif
