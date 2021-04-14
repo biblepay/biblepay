@@ -5,8 +5,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <wallet/wallet.h>
-
-//#include <base58.h>
 #include <checkpoints.h>
 #include <chain.h>
 #include <wallet/coincontrol.h>
@@ -46,6 +44,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
+
 static CCriticalSection cs_wallets;
 static std::vector<CWallet*> vpwallets GUARDED_BY(cs_wallets);
 
@@ -3781,9 +3780,32 @@ bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, CAmount a
     return true;
 }
 
-bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet,
-                                int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign, int nExtraPayloadSize, std::string sPayload)
+std::string ExtractXMLValue(std::string XMLdata, std::string key, std::string key_end)
 {
+	std::string extraction = "";
+	std::string::size_type loc = XMLdata.find( key, 0 );
+	if( loc != std::string::npos )
+	{
+		std::string::size_type loc_end = XMLdata.find( key_end, loc+3);
+		if (loc_end != std::string::npos )
+		{
+			extraction = XMLdata.substr(loc+(key.length()),loc_end-loc-(key.length()));
+		}
+	}
+	return extraction;
+}
+
+
+bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet,
+                                int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign, 
+								int nExtraPayloadSize, std::string sPayload)
+{
+
+	// Extract the maximum amount from the contract before spending any coins (this prevents big coins from being spent for the 1bbp stake transaction fee).
+	CAmount nMaxSpend = cdbl(ExtractXMLValue(sPayload, "<nmaxspend>", "</nmaxspend>"), 2) * COIN;
+	if (nMaxSpend == 0)
+		nMaxSpend = MAX_MONEY;
+
     CAmount nValue = 0;
     int nChangePosRequest = nChangePosInOut;
     unsigned int nSubtractFeeFromAmount = 0;
@@ -3855,8 +3877,7 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
         {
             CAmount nAmountAvailable{0};
             std::vector<COutput> vAvailableCoins;
-            AvailableCoins(vAvailableCoins, true, &coin_control);
-
+            AvailableCoins(vAvailableCoins, true, &coin_control, 0, nMaxSpend);
             for (auto out : vAvailableCoins) {
                 if (out.fSpendable) {
                     nAmountAvailable += out.tx->tx->vout[out.i].nValue;

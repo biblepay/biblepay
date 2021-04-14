@@ -55,17 +55,16 @@ DataTable GenericTableDialog::GetDataTable(std::string sType)
 		for (int i = 0; i < uNFTs.size(); i++)
 		{
 			NFT n = uNFTs[i];
-			if (n.found && sCPK == n.sCPK)
+			if (n.found && sCPK == n.sCPK && !n.fDeleted)
 			{
 				d.Rows++;
 
 				d.Set(d.Rows,0, n.GetHash().GetHex());
 				d.Set(d.Rows,1, n.sName);
 				d.Set(d.Rows,2, n.sDescription);
-				d.Set(d.Rows,3, n.sURL);
+				d.Set(d.Rows,3, n.sLoQualityURL);
 				d.Set(d.Rows,4, RoundToString((double)n.nMinimumBidAmount/COIN,2));
 				d.Set(d.Rows,5, ToYesNo(n.fMarketable));
-				
 			}
 		}
 		ui->btn1->setVisible(false);

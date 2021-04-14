@@ -41,18 +41,21 @@ struct NFT
 	std::string sCPK;
 	std::string sName;
 	std::string sDescription;
-	std::string sURL;
+	std::string sLoQualityURL;
+	std::string sHiQualityURL;
 	std::string sType;
 	std::string sXML;
 	CAmount nMinimumBidAmount = 0;
+	CAmount nReserveAmount = 0;
 	bool fMarketable = false;
+	bool fDeleted = false;
 	bool found = false;
 	uint256 TXID;
 	uint256 GetHash()
 	{
 		uint256 h;
         CSHA256 sha256;
-		std::string sURL1 = sURL;
+		std::string sURL1(sLoQualityURL.c_str());
 		boost::to_lower(sURL1);
 		boost::algorithm::trim(sURL1);
 	    std::vector<unsigned char> vchURL = std::vector<unsigned char>(sURL1.begin(), sURL1.end());
@@ -69,11 +72,14 @@ struct NFT
 		obj.push_back(Pair("CPK", sCPK));
 		obj.push_back(Pair("Name", sName));
 		obj.push_back(Pair("Description", sDescription));
-	    obj.push_back(Pair("URL", sURL));
+	    obj.push_back(Pair("Lo Quality URL", sLoQualityURL));
+		obj.push_back(Pair("Hi Quality URL", sHiQualityURL));
 		obj.push_back(Pair("TXID", TXID.GetHex()));
 		obj.push_back(Pair("Hash", GetHash().GetHex()));
 		obj.push_back(Pair("MinimumBidAmount", (double)nMinimumBidAmount/COIN));
+		obj.push_back(Pair("ReserveAmount", (double)nReserveAmount/COIN));
 		obj.push_back(Pair("Marketable", fMarketable));
+		obj.push_back(Pair("Deleted", fDeleted));
     }
 };
 

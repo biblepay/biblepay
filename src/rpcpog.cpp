@@ -1601,7 +1601,7 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 				// However, the buy amount must be > than the min bid amount, and the item must be marketable
 				// And the old nft must be visible
 				NFT oldNFT = GetSpecificNFT(n.GetHash());
-				if (oldNFT.fMarketable && oldNFT.found && oldNFT.nMinimumBidAmount > 0)
+				if (oldNFT.fMarketable && oldNFT.found && oldNFT.nMinimumBidAmount > 0 && !oldNFT.fDeleted)
 				{
 					CAmount nPaid = GetAmountPaidToRecipient(tx1, oldNFT.sCPK);
 
@@ -3113,11 +3113,14 @@ NFT GetNFT(CTransactionRef tx1)
 	w.sName = ExtractXML(w.sXML, "<name>", "</name>");
 	w.sDescription = ExtractXML(w.sXML, "<description>", "</description>");
 	w.sType = ExtractXML(w.sXML, "<type>", "</type>");
-	w.sURL = ExtractXML(w.sXML, "<url>", "</url>");
+	w.sLoQualityURL = ExtractXML(w.sXML, "<loqualityurl>", "</loqualityurl>");
+	w.sHiQualityURL = ExtractXML(w.sXML, "<hiqualityurl>", "</hiqualityurl>");
 	w.fMarketable = cdbl(ExtractXML(w.sXML, "<marketable>", "</marketable>"), 0) == 1 ? true : false;
+	w.fDeleted = cdbl(ExtractXML(w.sXML, "<deleted>", "</deleted>"), 0) == 1 ? true : false;
 	w.nMinimumBidAmount = cdbl(ExtractXML(w.sXML, "<minbidamount>", "</minbidamount>"), 2) * COIN;
+	w.nReserveAmount = cdbl(ExtractXML(w.sXML, "<reserveamount>", "</reserveamount>"), 2) * COIN;
 	w.TXID = tx1->GetHash();
-	if (!w.sCPK.empty() && !w.sURL.empty())
+	if (!w.sCPK.empty() && !w.sLoQualityURL.empty())
 	{
 		w.found = true;
 		return w;
@@ -4281,6 +4284,10 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	}
 
 	sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, fDryRun, sError, sPayload);
+	if (!sError.empty())
+	{
+		 sError += " NOTE: In this version, you must have an extra unspent coin between 1bbp-9999bbp to pay for the UTXO stake lock (in addition to the UTXO itself).  So please type 'exec bankroll 5 10' and this will create 5 coins worth 10 bbp for you, then try the stake again after those coins are 1 deep.  Thank you for being with BIBLEPAY.  ";
+	}
 	return (sError.empty());
 }
 
@@ -5328,18 +5335,20 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 			return false;
 		}
 
-		if (nBuyPrice < oldNFT.nMinimumBidAmount || oldNFT.nMinimumBidAmount == 0)
+		if (nBuyPrice < oldNFT.nMinimumBidAmount || nBuyPrice < oldNFT.nReserveAmount)
 		{
 			sError = "Sorry, your buy price is less than the minimum sale amount.";
 			return false;
 		}
-		if (!oldNFT.fMarketable)
+		if (!oldNFT.fMarketable || oldNFT.fDeleted)
 		{
 			sError = "Sorry, this NFT is not for sale, or, this orphan is not available for sponsorship.";
 			return false;
 		}
 		nft.fMarketable = false;
+		nft.fDeleted = false;
 		nft.nMinimumBidAmount = 0;
+		nft.nReserveAmount = 0;
 		if (!ValidateAddress2(sSellerCPK))
 		{
 			sError = "Invalid seller Address " + sSellerCPK;
@@ -5355,10 +5364,14 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		return false;
 	}
 
-	std::string sPayload = "<MT>NFT</MT><MK>" + sPK + "</MK><MV><nft><cpk>" + sBuyerCPK + "</cpk><name>" + nft.sName + "</name><description>" + nft.sDescription + "</description><url>" 
-		+ nft.sURL + "</url><marketable>" + (nft.fMarketable ? "1" : "0")
+	std::string sPayload = "<MT>NFT</MT><MK>" + sPK + "</MK><MV><nft><cpk>" + sBuyerCPK + "</cpk><name>" + nft.sName + "</name><description>" 
+		+ nft.sDescription + "</description><loqualityurl>" 
+		+ nft.sLoQualityURL + "</loqualityurl><hiqualityurl>" + nft.sHiQualityURL 
+		+ "</hiqualityurl><deleted>" + (nft.fDeleted ? "1" : "0") + "</deleted><marketable>" + (nft.fMarketable ? "1" : "0")
 		+ "</marketable><type>" + nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
-		    + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
+		+ "<reserveamount>" + RoundToString((double)nft.nReserveAmount/COIN, 2) + "</reserveamount>"
+		    + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" 
+			+ sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
 	
 	std::string sTXID = RPCSendMessage(nSend, sToAddress, false, sError, sPayload);
 	if (!sTXID.empty() && sError.empty())
@@ -5616,15 +5629,15 @@ std::string ClaimReferralCode(std::string sCode, std::string& sError)
 
 double GetReferralCodeEffectivity(int nPortfolioTime)
 {
-	// This function applies a decay factor to provide the 'effecivity' of a referral code.
+	// This function applies a decay factor to provide the 'effectivity' of a referral code.
 	// Effectivity is based on the average portfolio age (not the age of the coupon).
 	// Referral codes start at 100% effective, and diminish by .0027% per portfolio day (meaning, that they decay fully in one year, based on your avg portfolio date). 
 	// This means that a brand new portfolio (IE new user) will start at 100% effective, but a user who has a 180 day old portfolio starts at the half-life of the referral code.
 	// At your portfolio-age half-life, a referral code is worth .50* (half) of its original effectivity.
 	// Referral codes only cover up to 10% of the size of the generators portfolio.
-	// Referral codes provide a 10% DWU edge for the portion of the portfolio covered.  On day 1 of a new portfolio, user receives a 10% edge.  On 180th day, 5%.  On the 364th day, .01%.
-	// As an example, let us pretend the referral generator portfolio is worth 1MM and your portfolio is worth 10MM.  The referral code will only be applied to 1MM of the positions in your portfolio because it is limited by the portfolio it was generated from.
-	// As a second example, if you have 1MM of positions, and the generator has 10MM, the code may be applied to your entire portfolio because the code has a large enough size.
+	// As an example, let us hypothesize the referral-generator portfolio is worth 1MM and the subject portfolio is worth 10MM.  
+	// The referral code will only be applied to 1MM of the positions in the subject portfolio because it is limited by the portfolio size it was generated from.
+	// As a second example, if you have 1MM of positions, and the generator has 10MM, the code may be applied to your entire portfolio because the generator has a large enough size.
 	
 	int64_t nPortfolioAgeSecs = GetAdjustedTime() - nPortfolioTime;
 	double nDays = nPortfolioAgeSecs / 86400;

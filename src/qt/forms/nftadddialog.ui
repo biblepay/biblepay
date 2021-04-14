@@ -28,107 +28,10 @@
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="11" column="0">
-         <widget class="QLabel" name="label_31">
-          <property name="toolTip">
-           <string>Expense Type</string>
-          </property>
-          <property name="text">
-           <string>NFT Type:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="10" column="0">
-         <widget class="QLabel" name="label194">
-          <property name="toolTip">
-           <string>Receiving Address</string>
-          </property>
-          <property name="text">
-           <string>(CPK) Owner Address:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="2">
-         <widget class="QPlainTextEdit" name="txtDescription"/>
-        </item>
         <item row="1" column="2">
          <widget class="QLabel" name="lblAction">
           <property name="text">
-           <string>Add New NFT - v1.0   &lt;br&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item row="14" column="7">
-         <layout class="QHBoxLayout" name="horizontalLayout"/>
-        </item>
-        <item row="8" column="2">
-         <widget class="QLineEdit" name="txtMinimumBidAmount">
-          <property name="toolTip">
-           <string>Proposal Amount</string>
-          </property>
-          <property name="inputMethodHints">
-           <set>Qt::ImhDigitsOnly</set>
-          </property>
-         </widget>
-        </item>
-        <item row="10" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="toolTip">
-           <string>Enter Proposal Description</string>
-          </property>
-          <property name="text">
-           <string>NFT Description:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-          <property name="buddy">
-           <cstring>txtDescription</cstring>
-          </property>
-         </widget>
-        </item>
-        <item row="8" column="0">
-         <widget class="QLabel" name="label_212">
-          <property name="toolTip">
-           <string>Enter Proposal Amount</string>
-          </property>
-          <property name="text">
-           <string>&amp;Minimum Bid Amount:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-          <property name="buddy">
-           <cstring>txtMinimumBidAmount</cstring>
-          </property>
-         </widget>
-        </item>
-        <item row="9" column="0">
-         <widget class="QLabel" name="label_22">
-          <property name="toolTip">
-           <string>Discussion URL</string>
-          </property>
-          <property name="text">
-           <string>&amp;NFT URL:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-          <property name="buddy">
-           <cstring>txtURL</cstring>
+           <string>Add New NFT - v1.1   &lt;br&gt;</string>
           </property>
          </widget>
         </item>
@@ -138,7 +41,7 @@
            <string>Enter Proposal Name</string>
           </property>
           <property name="text">
-           <string>&amp;NFT Name:</string>
+           <string>NFT Name:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -161,31 +64,134 @@
           </property>
          </widget>
         </item>
-        <item row="14" column="0">
-         <widget class="QLabel" name="label_7">
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="toolTip">
+           <string>NFT Description</string>
+          </property>
           <property name="text">
-           <string/>
+           <string>Description:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy">
+           <cstring>txtDescription</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="2">
+         <widget class="QPlainTextEdit" name="txtDescription"/>
+        </item>
+        <item row="8" column="2">
+         <widget class="QLineEdit" name="txtMinimumBidAmount">
+          <property name="toolTip">
+           <string>Proposal Amount</string>
+          </property>
+          <property name="inputMethodHints">
+           <set>Qt::ImhDigitsOnly</set>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QLabel" name="label_512">
+          <property name="toolTip">
+           <string>Reserve Amount</string>
+          </property>
+          <property name="text">
+           <string>Reserve Amount:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy">
+           <cstring>txtReserveBidAmount</cstring>
           </property>
          </widget>
         </item>
         <item row="7" column="2">
-         <widget class="QLineEdit" name="txtReserved">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
+         <widget class="QLineEdit" name="txtReserveAmount">
           <property name="toolTip">
-           <string>Enter Proposal Name</string>
+           <string>Reserve Amount</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QLabel" name="label_212">
+          <property name="toolTip">
+           <string>Min Bid Amount</string>
+          </property>
+          <property name="text">
+           <string>&amp;Minimum Bid Amount:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy">
+           <cstring>txtMinimumBidAmount</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="0">
+         <widget class="QLabel" name="label_22">
+          <property name="toolTip">
+           <string>Lo-Quality URL</string>
+          </property>
+          <property name="text">
+           <string>Lo-Quality URL:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy">
+           <cstring>txtLoQualityURL</cstring>
           </property>
          </widget>
         </item>
         <item row="9" column="2">
-         <widget class="QLineEdit" name="txtURL">
+         <widget class="QLineEdit" name="txtLoQualityURL">
           <property name="toolTip">
-           <string>Discussion URL</string>
+           <string>LoQuality URL</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <widget class="QLabel" name="label_72">
+          <property name="toolTip">
+           <string>Hi-Quality URL</string>
+          </property>
+          <property name="text">
+           <string>Hi-Quality URL:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy">
+           <cstring>txtHiQualityURL</cstring>
           </property>
          </widget>
         </item>
         <item row="10" column="2">
+         <widget class="QLineEdit" name="txtHiQualityURL">
+          <property name="toolTip">
+           <string>HiQuality URL</string>
+          </property>
+         </widget>
+        </item>
+        <item row="11" column="0">
+         <widget class="QLabel" name="label194">
+          <property name="toolTip">
+           <string>Owner Address</string>
+          </property>
+          <property name="text">
+           <string>(CPK) Owner Address:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="11" column="2">
          <widget class="QLineEdit" name="txtOwnerAddress">
           <property name="toolTip">
            <string>Address</string>
@@ -201,10 +207,23 @@
           </property>
          </widget>
         </item>
-        <item row="11" column="2">
+        <item row="12" column="2">
          <widget class="QComboBox" name="cmbNFTType"/>
         </item>
-        <item row="13" column="2">
+        <item row="12" column="0">
+         <widget class="QLabel" name="label_31">
+          <property name="toolTip">
+           <string>NFT Type</string>
+          </property>
+          <property name="text">
+           <string>NFT Type:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="14" column="2">
          <widget class="QCheckBox" name="chkMarketable">
           <property name="maximumSize">
            <size>
@@ -217,7 +236,30 @@
           </property>
          </widget>
         </item>
-        <item row="14" column="2">
+        <item row="15" column="2">
+         <widget class="QCheckBox" name="chkDeleted">
+          <property name="maximumSize">
+           <size>
+            <width>777</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Delete this NFT?</string>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="7">
+         <layout class="QHBoxLayout" name="horizontalLayout"/>
+        </item>
+        <item row="16" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="2">
          <widget class="QPushButton" name="btnSubmit">
           <property name="minimumSize">
            <size>
@@ -308,9 +350,7 @@
  <tabstops>
   <tabstop>txtName</tabstop>
   <tabstop>txtDescription</tabstop>
-  <tabstop>txtReserved</tabstop>
   <tabstop>txtMinimumBidAmount</tabstop>
-  <tabstop>txtURL</tabstop>
   <tabstop>txtOwnerAddress</tabstop>
   <tabstop>cmbNFTType</tabstop>
   <tabstop>chkMarketable</tabstop>

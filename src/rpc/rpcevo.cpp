@@ -2330,7 +2330,7 @@ UniValue listnfts(const JSONRPCRequest& request)
 	for (int i = 0; i < uNFTs.size(); i++)
 	{
 		NFT n = uNFTs[i];
-		if (n.found)
+		if (n.found && !n.fDeleted)
 		{
 			if ((nMineType == 0 && sCPK == n.sCPK) || nMineType != 0)
 			{

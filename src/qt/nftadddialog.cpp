@@ -61,9 +61,12 @@ void NFTAddDialog::UpdateDisplay(std::string sAction, uint256 nftHash)
 		ui->lblAction->setText(GUIUtil::TOQS("Edit NFT " + nftHash.GetHex()));
 		ui->txtName->setText(GUIUtil::TOQS(n.sName));
 		ui->txtDescription->setPlainText(GUIUtil::TOQS(n.sDescription));
-		ui->txtURL->setText(GUIUtil::TOQS(n.sURL));
+		ui->txtLoQualityURL->setText(GUIUtil::TOQS(n.sLoQualityURL));
+		ui->txtHiQualityURL->setText(GUIUtil::TOQS(n.sHiQualityURL));
+		ui->txtReserveAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nReserveAmount/COIN, 2)));
 		ui->txtMinimumBidAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nMinimumBidAmount/COIN, 2)));
 		ui->chkMarketable->setChecked(n.fMarketable);
+		ui->chkDeleted->setChecked(n.fDeleted);
 		ui->cmbNFTType->setCurrentIndex(ui->cmbNFTType->findText(GUIUtil::TOQS(n.sType)));
 
 	}
@@ -87,8 +90,11 @@ void NFTAddDialog::clear()
 {
     ui->txtName->setText("");
 	ui->txtDescription->setPlainText("");
-    ui->txtURL->setText("");
+    ui->txtLoQualityURL->setText("");
+	ui->txtHiQualityURL->setText("");
 	ui->txtMinimumBidAmount->setText("");
+	ui->txtReserveAmount->setText("");
+	ui->chkDeleted->setChecked(false);
 	ui->chkMarketable->setChecked(false);
 }
 
@@ -114,10 +120,13 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	
 	n.sName = GUIUtil::FROMQS(ui->txtName->text());
 	n.sCPK = GUIUtil::FROMQS(ui->txtOwnerAddress->text());
-	n.nMinimumBidAmount = cdbl(GUIUtil::FROMQS(ui->txtMinimumBidAmount->text()),2) * COIN;
-	n.sURL = GUIUtil::FROMQS(ui->txtURL->text());
+	n.nMinimumBidAmount = cdbl(GUIUtil::FROMQS(ui->txtMinimumBidAmount->text()), 2) * COIN;
+	n.nReserveAmount = cdbl(GUIUtil::FROMQS(ui->txtReserveAmount->text()), 2) * COIN;
+	n.sLoQualityURL = GUIUtil::FROMQS(ui->txtLoQualityURL->text());
+	n.sHiQualityURL = GUIUtil::FROMQS(ui->txtHiQualityURL->text());
 	n.sDescription = GUIUtil::FROMQS(ui->txtDescription->toPlainText());
 	n.fMarketable = ui->chkMarketable->checkState();
+	n.fDeleted = ui->chkDeleted->checkState();
 	std::string sError;
 	if (n.sName.length() < 3)
 		sError += "NFT Name must be populated. ";
@@ -126,7 +135,7 @@ void NFTAddDialog::on_btnSubmit_clicked()
 
 	if (!ValidateAddress2(n.sCPK)) 
 		sError += "NFT Owner Address is invalid. ";
-	if (n.sURL.length() < 10) 
+	if (n.sLoQualityURL.length() < 10 || n.sHiQualityURL.length() < 10) 
 		sError += "You must enter an asset URL. ";
 	//combobox->itemData(combobox->currentIndex())
 	n.sType = GUIUtil::FROMQS(ui->cmbNFTType->currentText());
@@ -137,7 +146,7 @@ void NFTAddDialog::on_btnSubmit_clicked()
 		sError += "NFT Name must be < 128 chars.";
 	if (n.sDescription.length() > 512)
 		sError += "NFT Description must be < 512 chars.";
-	if (n.sURL.length() > 256)
+	if (n.sLoQualityURL.length() > 256 || n.sHiQualityURL.length() > 256)
 		sError += "URL Length must be < 256 chars.";
 
 	CAmount nBalance = GetRPCBalance();
@@ -158,5 +167,4 @@ void NFTAddDialog::on_btnSubmit_clicked()
  	QMessageBox::warning(this, tr("NFT Add Result"), GUIUtil::TOQS(sNarr), QMessageBox::Ok, QMessageBox::Ok);
 	clear();
 }
-
 
