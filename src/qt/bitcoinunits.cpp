@@ -22,7 +22,7 @@ QList<BitcoinUnits::Unit> BitcoinUnits::availableUnits()
     unitlist.append(BBP);
     unitlist.append(mBBP);
     unitlist.append(uBBP);
-    unitlist.append(duffs);
+    unitlist.append(pence);
     return unitlist;
 }
 
@@ -33,7 +33,7 @@ bool BitcoinUnits::valid(int unit)
     case BBP:
     case mBBP:
     case uBBP:
-    case duffs:
+    case pence:
         return true;
     default:
         return false;
@@ -49,7 +49,7 @@ QString BitcoinUnits::name(int unit)
             case BBP: return QString("BBP");
             case mBBP: return QString("mBBP");
             case uBBP: return QString::fromUtf8("μBBP");
-            case duffs: return QString("duffs");
+            case pence: return QString("pence");
             default: return QString("???");
         }
     }
@@ -60,7 +60,7 @@ QString BitcoinUnits::name(int unit)
             case BBP: return QString("tBBP");
             case mBBP: return QString("mtBBP");
             case uBBP: return QString::fromUtf8("μtBBP");
-            case duffs: return QString("tduffs");
+            case pence: return QString("tpence");
             default: return QString("???");
         }
     }
@@ -75,7 +75,7 @@ QString BitcoinUnits::description(int unit)
             case BBP: return QString("BBP");
             case mBBP: return QString("Milli-BBP (1 / 1" THIN_SP_UTF8 "000)");
             case uBBP: return QString("Micro-BBP (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case duffs: return QString("Ten Nano-BBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case pence: return QString("Ten Nano-BBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -86,7 +86,7 @@ QString BitcoinUnits::description(int unit)
             case BBP: return QString("TestBBP");
             case mBBP: return QString("Milli-TestBBP (1 / 1" THIN_SP_UTF8 "000)");
             case uBBP: return QString("Micro-TestBBP (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case duffs: return QString("Ten Nano-TestBBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case pence: return QString("Ten Nano-TestBBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -99,7 +99,7 @@ qint64 BitcoinUnits::factor(int unit)
     case BBP:  return 100000000;
     case mBBP: return 100000;
     case uBBP: return 100;
-    case duffs: return 1;
+    case pence: return 1;
     default:   return 100000000;
     }
 }
@@ -111,7 +111,7 @@ int BitcoinUnits::decimals(int unit)
     case BBP: return 8;
     case mBBP: return 5;
     case uBBP: return 2;
-    case duffs: return 0;
+    case pence: return 0;
     default: return 0;
     }
 }

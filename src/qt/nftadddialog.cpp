@@ -35,6 +35,7 @@ NFTAddDialog::NFTAddDialog(const PlatformStyle *platformStyle, QWidget *parent) 
 	ui->cmbNFTType->addItem("Digital Good (MP3, PNG, GIF, JPEG, PDF)");
 	ui->cmbNFTType->addItem("Orphan (Child to be sponsored)");
 	ui->txtMinimumBidAmount->setValidator( new QIntValidator(0, 100000000, this) );
+	ui->txtReserveAmount->setValidator( new QIntValidator(0, 100000000, this) );
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	ui->txtOwnerAddress->setText(GUIUtil::TOQS(sCPK));
 }

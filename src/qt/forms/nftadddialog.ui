@@ -38,7 +38,7 @@
         <item row="5" column="0">
          <widget class="QLabel" name="label_213">
           <property name="toolTip">
-           <string>Enter Proposal Name</string>
+           <string>Enter NFT Name</string>
           </property>
           <property name="text">
            <string>NFT Name:</string>
@@ -66,6 +66,12 @@
         </item>
         <item row="6" column="0">
          <widget class="QLabel" name="label_2">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>150</height>
+           </size>
+          </property>
           <property name="toolTip">
            <string>NFT Description</string>
           </property>
@@ -81,12 +87,19 @@
          </widget>
         </item>
         <item row="6" column="2">
-         <widget class="QPlainTextEdit" name="txtDescription"/>
+         <widget class="QPlainTextEdit" name="txtDescription">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>140</height>
+           </size>
+          </property>
+         </widget>
         </item>
         <item row="8" column="2">
          <widget class="QLineEdit" name="txtMinimumBidAmount">
           <property name="toolTip">
-           <string>Proposal Amount</string>
+           <string>Enter Reserve Amount (The buy-it-now amount you will immediately accept from a bidder or a buyer)</string>
           </property>
           <property name="inputMethodHints">
            <set>Qt::ImhDigitsOnly</set>
@@ -119,10 +132,10 @@
         <item row="8" column="0">
          <widget class="QLabel" name="label_212">
           <property name="toolTip">
-           <string>Min Bid Amount</string>
+           <string>The lowest bid you will consider.</string>
           </property>
           <property name="text">
-           <string>&amp;Minimum Bid Amount:</string>
+           <string>Minimum Bid Amount:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -335,7 +348,7 @@
           <property name="sizeHint" stdset="0">
            <size>
             <width>40</width>
-            <height>20</height>
+            <height>40</height>
            </size>
           </property>
          </spacer>

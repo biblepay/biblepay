@@ -25,6 +25,9 @@ static CWallet* pwalletpog;
 std::string RetrieveMd5(std::string s1);
 uint256 CoordToUint256(int row, int col);
 std::string RoundToString(double d, int place);
+std::string AmountToString(const CAmount& amount);
+double CalculateUTXOReward(int nStakeCount, int nDays);
+int GetUTXOStatus(uint256 txid);
 
 struct UserVote
 {
@@ -310,6 +313,7 @@ struct UTXOStake
 	std::string ForeignAddress = std::string();
 	std::string BBPSignature = std::string();
 	std::string ForeignSignature = std::string();
+	std::string sType = std::string();
 	double nBBPPrice = 0;
 	double nForeignPrice = 0;
 	double nBTCPrice = 0;
@@ -317,10 +321,35 @@ struct UTXOStake
 	double nForeignValueUSD = 0;
 	double nValue = 0;
 	double nCommitment = 0;
+	double nDWU = 0;
+	int nStatus = 0;
 	bool BBPSignatureValid = false;
 	bool ForeignSignatureValid = false;
 	bool SignatureValid = false;
 	uint256 TXID = uint256S("0x0");
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("RiskType", sType));
+		nDWU = CalculateUTXOReward(nType, nCommitment); //nType contains stake-type (1=bbp only, 2=foreign+bbp)
+		nStatus = GetUTXOStatus(TXID);
+			
+		obj.push_back(Pair("DWU", nDWU * 100));
+		obj.push_back(Pair("Sigs", SignatureNarr));
+		obj.push_back(Pair("TotalValue", nValue));
+		obj.push_back(Pair("Ticker", ReportTicker));
+	    obj.push_back(Pair("Status", nStatus));
+		obj.push_back(Pair("CPK", CPK));
+		obj.push_back(Pair("BBPAmount", AmountToString(nBBPAmount)));
+		obj.push_back(Pair("ForeignAmount", AmountToString(nForeignAmount)));
+		obj.push_back(Pair("BBPValue", RoundToString(nBBPValueUSD, 2)));
+		obj.push_back(Pair("ForeignValue", RoundToString(nForeignValueUSD, 2)));
+		obj.push_back(Pair("Commitment", nCommitment));
+		obj.push_back(Pair("Fulfilled %", CommitmentFulfilledPctg * 100));
+		obj.push_back(Pair("Time", Time));
+		obj.push_back(Pair("Spent", fBBPSpent));
+    }
 };
 
 struct DashStake
@@ -414,7 +443,6 @@ std::string PubKeyToAddress(const CScript& scriptPubKey);
 int DeserializePrayersFromFile();
 double Round(double d, int place);
 void SerializePrayersToFile(int nHeight);
-std::string AmountToString(const CAmount& amount);
 CBlockIndex* FindBlockByHeight(int nHeight);
 std::string rPad(std::string data, int minWidth);
 double cdbl(std::string s, int place);
@@ -516,11 +544,9 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
 int AssimilateUTXO(UTXOStake d);
 UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
-int GetUTXOStatus(uint256 txid);
 std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQty);
 std::string ScanBlockForNewUTXO(const CBlock& block);
 double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bool fDebug);
-double CalculateUTXOReward(int nStakeCount, int nDays);
 std::string strReplace(std::string str_input, std::string str_to_find, std::string str_to_replace_with);
 double AddressToPin(std::string sAddress);
 bool CompareMask2(CAmount nAmount, double nMask);

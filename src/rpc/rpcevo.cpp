@@ -1661,11 +1661,12 @@ std::string GetHighYieldWarning(int nDays)
 {
 	if (nDays < 31)
 		return "";
-	std::string sNarr = "When you promise to lock up your coins for an additional " + RoundToString(nDays, 0) + " days for an additional high yield reward, "
-		+ " you hereby AGREE that you may be PENALIZED by 200% of the TOTAL reward amount if you decide to spend your UTXO early!  "
-		+ " Use caution when selecting the high risk option.  This condition can cause you to lose up to 100% of your staked collateral to network fees.  "
-		+ " If you do not fulfill your obligation, your original UTXO will have a certain amount of burn fees deducted from it, and these fees will be burned.  "
-		+ " You will be UNABLE to send this UTXO back to your own address for spending.  EXAMPLE:  You have a 100,000 BBP coin.  You decide to lock it for an extra high risk reward for 30 days for a 60% DWU.  On the 15th day you try to spend the coin (breaking your obligation).  You will be penalized 60%*2=120% of your original UTXO, which is MORE THAN THE ORIGINAL VALUE.  Therefore due to our 99% cap, we will charge you a 99% BURN FEE to spend the coin.  Note that our conservative UTXO staking option does not carry this risk.  If you want conservative staking, select 0 days for the commitment length.  Thank you for using BIBLEPAY.  ";
+	std::string sNarr = "When you promise to lock for " + RoundToString(nDays, 0) + " days for a high yield reward, "
+		+ " you hereby AGREE that you may be PENALIZED by 200% of the TOTAL reward if you spend your UTXO early.  "
+		+ " If you do not fulfill your obligation, your original UTXO will have burn fees deducted from it.  "
+		+ " EXAMPLE:  You have a 100,000 BBP coin.  You lock it for 90 days for a 60% DWU.  On the 15th day you try to spend the coin (breaking your obligation).  "
+		+ " You will be penalized 60%*2=120% of your original UTXO, which is MORE THAN THE ORIGINAL VALUE.  Due to our 90% cap, we will charge you a 90% BURN FEE to spend the coin. "
+		+ " (If you do not agree please use our conservative staking feature.)  Thank you for using BIBLEPAY.  ";
 	return sNarr;
 }
 
@@ -1801,7 +1802,7 @@ UniValue easystake(const JSONRPCRequest& request)
 
 UniValue highriskstake(const JSONRPCRequest& request)
 {
-	std::string sHelp = "You must specify highriskstake minimum_bbp_amount foreign_address foreign_amount commitment_days[0=conservative,30-365=high-risk] 0=dry_run/1=real [Optional `Ticker`=Override Foreign Ticker]";
+	std::string sHelp = "You must specify highriskstake minimum_bbp_amount foreign_address foreign_amount commitment_days 0=dry_run/1=real [Optional `Ticker`=Override Foreign Ticker]";
 
 	std::string sError;
 	if (request.fHelp || (request.params.size() != 6 && request.params.size() != 5))
@@ -1809,13 +1810,14 @@ UniValue highriskstake(const JSONRPCRequest& request)
 	UniValue results(UniValue::VOBJ);
 
     JSONRPCRequest newRequest;
+	
 	newRequest.params.setArray();
 	newRequest.params.push_back(request.params[0].getValStr()); // min bbp
 	newRequest.params.push_back(request.params[1].getValStr()); // foreign addr
 	newRequest.params.push_back(request.params[2].getValStr()); // foreign amt
 	newRequest.params.push_back(request.params[4].getValStr()); // dry run
 	std::string sForeignTickerOverride;
-	if (request.params.size() > 5)
+	if (request.params.size() > 6)
 		sForeignTickerOverride = request.params[5].getValStr();
 	newRequest.params.push_back(sForeignTickerOverride); // override
 	newRequest.params.push_back(request.params[3].getValStr()); // commitment Days
@@ -1835,9 +1837,9 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 	double nDays = 0;
 	if (request.params.size() > 2)
 		nDays = cdbl(request.params[2].getValStr(), 2);
-	if (nDays > 0 && (nDays < 30 || nDays > 365))
+	if (nDays > 0 && (nDays < 31 || nDays > 365))
 	{
-		sError = "Commitment days must be between 30 and 365 if specified. ";
+		sError = "Commitment days must be between 31 and 365 if specified. ";
 		throw std::runtime_error(sError);
 	}
 	
@@ -1907,11 +1909,19 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 
 UniValue highriskbbpstake(const JSONRPCRequest& request)
 {
-	std::string sHelp = "You must specify highriskbbpstake minimum_bbp_amount 0=dry_run/1=real commitment_days[0=conservative,30-365=high_risk]";
+	std::string sHelp = "You must specify highriskbbpstake minimum_bbp_amount commitment_days 0=dry_run/1=real";
 	std::string sError;
 	if (request.fHelp || (request.params.size() != 3))
 		throw std::runtime_error(sHelp.c_str());
 	UniValue results(UniValue::VOBJ);
+
+    JSONRPCRequest newRequest;
+	
+	newRequest.params.setArray();
+	newRequest.params.push_back(request.params[0].getValStr()); // min bbp
+	newRequest.params.push_back(request.params[2].getValStr()); // dry run
+	newRequest.params.push_back(request.params[1].getValStr()); // days
+
 	results = easybbpstake(request);
 	return results;
 }
@@ -1980,6 +1990,7 @@ UniValue utxostake(const JSONRPCRequest& request)
 			results.push_back(Pair("UTXO Value", ds.nValue));
 			results.push_back(Pair("Results", "The UTXO Stake Contract was created successfully.  Thank you for using BIBLEPAY. "));
 			results.push_back(Pair("TXID", sTXID));
+			LockUTXOStakes();
 		}
 	}
 	else
@@ -2194,14 +2205,10 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 				{
 					if (d.nCommitment > 0)
 						nCommitmentQuantity++;
-					std::string sSigs = "Sigs: " + d.SignatureNarr;
-					std::string sRow = "#" + RoundToString(i+1, 0) + ":  Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
-						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
-						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2)
-					    + ", Commitment: e" + RoundToString(d.DaysElapsed, 2) + "/c" + RoundToString(d.nCommitment, 0) + "=" + RoundToString(d.CommitmentFulfilledPctg * 100, 2) + "%"
-						+ ", Time: " + RoundToString(d.Time,0) + ", Age: " + RoundToString(d.Age, 2) + ", bbpspent: " + ToYesNo(d.fBBPSpent);
-
-					results.push_back(Pair(d.TXID.GetHex(), sRow));
+				    UniValue o(UniValue::VOBJ);
+					d.ToJson(o);
+					
+					results.push_back(Pair(d.TXID.GetHex(), o));
 					nTotalAmount += d.nBBPAmount;
 					nTotalForeignAmount += d.nForeignAmount;
 					mapAmounts[d.ReportTicker] += d.ReportTicker == "BBP" ? d.nBBPAmount : d.nForeignAmount;
@@ -2210,10 +2217,6 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 		}
 		else
 		{
-				std::string sSigs = "Sigs: " + d.SignatureNarr;
-				std::string sRow = "#" + RoundToString(i+1, 0) + ":  TXID=" + d.TXID.GetHex() + ", Total_Value: $" + RoundToString(d.nValue, 2) + ", Ticker: " + d.ReportTicker 
-						+ ", Status: " + RoundToString(nStatus, 0) + ", CPK: " + d.CPK + ", " + sSigs + ", BBPAmount: " + AmountToString(d.nBBPAmount) + ", ForeignAmount: " 
-						+ AmountToString(d.nForeignAmount) + ", BBPValue: $" + RoundToString(d.nBBPValueUSD, 2) + ", ForeignValue: $" + RoundToString(d.nForeignValueUSD, 2);
 				// LogPrintf("\nlistutxostakes::Skipping %s", sRow);
 		}
 		if (nSpentType == 3)

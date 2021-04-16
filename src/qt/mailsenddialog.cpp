@@ -136,9 +136,15 @@ void MailSendDialog::on_btnSubmit_clicked()
 		DACResult d = MakeDerivedKey(dmTo.AddressLine1);
 		std::string sPayload = "<giftcard>" + RoundToString((double)dmTo.Amount/COIN, 2) + "</giftcard>";
 		sTXID = RPCSendMessage(dmTo.Amount, d.Address, fDryRun, sError, sPayload);
+		// 4-16-2021 add complete instructions
+		std::string sPhrase = "<span style='white-space: nowrap;'><font color=lime> &nbsp;\"" + dmTo.AddressLine1 + "\"&nbsp; </font></span>";
+		std::string sInstructions = "<small>To redeem your gift, download biblepay Desktop PC wallet from www.biblepay.org | Tools | Debug Console | acceptgift " + sPhrase + "</small>";
+
+
 		dmTo.Paragraph += "<p><br>A gift of $" + RoundToString(dSrcAmount, 2) + " [" + RoundToString((double)dmTo.Amount/COIN, 2) 
-						+ " BBP] has been sent to you!  Please use the code <span style='white-space: nowrap;'><font color=lime>\"" 
-						+ dmTo.AddressLine1 + "\"</font></span> to redeem your gift.<br>";
+						+ " BBP] has been sent to you!  "
+						+ " <br>" + sInstructions;
+
 		LogPrintf("\nSendGiftDialog::Sending a gift to %s, amt=%f, Error %s", dmTo.Paragraph, (double)dmTo.Amount/COIN, sError);
 	}
 	std::string sPDF;
@@ -151,7 +157,7 @@ void MailSendDialog::on_btnSubmit_clicked()
 	}
 		
 	std::string sNarr = (sError.empty()) ? "<small>Successfully created Mail Delivery " + sTXID + ". <br><small><a href='" 
-		+ sPDF + "'>Review Proof Here</a><br>Thank you for using BiblePay Physical Mail Delivery." : sError;
+		+ sPDF + "' style='text-decoration:none;color:pink;font-size:150%'><b>Click HERE to Review PROOF</b></a><br>Thank you for using BiblePay Physical Mail Delivery." : sError;
 	ui->txtInfo->setText(GUIUtil::TOQS(sNarr));
  	QMessageBox::warning(this, tr("Mail Delivery Result"), GUIUtil::TOQS(sNarr), QMessageBox::Ok, QMessageBox::Ok);
 	clear();

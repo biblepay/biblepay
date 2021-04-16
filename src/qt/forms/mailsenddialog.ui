@@ -29,7 +29,14 @@
       <item>
        <layout class="QGridLayout" name="gridLayout">
         <item row="6" column="2">
-         <widget class="QPlainTextEdit" name="txtParagraph"/>
+         <widget class="QPlainTextEdit" name="txtParagraph">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>125</height>
+           </size>
+          </property>
+         </widget>
         </item>
         <item row="1" column="2">
          <widget class="QLabel" name="lblAction">
@@ -127,6 +134,12 @@
          <widget class="QLineEdit" name="txtReserved">
           <property name="enabled">
            <bool>false</bool>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>5</height>
+           </size>
           </property>
           <property name="toolTip">
            <string>Enter Proposal Name</string>
@@ -297,7 +310,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Deliver this for real? (If unchecked we will create a proof for review, if checked we will charge you and deliver it).</string>
+           <string>Deliver this for real? (If unchecked we will create a proof, if checked we will charge and deliver).</string>
           </property>
          </widget>
         </item>
@@ -360,6 +373,24 @@
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QLabel" name="txtInfo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>888</width>
+            <height>45</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>222</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>15</pointsize>

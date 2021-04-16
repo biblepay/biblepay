@@ -370,7 +370,14 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
 		{
 			bool fPoosValid = POOSOrphanTest(dmnPayee->pdmnState->pubKeyOperator.Get().ToString(), 30);
 			if (!fPoosValid)
+			{
 				masternodeReward = 1 * COIN;
+				double nSancPaymentTier2 = GetSporkDouble("SancPaymentTier2", 0);
+				if (nSancPaymentTier2 > 0)
+				{
+					masternodeReward = APM3_REWARD;
+				}
+			}
 		}
 	}
 	// End of POOS
@@ -424,13 +431,13 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 				CAmount nAmount1 = txout.nValue;
 				CAmount nAmount2 = txout2.nValue;
 				// So for POOS, to prevent forking, we handle the situation that could occur when the supermajority set a payment of 1 (network values) and (lets say due to an internet outage, or a change of POOS status) we internally try to pay the full amount, let us catch that here:
-				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (nAmount1 == (1 * COIN) || nAmount2 == (1 * COIN)))
+				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (nAmount1 == (1 * COIN) || nAmount2 == (1 * COIN) || nAmount1 == (APM3_REWARD * COIN) || nAmount2 == (APM3_REWARD * COIN)))
 				{
 					found = true;
 					break;
 				}
 				// Automatic Price Mooning
-				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (blockReward == APM_REWARD * COIN || blockReward == APM2_REWARD * COIN))
+				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (blockReward == APM_REWARD * COIN || blockReward == APM2_REWARD * COIN || blockReward == APM3_REWARD))
 				{
 					found = true;
 					break;

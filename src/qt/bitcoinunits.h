@@ -60,7 +60,7 @@ public:
         BBP,
         mBBP,
         uBBP,
-        duffs
+        pence
     };
 
     enum SeparatorStyle

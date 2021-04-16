@@ -3003,6 +3003,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 			w.nForeignValueUSD = cdbl(ExtractXML(w.XML, "<foreignvalue>", "</foreignvalue>"), 2);
 			w.nBBPAmount = cdbl(ExtractXML(w.XML, "<bbpamount>", "</bbpamount>"), 2) * COIN;
 			w.nForeignAmount = StringToAmount(ExtractXML(w.XML, "<foreignamount>", "</foreignamount>"));
+					
 
 			bool fUseLive = true;
 			if (fUseLive)
@@ -3041,6 +3042,8 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 			w.CommitmentFulfilledPctg = w.DaysElapsed / (w.nCommitment + .01);
 			if (w.CommitmentFulfilledPctg > 1)
 				w.CommitmentFulfilledPctg = 1;
+
+			w.sType = w.nCommitment == 0 ? "C" : "H";
 
 			// BBP only spent test
 			CAmount nBBPAmountOut = 0;
@@ -4765,6 +4768,10 @@ std::string ScanBlockForNewUTXO(const CBlock& block)
 
 double SumUTXO()
 {
+	double nLast = cdbl(ReadCacheWithMaxAge("sumutxo", "all", (60 * 30)), 2);
+	if (nLast > 0)
+		return nLast;
+
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
 	double nTotal = 0;
 	int nCount = 0;
@@ -4781,20 +4788,19 @@ double SumUTXO()
 			}
 		}
 	}
+	WriteCache("sumutxo", "all", RoundToString(nTotal, 2), GetAdjustedTime());
 	return nTotal;
 }
 
 double CalculateUTXOReward(int nStakeCount, int nCommitment)
 {
 	int iNextSuperblock = 0;
-	double UTXO_GSC_PCT = 1.0;
 	int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
-	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, false) * UTXO_GSC_PCT;
+	CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, false);
 	double nTotal = SumUTXO();
 	double nBTCPrice = GetCryptoPrice("btc");
 	double nBBPPrice = GetCryptoPrice("bbp");
 	double nHSMultiplier = GetHighDWURewardPercentage(nCommitment);
-
 	double nUSDBBP = nBTCPrice * nBBPPrice;
 	double nAnnualReward = (nPaymentsLimit/COIN) * 365 * nUSDBBP;
 	double nDWU = nAnnualReward / (nTotal+.01);
@@ -5428,7 +5434,7 @@ void LockUTXOStakes()
 	if (!pwalletpog)
 		return;
 
-	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
     LOCK(pwalletpog->cs_wallet);
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
 	for (int i = 0; i < uStakes.size(); i++)
@@ -5783,8 +5789,19 @@ DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun)
 	return b;
 }
 
+std::string CleansePhrase(std::string sPhrase)
+{
+	// Remove special characters from the passphrase so they can't hose it up between machines.
+	sPhrase = SanitizeString(sPhrase);
+    boost::replace_all(sPhrase, "'", "");
+	boost::replace_all(sPhrase, "\"", "");
+	boost::replace_all(sPhrase, " ", "");
+	return sPhrase;
+}
+
 DACResult MakeDerivedKey(std::string sPhrase)
 {
+	sPhrase = CleansePhrase(sPhrase);
 	AcquireWallet();
 	WalletBatch dummyBatch(pwalletpog->GetDBHandle(), "r+", false);
 	dummyBatch.TxnBegin();

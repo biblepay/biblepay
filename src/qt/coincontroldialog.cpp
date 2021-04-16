@@ -243,8 +243,7 @@ void CoinControlDialog::buttonSelectAllClicked()
 void CoinControlDialog::buttonToggleLockClicked()
 {
     QTreeWidgetItem *item;
-	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
-
+	
     // Works in list-mode only
     if(ui->radioListMode->isChecked()){
         ui->treeWidget->setEnabled(false);
@@ -255,10 +254,7 @@ void CoinControlDialog::buttonToggleLockClicked()
             if (coinControl()->IsUsingPrivateSend() && !fHideAdditional && !model->isFullyMixed(outpt)) {
                 continue;
             }
-
-			std::string sUTXO = item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString() + "-" + RoundToString(item->data(COLUMN_ADDRESS, VOutRole).toUInt(), 0);
-			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO, false);
-
+	
             if (model->isLockedCoin(uint256S(item->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), item->data(COLUMN_ADDRESS, VOutRole).toUInt()))
 			{
                 model->unlockCoin(outpt);
@@ -272,25 +268,11 @@ void CoinControlDialog::buttonToggleLockClicked()
                 item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("lock_closed", GUIUtil::ThemedColor::RED));
             }
 
-			/*
-			if (u1.found)
-			{
-				if (u1.nCommitment > 0)
-				{
-		      		item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
-				}
-				else
-				{
-	           		item->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
-				}
-			}
-			*/
-			
-
             updateLabelLocked();
         }
         ui->treeWidget->setEnabled(true);
         CoinControlDialog::updateLabels(model, this);
+		updateView();
     }
     else{
         QMessageBox msgBox(this);
@@ -384,6 +366,7 @@ void CoinControlDialog::lockCoin()
     contextMenuItem->setDisabled(true);
     contextMenuItem->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("lock_closed", GUIUtil::ThemedColor::RED));
     updateLabelLocked();
+	updateView();
 }
 
 // context menu action: unlock coin
@@ -396,23 +379,7 @@ void CoinControlDialog::unlockCoin()
     contextMenuItem->setDisabled(false);
     //contextMenuItem->setIcon(COLUMN_CHECKBOX, QIcon());
     updateLabelLocked();
-	/*
-	std::string sUTXO = contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString() + "-" + RoundToString(contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toUInt(), 0);
-	
-	UTXOStake u1 = (uStakes, sUTXO, false);
-	if (u1.found)
-	{
-		if (u1.nCommitment > 0)
-		{
-	   		contextMenuItem->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
-		}
-		else
-		{
-	   		contextMenuItem->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
-		}
-	}
-	*/
-
+	updateView();
 }
 
 // copy label "Quantity" to clipboard
@@ -730,7 +697,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
     // how many satoshis the estimated fee can vary per byte we guess wrong
     double dFeeVary = (nBytes != 0) ? (double)nPayFee / nBytes : 0;
 
-    QString toolTip4 = tr("Can vary +/- %1 duff(s) per input.").arg(dFeeVary);
+    QString toolTip4 = tr("Can vary +/- %1 pence per input.").arg(dFeeVary);
 
     l3->setToolTip(toolTip4);
     l4->setToolTip(toolTip4);
@@ -965,7 +932,14 @@ void CoinControlDialog::updateView()
 			    COutPoint outpt(txhash, out.i);
 				if (u1.nCommitment > 0)
 				{
-		       		itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
+					if (u1.CommitmentFulfilledPctg >= 1)
+					{
+						itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("tx_mined", GUIUtil::ThemedColor::GREEN));
+					}
+					else
+					{
+						itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
+					}
 				}
 				else
 				{
