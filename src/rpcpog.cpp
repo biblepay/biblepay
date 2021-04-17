@@ -5844,6 +5844,12 @@ DACResult MakeDerivedKey(std::string sPhrase)
 		return d;
 	}
 	d.SecretKey = CBitcoinSecret(vchSecret).ToString();
+
+	CKeyID vchAddress = dpk.GetID();
+	{
+		pwalletpog->SetAddressBook(vchAddress, sPhrase, "receive");
+	}
+
 	pwalletpog->UnlockGift(d.Address);
 
 	return d;

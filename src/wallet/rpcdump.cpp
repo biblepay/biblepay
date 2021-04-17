@@ -160,6 +160,24 @@ UniValue importprivkey(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+void ImportAddress(CWallet*, const CTxDestination& dest, const std::string& strLabel);
+bool AcquireWallet18()
+{
+	std::vector<CWallet*> wallets = GetWallets();
+	if (wallets.size() > 0)
+	{
+		pwalletpog = wallets[0];
+		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
+		return true;
+	}
+	else
+	{
+		pwalletpog = NULL;
+		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
+	}
+	return false;
+}
+
 UniValue acceptgift(const JSONRPCRequest& request)
 {
 	if (request.fHelp || request.params.size() < 1)
@@ -170,12 +188,30 @@ UniValue acceptgift(const JSONRPCRequest& request)
 	UniValue results(UniValue::VOBJ);
 	results.push_back(Pair("Address", d.Address));
 	results.push_back(Pair("Note", "Your wallet will now rescan to reflect the gift balance!"));
-	JSONRPCRequest newRequest;
-	newRequest.params.setArray();
-	newRequest.params.push_back(d.SecretKey);
-	UniValue result2(UniValue::VOBJ);
-	result2 = importprivkey(newRequest);
-	results.push_back(Pair("Accept", result2));
+    CBitcoinSecret vchSecret;
+    bool fGood = vchSecret.SetString(d.SecretKey);
+	if (!fGood) 
+		throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
+	AcquireWallet18();
+
+    CKey key = vchSecret.GetKey();
+	if (!key.IsValid()) 
+		throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+
+	CPubKey pubkey = key.GetPubKey();
+    assert(key.VerifyPubKey(pubkey));
+    EnsureWalletIsUnlocked(pwalletpog);
+	LOCK2(cs_main, pwalletpog->cs_wallet);
+	{
+		WalletRescanReserver reserver(pwalletpog);
+		if (!reserver.reserve()) {
+			throw JSONRPCError(RPC_WALLET_ERROR, "Wallet is currently rescanning. Abort existing rescan or wait.");
+		}
+
+		pwalletpog->RescanFromTime(TIMESTAMP_MIN, reserver, true /* update */);
+		pwalletpog->ReacceptWalletTransactions();
+		pwalletpog->MarkDirty();
+	}
 	return results;
 }
 
@@ -206,7 +242,6 @@ UniValue abortrescan(const JSONRPCRequest& request)
     return true;
 }
 
-void ImportAddress(CWallet*, const CTxDestination& dest, const std::string& strLabel);
 void ImportScript(CWallet * const pwallet, const CScript& script, const std::string& strLabel, bool isRedeemScript)
 {
     if (!isRedeemScript && ::IsMine(*pwallet, script) == ISMINE_SPENDABLE) {
