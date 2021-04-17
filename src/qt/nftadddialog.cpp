@@ -36,6 +36,7 @@ NFTAddDialog::NFTAddDialog(const PlatformStyle *platformStyle, QWidget *parent) 
 	ui->cmbNFTType->addItem("Orphan (Child to be sponsored)");
 	ui->txtMinimumBidAmount->setValidator( new QIntValidator(0, 100000000, this) );
 	ui->txtReserveAmount->setValidator( new QIntValidator(0, 100000000, this) );
+	ui->txtBuyItNowAmount->setValidator( new QIntValidator(0, 100000000, this) );
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	ui->txtOwnerAddress->setText(GUIUtil::TOQS(sCPK));
 }
@@ -65,6 +66,7 @@ void NFTAddDialog::UpdateDisplay(std::string sAction, uint256 nftHash)
 		ui->txtLoQualityURL->setText(GUIUtil::TOQS(n.sLoQualityURL));
 		ui->txtHiQualityURL->setText(GUIUtil::TOQS(n.sHiQualityURL));
 		ui->txtReserveAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nReserveAmount/COIN, 2)));
+		ui->txtBuyItNowAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nBuyItNowAmount/COIN, 2)));
 		ui->txtMinimumBidAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nMinimumBidAmount/COIN, 2)));
 		ui->chkMarketable->setChecked(n.fMarketable);
 		ui->chkDeleted->setChecked(n.fDeleted);
@@ -95,6 +97,7 @@ void NFTAddDialog::clear()
 	ui->txtHiQualityURL->setText("");
 	ui->txtMinimumBidAmount->setText("");
 	ui->txtReserveAmount->setText("");
+	ui->txtBuyItNowAmount->setText("");
 	ui->chkDeleted->setChecked(false);
 	ui->chkMarketable->setChecked(false);
 }
@@ -123,6 +126,7 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	n.sCPK = GUIUtil::FROMQS(ui->txtOwnerAddress->text());
 	n.nMinimumBidAmount = cdbl(GUIUtil::FROMQS(ui->txtMinimumBidAmount->text()), 2) * COIN;
 	n.nReserveAmount = cdbl(GUIUtil::FROMQS(ui->txtReserveAmount->text()), 2) * COIN;
+	n.nBuyItNowAmount = cdbl(GUIUtil::FROMQS(ui->txtBuyItNowAmount->text()), 2) * COIN;
 	n.sLoQualityURL = GUIUtil::FROMQS(ui->txtLoQualityURL->text());
 	n.sHiQualityURL = GUIUtil::FROMQS(ui->txtHiQualityURL->text());
 	n.sDescription = GUIUtil::FROMQS(ui->txtDescription->toPlainText());

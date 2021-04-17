@@ -131,6 +131,7 @@ void GenericTableDialog::UpdateDisplay(std::string sType)
 	}
 	ui->table1->setColumnWidth(0,100); // Truncate ID column
 	ui->table1->setColumnWidth(2,200); // Description is too wide
+	ui->table1->setColumnWidth(4,150); // Min_Bid_Price is too narrow
 
 }
 

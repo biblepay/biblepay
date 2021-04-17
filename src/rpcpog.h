@@ -50,6 +50,7 @@ struct NFT
 	std::string sXML;
 	CAmount nMinimumBidAmount = 0;
 	CAmount nReserveAmount = 0;
+	CAmount nBuyItNowAmount = 0;
 	bool fMarketable = false;
 	bool fDeleted = false;
 	bool found = false;
@@ -67,6 +68,26 @@ struct NFT
 		return h;
 	}
 	
+	CAmount LowestAcceptableAmount()
+	{
+		CAmount nAcceptable = 100000000 * COIN;
+		if (nReserveAmount > 0 && nBuyItNowAmount > 0)
+		{
+			// This is an Auction AND a buy-it-now NFT, so accept the lower of the two
+			nAcceptable = std::min(nReserveAmount, nBuyItNowAmount);
+		}
+		else if (nReserveAmount > 0 && nBuyItNowAmount == 0)
+		{
+			// This is an auction (but not a buy it now)
+			nAcceptable = nReserveAmount;
+		}
+		else if (nBuyItNowAmount > 0 && nReserveAmount == 0)
+		{
+			nAcceptable = nBuyItNowAmount;
+		}
+		return nAcceptable;		
+	}
+
 	void ToJson(UniValue& obj)
 	{
 		obj.clear();
@@ -81,6 +102,8 @@ struct NFT
 		obj.push_back(Pair("Hash", GetHash().GetHex()));
 		obj.push_back(Pair("MinimumBidAmount", (double)nMinimumBidAmount/COIN));
 		obj.push_back(Pair("ReserveAmount", (double)nReserveAmount/COIN));
+		obj.push_back(Pair("BuyItNowAmount", (double)nBuyItNowAmount/COIN));
+		obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
 		obj.push_back(Pair("Marketable", fMarketable));
 		obj.push_back(Pair("Deleted", fDeleted));
     }

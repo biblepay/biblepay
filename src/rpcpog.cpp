@@ -1606,7 +1606,7 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 					CAmount nPaid = GetAmountPaidToRecipient(tx1, oldNFT.sCPK);
 
 					LogPrintf("\nAcceptPrayer::ProcessNFT::Buy Old NFT found min bid amount %f ", oldNFT.nMinimumBidAmount/COIN);
-					if (nPaid >= oldNFT.nMinimumBidAmount)
+					if (nPaid >= oldNFT.LowestAcceptableAmount())
 					{
 						// When we transfer ownership to the new CPK, we throw the Marketable switch to OFF, and the minimumBidAmount back to zero.
 						// This way the new owner must manually make the NFT marketable, and manually set the new sale amount.
@@ -3122,6 +3122,7 @@ NFT GetNFT(CTransactionRef tx1)
 	w.fDeleted = cdbl(ExtractXML(w.sXML, "<deleted>", "</deleted>"), 0) == 1 ? true : false;
 	w.nMinimumBidAmount = cdbl(ExtractXML(w.sXML, "<minbidamount>", "</minbidamount>"), 2) * COIN;
 	w.nReserveAmount = cdbl(ExtractXML(w.sXML, "<reserveamount>", "</reserveamount>"), 2) * COIN;
+	w.nBuyItNowAmount = cdbl(ExtractXML(w.sXML, "<buyitnowamount>", "</buyitnowamount>"), 2) * COIN;
 	w.TXID = tx1->GetHash();
 	if (!w.sCPK.empty() && !w.sLoQualityURL.empty())
 	{
@@ -5289,7 +5290,6 @@ CAmount ARM64()
 
 bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nBuyPrice, bool fDryRun, std::string& sError)
 {
-
 	// Create, Buy,  Edit
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	AcquireWallet();
@@ -5341,7 +5341,7 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 			return false;
 		}
 
-		if (nBuyPrice < oldNFT.nMinimumBidAmount || nBuyPrice < oldNFT.nReserveAmount)
+		if (nBuyPrice < oldNFT.LowestAcceptableAmount())
 		{
 			sError = "Sorry, your buy price is less than the minimum sale amount.";
 			return false;
@@ -5355,6 +5355,7 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		nft.fDeleted = false;
 		nft.nMinimumBidAmount = 0;
 		nft.nReserveAmount = 0;
+		nft.nBuyItNowAmount = 0;
 		if (!ValidateAddress2(sSellerCPK))
 		{
 			sError = "Invalid seller Address " + sSellerCPK;
@@ -5375,7 +5376,7 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		+ nft.sLoQualityURL + "</loqualityurl><hiqualityurl>" + nft.sHiQualityURL 
 		+ "</hiqualityurl><deleted>" + (nft.fDeleted ? "1" : "0") + "</deleted><marketable>" + (nft.fMarketable ? "1" : "0")
 		+ "</marketable><type>" + nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
-		+ "<reserveamount>" + RoundToString((double)nft.nReserveAmount/COIN, 2) + "</reserveamount>"
+		+ "<reserveamount>" + RoundToString((double)nft.nReserveAmount/COIN, 2) + "</reserveamount><buyitnowamount>" + RoundToString((double)nft.nBuyItNowAmount/COIN, 2) + "</buyitnowamount>"
 		    + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" 
 			+ sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
 	

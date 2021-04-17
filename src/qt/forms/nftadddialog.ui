@@ -31,11 +31,11 @@
         <item row="1" column="2">
          <widget class="QLabel" name="lblAction">
           <property name="text">
-           <string>Add New NFT - v1.1   &lt;br&gt;</string>
+           <string>Add New NFT - v1.2   &lt;br&gt;</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
+        <item row="4" column="0">
          <widget class="QLabel" name="label_213">
           <property name="toolTip">
            <string>Enter NFT Name</string>
@@ -51,7 +51,7 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="2">
+        <item row="4" column="2">
          <widget class="QLineEdit" name="txtName">
           <property name="toolTip">
            <string>Address</string>
@@ -64,7 +64,7 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="5" column="0">
          <widget class="QLabel" name="label_2">
           <property name="maximumSize">
            <size>
@@ -86,7 +86,7 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="2">
+        <item row="5" column="2">
          <widget class="QPlainTextEdit" name="txtDescription">
           <property name="maximumSize">
            <size>
@@ -96,13 +96,33 @@
           </property>
          </widget>
         </item>
-        <item row="8" column="2">
-         <widget class="QLineEdit" name="txtMinimumBidAmount">
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_912">
           <property name="toolTip">
-           <string>Enter Reserve Amount (The buy-it-now amount you will immediately accept from a bidder or a buyer)</string>
+           <string>Reserve Amount</string>
           </property>
-          <property name="inputMethodHints">
-           <set>Qt::ImhDigitsOnly</set>
+          <property name="text">
+           <string>Buy-it-Now Amount:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="buddy">
+           <cstring>txtBuyItNowAmount</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="2">
+         <widget class="QLineEdit" name="txtBuyItNowAmount">
+          <property name="toolTip">
+           <string>Buy It Now Amount (The amount you will accept for an immediate sale)</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="2">
+         <widget class="QLineEdit" name="txtReserveAmount">
+          <property name="toolTip">
+           <string>Reserve Amount</string>
           </property>
          </widget>
         </item>
@@ -122,10 +142,13 @@
           </property>
          </widget>
         </item>
-        <item row="7" column="2">
-         <widget class="QLineEdit" name="txtReserveAmount">
+        <item row="8" column="2">
+         <widget class="QLineEdit" name="txtMinimumBidAmount">
           <property name="toolTip">
-           <string>Reserve Amount</string>
+           <string>Enter Reserve Amount (The auction price you will accept that triggers a sale)</string>
+          </property>
+          <property name="inputMethodHints">
+           <set>Qt::ImhDigitsOnly</set>
           </property>
          </widget>
         </item>
