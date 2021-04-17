@@ -205,9 +205,17 @@ CPubKey CWallet::GenerateNewKey(WalletBatch &batch, uint32_t nAccountIndex, bool
 		}
 		pubkey = secret.GetPubKey();
 		assert(secret.VerifyPubKey(pubkey));
+
+		if (HaveKey(secret.GetPubKey().GetID()))
+		{
+			LogPrintf("\nWe already have this key %s", sPhrase);
+			return pubkey;
+		}
+
 		// Create new metadata
 		mapKeyMetadata[pubkey.GetID()] = metadata;
 		UpdateTimeFirstKey(nCreationTime);
+
 		if (!AddKeyPubKeyWithDB(batch, secret, pubkey)) {
 			throw std::runtime_error(std::string(__func__) + ": AddKey failed");
 		}
@@ -2886,7 +2894,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                 if (coinControl && coinControl->HasSelected() && !coinControl->fAllowOtherInputs && !coinControl->IsSelected(COutPoint(wtxid, i)))
                     continue;
 
-                if (IsLockedCoin(wtxid, i) && nCoinType != CoinType::ONLY_MASTERNODE_COLLATERAL)
+                if (IsLockedCoin(wtxid, i) && nCoinType != CoinType::ONLY_MASTERNODE_COLLATERAL && nCoinType != CoinType::LOCKED_COINS)
                     continue;
 
                 if (IsSpent(wtxid, i))
@@ -3640,6 +3648,68 @@ int CWallet::CountInputsWithAmount(CAmount nInputAmount) const
     }
 
     return nTotal;
+}
+
+void CWallet::LockGifts()
+{
+	CCoinControl coin_control;
+	std::vector<COutput> vAvailableCoins;
+	
+	LOCK2(cs_main, cs_wallet);
+    {
+	    AvailableCoins(vAvailableCoins, true, &coin_control);
+	}
+	for (auto out : vAvailableCoins)
+    {
+		if(!out.fSpendable)
+                continue;
+		const CWalletTx *pcoin = out.tx;
+		COutPoint out1(out.tx->GetHash(), out.i);
+	
+		CAmount nAmount = pcoin->tx->vout[out.i].nValue;
+		bool fGift = CompareMask2(nAmount, 1537);
+		bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
+		if (!fLocked && fGift)
+		{
+			LockCoin(out1);
+		}
+	}
+}
+
+void CWallet::UnlockGift(std::string sAddress)
+{
+	CCoinControl coin_control;
+	coin_control.nCoinType = CoinType::LOCKED_COINS;
+
+	std::vector<COutput> vAvailableCoins;
+	
+	LOCK2(cs_main, cs_wallet);
+    {
+	    AvailableCoins(vAvailableCoins, true, &coin_control);
+	}
+	LogPrintf("\nUnlockGift::VecSz %f", (int)vAvailableCoins.size());
+
+	for (auto out : vAvailableCoins)
+    {
+		const CWalletTx *pcoin = out.tx;
+		COutPoint out1(out.tx->GetHash(), out.i);
+		CAmount nAmount = pcoin->tx->vout[out.i].nValue;
+		std::string sRecip = PubKeyToAddress(pcoin->tx->vout[out.i].scriptPubKey);
+		bool fGift = CompareMask2(nAmount, 1537);
+		if (fGift)
+			LogPrintf("\nUnlockGift1::AmtGift %f for %s", (double)nAmount/COIN, sRecip);
+		if (sRecip == sAddress)
+		{
+			LogPrintf("\nUnlockGift1::AmtAddrGift %f for %s", (double)nAmount/COIN, sRecip);
+	
+		}
+		//bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
+		if (fGift && sRecip == sAddress)
+		{
+			UnlockCoin(out1);
+			LogPrintf("\nUnlockGift::Unlocking %f for %s", (double)nAmount/COIN, sRecip);
+		}
+	}
 }
 
 std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress, CAmount& nReturnAmount)
@@ -4690,6 +4760,16 @@ bool CWallet::GetKeyFromPool(CPubKey& result, bool internal)
         KeepKey(nIndex);
         result = keypool.vchPubKey;
     }
+    return true;
+}
+
+bool CWallet::GetDerivedKey(CPubKey& result, std::string sPhrase)
+{
+	LOCK(cs_wallet);
+    if (IsLocked(true)) 
+		return false;
+    WalletBatch batch(*database);
+    result = GenerateNewKey(batch, 0, false, sPhrase);
     return true;
 }
 

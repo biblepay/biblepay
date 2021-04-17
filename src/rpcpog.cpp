@@ -5449,6 +5449,7 @@ void LockUTXOStakes()
 			}
 		}
 	}
+	pwalletpog->LockGifts();
 }
 
 std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload)
@@ -5763,13 +5764,14 @@ CAmount GetBBPValueUSD(double nUSD)
 	double nBBPPrice = GetCryptoPrice("bbp");
 	double nUSDBBP = nBTCPrice * nBBPPrice;
 	double nCost = nUSD/(nUSDBBP+.000001);
+	nCost = cdbl(RoundToString(nCost, 2), 2);
 	CAmount nOut = nCost * COIN;
 	return nOut;
 }
 
 DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun)
 {
-	std::string sTXID = "12345";
+	std::string sTXID;
 	std::string sError;
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 
@@ -5803,13 +5805,17 @@ DACResult MakeDerivedKey(std::string sPhrase)
 {
 	sPhrase = CleansePhrase(sPhrase);
 	AcquireWallet();
-	WalletBatch dummyBatch(pwalletpog->GetDBHandle(), "r+", false);
-	dummyBatch.TxnBegin();
-	CPubKey dummyPubkey = pwalletpog->GenerateNewKey(dummyBatch, 0, false, sPhrase);
-	dummyBatch.TxnAbort();
+	CPubKey dpk;
 	DACResult d;
-	d.PublicKey = HexStr(dummyPubkey);
-	CKeyID keyID = dummyPubkey.GetID();
+
+	bool fResult = pwalletpog->GetDerivedKey(dpk, sPhrase);
+	if (!fResult)
+	{
+		d.ErrorCode = "Creation failed (04162021).";
+		return d;
+	}
+	d.PublicKey = HexStr(dpk);
+	CKeyID keyID = dpk.GetID();
 	d.Address = EncodeDestination(keyID);
 	CKey vchSecret;
 	if (!pwalletpog->GetKey(keyID, vchSecret)) 
@@ -5818,6 +5824,8 @@ DACResult MakeDerivedKey(std::string sPhrase)
 		return d;
 	}
 	d.SecretKey = CBitcoinSecret(vchSecret).ToString();
+	pwalletpog->UnlockGift(d.Address);
+
 	return d;
 }
 

@@ -96,6 +96,8 @@ void MailSendDialog::on_btnSubmit_clicked()
 	dmTo.Zip = GUIUtil::FROMQS(ui->txtZip->text());
 	double dSrcAmount = cdbl(GUIUtil::FROMQS(ui->txtGiftCardAmount->text()), 2);
 	dmTo.Amount = GetBBPValueUSD(dSrcAmount);
+	dmTo.Amount += 1537;  // Gift Mask
+
 	dmTo.Paragraph = GUIUtil::FROMQS(ui->txtParagraph->toPlainText());
 	dmTo.Paragraph = strReplace(dmTo.Paragraph, "\t", "");
 	dmTo.Paragraph = strReplace(dmTo.Paragraph, "\r\n", "<br>");
@@ -137,9 +139,9 @@ void MailSendDialog::on_btnSubmit_clicked()
 		std::string sPayload = "<giftcard>" + RoundToString((double)dmTo.Amount/COIN, 2) + "</giftcard>";
 		sTXID = RPCSendMessage(dmTo.Amount, d.Address, fDryRun, sError, sPayload);
 		// 4-16-2021 add complete instructions
+		LockUTXOStakes();
 		std::string sPhrase = "<span style='white-space: nowrap;'><font color=lime> &nbsp;\"" + dmTo.AddressLine1 + "\"&nbsp; </font></span>";
-		std::string sInstructions = "<small>To redeem your gift, download biblepay Desktop PC wallet from www.biblepay.org | Tools | Debug Console | acceptgift " + sPhrase + "</small>";
-
+		std::string sInstructions = "<br><small>To redeem your gift, download biblepay Desktop PC wallet from www.biblepay.org | Tools | Debug Console | acceptgift " + sPhrase + "</small>";
 
 		dmTo.Paragraph += "<p><br>A gift of $" + RoundToString(dSrcAmount, 2) + " [" + RoundToString((double)dmTo.Amount/COIN, 2) 
 						+ " BBP] has been sent to you!  "

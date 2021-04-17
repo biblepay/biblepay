@@ -925,6 +925,8 @@ void CoinControlDialog::updateView()
 				}
             }
 
+			bool fGift = CompareMask2(out.tx->tx->vout[out.i].nValue, 1537);
+
 			std::string sUTXO = txhash.GetHex() + "-" + RoundToString(out.i, 0);
 			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO, false);
 			if (u1.found)
@@ -946,6 +948,10 @@ void CoinControlDialog::updateView()
 	            	itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
 				}
 				nTotalUTXOCoins += out.tx->tx->vout[out.i].nValue;
+			}
+			else if (fGift)
+			{
+            	itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("reward232", GUIUtil::ThemedColor::RED));
 			}
 
 			COutPoint outpt1(txhash, out.i);

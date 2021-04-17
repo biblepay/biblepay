@@ -958,6 +958,8 @@ public:
     bool GetCollateralTxDSIn(CTxDSIn& txdsinRet, CAmount& nValueRet) const;
     bool SelectDenominatedAmounts(CAmount nValueMax, std::set<CAmount>& setAmountsRet) const;
 	std::string GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress, CAmount& nReturnAmount);
+	void LockGifts();
+	void UnlockGift(std::string sAddress);
 	bool InitLoadWallet();
 
     bool SelectCoinsGroupedByAddresses(std::vector<CompactTallyItem>& vecTallyRet, bool fSkipDenominated = true, bool fAnonymizable = true, bool fSkipUnconfirmed = true, int nMaxOupointsPerAddress = -1) const;
@@ -1134,6 +1136,8 @@ public:
     void KeepKey(int64_t nIndex);
     void ReturnKey(int64_t nIndex, bool fInternal, const CPubKey& pubkey);
     bool GetKeyFromPool(CPubKey &key, bool fInternal /*= false*/);
+	bool GetDerivedKey(CPubKey& result, std::string sPhrase);
+
     int64_t GetOldestKeyPoolTime();
     /**
      * Marks all keys in the keypool up to and including reserve_key as used.
