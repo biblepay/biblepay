@@ -95,9 +95,8 @@ void MailSendDialog::on_btnSubmit_clicked()
 	dmTo.State = GUIUtil::FROMQS(ui->txtState->text());
 	dmTo.Zip = GUIUtil::FROMQS(ui->txtZip->text());
 	double dSrcAmount = cdbl(GUIUtil::FROMQS(ui->txtGiftCardAmount->text()), 2);
-	dmTo.Amount = GetBBPValueUSD(dSrcAmount);
-	dmTo.Amount += 1537;  // Gift Mask
-
+	dmTo.Amount = GetBBPValueUSD(dSrcAmount, 1537);
+	
 	dmTo.Paragraph = GUIUtil::FROMQS(ui->txtParagraph->toPlainText());
 	dmTo.Paragraph = strReplace(dmTo.Paragraph, "\t", "");
 	dmTo.Paragraph = strReplace(dmTo.Paragraph, "\r\n", "<br>");

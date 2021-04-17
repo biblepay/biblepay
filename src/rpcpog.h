@@ -595,7 +595,7 @@ std::vector<ReferralCode> GetReferralCodes();
 CAmount GetBBPSizeFromPortfolio(std::string sCPK);
 DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun);
 DACResult MakeDerivedKey(std::string sPhrase);
-CAmount GetBBPValueUSD(double nUSD);
+CAmount GetBBPValueUSD(double nUSD, double nMask);
 DACResult ReadAccountingEntry(std::string sKey, std::string sKey2);
 bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount);
 DMAddress DeserializeFrom();

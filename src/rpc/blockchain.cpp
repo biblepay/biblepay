@@ -2771,7 +2771,7 @@ UniValue exec(const JSONRPCRequest& request)
 		bool fDryRun = false;
 		if (request.params.size() > 4)
 			fDryRun = !(cdbl(request.params[4].get_str(), 0) == 1);
-		CAmount nAmount = GetBBPValueUSD(dAmount);
+		CAmount nAmount = GetBBPValueUSD(dAmount, 1537);
 		std::vector<std::string> vT = Split(sData.c_str(), ",");
 		if (vT.size() < 5)
 		{

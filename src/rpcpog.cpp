@@ -5758,13 +5758,13 @@ std::string SerializeDMAddress(DMAddress d)
 	return sXML;
 }
 
-CAmount GetBBPValueUSD(double nUSD)
+CAmount GetBBPValueUSD(double nUSD, double nMask)
 {
 	double nBTCPrice = GetCryptoPrice("btc");
 	double nBBPPrice = GetCryptoPrice("bbp");
 	double nUSDBBP = nBTCPrice * nBBPPrice;
 	double nCost = nUSD/(nUSDBBP+.000001);
-	nCost = cdbl(RoundToString(nCost, 2), 2);
+	nCost = cdbl(RoundToString(nCost, 0) + "." + RoundToString(nMask, 0), 6);
 	CAmount nOut = nCost * COIN;
 	return nOut;
 }
@@ -5777,7 +5777,7 @@ DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun)
 
 	if (!fDryRun)
 	{
-		CAmount nCost = GetBBPValueUSD(1);
+		CAmount nCost = GetBBPValueUSD(1, 0);
 		if (nCost > 250000)
 			nCost = 250000;
 		std::string sPayload = "<mail>" + RoundToString((double)nCost/COIN, 2) + "</mail>";
