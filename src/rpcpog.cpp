@@ -1590,21 +1590,38 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 			{
 				// During edit, the NFT shows up as a 'duplicate', therefore duplicates are allowed,
 				// However we require that the owner of the CPK signed this edit
+				NFT oldNFT = GetSpecificNFT(n.GetHash());
+				bool fOrphan = findStringCaseInsensitive(oldNFT.sType, "orphan");
+				// HARVEST Mission Critical ToDO:  We may possibly want to remove the ability to edit an orphan.  Force the user to do it all during create; then the orphan expires
+				// as of the duration after the sponsor occurs.  This simplifies the whole thing (as we are going to run into issues with Reserve, Buy It now, edit security, etc.)
 				if (t.fBOSigValid)
 				{
 					t.fPassedSecurityCheck = true;
+				}
+				
+				if (fOrphan)
+				{
+					if (n.fDeleted)
+					{
+						// OK
+					}
+					else
+					{
+						LogPrintf("\nAcceptPrayer::ProcessNFT::Orphan Edit Failed - We do not allow you to make changes to an orphan.  %f", 4172021);
+						t.fPassedSecurityCheck = false;
+					}
 				}
 			}
 			else if (sAction == "BUY")
 			{
 				// During buy, the NFT is a duplicate, and we do not check the signature of the BUYER, 
-				// However, the buy amount must be > than the min bid amount, and the item must be marketable
-				// And the old nft must be visible
+				// However, the buy amount must be > than the buy_it_now amount (or the reserve price), and the item must be marketable
 				NFT oldNFT = GetSpecificNFT(n.GetHash());
+				// 4-17-2021
+				bool fOrphan = findStringCaseInsensitive(oldNFT.sType, "orphan");
 				if (oldNFT.fMarketable && oldNFT.found && oldNFT.nMinimumBidAmount > 0 && !oldNFT.fDeleted)
 				{
 					CAmount nPaid = GetAmountPaidToRecipient(tx1, oldNFT.sCPK);
-
 					LogPrintf("\nAcceptPrayer::ProcessNFT::Buy Old NFT found min bid amount %f ", oldNFT.nMinimumBidAmount/COIN);
 					if (nPaid >= oldNFT.LowestAcceptableAmount())
 					{
@@ -1622,7 +1639,6 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 							t.fPassedSecurityCheck = true;
 							LogPrintf("\nProfessNFT:Succeeded-BUY-%s", t.sMessageValue);
 						}
-
 					}
 				}
 			}
@@ -3114,6 +3130,7 @@ NFT GetNFT(CTransactionRef tx1)
 	w.sXML = ExtractXML(sData, "<nft>", "</nft>");
 	w.sCPK = ExtractXML(w.sXML, "<cpk>", "</cpk>");
 	w.sName = ExtractXML(w.sXML, "<name>", "</name>");
+	w.nTime = (int64_t)cdbl(ExtractXML(w.sXML, "<time>", "</time>"), 0);
 	w.sDescription = ExtractXML(w.sXML, "<description>", "</description>");
 	w.sType = ExtractXML(w.sXML, "<type>", "</type>");
 	w.sLoQualityURL = ExtractXML(w.sXML, "<loqualityurl>", "</loqualityurl>");
@@ -5375,10 +5392,12 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		+ nft.sDescription + "</description><loqualityurl>" 
 		+ nft.sLoQualityURL + "</loqualityurl><hiqualityurl>" + nft.sHiQualityURL 
 		+ "</hiqualityurl><deleted>" + (nft.fDeleted ? "1" : "0") + "</deleted><marketable>" + (nft.fMarketable ? "1" : "0")
-		+ "</marketable><type>" + nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
-		+ "<reserveamount>" + RoundToString((double)nft.nReserveAmount/COIN, 2) + "</reserveamount><buyitnowamount>" + RoundToString((double)nft.nBuyItNowAmount/COIN, 2) + "</buyitnowamount>"
-		    + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" 
-			+ sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
+		+ "</marketable><time>" + RoundToString(GetAdjustedTime(), 0) + "</time><type>" 
+		+ nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
+		+ "<reserveamount>" + RoundToString((double)nft.nReserveAmount/COIN, 2) + "</reserveamount><buyitnowamount>" 
+		+ RoundToString((double)nft.nBuyItNowAmount/COIN, 2) + "</buyitnowamount>"
+		+ "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" 
+		+ sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
 	
 	std::string sTXID = RPCSendMessage(nSend, sToAddress, false, sError, sPayload);
 	if (!sTXID.empty() && sError.empty())

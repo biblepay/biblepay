@@ -28,6 +28,8 @@ std::string RoundToString(double d, int place);
 std::string AmountToString(const CAmount& amount);
 double CalculateUTXOReward(int nStakeCount, int nDays);
 int GetUTXOStatus(uint256 txid);
+bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle);
+CAmount GetBBPValueUSD(double nUSD, double nMask);
 
 struct UserVote
 {
@@ -54,6 +56,7 @@ struct NFT
 	bool fMarketable = false;
 	bool fDeleted = false;
 	bool found = false;
+	uint64_t nTime = 0;
 	uint256 TXID;
 	uint256 GetHash()
 	{
@@ -106,6 +109,17 @@ struct NFT
 		obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
 		obj.push_back(Pair("Marketable", fMarketable));
 		obj.push_back(Pair("Deleted", fDeleted));
+		obj.push_back(Pair("Time", nTime));
+		bool fOrphan = findStringCaseInsensitive(sType, "orphan");
+		if (fOrphan)
+		{
+			// Remaining Sponsorship days
+			CAmount nAmountPerDay = GetBBPValueUSD(40, 1538);
+			double nDays = (nBuyItNowAmount/COIN) / ((nAmountPerDay/COIN) + .01);
+			double nElapsed = (GetAdjustedTime() - nTime) / 86400;
+			obj.push_back(Pair("Sponsorship Length", nDays));
+			obj.push_back(Pair("Elapsed", nElapsed));
+		}
     }
 };
 
@@ -458,7 +472,6 @@ std::string GetSporkValue(std::string sKey);
 std::string TimestampToHRDate(double dtm);
 std::string GetArrayElement(std::string s, std::string delim, int iPos);
 void GetMiningParams(int nPrevHeight, bool& f7000, bool& f8000, bool& f9000, bool& fTitheBlocksActive);
-bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle);
 bool SubmitProposalToNetwork(uint256 txidFee, int64_t nStartTime, std::string sHex, std::string& sError, std::string& out_sGovObj);
 UniValue GetDataList(std::string sType, int iMaxAgeInDays, int& iSpecificEntry, std::string sSearch, std::string& outEntry);
 double GetDifficulty(const CBlockIndex* blockindex);
@@ -618,7 +631,6 @@ std::vector<ReferralCode> GetReferralCodes();
 CAmount GetBBPSizeFromPortfolio(std::string sCPK);
 DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun);
 DACResult MakeDerivedKey(std::string sPhrase);
-CAmount GetBBPValueUSD(double nUSD, double nMask);
 DACResult ReadAccountingEntry(std::string sKey, std::string sKey2);
 bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount);
 DMAddress DeserializeFrom();
