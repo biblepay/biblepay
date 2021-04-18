@@ -1283,7 +1283,7 @@ int GetRequiredQuorumLevel(int nHeight)
 	static int MINIMUM_QUORUM_PROD = 5;
 	static int MINIMUM_QUORUM_TESTNET = 2;
 	int nCount = deterministicMNManager->GetListAtChainTip().GetValidMNsCount();
-	int nReq = nCount * .15;
+	int nReq = nCount * .35; // Shoot for at least 35% net positive vote levels 
 	int nMinimumQuorum = fProd ? MINIMUM_QUORUM_PROD : MINIMUM_QUORUM_TESTNET;
 	if (nReq < nMinimumQuorum) nReq = nMinimumQuorum;
 	return nReq;
