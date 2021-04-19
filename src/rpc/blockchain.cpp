@@ -2537,23 +2537,6 @@ UniValue getspecialtxes(const JSONRPCRequest& request)
     return result;
 }
 
-bool AcquireWallet2()
-{
-	std::vector<CWallet*> wallets = GetWallets();
-	if (wallets.size() > 0)
-	{
-		pwalletpog = wallets[0];
-		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
-		return true;
-	}
-	else
-	{
-		pwalletpog = NULL;
-		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
-	}
-	return false;
-}
-
 UniValue exec(const JSONRPCRequest& request)
 {
     if (request.fHelp || (request.params.size() != 1 && request.params.size() != 2  && request.params.size() != 3 && request.params.size() != 4 
@@ -2792,26 +2775,8 @@ UniValue exec(const JSONRPCRequest& request)
 			results.push_back(Pair("To City", dmTo.City));
 			results.push_back(Pair("To State", dmTo.State));
 			results.push_back(Pair("To Zip", dmTo.Zip));
-				
-			if (dAmount > 0)
-			{
-				DACResult d = MakeDerivedKey(sCode);
-				results.push_back(Pair("Gift Address", d.Address));
-				results.push_back(Pair("Gift Secret", d.SecretKey));
-				results.push_back(Pair("Gift Code", sCode));
-				results.push_back(Pair("Gift Amount USD", dAmount));
-				results.push_back(Pair("Gift Amount BBP", (double)nAmount/COIN));
-				std::string sError;
-				std::string sPayload = "<giftcard>" + RoundToString((double)nAmount/COIN, 2) + "</giftcard>";
-				std::string sTXID = RPCSendMessage(nAmount, d.Address, fDryRun, sError, sPayload);
-				results.push_back(Pair("Gift TXID", sTXID));
-				sParagraph += "<p><br>A gift of $" + RoundToString(dAmount, 2) + " [" + RoundToString((double)nAmount/COIN, 2) 
-						+ " BBP] has been sent to you!  Please use the code <span style='white-space: nowrap;'><font color=lime>\"" + sCode + "\"</font></span> to redeem your gift.<br>";
-			}
-	
-
 			results.push_back(Pair("Extra Paragraph", sParagraph));
-			dmTo.Paragraph = sParagraph;
+			dmTo.Paragraph1 = sParagraph;
 			results.push_back(Pair("Gift Amount", dAmount));
 			DACResult b = MailLetter(dmFrom, dmTo, true);
 			std::string sError = ExtractXML(b.Response, "<error>", "</error>");
@@ -3072,8 +3037,8 @@ UniValue exec(const JSONRPCRequest& request)
 		double nMin = cdbl(request.params[1].getValStr(), 2);
 		std::string sAddress;
 		CAmount nReturnAmount;
-		bool fWallet = AcquireWallet2();
-		std::string sUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sAddress, nReturnAmount);
+		CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+		std::string sUTXO = pwallet->GetBestUTXO(nMin * COIN, .01, sAddress, nReturnAmount);
 		results.push_back(Pair("UTXO", sUTXO));
 		results.push_back(Pair("Address", sAddress));
 		results.push_back(Pair("Amount", (double)nReturnAmount/COIN));
@@ -3481,9 +3446,9 @@ UniValue exec(const JSONRPCRequest& request)
 	{
 		// Pools: Allows pools to send a multi-output tx with ease
 		// Format: exec sendmanyxml from_account xml_payload comment
-		bool fWallet = AcquireWallet2();
+	    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
 
-		LOCK2(cs_main, pwalletpog->cs_wallet);
+		LOCK2(cs_main, pwallet->cs_wallet);
 		std::string strAccount = request.params[1].get_str();
 		if (strAccount == "*")
 			throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Invalid account name");
@@ -3523,9 +3488,9 @@ UniValue exec(const JSONRPCRequest& request)
 				}
 			}
 		}
-		EnsureWalletIsUnlocked(pwalletpog);
+		EnsureWalletIsUnlocked(pwallet);
 		// Send
-		CReserveKey keyChange(pwalletpog);
+		CReserveKey keyChange(pwallet);
 		CAmount nFeeRequired = 0;
 		int nChangePosRet = -1;
 		std::string strFailReason;
@@ -3533,12 +3498,12 @@ UniValue exec(const JSONRPCRequest& request)
 		bool fUsePrivateSend = false;
 		CValidationState state;
 	    CCoinControl coinControl;
-		bool fCreated = pwalletpog->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, 
+		bool fCreated = pwallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, 
 			strFailReason, coinControl, true, 0);
 		if (!fCreated)
 			throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
     
-		if (!pwalletpog->CommitTransaction(wtx, keyChange, g_connman.get(), state))
+		if (!pwallet->CommitTransaction(wtx, keyChange, g_connman.get(), state))
 			throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
 		results.push_back(Pair("txid", wtx.GetHash().GetHex()));
 	}
@@ -3560,12 +3525,9 @@ UniValue exec(const JSONRPCRequest& request)
 	{
 		if (request.params.size() != 2)
 			throw std::runtime_error("funddsql: Make a DSQL payment.  Usage:  funddsql amount.");
-		EnsureWalletIsUnlocked(pwalletpog);
-	
 		CAmount nAmount = cdbl(request.params[1].get_str(), 2) * COIN;
 		if (nAmount < 1)
 			throw std::runtime_error("Amount must be > 0.");
-
 		// Ensure the DSQL server knows about it
 		std::string sResult = BIPFS_Payment(nAmount, "", "");
 		std::string sHash = ExtractXML(sResult, "<hash>", "</hash>");
@@ -3680,25 +3642,6 @@ UniValue exec(const JSONRPCRequest& request)
 		sDec = DecryptAES256WithIV(sEnc, sPass, sIV);
 		results.push_back(Pair("EncIV00", sEnc));
 		results.push_back(Pair("DecIV00", sDec));
-	}
-	else if (sItem == "bankroll")
-	{
-		if (request.params.size() != 3)
-			throw std::runtime_error("You must specify type: IE 'exec bankroll quantity denomination'.  IE exec bankroll 10 100 (creates ten bills of value 100 each).");
-		double nQty = cdbl(request.params[1].get_str(), 0);
-		CAmount denomination = cdbl(request.params[2].get_str(), 4) * COIN;
-		std::string sError = "";
-		std::string sTxId = CreateBankrollDenominations(nQty, denomination, sError);
-		if (!sError.empty())
-		{
-			if (sError == "Signing transaction failed") 
-				sError += ".  (Please ensure your wallet is unlocked).";
-			results.push_back(Pair("Error", sError));
-		}
-		else
-		{
-			results.push_back(Pair("TXID", sTxId));
-		}
 	}
 	else if (sItem == "health")
 	{

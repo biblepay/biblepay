@@ -143,22 +143,6 @@ void ProposalAddDialog::clear()
 	ui->txtAddress->setText("");
 }
 
-bool AcquireWallet6()
-{
-	std::vector<CWallet*> wallets = GetWallets();
-	if (wallets.size() > 0)
-	{
-		pwalletpog = wallets[0];
-		return true;
-	}
-	else
-	{
-		pwalletpog = NULL;
-	}
-	return false;
-}
-
-
 void ProposalAddDialog::on_btnSubmit_clicked()
 {
 	std::string sName = GUIUtil::FROMQS(ui->txtName->text());
@@ -181,12 +165,6 @@ void ProposalAddDialog::on_btnSubmit_clicked()
 
 	if (nBalance < (2501*COIN)) 
 		sError += "Sorry balance too low to create proposal collateral. ";
-
-	AcquireWallet6();
-	if (pwalletpog->IsLocked())
-	{
-		sError += "Sorry, wallet must be unlocked.";
-	}
        
 	std::string sPrepareTxId;
 	std::string sHex;

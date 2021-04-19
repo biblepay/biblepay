@@ -102,22 +102,6 @@ void NFTAddDialog::clear()
 	ui->chkMarketable->setChecked(false);
 }
 
-bool AcquireWallet7()
-{
-	std::vector<CWallet*> wallets = GetWallets();
-	if (wallets.size() > 0)
-	{
-		pwalletpog = wallets[0];
-		return true;
-	}
-	else
-	{
-		pwalletpog = NULL;
-	}
-	return false;
-}
-
-
 void NFTAddDialog::on_btnSubmit_clicked()
 {
 	NFT n;
@@ -159,11 +143,6 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	if (nBalance < (100*COIN)) 
 		sError += "Sorry balance too low to create an NFT. ";
 
-	AcquireWallet7();
-	if (pwalletpog->IsLocked())
-	{
-		sError += "Sorry, wallet must be unlocked.";
-	}
     std::string sTXID;   
 	bool fCreated = ProcessNFT(n, msMode, n.sCPK, 0, false, sError);
 	

@@ -91,23 +91,6 @@ BlockAssembler::BlockAssembler(const CChainParams& params, const Options& option
     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MaxBlockSize(fDIP0001ActiveAtTip) - 1000), (unsigned int)options.nBlockMaxSize));
 }
 
-bool AcquireWallet4()
-{
-	std::vector<CWallet*> wallets = GetWallets();
-	if (wallets.size() > 0)
-	{
-		pwalletpog = wallets[0];
-		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
-		return true;
-	}
-	else
-	{
-		pwalletpog = NULL;
-		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
-	}
-	return false;
-}
-
 static BlockAssembler::Options DefaultOptions(const CChainParams& params)
 {
     // Block resource limits
@@ -598,8 +581,8 @@ bool CreateBlockForStratum(std::string sAddress, uint256 uRandomXKey, std::vecto
 	int iThreadID = 0;
 	//boost::shared_ptr<CReserveScript> coinbaseScript;
 	std::shared_ptr<CReserveScript> coinbaseScript;
-	AcquireWallet4();
-	pwalletpog->GetScriptForMining(coinbaseScript);
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	pwallet->GetScriptForMining(coinbaseScript);
 	//    GetMainSignals().GetScriptForMining(coinbaseScript);
 	std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, sAddress, uRandomXKey, vRandomXHeader));
 	std::string sUTXO = ScanBlockForNewUTXO(pblocktemplate->block);
@@ -639,9 +622,9 @@ void static BibleMiner(const CChainParams& chainparams, int iThreadID, int iFeat
     //boost::shared_ptr<CReserveScript> coinbaseScript;
 	//    GetMainSignals().GetScriptForMining(coinbaseScript);
 	std::shared_ptr<CReserveScript> coinbaseScript;
-	AcquireWallet4();
+	CWallet * const pwallet = GetWalletForGenericRequest();
 
-	pwalletpog->GetScriptForMining(coinbaseScript);
+	pwallet->GetScriptForMining(coinbaseScript);
 
 	int iStart = rand() % 1000;
 	MilliSleep(iStart);

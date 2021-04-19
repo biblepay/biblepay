@@ -1353,23 +1353,6 @@ UniValue bls_fromsecret(const JSONRPCRequest& request)
             );
 }
 
-bool AcquireWallet3()
-{
-	std::vector<CWallet*> wallets = GetWallets();
-	if (wallets.size() > 0)
-	{
-		pwalletpog = wallets[0];
-		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
-		return true;
-	}
-	else
-	{
-		pwalletpog = NULL;
-		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
-	}
-	return false;
-}
-
 UniValue _bls(const JSONRPCRequest& request)
 {
     if (request.fHelp && request.params.empty()) {
@@ -1686,8 +1669,8 @@ UniValue easystake(const JSONRPCRequest& request)
 	std::string sBBPAddress;
 	std::string sTickerOverride;
 	CAmount nBBPReturnAmount = 0;
-	AcquireWallet3();
-	
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sForeignAddress = request.params[1].getValStr();
 	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
@@ -1696,12 +1679,12 @@ UniValue easystake(const JSONRPCRequest& request)
 	if (request.params.size() > 4)
 		sTickerOverride = request.params[4].getValStr();
 	
-	std::string sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
+	std::string sBBPUTXO = pwallet->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	if (sBBPUTXO.empty())
 	{
 		// They dont have one with 1+ day of age; try one without age
 		LogPrintf("\nEasyStake::NO_AGE We cant find a UTXO with age, so we will try one without age. %f", 10001);
-		sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
+		sBBPUTXO = pwallet->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	}
 	if (sBBPUTXO.empty())
 	{
@@ -1759,7 +1742,7 @@ UniValue easystake(const JSONRPCRequest& request)
 	std::string sTXID;
 	UTXOStake ds;
 
-	std::string sBBPSig = pwalletpog->SignBBPUTXO(sBBPUTXO, sError);
+	std::string sBBPSig = pwallet->SignBBPUTXO(sBBPUTXO, sError);
 	if (!sError.empty())
 	{
 		results.push_back(Pair("BBP Signing Error", sError));
@@ -1845,9 +1828,9 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 	
 	std::string sBBPAddress;
 	CAmount nBBPReturnAmount = 0;
-	bool fWallet = AcquireWallet3();
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
 
-	std::string sBBPUTXO = pwalletpog->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
+	std::string sBBPUTXO = pwallet->GetBestUTXO(nMin * COIN, .01, sBBPAddress, nBBPReturnAmount);
 	
 	if (sBBPUTXO.empty())
 	{
@@ -1871,7 +1854,7 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 
 	std::string sTXID;
 	UTXOStake ds;
-	std::string sBBPSig = pwalletpog->SignBBPUTXO(sBBPUTXO, sError);
+	std::string sBBPSig = pwallet->SignBBPUTXO(sBBPUTXO, sError);
 	if (!sError.empty())
 	{
 		results.push_back(Pair("BBP Signing Error", sError));
@@ -1955,7 +1938,9 @@ UniValue utxostake(const JSONRPCRequest& request)
 	}
 
 	std::string sError;
-	std::string sBBPSig = pwalletpog->SignBBPUTXO(sBBPUTXO, sError);
+	CWallet * const pwallet = GetWalletForGenericRequest();
+
+	std::string sBBPSig = pwallet->SignBBPUTXO(sBBPUTXO, sError);
 	UniValue results(UniValue::VOBJ);
 
 	if (!sError.empty())
@@ -2080,14 +2065,14 @@ UniValue give(const JSONRPCRequest& request)
 	bool fUseInstantSend = false;
 	std::string sError;
 	CValidationState state;
-	AcquireWallet3();
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
 
-	CReserveKey reserveKey(pwalletpog);
+	CReserveKey reserveKey(pwallet);
 	CWalletTx wtx;
 	std::string sGiftXML = "<gift><amount>" + RoundToString(dGive, 2) + "</amount></gift>";
     CCoinControl coinControl;
     
-	bool fCreated = pwalletpog->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl,
+	bool fCreated = pwallet->CreateTransaction(vecSend, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl,
 		true, 0, sGiftXML);
 	if (!fCreated)    
 	{
@@ -2095,7 +2080,7 @@ UniValue give(const JSONRPCRequest& request)
 	}
 	else
 	{
-		if (!pwalletpog->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
+		if (!pwallet->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
 		{
 			throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
 		}
@@ -2356,7 +2341,6 @@ UniValue generatereferralcode(const JSONRPCRequest& request)
 		throw std::runtime_error("You may specify generatereferralcode");
 	UniValue results(UniValue::VOBJ);
 	std::string sError;
-	AcquireWallet3();
 	std::string sTXID = SendReferralCode(sError);
 	if (!sError.empty())
 	{
@@ -2444,10 +2428,34 @@ UniValue checkreferralcode(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue bankroll(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+		throw std::runtime_error("You may specify bankroll quantity amount_per_coin.  This command denominates some of your coins into the quantity you specify and the amount you specify; for example: bankroll 10 500 will create ten coins worth 500 each.  The net cost for this transaction is zero (it just redenominates your bills) making it work better for utxostakes.  ");
+
+	UniValue results(UniValue::VOBJ);
+	double nQty = cdbl(request.params[0].get_str(), 0);
+	CAmount denomination = cdbl(request.params[1].get_str(), 4) * COIN;
+	std::string sError = "";
+	std::string sTxId = CreateBankrollDenominations(nQty, denomination, sError);
+	if (!sError.empty())
+	{
+		if (sError == "Signing transaction failed") 
+			sError += ".  (Please ensure your wallet is unlocked).";
+		results.push_back(Pair("Error", sError));
+	}
+	else
+	{
+		results.push_back(Pair("TXID", sTxId));
+	}
+	return results;
+}
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)
   //  --------------------- ------------------------  -----------------------
     { "evo",                "bls",                          &_bls,                     {}  },
+    { "evo",                "bankroll",                     &bankroll,                 {}  },
     { "evo",                "protx",                        &protx,                    {}  },
 	{ "evo",                "attachreferralcode",           &attachreferralcode,       {}  },
 	{ "evo",                "bookname",                     &bookname,                 {}  },

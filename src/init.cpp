@@ -2122,9 +2122,7 @@ bool AppInitMain()
 
     // ********************************************************* Step 8: load wallet
     if (!g_wallet_init_interface->Open()) return false;
-	InitUTXOWallet();
-
-
+	
     // As InitLoadWallet can take several minutes, it's possible the user
     // requested to kill the GUI during the last operation. If so, exit.
     if (fRequestShutdown)

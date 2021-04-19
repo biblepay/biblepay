@@ -20,8 +20,6 @@
 
 class CWallet;
 
-static CWallet* pwalletpog;
-
 std::string RetrieveMd5(std::string s1);
 uint256 CoordToUint256(int row, int col);
 std::string RoundToString(double d, int place);
@@ -143,10 +141,14 @@ struct DMAddress
 	std::string Name;
 	std::string AddressLine1;
 	std::string AddressLine2;
+	std::string Template;
 	std::string City;
 	std::string State;
 	std::string Zip;
-	std::string Paragraph;
+	std::string Paragraph1;
+	std::string Paragraph2;
+	std::string OpeningSalutation;
+	std::string ClosingSalutation;
 	CAmount Amount;
 };
 
@@ -604,10 +606,9 @@ int64_t GetDCCFileAge();
 std::string GetSANDirectory2();
 bool CreateLegacyGSCTransmission(std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError);
 bool ValidateAddress2(std::string sAddress);
-void InitUTXOWallet();
+std::string GetReleaseSuffix();
 boost::filesystem::path GetDeterministicConfigFile();
 boost::filesystem::path GetMasternodeConfigFile();
-bool AcquireWallet();
 CAmount ARM64();
 std::vector<NFT> GetNFTs(bool fIncludeMemoryPool);
 bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nBuyPrice, bool fDryRun, std::string& sError);

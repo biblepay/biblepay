@@ -753,7 +753,7 @@ int GetRequiredQuorumLevel(int nHeight)
 {
 	int nMinimumQuorum = 2;
 	int nCount = deterministicMNManager->GetListAtChainTip().GetValidMNsCount();
-	int nReq = nCount * .10;
+	int nReq = nCount * .35;
 	if (nReq < nMinimumQuorum)
 		nReq = nMinimumQuorum;
 	return nReq;

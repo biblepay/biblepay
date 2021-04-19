@@ -152,17 +152,6 @@ double cdbl(std::string s, int place)
 	return d;
 }
 
-void InitUTXOWallet()
-{
-	std::vector<CWallet*> w = GetWallets();
-	if (w.size() > 0)
-	{
-		pwalletpog = w[0];
-	}
-	LogPrintf("\nPogWallets Loaded %f", (int)w.size());
-	
-}
-
 bool Contains(std::string data, std::string instring)
 {
 	std::size_t found = 0;
@@ -243,8 +232,9 @@ CPK GetCPK(std::string sData)
 		k.sVendorType = vDec[6];
 	if (vDec.size() >= 8)
 		k.sOptData = vDec[7];
-	AcquireWallet();
-	k.fValid = pwalletpog->CheckStakeSignature(sCPK, sSig, sSecurityHash, k.sError);
+    CWallet * const pwallet = GetWalletForGenericRequest();
+
+	k.fValid = pwallet->CheckStakeSignature(sCPK, sSig, sSecurityHash, k.sError);
 	if (!k.fValid) 
 	{
 		LogPrintf("GetCPK::Error Sig %s, SH %s, Err %s, CPK %s, NickName %s ", sSig, sSecurityHash, k.sError, sCPK, vDec[1]);
@@ -389,14 +379,14 @@ CBlockIndex* FindBlockByHeight(int nHeight)
 
 std::string DefaultRecAddress(std::string sType)
 {
-	AcquireWallet();
-	if (!pwalletpog)
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	if (!pwallet)
 	{
-		LogPrintf("\nDefaultRecAddress::ERROR %f No pwalletpog", 03142021);
+		LogPrintf("\nDefaultRecAddress::ERROR %f No pwallet", 03142021);
 		return "";
 	}
 	std::string sDefaultRecAddress;
-	for (auto item : pwalletpog->mapAddressBook)
+	for (auto item : pwallet->mapAddressBook)
     {
 		
 		CTxDestination txd1 = item.first;
@@ -404,7 +394,7 @@ std::string DefaultRecAddress(std::string sType)
         std::string sAddr = EncodeDestination(txd1);
 	
 		std::string strName = item.second.name;
-        bool fMine = IsMine(*pwalletpog, item.first);
+        bool fMine = IsMine(*pwallet, item.first);
         if (fMine)
 		{
 			boost::to_upper(strName);
@@ -421,7 +411,7 @@ std::string DefaultRecAddress(std::string sType)
 	if (!sType.empty())
 	{
 		std::string sError;
-		sDefaultRecAddress = pwalletpog->GenerateNewAddress(sError, sType);
+		sDefaultRecAddress = pwallet->GenerateNewAddress(sError, sType);
 		if (sError.empty()) return sDefaultRecAddress;
 	}
 	LogPrintf("nDefRecAddress %s", sDefaultRecAddress);
@@ -435,8 +425,8 @@ std::string CreateBankrollDenominations(double nQuantity, CAmount denominationAm
 	CAmount nBankrollMask = .001 * COIN;
 
 	CAmount nTotal = denominationAmount * nQuantity;
-	AcquireWallet();
-	CAmount curBalance = pwalletpog->GetBalance();
+    CWallet * const pwallet = GetWalletForGenericRequest();
+	CAmount curBalance = pwallet->GetBalance();
 	if (curBalance < nTotal)
 	{
 		sError = "Insufficient funds (Unlock Wallet).";
@@ -446,7 +436,7 @@ std::string CreateBankrollDenominations(double nQuantity, CAmount denominationAm
 	CWalletTx wtx;
 	
     CScript scriptPubKey = GetScriptForDestination(DecodeDestination(sTitheAddress));
-    CReserveKey reservekey(pwalletpog);
+    CReserveKey reservekey(pwallet);
     CAmount nFeeRequired;
     std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
@@ -469,21 +459,21 @@ std::string CreateBankrollDenominations(double nQuantity, CAmount denominationAm
 	std::string sOptData;
     CCoinControl coinControl;
 
-    if (!pwalletpog->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sOptData)) 
+    if (!pwallet->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sOptData)) 
 	{
 		if (!sError.empty())
 		{
 			return std::string();
 		}
 
-        if (nTotal + nFeeRequired > pwalletpog->GetBalance())
+        if (nTotal + nFeeRequired > pwallet->GetBalance())
 		{
             sError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!", FormatMoney(nFeeRequired));
 			return std::string();
 		}
     }
 	CValidationState state;
-    if (!pwalletpog->CommitTransaction(wtx, reservekey, g_connman.get(), state))
+    if (!pwallet->CommitTransaction(wtx, reservekey, g_connman.get(), state))
     {
 		sError = "Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.";
 		return std::string();
@@ -524,15 +514,15 @@ std::string PubKeyToAddress(const CScript& scriptPubKey)
 
 CAmount GetRPCBalance()
 {
-	AcquireWallet();
-	return pwalletpog->GetBalance();
+    CWallet * const pwallet = GetWalletForGenericRequest();
+	return pwallet->GetBalance();
 }
 
 
 bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nValue, bool fSubtractFeeFromAmount, CWalletTx& wtxNew, bool fUseInstantSend, std::string sOptionalData, double nCoinAge)
 {
-	AcquireWallet();
-    CAmount curBalance = pwalletpog->GetBalance();
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	CAmount curBalance = pwallet->GetBalance();
 
     // Check amount
     if (nValue <= 0)
@@ -541,7 +531,7 @@ bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nV
 		return false;
 	}
 	
-	if (pwalletpog->IsLocked())
+	if (pwallet->IsLocked())
 	{
 		sError = "Wallet unlock required";
 		return false;
@@ -556,7 +546,7 @@ bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nV
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
-    CReserveKey reservekey(pwalletpog);
+    CReserveKey reservekey(pwallet);
     CAmount nFeeRequired;
     std::string strError;
     std::vector<CRecipient> vecSend;
@@ -584,9 +574,9 @@ bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nV
     int nMinConfirms = 0;
     CCoinControl coinControl;
 	int nChangePos = -1;
-    if (!pwalletpog->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePos, strError, coinControl, true, 0, sOptionalData)) 
+    if (!pwallet->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePos, strError, coinControl, true, 0, sOptionalData)) 
 	{
-        if (!fSubtractFeeFromAmount && nValue + nFeeRequired > pwalletpog->GetBalance())
+        if (!fSubtractFeeFromAmount && nValue + nFeeRequired > pwallet->GetBalance())
 		{
             sError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!", FormatMoney(nFeeRequired));
 			return false;
@@ -596,7 +586,7 @@ bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nV
     }
     CValidationState state;
         
-    if (!pwalletpog->CommitTransaction(wtxNew, reservekey, g_connman.get(), state))
+    if (!pwallet->CommitTransaction(wtxNew, reservekey, g_connman.get(), state))
 	{
         sError = "Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.";
 		return false;
@@ -725,15 +715,12 @@ bool VoteManyForGobject(std::string govobj, std::string strVoteSignal, std::stri
 		return false;
 	}
 
-	AcquireWallet();
-
-#ifdef ENABLE_WALLET	
-    if (!pwalletpog)	
+	CWallet * const pwallet = GetWalletForGenericRequest();
+    if (!pwallet)	
     {	
         sError = "Voting is not supported when wallet is disabled.";	
         return false;	
     }	
-#endif
 
 	std::map<uint256, CKey> votingKeys;	
 
@@ -741,7 +728,7 @@ bool VoteManyForGobject(std::string govobj, std::string strVoteSignal, std::stri
     mnList.ForEachMN(true, [&](const CDeterministicMNCPtr& dmn) 
 	{
         CKey votingKey;		
-        if (pwalletpog->GetKey(dmn->pdmnState->keyIDVoting, votingKey)) 
+        if (pwallet->GetKey(dmn->pdmnState->keyIDVoting, votingKey)) 
 		{	       
             votingKeys.emplace(dmn->proTxHash, votingKey);	
 		}
@@ -771,9 +758,9 @@ bool VoteManyForGobject(std::string govobj, std::string strVoteSignal, std::stri
 std::string CreateGovernanceCollateral(uint256 GovObjHash, CAmount caFee, std::string& sError)
 {
 	CWalletTx wtx;
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
-	if(!pwalletpog->GetBudgetSystemCollateralTX(wtx, GovObjHash, caFee)) 
+	if(!pwallet->GetBudgetSystemCollateralTX(wtx, GovObjHash, caFee)) 
 	{
 		sError = "Error creating collateral transaction for governance object.  Please check your wallet balance and make sure your wallet is unlocked.";
 		return std::string();
@@ -781,9 +768,9 @@ std::string CreateGovernanceCollateral(uint256 GovObjHash, CAmount caFee, std::s
 	if (sError.empty())
 	{
 		// -- make our change address
-		CReserveKey reservekey(pwalletpog);
+		CReserveKey reservekey(pwallet);
 		CValidationState state;
-        pwalletpog->CommitTransaction(wtx, reservekey, g_connman.get(), state);
+        pwallet->CommitTransaction(wtx, reservekey, g_connman.get(), state);
 		DBG( cout << "gobject: prepare "
 					<< " strData = " << govobj.GetDataAsString()
 					<< ", hash = " << govobj.GetHash().GetHex()
@@ -1380,9 +1367,9 @@ bool CheckSporkSig(TxMessage t)
 {
 	std::string sError = "";
 	const CChainParams& chainparams = Params();
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
-	bool fSigValid = pwalletpog->CheckStakeSignature(chainparams.GetConsensus().FoundationAddress, t.sSporkSig, t.sMessageValue + t.sNonce, sError);
+	bool fSigValid = pwallet->CheckStakeSignature(chainparams.GetConsensus().FoundationAddress, t.sSporkSig, t.sMessageValue + t.sNonce, sError);
     bool bValid = (fSigValid && t.fNonceValid);
 	if (!bValid)
 	{
@@ -1397,7 +1384,8 @@ bool CheckBusinessObjectSig(TxMessage t)
 	if (!t.sBOSig.empty() && !t.sBOSigner.empty())
 	{	
 		std::string sError = "";
-		bool fBOSigValid = pwalletpog->CheckStakeSignature(t.sBOSigner, t.sBOSig, t.sMessageValue + t.sNonce, sError);
+		CWallet * const pwallet = GetWalletForGenericRequest();
+		bool fBOSigValid = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, t.sMessageValue + t.sNonce, sError);
    		if (!fBOSigValid)
 		{
 			LogPrint(BCLog::NET, "MemorizePrayers::BO_SignatureFailed - Type %s, Nonce %f, Time %f, Bad BO Sig %s on message %s on TXID %s \n", 
@@ -1558,7 +1546,8 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 	{
 		std::string sMsg = ExtractXML(t.sMessageValue, "<BOMSG>", "</BOMSG>");
 		std::string sError;
-		t.fBOSigValid = pwalletpog->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
+		CWallet * const pwallet = GetWalletForGenericRequest();
+		t.fBOSigValid = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
 		t.fPassedSecurityCheck = t.fBOSigValid;
 		LogPrintf("\nAcceptPrayer::%s, %s, %s, %f ",t.sMessageType, t.sBOSigner, sMsg, (int)t.fBOSigValid);
 	}
@@ -1571,7 +1560,8 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 			std::string sAction = ExtractXML(t.sMessageValue,"<BOACTION>", "</BOACTION>");
 			bool fDuplicate = IsDuplicateNFT(n);
 			std::string sError;
-			t.fBOSigValid = pwalletpog->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
+			CWallet * const pwallet = GetWalletForGenericRequest();
+			t.fBOSigValid = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
 			LogPrintf("\nAcceptPrayer::ProcessNFT -- CPKType %s, %s, %s, bosigvalid %f, Action=%s ", t.sMessageType, t.sMessageValue, t.sMessageValue, t.fBOSigValid, sAction);
 			std::string sOldNftTxId = ExtractXML(t.sMessageValue, "<nfttxid>", "</nfttxid>");
 			boost::replace_all(t.sMessageValue, sOldNftTxId, "");
@@ -1689,6 +1679,8 @@ bool IsCPKWL(std::string sCPK, std::string sNN)
 void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool fColdBoot, bool fDuringSanctuaryQuorum)
 {
 	int nDeserializedHeight = 0;
+	CWallet * const pwallet = GetWalletForGenericRequest();
+
 	if (fColdBoot)
 	{
 		nDeserializedHeight = DeserializePrayersFromFile();
@@ -1758,7 +1750,7 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 								std::string sBBPAddress = ExtractXML(sUTXOStake, "<bbpaddress>", "</bbpaddress>");
 								std::string sBBPSig = ExtractXML(sUTXOStake, "<bbpsig>", "</bbpsig>");
 								std::string sBBPUTXO = ExtractXML(sUTXOStake, "<bbputxo>", "</bbputxo>");
-								bool fSigValid = pwalletpog->CheckStakeSignature(sBBPAddress, sBBPSig, sBBPUTXO, sBBPSig);
+								bool fSigValid = pwallet->CheckStakeSignature(sBBPAddress, sBBPSig, sBBPUTXO, sBBPSig);
 								if (fSigValid)
 								{
 									sUTXOStake += "<burnutxo>" + block.vtx[n]->GetHash().GetHex() + "-" + RoundToString(i, 0) + "</burnutxo>";
@@ -1824,10 +1816,10 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 
 std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::string& sError)
 {
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
-    LOCK2(cs_main, pwalletpog->cs_wallet);
-	if (pwalletpog->IsLocked())
+    LOCK2(cs_main, pwallet->cs_wallet);
+	if (pwallet->IsLocked())
 	{
 		sError = "Sorry, wallet must be unlocked.";
 		return std::string();
@@ -1847,7 +1839,7 @@ std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::
 			return std::string();
     }
 	CKey key;
-	if (!pwalletpog->GetKey(*keyID, key)) 
+	if (!pwallet->GetKey(*keyID, key)) 
 	{
 		sError = "Private key not available";
 		return std::string();
@@ -2305,7 +2297,7 @@ bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickNa
 	bool fForce, CAmount nFee, std::string sOptData, std::string &sError)
 {	
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
 	boost::to_lower(sProjectId);
 
@@ -2361,7 +2353,7 @@ bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickNa
         return false;
     }
 
-    CAmount nBalance = pwalletpog->GetBalance();
+    CAmount nBalance = pwallet->GetBalance();
 	double nCPKAdvertisementFee = GetSporkDouble("CPKAdvertisementFee", 1);    
 	if (nFee == 0) 
 		nFee = nCPKAdvertisementFee * COIN;
@@ -2995,7 +2987,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 {
 	UTXOStake w;
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
 	for (unsigned int i = 0; i < tx1->vout.size(); i++)
 	{
@@ -3074,7 +3066,7 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 			// End of High-yield staking
 
 			// Calculate weight, value, and signature here
-			w.BBPSignatureValid = pwalletpog->CheckStakeSignature(w.BBPAddress, w.BBPSignature, w.BBPUTXO, w.BBPSignature);
+			w.BBPSignatureValid = pwallet->CheckStakeSignature(w.BBPAddress, w.BBPSignature, w.BBPUTXO, w.BBPSignature);
 			w.ForeignSignatureValid = true;
 
 			if (w.ForeignTicker.empty())
@@ -3478,10 +3470,9 @@ uint256 ComputeRandomXTarget(uint256 dac_hash, int64_t nPrevBlockTime, int64_t n
 
 std::string GenerateFaucetCode()
 {
-	AcquireWallet();
-
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	std::string s1 = RoundToString(((double)(pwalletpog->GetBalance() / COIN) / 1000), 0);
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	std::string s1 = RoundToString(((double)(pwallet->GetBalance() / COIN) / 1000), 0);
 	std::string sXML = "<cpk>" + sCPK + "</cpk><s1>" + s1 + "</s1>";
 	DACResult b = DSQL_ReadOnlyQuery("BMS/FaucetID", sXML);
 	std::string sResponse = ExtractXML(b.Response, "<response>", "</response>");
@@ -4206,7 +4197,7 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	
 	boost::to_upper(sForeignTicker);
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
 	bool fForeignTickerValid = false;
 	if (sForeignTicker == "DASH" || sForeignTicker == "BTC" || sForeignTicker == "DOGE" || sForeignTicker == "LTC" || sForeignTicker == "ETH" || sForeignTicker.empty())
@@ -4652,7 +4643,7 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 		return "";
 
 	std::map<std::string, std::string> mapTickers;
-	AcquireWallet();
+	CWallet * const pwallet = GetWalletForGenericRequest();
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
 	std::vector<ReferralCode> uRC = GetReferralCodes();
@@ -5141,9 +5132,9 @@ bool VerifySigner(std::string sXML)
 	std::string sSigner = ExtractXML(sXML, "<signer>", "</signer>");
 	std::string sMessage = ExtractXML(sXML, "<message>", "</message>");
 	std::string sError;
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
-	bool fValid = pwalletpog->CheckStakeSignature(sSigner, sSignature, sMessage, sError);
+	bool fValid = pwallet->CheckStakeSignature(sSigner, sSignature, sMessage, sError);
 	return fValid;
 }
 
@@ -5219,9 +5210,11 @@ bool ValidateAddress2(std::string sAddress)
 
 bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string& sError, std::string& sSignature)
 {
-	LOCK2(cs_main, pwalletpog->cs_wallet);
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	
+	LOCK2(cs_main, pwallet->cs_wallet);
 	{
-		if (pwalletpog->IsLocked()) 
+		if (pwallet->IsLocked()) 
 		{
 			sError = "Please unlock the wallet first.";
 			return false;
@@ -5241,7 +5234,7 @@ bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string&
 			return false;
 	   }
 	   CKey key;
-	   if (!pwalletpog->GetKey(*keyID, key)) 
+	   if (!pwallet->GetKey(*keyID, key)) 
 	   {
 			sError = "Private key not available";
 			return false;
@@ -5279,21 +5272,6 @@ boost::filesystem::path GetMasternodeConfigFile()
     return pathConfigFile;
 }
 
-bool AcquireWallet()
-{
-	std::vector<CWallet*> wallets = GetWallets();
-	if (wallets.size() > 0)
-	{
-		pwalletpog = wallets[0];
-		return true;
-	}
-	else
-	{
-		pwalletpog = NULL;
-	}
-	return false;
-}
-
 CAmount ARM64()
 {
 	// If biblepay is compiled for ARM64, there is a floating point math problem that results in the block.vtx[0]->GetValueOut() being 1/10000000 satoshi higher than the block subsidy limit (for example actual=596050766864 vs limit=596050766863)
@@ -5309,7 +5287,7 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 {
 	// Create, Buy,  Edit
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-	AcquireWallet();
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
 	std::string sPK = "NFT-" + nft.GetHash().GetHex();
 	std::string sSignature;
@@ -5450,12 +5428,12 @@ COutPoint OutPointFromUTXO(std::string sUTXO)
 
 void LockUTXOStakes()
 {
-	AcquireWallet();
-	if (!pwalletpog)
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	if (!pwallet)
 		return;
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
-    LOCK(pwalletpog->cs_wallet);
+    LOCK(pwallet->cs_wallet);
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
 	for (int i = 0; i < uStakes.size(); i++)
 	{
@@ -5465,11 +5443,11 @@ void LockUTXOStakes()
 			COutPoint c = OutPointFromUTXO(d.BBPUTXO);
 			if (d.CPK == sCPK)
 			{
-				pwalletpog->LockCoin(c);
+				pwallet->LockCoin(c);
 			}
 		}
 	}
-	pwalletpog->LockGifts();
+	pwallet->LockGifts();
 }
 
 std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload)
@@ -5487,15 +5465,16 @@ std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun
 		sError = "Invalid destination address.";
 		return std::string();
 	}
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	
 	CScript scr = GetScriptForDestination(DecodeDestination(sToAddress));
 	CRecipient rec = {scr, nAmount, false, fSubtractFee};
 	vec.push_back(rec);
 	CAmount nFeeRequired = 0;
-	CReserveKey reserveKey(pwalletpog);
+	CReserveKey reserveKey(pwallet);
     CCoinControl coinControl;
-	AcquireWallet();
-	
-	bool fCre = pwalletpog->CreateTransaction(vec, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
+
+	bool fCre = pwallet->CreateTransaction(vec, wtx, reserveKey, nFeeRequired, nChangePosRet, sError, coinControl, true, 0, sPayload);
 	if (!fCre)
 	{
 		sError += "Unable to Create Transaction.";
@@ -5505,9 +5484,8 @@ std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun
 	if (!fDryRun)
 	{
 		CValidationState state;
-		AcquireWallet();
-	
-		if (!pwalletpog->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
+
+		if (!pwallet->CommitTransaction(wtx, reserveKey, g_connman.get(), state))
 		{
 			sError += "Commit failed.";
 			return std::string();
@@ -5562,9 +5540,9 @@ CAmount CheckReferralCode(std::string sCode)
 	std::string sCPK = ExtractXML(sMsg, "<BOSIGNER>", "</BOSIGNER>");
 	std::string sSig = ExtractXML(sMsg, "<BOSIG>", "</BOSIG>");
 	std::string sSigMsg = ExtractXML(sMsg, "<BOMSG>", "</BOMSG>");
-	AcquireWallet();
+	CWallet * const pwallet = GetWalletForGenericRequest();
 	std::string sError;
-	bool fSigValid = pwalletpog->CheckStakeSignature(sCPK, sSig, sSigMsg, sError);
+	bool fSigValid = pwallet->CheckStakeSignature(sCPK, sSig, sSigMsg, sError);
 	if (!fSigValid)
 		return 0;
 	CAmount nBBPQty = GetBBPSizeFromPortfolio(sCPK);
@@ -5576,8 +5554,7 @@ CAmount CheckReferralCode(std::string sCode)
 std::string SendReferralCode(std::string& sError)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-	AcquireWallet();
-	std::string sSignature;
+    std::string sSignature;
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	std::string sMsg = RoundToString(GetAdjustedTime(), 0);
 	std::string sPK = "REFERRALCODE-" + sCPK;
@@ -5614,7 +5591,6 @@ std::string SendReferralCode(std::string& sError)
 std::string ClaimReferralCode(std::string sCode, std::string& sError)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-	AcquireWallet();
 	std::string sSignature;
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	std::string sMsg = RoundToString(GetAdjustedTime(), 0);
@@ -5774,7 +5750,8 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 
 std::string SerializeDMAddress(DMAddress d)
 {
-	std::string sXML = "<Name>" + d.Name + "</Name><AddressLine1>" + d.AddressLine1 + "</AddressLine1><AddressLine2>" + d.AddressLine2 + "</AddressLine2><City>" + d.City + "</City><State>" + d.State + "</State><Zip>" + d.Zip + "</Zip>";
+	std::string sXML = "<Name>" + d.Name + "</Name><AddressLine1>" + d.AddressLine1 + "</AddressLine1><AddressLine2>" + d.AddressLine2 + "</AddressLine2><City>" 
+		+ d.City + "</City><State>" + d.State + "</State><Zip>" + d.Zip + "</Zip><Template>"+ d.Template + "</Template>";
 	return sXML;
 }
 
@@ -5805,8 +5782,12 @@ DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun)
 	}
 	// Todo: Add the custom paragraph here, and the custom gift here
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	std::string sXML = "<cpk>" + sCPK + "</cpk><paragraph>" + dmTo.Paragraph + "</paragraph><from>" + SerializeDMAddress(dmFrom) + "</from><to>" 
-		+ SerializeDMAddress(dmTo) + "</to><dryrun>" + (fDryRun ? "1" : "0") + "</dryrun><txid>" + sTXID + "</txid>";
+	std::string sXML = "<cpk>" + sCPK + "</cpk><paragraph1>" + dmTo.Paragraph1 + "</paragraph1><paragraph2>" 
+		+ dmTo.Paragraph2 + "</paragraph2><from>" + SerializeDMAddress(dmFrom) 
+		+ "</from><to>" 
+		+ SerializeDMAddress(dmTo) + "<OpeningSalutation>" 
+		+ dmTo.OpeningSalutation + "</OpeningSalutation><ClosingSalutation>" 
+		+ dmTo.ClosingSalutation + "</ClosingSalutation></to><dryrun>" + (fDryRun ? "1" : "0") + "</dryrun><txid>" + sTXID + "</txid>";
 	DACResult b = DSQL_ReadOnlyQuery("Server?action=MAIL", sXML);
 	return b;
 }
@@ -5824,11 +5805,11 @@ std::string CleansePhrase(std::string sPhrase)
 DACResult MakeDerivedKey(std::string sPhrase)
 {
 	sPhrase = CleansePhrase(sPhrase);
-	AcquireWallet();
+	CWallet * const pwallet = GetWalletForGenericRequest();
 	CPubKey dpk;
 	DACResult d;
 
-	bool fResult = pwalletpog->GetDerivedKey(dpk, sPhrase);
+	bool fResult = pwallet->GetDerivedKey(dpk, sPhrase);
 	if (!fResult)
 	{
 		d.ErrorCode = "Creation failed (04162021).";
@@ -5838,7 +5819,7 @@ DACResult MakeDerivedKey(std::string sPhrase)
 	CKeyID keyID = dpk.GetID();
 	d.Address = EncodeDestination(keyID);
 	CKey vchSecret;
-	if (!pwalletpog->GetKey(keyID, vchSecret)) 
+	if (!pwallet->GetKey(keyID, vchSecret)) 
 	{
 		d.ErrorCode = "Private key for address is not known";
 		return d;
@@ -5847,20 +5828,21 @@ DACResult MakeDerivedKey(std::string sPhrase)
 
 	CKeyID vchAddress = dpk.GetID();
 	{
-		pwalletpog->SetAddressBook(vchAddress, sPhrase, "receive");
+		pwallet->SetAddressBook(vchAddress, sPhrase, "receive");
 	}
 
-	pwalletpog->UnlockGift(d.Address);
+	pwallet->UnlockGift(d.Address);
 
 	return d;
 }
 
 bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount)
 {
-	AcquireWallet();
-    LOCK2(cs_main, pwalletpog->cs_wallet);
+    CWallet * const pwallet = GetWalletForGenericRequest();
 
-    if (!pwalletpog->AccountMove2(sKey, sKey2, nAmount, sValue)) 
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    if (!pwallet->AccountMove2(sKey, sKey2, nAmount, sValue)) 
 	{
 		return false;
     }
@@ -5869,10 +5851,10 @@ bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValu
 
 DACResult ReadAccountingEntry(std::string sKey, std::string sKey2)
 {
-	AcquireWallet();
-    LOCK2(cs_main, pwalletpog->cs_wallet);
+	CWallet * const pwallet = GetWalletForGenericRequest();
+	LOCK2(cs_main, pwallet->cs_wallet);
     std::string strAccount = "*";
-    const CWallet::TxItems & txOrdered = pwalletpog->wtxOrdered;
+    const CWallet::TxItems & txOrdered = pwallet->wtxOrdered;
 	DACResult d;
     for (CWallet::TxItems::const_reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it)
     {
@@ -5891,4 +5873,12 @@ DACResult ReadAccountingEntry(std::string sKey, std::string sKey2)
 		}
     }
 	return d;
+}
+
+std::string GetReleaseSuffix()
+{
+	// Strictly for minor leisures where we do not want to increment the version; Most of the time we should leave this empty.
+	// For example when we fix a typo, or for example if we are doing an emergency fix on just released code where compile time is of the essence.  
+	// (Incrementing the version increases compile time dramatically).
+	return "-c";
 }

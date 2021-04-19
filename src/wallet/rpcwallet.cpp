@@ -56,6 +56,12 @@ CWallet *GetWalletForJSONRPCRequest(const JSONRPCRequest& request)
     return wallets.size() == 1 || (request.fHelp && wallets.size() > 0) ? wallets[0] : nullptr;
 }
 
+CWallet *GetWalletForGenericRequest()
+{
+    std::vector<CWallet*> wallets = GetWallets();
+    return wallets.size() == 1 || (wallets.size() > 0) ? wallets[0] : nullptr;
+}
+
 std::string HelpRequiringPassphrase(CWallet * const pwallet)
 {
     return pwallet && pwallet->IsCrypted()

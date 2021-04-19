@@ -116,7 +116,7 @@ UniValue importprivkey(const JSONRPCRequest& request)
 
         // Whether to perform rescan after import
         if (!request.params[2].isNull())
-            fRescan = request.params[2].get_bool();
+            fRescan = request.params[2].get_str() == "true";
 
         if (fRescan && fPruneMode)
             throw JSONRPCError(RPC_WALLET_ERROR, "Rescan is disabled in pruned mode");
@@ -161,21 +161,20 @@ UniValue importprivkey(const JSONRPCRequest& request)
 }
 
 void ImportAddress(CWallet*, const CTxDestination& dest, const std::string& strLabel);
-bool AcquireWallet18()
+
+bool TriggerRescan(int64_t nTime)
 {
-	std::vector<CWallet*> wallets = GetWallets();
-	if (wallets.size() > 0)
+    CWallet * const pwallet = GetWalletForGenericRequest();
+    LOCK2(cs_main, pwallet->cs_wallet);
+    WalletRescanReserver reserver(pwallet);
+    if (!reserver.reserve()) 
 	{
-		pwalletpog = wallets[0];
-		LogPrintf("\nAcquireWallets::GetWallets size=%f, acquired=1", (int)wallets.size());
-		return true;
-	}
-	else
-	{
-		pwalletpog = NULL;
-		LogPrintf("\nAcquireWallet::Unable to retrieve any wallet. %f", (int)3182021);
-	}
-	return false;
+		return false;
+    }
+
+    pwallet->RescanFromTime(nTime, reserver, true /* update */);
+    pwallet->ReacceptWalletTransactions();
+    return true;
 }
 
 UniValue acceptgift(const JSONRPCRequest& request)
@@ -187,31 +186,19 @@ UniValue acceptgift(const JSONRPCRequest& request)
 	DACResult d = MakeDerivedKey(sPhrase);
 	UniValue results(UniValue::VOBJ);
 	results.push_back(Pair("Address", d.Address));
-	results.push_back(Pair("Note", "Your wallet will now rescan to reflect the gift balance!"));
-    CBitcoinSecret vchSecret;
-    bool fGood = vchSecret.SetString(d.SecretKey);
-	if (!fGood) 
-		throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
-	AcquireWallet18();
+	
+    JSONRPCRequest newRequest;
+	newRequest.params.setArray();
+	newRequest.params.push_back(d.SecretKey);
+	newRequest.params.push_back(sPhrase);
+	newRequest.params.push_back("false");
+	UniValue result2(UniValue::VOBJ);
+	result2 = importprivkey(newRequest);
+	results.push_back(Pair("importprivkey", result2));
+	int64_t nTime = GetAdjustedTime() - (86400 * 30 * 7);
+	bool fResult = TriggerRescan(nTime);
 
-    CKey key = vchSecret.GetKey();
-	if (!key.IsValid()) 
-		throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
-
-	CPubKey pubkey = key.GetPubKey();
-    assert(key.VerifyPubKey(pubkey));
-    EnsureWalletIsUnlocked(pwalletpog);
-	LOCK2(cs_main, pwalletpog->cs_wallet);
-	{
-		WalletRescanReserver reserver(pwalletpog);
-		if (!reserver.reserve()) {
-			throw JSONRPCError(RPC_WALLET_ERROR, "Wallet is currently rescanning. Abort existing rescan or wait.");
-		}
-
-		pwalletpog->RescanFromTime(TIMESTAMP_MIN, reserver, true /* update */);
-		pwalletpog->ReacceptWalletTransactions();
-		pwalletpog->MarkDirty();
-	}
+	results.push_back(Pair("Your wallet will now rescan to reflect the gift balance!", fResult));
 	return results;
 }
 

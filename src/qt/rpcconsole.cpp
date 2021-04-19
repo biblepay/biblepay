@@ -39,6 +39,7 @@
 #include <QTimer>
 #include <QStringList>
 #include <QStyledItemDelegate>
+#include "rpcpog.h"
 
 #if QT_VERSION < 0x050000
 #include <QUrl>
@@ -686,7 +687,7 @@ void RPCConsole::setClientModel(ClientModel *model)
         showOrHideBanTableIfRequired();
 
         // Provide initial values
-        ui->clientVersion->setText(model->formatFullVersion());
+        ui->clientVersion->setText(model->formatFullVersion() + GUIUtil::TOQS(GetReleaseSuffix()));
         ui->clientUserAgent->setText(model->formatSubVersion());
         ui->dataDir->setText(model->dataDir());
         ui->startupTime->setText(model->formatClientStartupTime());
