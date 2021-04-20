@@ -160,7 +160,7 @@ public:
 	/** If this is a UTXO Stake */
 	bool IsUTXOStake;
 
-	/** If this is a PODC Research Payment */
+	/** If this is a GSC Payment */
 	bool IsGSCPayment;
 
 	/** If this is a Superblock Payment */

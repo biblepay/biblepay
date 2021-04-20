@@ -1348,7 +1348,6 @@ struct TxMessage
   std::string sBOSigner;
   std::string sTimestamp;
   std::string sIPFSSize;
-  std::string sPODCTasks;
   std::string sTxId;
   std::string sVoteSignal;
   std::string sVoteHash;
@@ -1828,7 +1827,7 @@ std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::
 	CTxDestination dest = DecodeDestination(strAddress);
 	if (!IsValidDestination(dest)) 
 	{
-		   sError = "Invalid Address.";
+		   sError = "Invalid Sign-Message-Address.";
 		   return std::string();
     }
         
@@ -2047,7 +2046,7 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 		mapRequestHeaders["NetworkID"] = chainparams.NetworkIDString();
 		mapRequestHeaders["OS"] = sOS;
 		mapRequestHeaders["SessionID"] = msSessionID;
-		if (sPayload.length() < 1000)
+		if (sPayload.length() < 7777)
 			mapRequestHeaders["Action"] = sPayload;
 		mapRequestHeaders["HTTP_PROTO_VERSION"] = RoundToString(HTTP_PROTO_VERSION, 0);
 		if (bPost)
@@ -5314,6 +5313,13 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		}
 		sToAddress = consensusParams.BurnAddress;
 		
+
+		bool fOrphan = findStringCaseInsensitive(nft.sType, "orphan");
+		if (fOrphan && !nft.fDeleted)
+		{
+			sError = "Sorry, you may not edit an orphan.  But you may delete an orphan.";
+			return false;
+		}
 	}
 	else if (sAction == "CREATE")
 	{
@@ -5751,7 +5757,7 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 std::string SerializeDMAddress(DMAddress d)
 {
 	std::string sXML = "<Name>" + d.Name + "</Name><AddressLine1>" + d.AddressLine1 + "</AddressLine1><AddressLine2>" + d.AddressLine2 + "</AddressLine2><City>" 
-		+ d.City + "</City><State>" + d.State + "</State><Zip>" + d.Zip + "</Zip><Template>"+ d.Template + "</Template>";
+		+ d.City + "</City><State>" + d.State + "</State><Zip>" + d.Zip + "</Zip>";
 	return sXML;
 }
 
@@ -5783,12 +5789,13 @@ DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun)
 	// Todo: Add the custom paragraph here, and the custom gift here
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	std::string sXML = "<cpk>" + sCPK + "</cpk><paragraph1>" + dmTo.Paragraph1 + "</paragraph1><paragraph2>" 
-		+ dmTo.Paragraph2 + "</paragraph2><from>" + SerializeDMAddress(dmFrom) 
-		+ "</from><to>" 
-		+ SerializeDMAddress(dmTo) + "<OpeningSalutation>" 
+		+ dmTo.Paragraph2 + "</paragraph2><Template>" + dmTo.Template + "</Template>"
+		+ "<from>" + SerializeDMAddress(dmFrom) + "</from>"
+		+ "<to>" + SerializeDMAddress(dmTo) + "<OpeningSalutation>" 
 		+ dmTo.OpeningSalutation + "</OpeningSalutation><ClosingSalutation>" 
 		+ dmTo.ClosingSalutation + "</ClosingSalutation></to><dryrun>" + (fDryRun ? "1" : "0") + "</dryrun><txid>" + sTXID + "</txid>";
-	DACResult b = DSQL_ReadOnlyQuery("Server?action=MAIL", sXML);
+	std::string sXML2 = EncodeBase64(sXML);
+    DACResult b = DSQL_ReadOnlyQuery("Server?action=MAIL", sXML2);
 	return b;
 }
 
@@ -5808,7 +5815,7 @@ DACResult MakeDerivedKey(std::string sPhrase)
 	CWallet * const pwallet = GetWalletForGenericRequest();
 	CPubKey dpk;
 	DACResult d;
-
+	// Derive new Key
 	bool fResult = pwallet->GetDerivedKey(dpk, sPhrase);
 	if (!fResult)
 	{
@@ -5825,14 +5832,8 @@ DACResult MakeDerivedKey(std::string sPhrase)
 		return d;
 	}
 	d.SecretKey = CBitcoinSecret(vchSecret).ToString();
-
-	CKeyID vchAddress = dpk.GetID();
-	{
-		pwallet->SetAddressBook(vchAddress, sPhrase, "receive");
-	}
-
+	pwallet->SetAddressBook(keyID, sPhrase, "receive");
 	pwallet->UnlockGift(d.Address);
-
 	return d;
 }
 
@@ -5880,5 +5881,26 @@ std::string GetReleaseSuffix()
 	// Strictly for minor leisures where we do not want to increment the version; Most of the time we should leave this empty.
 	// For example when we fix a typo, or for example if we are doing an emergency fix on just released code where compile time is of the essence.  
 	// (Incrementing the version increases compile time dramatically).
-	return "-c";
+	return "";
 }
+
+std::string RSAEncryptHQURL(std::string sSourceData, std::string& sError)
+{
+	std::string sFoundation = "foundation"; // This is not a literal yet because we may have more than one marketplace.  We need to discuss this.
+	UserRecord u = GetUserRecord(sFoundation);
+	if (u.RSAPublicKey.length() < 256)
+	{
+		sError = "Bad public key.";
+		return "";
+	}
+	std::string sEnc = RSA_Encrypt_String_With_Key(u.RSAPublicKey, sSourceData, sError);
+	return sEnc;
+}
+
+std::string RSADecryptHQURL(std::string sEncData, std::string& sError)
+{
+	std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
+	std::string sDec = RSA_Decrypt_String(sPrivPath, sEncData, sError);
+	return sDec;
+}
+

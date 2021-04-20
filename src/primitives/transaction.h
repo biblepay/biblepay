@@ -287,8 +287,8 @@ public:
 		if (IsSuperblock)
 		{
 			CAmount nValueOut = GetValueOut();
-			bool bPODCPayment = nValueOut < (SUPERBLOCK_PAYMENT_THRESHHOLD * COIN);
-			return bPODCPayment;
+			bool bGSCPayment = nValueOut < (SUPERBLOCK_PAYMENT_THRESHHOLD * COIN);
+			return bGSCPayment;
 		}
 		return false;
     }

@@ -2735,6 +2735,17 @@ UniValue exec(const JSONRPCRequest& request)
 		bool fResponse = WriteAccountingEntry(sKey1, sKey2, sValue, nAmount);
 		results.push_back(Pair("Results", fResponse));	
 	}
+	else if (sItem == "testrsa10")
+	{
+		std::string sError;
+		std::string sSourceData = "this is a test of the emergency broadcasting systemthis is a test of the emergency broadcasting system.this is a test of the emergency broadcasting system.this is a test of the emergency broadcasting system.this is a test of the emergency broadcasting system..";
+		std::string sEnc = RSAEncryptHQURL(sSourceData, sError);
+		results.push_back(Pair("encdata", sEnc));
+		results.push_back(Pair("err0", sError));
+		std::string sDec = RSADecryptHQURL(sEnc, sError);
+		results.push_back(Pair("dec", sDec));
+		results.push_back(Pair("err1", sError));
+	}
 	else if (sItem == "testmail")
 	{
 		std::string sHelp = "exec testmail \"Name,Address-1,City,State,Zip\" \"Your customized recipient paragraph\" bbp_gift_amount 0=dry/1=real";

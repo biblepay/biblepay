@@ -28,6 +28,8 @@ double CalculateUTXOReward(int nStakeCount, int nDays);
 int GetUTXOStatus(uint256 txid);
 bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle);
 CAmount GetBBPValueUSD(double nUSD, double nMask);
+std::string RSADecryptHQURL(std::string sEncData, std::string& sError);
+std::string RSAEncryptHQURL(std::string sSourceData, std::string& sError);
 
 struct UserVote
 {
@@ -98,7 +100,10 @@ struct NFT
 		obj.push_back(Pair("Name", sName));
 		obj.push_back(Pair("Description", sDescription));
 	    obj.push_back(Pair("Lo Quality URL", sLoQualityURL));
-		obj.push_back(Pair("Hi Quality URL", sHiQualityURL));
+		std::string sError;
+		std::string sHiQ = RSADecryptHQURL(sHiQualityURL, sError);
+
+		obj.push_back(Pair("Hi Quality URL", sHiQ));
 		obj.push_back(Pair("TXID", TXID.GetHex()));
 		obj.push_back(Pair("Hash", GetHash().GetHex()));
 		obj.push_back(Pair("MinimumBidAmount", (double)nMinimumBidAmount/COIN));

@@ -781,6 +781,7 @@ std::string RSA_Decrypt_String(std::string sPrivKeyPath, std::string sData, std:
 	if (iLoc < 1)
 	{
 		sError = "Decryption markers empty.";
+		LogPrintf("\nCrypter::DecMarkersEmpty %s", strDec);
 		return "-7";
 	}
 	std::string sFinal = strDec.substr(0, iLoc);

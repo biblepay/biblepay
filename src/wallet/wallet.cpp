@@ -2829,8 +2829,8 @@ bool IsMaskDenominated(CAmount nAmount)
 {
 	double dAmt = (double)nAmount / COIN;
 	std::string sAmt = RoundToString(dAmt, 4);
-	bool fPODCDenominated = Contains(sAmt, ".001");
-	return fPODCDenominated;
+	bool fDenominated = Contains(sAmt, ".001");
+	return fDenominated;
 }
 
 void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const CCoinControl *coinControl, const CAmount &nMinimumAmount, const CAmount &nMaximumAmount, 
@@ -3687,8 +3687,6 @@ void CWallet::UnlockGift(std::string sAddress)
     {
 	    AvailableCoins(vAvailableCoins, true, &coin_control);
 	}
-	LogPrintf("\nUnlockGift::VecSz %f", (int)vAvailableCoins.size());
-
 	for (auto out : vAvailableCoins)
     {
 		const CWalletTx *pcoin = out.tx;
@@ -3696,18 +3694,10 @@ void CWallet::UnlockGift(std::string sAddress)
 		CAmount nAmount = pcoin->tx->vout[out.i].nValue;
 		std::string sRecip = PubKeyToAddress(pcoin->tx->vout[out.i].scriptPubKey);
 		bool fGift = CompareMask2(nAmount, 1537);
-		if (fGift)
-			LogPrintf("\nUnlockGift1::AmtGift %f for %s", (double)nAmount/COIN, sRecip);
-		if (sRecip == sAddress)
-		{
-			LogPrintf("\nUnlockGift1::AmtAddrGift %f for %s", (double)nAmount/COIN, sRecip);
-	
-		}
-		//bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
 		if (fGift && sRecip == sAddress)
 		{
 			UnlockCoin(out1);
-			LogPrintf("\nUnlockGift::Unlocking %f for %s", (double)nAmount/COIN, sRecip);
+			LogPrintf("     UnlockGift::Unlocking %f for %s", (double)nAmount/COIN, sRecip);
 		}
 	}
 }

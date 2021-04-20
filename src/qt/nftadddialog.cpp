@@ -55,16 +55,14 @@ void NFTAddDialog::UpdateDisplay(std::string sAction, uint256 nftHash)
 		NFT n = GetSpecificNFT(nftHash);
 		if (!n.found)
 		{
-			 //QMessageBox::information(this, "NFT Not Found", "Sorry, we cant find this nft " + nftHash.GetHex());
 			 QMessageBox::warning(this, tr("NFT Not Found"), GUIUtil::TOQS("Sorry, we cannot find this nft " + nftHash.GetHex()), QMessageBox::Ok, QMessageBox::Ok);
-
 			 return;
 		}
 		ui->lblAction->setText(GUIUtil::TOQS("Edit NFT " + nftHash.GetHex()));
 		ui->txtName->setText(GUIUtil::TOQS(n.sName));
 		ui->txtDescription->setPlainText(GUIUtil::TOQS(n.sDescription));
 		ui->txtLoQualityURL->setText(GUIUtil::TOQS(n.sLoQualityURL));
-		ui->txtHiQualityURL->setText(GUIUtil::TOQS(n.sHiQualityURL));
+		ui->txtHiQualityURL->setText("");  // User has to set this every time they edit.
 		ui->txtReserveAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nReserveAmount/COIN, 2)));
 		ui->txtBuyItNowAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nBuyItNowAmount/COIN, 2)));
 		ui->txtMinimumBidAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nMinimumBidAmount/COIN, 2)));
@@ -75,9 +73,7 @@ void NFTAddDialog::UpdateDisplay(std::string sAction, uint256 nftHash)
 	}
 	std::string sInfo = "Note: It costs 100 BBP to create or edit an NFT.";
 	ui->txtInfo->setText(GUIUtil::TOQS(sInfo));
-
 }
-
 
 void NFTAddDialog::setModel(WalletModel *model)
 {
@@ -102,6 +98,15 @@ void NFTAddDialog::clear()
 	ui->chkMarketable->setChecked(false);
 }
 
+std::string CleansePhrase(std::string sPhrase)
+{
+	// Remove special characters from the passphrase so they can't hose it up between machines.
+	sPhrase = SanitizeString(sPhrase);
+	boost::replace_all(sPhrase, "\r", "");
+	boost::replace_all(sPhrase, "\n", "");
+	return sPhrase;
+}
+
 void NFTAddDialog::on_btnSubmit_clicked()
 {
 	NFT n;
@@ -111,8 +116,9 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	n.nMinimumBidAmount = cdbl(GUIUtil::FROMQS(ui->txtMinimumBidAmount->text()), 2) * COIN;
 	n.nReserveAmount = cdbl(GUIUtil::FROMQS(ui->txtReserveAmount->text()), 2) * COIN;
 	n.nBuyItNowAmount = cdbl(GUIUtil::FROMQS(ui->txtBuyItNowAmount->text()), 2) * COIN;
-	n.sLoQualityURL = GUIUtil::FROMQS(ui->txtLoQualityURL->text());
-	n.sHiQualityURL = GUIUtil::FROMQS(ui->txtHiQualityURL->text());
+	n.sLoQualityURL = CleansePhrase(GUIUtil::FROMQS(ui->txtLoQualityURL->text()));
+	std::string sError1;
+	n.sHiQualityURL = RSAEncryptHQURL(CleansePhrase(GUIUtil::FROMQS(ui->txtHiQualityURL->text())), sError1);
 	n.sDescription = GUIUtil::FROMQS(ui->txtDescription->toPlainText());
 	n.fMarketable = ui->chkMarketable->checkState();
 	n.fDeleted = ui->chkDeleted->checkState();
@@ -135,8 +141,8 @@ void NFTAddDialog::on_btnSubmit_clicked()
 		sError += "NFT Name must be < 128 chars.";
 	if (n.sDescription.length() > 512)
 		sError += "NFT Description must be < 512 chars.";
-	if (n.sLoQualityURL.length() > 256 || n.sHiQualityURL.length() > 256)
-		sError += "URL Length must be < 256 chars.";
+	if (n.sLoQualityURL.length() > 512 || n.sHiQualityURL.length() > 1024)
+		sError += "URL Length must be < 512 (lo) and 1024 (hi) chars.";
 
 	CAmount nBalance = GetRPCBalance();
 

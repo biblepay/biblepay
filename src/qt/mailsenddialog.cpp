@@ -158,15 +158,12 @@ void MailSendDialog::on_btnSubmit_clicked()
 		DACResult d = MakeDerivedKey(dmTo.AddressLine1);
 		std::string sPayload = "<giftcard>" + RoundToString((double)dmTo.Amount/COIN, 2) + "</giftcard>";
 		sTXID = RPCSendMessage(dmTo.Amount, d.Address, fDryRun, sError, sPayload);
-		// 4-16-2021 add complete instructions
 		LockUTXOStakes();
-		std::string sPhrase = "<span style='white-space: nowrap;'><font color=lime> &nbsp;\"" + dmTo.AddressLine1 + "\"&nbsp; </font></span>";
+		std::string sPhrase = "<span style='white-space: nowrap;'><font color=lime> \"" + dmTo.AddressLine1 + "\"</font></span>";
 		std::string sInstructions = "<br><small>To redeem your gift, download biblepay Desktop PC wallet from www.biblepay.org | Tools | Debug Console | acceptgift " + sPhrase + "</small>";
-
-		dmTo.Paragraph2 += "<p><br>A gift of $" + RoundToString(dSrcAmount, 2) + " [" + RoundToString((double)dmTo.Amount/COIN, 2) 
-						+ " BBP] has been sent to you!  "
-						+ " <br>" + sInstructions;
-
+		std::string sNarr = "<p><br>A gift of $" + RoundToString(dSrcAmount, 2) + " (" + RoundToString((double)dmTo.Amount/COIN, 2) + " BBP) has been sent to you!<br>" + sInstructions;
+		dmTo.Paragraph2 = dmTo.Paragraph2 + sNarr;
+		LogPrintf("\nCreating gift with virtual amount %f, containing %s %s ", dmTo.Amount/COIN, dmTo.Paragraph1, dmTo.Paragraph2);
 	}
 	std::string sPDF;
 	if (sError.empty())
@@ -185,7 +182,7 @@ void MailSendDialog::on_btnSubmit_clicked()
 	if (sError.empty())
 	{
 		clear();
+		on_TypeChanged(0);
 	}
 }
-
 
