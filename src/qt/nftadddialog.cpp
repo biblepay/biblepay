@@ -118,7 +118,7 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	n.nBuyItNowAmount = cdbl(GUIUtil::FROMQS(ui->txtBuyItNowAmount->text()), 2) * COIN;
 	n.sLoQualityURL = CleansePhrase2(GUIUtil::FROMQS(ui->txtLoQualityURL->text()));
 	std::string sError1;
-	n.sHiQualityURL = RSAEncryptHQURL(CleansePhrase(GUIUtil::FROMQS(ui->txtHiQualityURL->text())), sError1);
+	n.sHiQualityURL = RSAEncryptHQURL(CleansePhrase2(GUIUtil::FROMQS(ui->txtHiQualityURL->text())), sError1);
 	n.sDescription = GUIUtil::FROMQS(ui->txtDescription->toPlainText());
 	n.fMarketable = ui->chkMarketable->checkState();
 	n.fDeleted = ui->chkDeleted->checkState();
