@@ -98,7 +98,7 @@ void NFTAddDialog::clear()
 	ui->chkMarketable->setChecked(false);
 }
 
-std::string CleansePhrase(std::string sPhrase)
+std::string CleansePhrase2(std::string sPhrase)
 {
 	// Remove special characters from the passphrase so they can't hose it up between machines.
 	sPhrase = SanitizeString(sPhrase);
@@ -116,7 +116,7 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	n.nMinimumBidAmount = cdbl(GUIUtil::FROMQS(ui->txtMinimumBidAmount->text()), 2) * COIN;
 	n.nReserveAmount = cdbl(GUIUtil::FROMQS(ui->txtReserveAmount->text()), 2) * COIN;
 	n.nBuyItNowAmount = cdbl(GUIUtil::FROMQS(ui->txtBuyItNowAmount->text()), 2) * COIN;
-	n.sLoQualityURL = CleansePhrase(GUIUtil::FROMQS(ui->txtLoQualityURL->text()));
+	n.sLoQualityURL = CleansePhrase2(GUIUtil::FROMQS(ui->txtLoQualityURL->text()));
 	std::string sError1;
 	n.sHiQualityURL = RSAEncryptHQURL(CleansePhrase(GUIUtil::FROMQS(ui->txtHiQualityURL->text())), sError1);
 	n.sDescription = GUIUtil::FROMQS(ui->txtDescription->toPlainText());
