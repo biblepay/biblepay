@@ -102,8 +102,8 @@ std::string CleansePhrase(std::string sPhrase)
 {
 	// Remove special characters from the passphrase so they can't hose it up between machines.
 	sPhrase = SanitizeString(sPhrase);
-	boost::replace_all(sPhrase, "\r", "");
-	boost::replace_all(sPhrase, "\n", "");
+	sPhrase = strReplace(sPhrase, "\r", "");
+	sPhrase = strReplace(sPhrase, "\n", "");
 	return sPhrase;
 }
 
