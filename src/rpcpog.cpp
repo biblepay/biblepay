@@ -357,6 +357,12 @@ std::string AmountToString(const CAmount& amount)
 	return sAmount;
 }
 
+double AmountToDouble(const CAmount& amount)
+{
+	double nAmount = (double)amount/COIN;
+	return nAmount;
+}
+
 static CBlockIndex* pblockindexFBBHLast;
 CBlockIndex* FindBlockByHeight(int nHeight)
 {
@@ -1246,19 +1252,22 @@ int DeserializePrayersFromFile()
 	return nHeight;
 }
 
-CAmount GetTitheAmount(CTransactionRef ctx)
+
+CAmount GetTxTotalFromAddress(CTransactionRef ctx, std::string sAddress)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
+	CAmount nTotal = 0;
 	for (unsigned int z = 0; z < ctx->vout.size(); z++)
 	{
 		std::string sRecip = PubKeyToAddress(ctx->vout[z].scriptPubKey);
-		if (sRecip == consensusParams.FoundationAddress) 
+		if (sRecip == sAddress) 
 		{
-			return ctx->vout[z].nValue;  // First Tithe amount found in transaction counts
+			nTotal += ctx->vout[z].nValue;
 		}
 	}
-	return 0;
+	return nTotal;
 }
+
 
 CAmount StringToAmount(std::string sValue)
 {
@@ -1395,7 +1404,7 @@ bool CheckBusinessObjectSig(TxMessage t)
 	return false;
 }
 
-TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime, int iPosition, std::string sTxId, double dAmount, double dFoundationDonation, int nHeight)
+TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime, int iPosition, std::string sTxId, double dAmount, double dFoundationDonation, int nHeight)
 {
 	TxMessage t;
 	t.sMessageType = ExtractXML(sMessage,"<MT>","</MT>");
@@ -1417,6 +1426,7 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
     boost::to_upper(t.sMessageType);
 	boost::to_upper(t.sMessageKey);
 	bool fGSC = CSuperblock::IsSmartContract(nHeight);
+	CWallet * const pwallet = GetWalletForGenericRequest();
 
 	t.sTimestamp = TimestampToHRDate((double)nTime + iPosition);
 	t.fNonceValid = (!(t.nNonce > (nTime+(60 * 60)) || t.nNonce < (nTime-(60 * 60))));
@@ -1445,6 +1455,28 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 		double nAmt = cdbl(ExtractXML(sGift, "<amount>", "</amount>"), 2);
 		WriteCache("GIFT", tx1->GetHash().GetHex(), RoundToString(nAmt, 2), nTime, false);	
 	}
+
+	// For Coin-Age voting
+	std::string sGobjectID = ExtractXML(sMessage, "<gobject>", "</gobject>");
+	std::string sGSCCampaign = ExtractXML(sMessage, "<gsccampaign>", "</gsccampaign>");
+	std::string sCPK = ExtractXML(sMessage, "<abncpk>", "</abncpk>");
+	if (!sGobjectID.empty() && t.sMessageType == "GSCTransmission" && sGSCCampaign == "COINAGEVOTE" && !sCPK.empty())
+	{
+		// This user voted on a poll with coin-age:
+		double nCoinAge = GetVINCoinAge(nTime, tx1, false);
+		// At this point we can do two cool things to extend the sanctuary gobject vote:
+		// 1: Increment the vote count by distinct voter (1 vote per distinct GobjectID-CPK), and, 2: increment the vote coin-age-tally by coin-age spent (sum(coinage(gobjectid-cpk))):
+		std::string sOutcome = ExtractXML(sMessage, "<outcome>", "</outcome>");
+		if (sOutcome == "YES" || sOutcome == "NO" || sOutcome == "ABSTAIN")
+		{
+			WriteCache("coinage-vote-count-" + sGobjectID, sCPK, sOutcome, GetAdjustedTime());
+			// Note, if someone votes more than once, we only count it once (see above line), but, we do tally coin-age (within the duration of the poll start-end).  This means a whale who accidentally voted with 10% of the coin-age on Monday may vote with the rest of their 90% of coin age as long as the poll is not expired and the coin-age will be counted in total.  But, we will display one vote for the cpk, with the sum of the coinage spent.
+			WriteCache("coinage-vote-sum-" + sOutcome + "-" + sGobjectID, sCPK + "-" + tx1->GetHash().GetHex(), RoundToString(nCoinAge, 2), GetAdjustedTime());
+			// TODO - limit voting to start date and end date here
+			LogPrintf("\nVoted with %f coinage outcome %s for %s from %s ", nCoinAge, sOutcome, sGobjectID, sCPK);
+		}
+	}
+	
 
 	if (t.sMessageType == "PRAYER" && (!(Contains(t.sMessageKey, "(") ))) t.sMessageKey += " (" + t.sTimestamp + ")";
 	// The following area allows us to be a true decentralized autonomous charity (DAC):
@@ -1541,11 +1573,30 @@ TxMessage GetTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nTime,
 			LogPrintf("\nAcceptPrayer::CPKType %s, %s, %s, bosigvalid %f ", t.sMessageType, sMessage, t.sMessageValue, t.fBOSigValid);
 		t.fPassedSecurityCheck = true;
 	}
+	else if (t.sMessageType == "INVOICE")
+	{
+		std::string sMsg = ExtractXML(t.sMessageValue, "<BOMSG>", "</BOMSG>");
+		std::string sError;
+		t.fPassedSecurityCheck = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
+		t.sMessageValue += "<txid>"+ tx1->GetHash().GetHex() + "</txid>";
+		LogPrintf("\nAcceptPrayer::INVOICE bosigvalid %f for %s", t.fPassedSecurityCheck, t.sMessageValue);
+		// Harvest what do we do to map shortcut to invoices (from mvApplicationCache) etc...
+	}
+	else if (t.sMessageType == "PAYMENT")
+	{
+		std::string sMsg = ExtractXML(t.sMessageValue, "<BOMSG>", "</BOMSG>");
+		std::string sError;
+		t.fPassedSecurityCheck = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
+		t.sMessageValue += "<txid>" + tx1->GetHash().GetHex() + "</txid>";
+
+		LogPrintf("\nAcceptPrayer::PAYMENT bosigvalid %f for %s  ", 
+			t.fPassedSecurityCheck, t.sMessageValue);
+		// Harvest Mission Critical todo - make this area conditional on sig.
+	}
 	else if (t.sMessageType == "REFERRALCODE" || t.sMessageType == "CLAIMREFERRALCODE")
 	{
 		std::string sMsg = ExtractXML(t.sMessageValue, "<BOMSG>", "</BOMSG>");
 		std::string sError;
-		CWallet * const pwallet = GetWalletForGenericRequest();
 		t.fBOSigValid = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
 		t.fPassedSecurityCheck = t.fBOSigValid;
 		LogPrintf("\nAcceptPrayer::%s, %s, %s, %f ",t.sMessageType, t.sBOSigner, sMsg, (int)t.fBOSigValid);
@@ -1675,10 +1726,57 @@ bool IsCPKWL(std::string sCPK, std::string sNN)
 	return (Contains(sWL, sNN));
 }
 
+void ProcessLegacyUtxoData(std::string sBlockHash, std::string sPrayer, std::string sPK, int nHeight, int nOrdinal, int iOrdinal, double dAmount)
+{
+	// This is for Dynamic-Whale-Staking (DWS):
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	if (sPK == consensusParams.BurnAddress)
+	{
+		std::string sXML = ExtractXML(sPrayer, "<dws>", "</dws>");
+		if (!sXML.empty())
+		{
+			WriteCache("dws-burn", sBlockHash, sXML, GetAdjustedTime());
+		}
+		std::string sUTXOStake = ExtractXML(sPrayer, "<utxostake>", "</utxostake>");
+		if (!sUTXOStake.empty())
+		{
+			double dCommitment = cdbl(ExtractXML(sUTXOStake, "<commitment>", "</commitment>"), 0);
+			if (dCommitment > 0)
+			{
+					std::string sBBPAddress = ExtractXML(sUTXOStake, "<bbpaddress>", "</bbpaddress>");
+					std::string sBBPSig = ExtractXML(sUTXOStake, "<bbpsig>", "</bbpsig>");
+					std::string sBBPUTXO = ExtractXML(sUTXOStake, "<bbputxo>", "</bbputxo>");
+					CWallet * const pwallet = GetWalletForGenericRequest();
+					bool fSigValid = pwallet->CheckStakeSignature(sBBPAddress, sBBPSig, sBBPUTXO, sBBPSig);
+					if (fSigValid)
+					{
+						sUTXOStake += "<burnutxo>" + sBlockHash + "-" + RoundToString(iOrdinal, 0) + "</burnutxo>";
+						WriteCache("utxo-commitment", sBBPUTXO, sUTXOStake, GetAdjustedTime());
+					}
+					else
+					{
+						LogPrintf("\nMemorizeBlockChainPrayers stakesig failed %s %s %s", sBBPAddress, sBBPSig, sBBPUTXO);
+					}
+			}
+			WriteCache("utxo-burn", sBlockHash, sUTXOStake, GetAdjustedTime());
+		}
+	}
+	else if (sPK == consensusParams.BurnAddressOrphanDonations)
+	{
+			std::string sRow = "<height>" + RoundToString(nHeight, 0) + "</height><amount>" + RoundToString(dAmount, 2) + "</amount>";
+			WriteCache("dac-donation", sBlockHash, sRow, GetAdjustedTime());
+	}
+	else if (sPK == consensusParams.BurnAddressWhaleMatches)
+	{
+			std::string sRow = "<height>" + RoundToString(nHeight, 0) + "</height><amount>" + RoundToString(dAmount, 2) + "</amount>";
+			WriteCache("dac-whalematch", sBlockHash, sRow, GetAdjustedTime());
+	}
+	
+}
+
 void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool fColdBoot, bool fDuringSanctuaryQuorum)
 {
 	int nDeserializedHeight = 0;
-	CWallet * const pwallet = GetWalletForGenericRequest();
 
 	if (fColdBoot)
 	{
@@ -1691,23 +1789,28 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 	}
 
 	int nMaxDepth = chainActive.Tip()->nHeight;
-	int nMinDepth = fDuringConnectBlock ? nMaxDepth - 2 : nMaxDepth - (BLOCKS_PER_DAY * 30 * 12 * 7);  // Seven years
-	if (fDuringSanctuaryQuorum) nMinDepth = nMaxDepth - (BLOCKS_PER_DAY * 14); // Two Weeks
-	if (nDeserializedHeight > 0 && nDeserializedHeight < nMaxDepth) nMinDepth = nDeserializedHeight;
-	if (nMinDepth < 0) nMinDepth = 0;
+	int nMinDepth = fDuringConnectBlock ? nMaxDepth - 1 : nMaxDepth - (BLOCKS_PER_DAY * 30 * 12 * 7);  // Seven years
+	if (fDuringSanctuaryQuorum) 
+		nMinDepth = nMaxDepth - (BLOCKS_PER_DAY * 14); // Two Weeks
+	if (nDeserializedHeight > 0 && nDeserializedHeight < nMaxDepth)
+		nMinDepth = nDeserializedHeight;
+	if (nMinDepth < 0) 
+		nMinDepth = 0;
 	CBlockIndex* pindex = FindBlockByHeight(nMinDepth);
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	while (pindex && pindex->nHeight < nMaxDepth)
 	{
-		if (pindex) 
-			if (pindex->nHeight < chainActive.Tip()->nHeight)
-				pindex = chainActive.Next(pindex);
 		if (!pindex)
 			break;
+		
+		if (pindex->nHeight < chainActive.Tip()->nHeight)
+				pindex = chainActive.Next(pindex);
+		
 		CBlock block;
 		if (ReadBlockFromDisk(block, pindex, consensusParams)) 
 		{
-			if (pindex->nHeight % 25000 == 0)
+			// Harvest Mission Critial :: Revert
+			if (pindex->nHeight % 25000 == 0 || true)
 				LogPrintf(" MBCP %f @ %f, ", pindex->nHeight, GetAdjustedTime());
 			for (unsigned int n = 0; n < block.vtx.size(); n++)
     		{
@@ -1719,90 +1822,20 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 					sPrayer += block.vtx[n]->vout[i].sTxOutMessage;
 					double dAmount = block.vtx[n]->vout[i].nValue / COIN;
 					dTotalSent += dAmount;
-					// The following 3 lines are used for PODS (Proof of document storage); allowing persistence of paid documents in IPFS
 					std::string sPK = PubKeyToAddress(block.vtx[n]->vout[i].scriptPubKey);
 					if (sPK == consensusParams.FoundationAddress || sPK == consensusParams.FoundationPODSAddress)
 					{
 						dFoundationDonation += dAmount;
 					}
-					// This is for Dynamic-Whale-Staking (DWS):
-					if (sPK == consensusParams.BurnAddress)
-					{
-						// Memorize each DWS txid-vout and burn amount (later the sancs will audit each one to ensure they are mature and in the main chain). 
-						// NOTE:  This data is automatically persisted during shutdowns and reboots and loaded efficiently into memory.
-						std::string sXML = ExtractXML(sPrayer, "<dws>", "</dws>");
-						if (!sXML.empty())
-						{
-							WriteCache("dws-burn", block.vtx[n]->GetHash().GetHex(), sXML, GetAdjustedTime());
-						}
-						std::string sDashStake = ExtractXML(sPrayer, "<dashstake>", "</dashstake>");
-						if (!sDashStake.empty())
-						{
-							WriteCache("dash-burn", block.vtx[n]->GetHash().GetHex(), sDashStake, GetAdjustedTime());
-						}
-						std::string sUTXOStake = ExtractXML(sPrayer, "<utxostake>", "</utxostake>");
-						if (!sUTXOStake.empty())
-						{
-							double dCommitment = cdbl(ExtractXML(sUTXOStake, "<commitment>", "</commitment>"), 0);
-							if (dCommitment > 0)
-							{
-								std::string sBBPAddress = ExtractXML(sUTXOStake, "<bbpaddress>", "</bbpaddress>");
-								std::string sBBPSig = ExtractXML(sUTXOStake, "<bbpsig>", "</bbpsig>");
-								std::string sBBPUTXO = ExtractXML(sUTXOStake, "<bbputxo>", "</bbputxo>");
-								bool fSigValid = pwallet->CheckStakeSignature(sBBPAddress, sBBPSig, sBBPUTXO, sBBPSig);
-								if (fSigValid)
-								{
-									sUTXOStake += "<burnutxo>" + block.vtx[n]->GetHash().GetHex() + "-" + RoundToString(i, 0) + "</burnutxo>";
-									WriteCache("utxo-commitment", sBBPUTXO, sUTXOStake, GetAdjustedTime());
-								}
-								else
-								{
-									LogPrintf("\nMemorizeBlockChainPrayers stakesig failed %s %s %s", sBBPAddress, sBBPSig, sBBPUTXO);
-								}
-							}
-
-							WriteCache("utxo-burn", block.vtx[n]->GetHash().GetHex(), sUTXOStake, GetAdjustedTime());
-						}
-					}
-					else if (sPK == consensusParams.BurnAddressOrphanDonations)
-					{
-						std::string sRow = "<height>" + RoundToString(pindex->nHeight, 0) + "</height><amount>" + RoundToString(dAmount, 2) + "</amount>";
-						WriteCache("dac-donation", block.vtx[n]->GetHash().GetHex(), sRow, GetAdjustedTime());
-
-					}
-					else if (sPK == consensusParams.BurnAddressWhaleMatches)
-					{
-						std::string sRow = "<height>" + RoundToString(pindex->nHeight, 0) + "</height><amount>" + RoundToString(dAmount, 2) + "</amount>";
-						WriteCache("dac-whalematch", block.vtx[n]->GetHash().GetHex(), sRow, GetAdjustedTime());
-					}
-					// For Coin-Age voting:  This vote cannot be falsified because we require the user to vote with coin-age (they send the stake back to their own address):
-					std::string sGobjectID = ExtractXML(sPrayer, "<gobject>", "</gobject>");
-					std::string sType = ExtractXML(sPrayer, "<MT>", "</MT>");
-					std::string sGSCCampaign = ExtractXML(sPrayer, "<gsccampaign>", "</gsccampaign>");
-					std::string sCPK = ExtractXML(sPrayer, "<abncpk>", "</abncpk>");
-					if (!sGobjectID.empty() && sType == "GSCTransmission" && sGSCCampaign == "COINAGEVOTE" && !sCPK.empty())
-					{
-						// This user voted on a poll with coin-age:
-						CTransactionRef tx = block.vtx[n];
-						double nCoinAge = GetVINCoinAge(block.GetBlockTime(), tx, false);
-						// At this point we can do two cool things to extend the sanctuary gobject vote:
-						// 1: Increment the vote count by distinct voter (1 vote per distinct GobjectID-CPK), and, 2: increment the vote coin-age-tally by coin-age spent (sum(coinage(gobjectid-cpk))):
-						std::string sOutcome = ExtractXML(sPrayer, "<outcome>", "</outcome>");
-						if (sOutcome == "YES" || sOutcome == "NO" || sOutcome == "ABSTAIN")
-						{
-							WriteCache("coinage-vote-count-" + sGobjectID, sCPK, sOutcome, GetAdjustedTime());
-							// Note, if someone votes more than once, we only count it once (see above line), but, we do tally coin-age (within the duration of the poll start-end).  This means a whale who accidentally voted with 10% of the coin-age on Monday may vote with the rest of their 90% of coin age as long as the poll is not expired and the coin-age will be counted in total.  But, we will display one vote for the cpk, with the sum of the coinage spent.
-							WriteCache("coinage-vote-sum-" + sOutcome + "-" + sGobjectID, sCPK + "-" + tx->GetHash().GetHex(), RoundToString(nCoinAge, 2), GetAdjustedTime());
-							// TODO - limit voting to start date and end date here
-							LogPrintf("\nVoted with %f coinage outcome %s for %s from %s ", nCoinAge, sOutcome, sGobjectID, sCPK);
-						}
-					}
+					ProcessLegacyUtxoData(block.vtx[n]->GetHash().GetHex(), sPrayer, sPK, pindex->nHeight, n, i, dAmount);
 				}
+				
 				double dAge = GetAdjustedTime() - block.GetBlockTime();
-				GetTxMessage(block.vtx[n], sPrayer, block.GetBlockTime(), 0, block.vtx[n]->GetHash().GetHex(), dTotalSent, dFoundationDonation, pindex->nHeight);
-	
+				ProcessTxMessage(block.vtx[n], sPrayer, block.GetBlockTime(), 0, block.vtx[n]->GetHash().GetHex(), dTotalSent, dFoundationDonation, pindex->nHeight);
+
 			}
 	 	}
+
 	}
 	if (fColdBoot) 
 	{
@@ -2561,6 +2594,18 @@ std::string GetPOGBusinessObjectList(std::string sType1, std::string sFields)
 	sData += "<highblock>" + RoundToString(iNextSuperblock, 0)  + "</highblock>";
 
 	return sData;
+}
+
+CTransactionRef GetTxRef(uint256 hash)
+{
+	CBlockIndex* pindexHistorical;
+	CTransactionRef tx1;
+	uint256 hashBlock1;
+	if (GetTransaction(hash, tx1, Params().GetConsensus(), hashBlock1, true))
+	{
+		return tx1;
+	}
+    return tx1;
 }
 
 const CBlockIndex* GetBlockIndexByTransactionHash(const uint256 &hash)
@@ -3629,8 +3674,8 @@ CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAm
 			{
 				double nDWU = CalculateUTXOReward(u.nType, u.nCommitment); //nType contains stake-type (1=bbp only, 2=foreign+bbp)
 				nPenaltyPercentage = nDWU * 1.75;
-				if (nPenaltyPercentage > .90)
-					nPenaltyPercentage = .90;
+				if (nPenaltyPercentage > .50)
+					nPenaltyPercentage = .50;
 				double nAmountRequired = nPenaltyPercentage * ((double)nAmountOriginallyStaked/COIN);
 				CAmount caAmountRequired = nAmountRequired * COIN;
 				caTotalAmountRequired += caAmountRequired;
@@ -4190,6 +4235,50 @@ std::string GetHowey(bool fRPC, bool fBurn)
 	return sHowey;
 }
 
+
+std::string GenerateXMLSignature(std::string sPrimaryKey, std::string sSigningPublicKey)
+{
+	std::string sBBPSig;
+	std::string sXML;
+	std::string sError;
+	LogPrintf("\n%f", 8109);
+
+	bool bSigned = SignStake(sSigningPublicKey, sPrimaryKey, sError, sBBPSig);
+	LogPrintf("\n%f", 8110);
+
+	sXML = "<BOSIGNER>"+ sSigningPublicKey + "</BOSIGNER><BOSIG>" + sBBPSig + "</BOSIG><BOMSG>"+ sPrimaryKey + "</BOMSG>";
+	return sXML;
+}
+
+DACResult SendPayment(Payment p)
+{
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	DACResult dr;
+
+	if (!ValidateAddress2(p.sFromAddress) || !ValidateAddress2(p.sToAddress))
+	{
+		dr.ErrorCode = "Invalid Invoice Address or invalid source cpk address.";
+		return dr;
+	}
+	dr.TXID = RPCSendMessage(p.nAmount, p.sToAddress, false, dr.ErrorCode, p.ToXML());
+	return dr;
+}
+
+DACResult SendInvoice(Invoice i)
+{
+	DACResult d;
+
+	if (!ValidateAddress2(i.sFromAddress) || !ValidateAddress2(i.sToAddress))
+	{
+		d.ErrorCode = "Invalid Invoice Address or invalid source cpk address.";
+		return d;
+	}
+
+	d.TXID = RPCSendMessage(1*COIN, i.sToAddress, false, d.ErrorCode, i.ToXML());
+	return d;
+}
+
+
 bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
 	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake, int nCommitmentDays)
 {
@@ -4301,6 +4390,7 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	}
 	return (sError.empty());
 }
+
 
 std::string FormatURL(std::string URL, int iPart)
 {
@@ -4697,7 +4787,7 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 						nForeignQuantity += d.nForeignAmount;
 						nForeignValue += d.nForeignValueUSD;
 						nForeignCount++;
-						sForeignQuants += RoundToString((double)d.nForeignAmount/COIN, 2) + ", ";
+						sForeignQuants += RoundToString((double)d.nForeignAmount/COIN, 2) + " (" + sTicker + " $" + RoundToString(d.nForeignValueUSD, 2) + "), ";
 						nTotal += d.nBBPValueUSD + d.nForeignValueUSD;	
 						// Foreign = std::min(bbpvalue,foreignvalue) * 2
 						nBBPStakeWeight += d.nValue / 2;
@@ -5210,7 +5300,6 @@ bool ValidateAddress2(std::string sAddress)
 bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string& sError, std::string& sSignature)
 {
 	CWallet * const pwallet = GetWalletForGenericRequest();
-	
 	LOCK2(cs_main, pwallet->cs_wallet);
 	{
 		if (pwallet->IsLocked()) 
@@ -5219,13 +5308,19 @@ bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string&
 			return false;
 		}
 
-	   CTxDestination dest = DecodeDestination(sBitcoinAddress);
-	   if (!IsValidDestination(dest)) 
+	   if (!ValidateAddress2(sBitcoinAddress))
 	   {
 		   sError = "Invalid Address.";
 		   return false;
 	   }
-        
+
+	   if (strMessage.empty())
+	   {
+		   sError = "Signing message empty.";
+		   return false;
+	   }
+
+	   CTxDestination dest = DecodeDestination(sBitcoinAddress);
 	   const CKeyID *keyID = boost::get<CKeyID>(&dest);
 	   if (!keyID) 
 	   {
@@ -5313,7 +5408,6 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		}
 		sToAddress = consensusParams.BurnAddress;
 		
-
 		bool fOrphan = findStringCaseInsensitive(nft.sType, "orphan");
 		if (fOrphan && !nft.fDeleted)
 		{
@@ -5395,7 +5489,6 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 	}
 	return true;
 }
-
 
 CAmount GetAmountPaidToRecipient(CTransactionRef tx1, std::string sRecipient)
 {
@@ -5713,6 +5806,41 @@ std::vector<ReferralCode> GetReferralCodes()
 	return vRC;
 }
 
+std::vector<Invoice> GetInvoices()
+{
+	std::vector<Invoice> vI;
+	for (auto ii : mvApplicationCache) 
+	{
+		if (Contains(ii.first, "INVOICE[-]"))
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			Invoice i;
+			i.FromXML(v.first);
+			if (i.found)
+				vI.push_back(i);
+		}
+	}
+	return vI;
+}
+
+std::vector<Payment> GetPayments()
+{
+	std::vector<Payment> vP;
+	for (auto ii : mvApplicationCache) 
+	{
+		if (Contains(ii.first, "PAYMENT[-]"))
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			Payment p;
+			p.FromXML(v.first);
+			if (p.found)
+				vP.push_back(p);
+		}
+	}
+	return vP;
+}
+
+
 ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK)
 {
 	// Given a CPK (this is a pointer to a portfolio), assess the portfolio determining the impact of the collection of referral codes when applied.
@@ -5777,23 +5905,24 @@ DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun)
 	std::string sTXID;
 	std::string sError;
 	const Consensus::Params& consensusParams = Params().GetConsensus();
+	std::string sFeeAddress = consensusParams.BurnAddress;
 
 	if (!fDryRun)
 	{
 		CAmount nCost = GetBBPValueUSD(1, 0);
-		if (nCost > 250000)
-			nCost = 250000;
+		if (nCost > 250000 * COIN)
+			nCost = 250000 * COIN;
 		std::string sPayload = "<mail>" + RoundToString((double)nCost/COIN, 2) + "</mail>";
-		sTXID = RPCSendMessage(nCost, consensusParams.BurnAddress, fDryRun, sError, sPayload);
+		sTXID = RPCSendMessage(nCost, sFeeAddress, fDryRun, sError, sPayload);
 	}
-	// Todo: Add the custom paragraph here, and the custom gift here
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 	std::string sXML = "<cpk>" + sCPK + "</cpk><paragraph1>" + dmTo.Paragraph1 + "</paragraph1><paragraph2>" 
 		+ dmTo.Paragraph2 + "</paragraph2><Template>" + dmTo.Template + "</Template>"
 		+ "<from>" + SerializeDMAddress(dmFrom) + "</from>"
 		+ "<to>" + SerializeDMAddress(dmTo) + "<OpeningSalutation>" 
 		+ dmTo.OpeningSalutation + "</OpeningSalutation><ClosingSalutation>" 
-		+ dmTo.ClosingSalutation + "</ClosingSalutation></to><dryrun>" + (fDryRun ? "1" : "0") + "</dryrun><txid>" + sTXID + "</txid>";
+		+ dmTo.ClosingSalutation + "</ClosingSalutation></to><dryrun>" 
+		+ (fDryRun ? "1" : "0") + "</dryrun><txid>" + sTXID + "</txid><feeaddress>" + sFeeAddress + "</feeaddress>";
 	std::string sXML2 = EncodeBase64(sXML);
     DACResult b = DSQL_ReadOnlyQuery("Server?action=MAIL", sXML2);
 	return b;
@@ -5902,5 +6031,63 @@ std::string RSADecryptHQURL(std::string sEncData, std::string& sError)
 	std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
 	std::string sDec = RSA_Decrypt_String(sPrivPath, sEncData, sError);
 	return sDec;
+}
+
+std::string RemoveQuotesAndConvertCommas(std::string sData)
+{
+	bool fInQuote = false;
+	std::string sDelim = "<col>";
+	std::string sOut;
+	for (int i = 0; i < sData.length(); i++)
+	{
+		std::string sChar = sData.substr(i, 1);
+		if (sChar == "\"")
+		{
+			fInQuote = !fInQuote;
+		}
+		if (sChar == "," && !fInQuote)
+			sChar = sDelim;
+
+		if (sChar == "\"")
+			sChar = "";
+
+		sOut += sChar;
+	}
+	return sOut;
+}
+
+std::vector<DMAddress> ImportGreetingCardCSVFile(std::string sFullPath)
+{
+    boost::filesystem::path pathIn(sFullPath);
+
+    boost::filesystem::ifstream streamCSV(pathIn);
+	std::vector<DMAddress> d;
+    if (!streamCSV.good()) 
+	{
+		return d;
+	}
+
+	// Format: Name, Address1, Address2, City, State, Zip
+	int linenumber = 0;
+	for(std::string line; std::getline(streamCSV, line); linenumber++)
+    {
+        if(line.empty())
+			continue;
+		line = RemoveQuotesAndConvertCommas(line);
+		std::vector<std::string> v = Split(line.c_str(), "<col>");
+		if (v.size() >= 6)
+		{
+			DMAddress d1;
+			d1.Name = v[0];
+			d1.AddressLine1 = v[1];
+			d1.AddressLine2 = v[2];
+			d1.City = v[3];
+			d1.State = v[4];
+			d1.Zip = v[5];
+			d.push_back(d1);
+		}
+    }
+    streamCSV.close();
+	return d;
 }
 

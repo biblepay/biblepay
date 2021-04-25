@@ -155,6 +155,9 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	std::string sNarr = (sError.empty()) ? "Successfully " + msMode + "(ed) NFT " + sTXID + ". <br><br>Thank you for using BiblePay Non Fungible Tokens." : sError;
 
  	QMessageBox::warning(this, tr("NFT Add Result"), GUIUtil::TOQS(sNarr), QMessageBox::Ok, QMessageBox::Ok);
-	clear();
+	if (sError.empty())
+	{
+		clear();
+	}
 }
 

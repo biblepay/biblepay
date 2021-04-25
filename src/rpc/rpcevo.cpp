@@ -1645,11 +1645,11 @@ std::string GetHighYieldWarning(int nDays)
 	if (nDays < 31)
 		return "";
 	std::string sNarr = "When you promise to lock for " + RoundToString(nDays, 0) + " days for a high yield reward, "
-		+ " you hereby AGREE that you may be PENALIZED by 200% of the TOTAL reward if you spend your UTXO early.  "
+		+ " you hereby AGREE that you may be PENALIZED by up to 50% of the value of your UTXO.  "
 		+ " If you do not fulfill your obligation, your original UTXO will have burn fees deducted from it.  "
-		+ " EXAMPLE:  You have a 100,000 BBP coin.  You lock it for 90 days for a 60% DWU.  On the 15th day you try to spend the coin (breaking your obligation).  "
-		+ " You will be penalized 60%*2=120% of your original UTXO, which is MORE THAN THE ORIGINAL VALUE.  Due to our 90% cap, we will charge you a 90% BURN FEE to spend the coin. "
-		+ " (If you do not agree please use our conservative staking feature.)  Thank you for using BIBLEPAY.  ";
+		+ " EXAMPLE:  You have a 100,000 BBP coin.  You lock it for 90 days for a 40% DWU.  On the 15th day you try to spend the coin (breaking your obligation).  "
+		+ " You will be penalized 40%*2=80% (capped at 50% max) of your original UTXO.  "
+		+ " (If you do not agree please use our conservative staking feature: easybbpstake.)  Thank you for using BIBLEPAY.  ";
 	return sNarr;
 }
 
@@ -1905,7 +1905,7 @@ UniValue highriskbbpstake(const JSONRPCRequest& request)
 	newRequest.params.push_back(request.params[2].getValStr()); // dry run
 	newRequest.params.push_back(request.params[1].getValStr()); // days
 
-	results = easybbpstake(request);
+	results = easybbpstake(newRequest);
 	return results;
 }
 
@@ -2451,6 +2451,95 @@ UniValue bankroll(const JSONRPCRequest& request)
 	return results;
 }
 
+UniValue getstatement(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
+		throw std::runtime_error("You may specify getstatement business_address customer_address (optional nStartTime) (optional nEndTime)");
+
+	UniValue results(UniValue::VOBJ);
+	std::string sBusinessAddress = request.params[0].get_str();
+	std::string sCustomerAddress = request.params[1].get_str();
+	int64_t nStartTime = 0;
+	int64_t nEndTime = 0;
+	if (request.params.size() > 2)
+		nStartTime = cdbl(request.params[2].get_str(), 0);
+	if (request.params.size() > 3)
+		nEndTime = cdbl(request.params[3].get_str(), 0);
+
+	if (nStartTime == 0)
+	{
+		nStartTime = GetAdjustedTime() - (86400 * 30);
+		nEndTime = GetAdjustedTime();
+	}
+
+	// Combines the Invoices and Payments for a given address, and produces the statement.
+	std::vector<Invoice> vI = GetInvoices();
+	std::vector<Payment> vP = GetPayments();
+	UniValue o(UniValue::VOBJ);
+	CAmount nNonCurrentOwed = 0;
+	CAmount nCurrentOwed = 0;
+	CAmount nNonCurrentPaid = 0;
+	CAmount nCurrentPaid = 0;
+	UniValue oCharges(UniValue::VOBJ);
+	UniValue oPayments(UniValue::VOBJ);
+
+	for (auto inv : vI)
+	{
+		if (inv.sToAddress == sCustomerAddress && inv.sFromAddress == sBusinessAddress)
+		{
+			// if it is within the window, return the details
+			if (inv.nTime >= nStartTime && inv.nTime <= nEndTime)
+			{
+				UniValue oInvoice(UniValue::VOBJ);
+				inv.ToJson(oInvoice);
+				oCharges.push_back(Pair(inv.GetHash().GetHex(), oInvoice));
+				nCurrentOwed += inv.nAmount;
+			}
+			else if (inv.nTime < nStartTime)
+			{
+				nNonCurrentOwed += inv.nAmount;
+			}
+		}
+	}
+	o.push_back(Pair("Charges", oCharges));
+
+	for (auto pay : vP)
+	{
+		if (pay.sToAddress == sBusinessAddress && pay.sFromAddress == sCustomerAddress)
+		{
+			if (pay.nTime >= nStartTime && pay.nTime <= nEndTime)
+			{
+				UniValue oPayment(UniValue::VOBJ);
+				pay.ToJson(oPayment);
+				oPayments.push_back(Pair(pay.GetHash().GetHex(), oPayment));
+				nCurrentPaid += pay.nAmount;
+			}
+			else if (pay.nTime < nStartTime)
+			{
+				nNonCurrentPaid += pay.nAmount;
+			}
+
+		}
+	}
+	o.push_back(Pair("Payments", oPayments));
+
+	// Summary
+	o.push_back(Pair("Period Start", nStartTime));
+	o.push_back(Pair("Period End", nEndTime));
+	o.push_back(Pair("Prior Charges", AmountToDouble(nNonCurrentOwed)));
+	o.push_back(Pair("Prior Payments", AmountToDouble(nNonCurrentPaid)));
+	CAmount nBalanceForward = nNonCurrentOwed - nNonCurrentPaid;
+	o.push_back(Pair("Balance Forward", AmountToDouble(nBalanceForward)));
+	o.push_back(Pair("Current Charges", AmountToDouble(nCurrentOwed)));
+	o.push_back(Pair("Current Payments", AmountToDouble(nCurrentPaid)));
+	CAmount nOwed = nBalanceForward + nCurrentOwed - nCurrentPaid;
+	o.push_back(Pair("Current Balance", AmountToDouble(nOwed)));
+	std::string sURL = "https://foundation.biblepay.org/Server?action=statement&starttime=" + RoundToString(nStartTime, 0) 
+		+ "&endtime=" + RoundToString(nEndTime, 0) + "&businessaddress="+ sBusinessAddress + "&customeraddress="+ sCustomerAddress;
+	o.push_back(Pair("URL", sURL));
+	return o;
+}
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)
   //  --------------------- ------------------------  -----------------------
@@ -2466,6 +2555,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "dashpay",                      &dashpay,                  {}  },
 	{ "evo",                "give",                         &give,                     {}  },
 	{ "evo",                "getpin",                       &getpin,                   {}  },
+	{ "getstatement",       "getstatement",                 &getstatement,             {}  },
 	{ "evo",                "easystake",                    &easystake,                {}  },
 	{ "evo",                "highriskstake",                &highriskstake,            {}  },
 	{ "evo",                "highriskbbpstake",             &highriskbbpstake,         {}  },

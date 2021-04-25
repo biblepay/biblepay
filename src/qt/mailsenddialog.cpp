@@ -36,6 +36,7 @@ MailSendDialog::MailSendDialog(const PlatformStyle *platformStyle, QWidget *pare
 	ui->cmbType->addItem("Easter Card");
 	ui->cmbType->addItem("Kittens Card");
 	connect(ui->cmbType, SIGNAL(currentIndexChanged(int)), SLOT(on_TypeChanged(int)));
+    connect(ui->btnCSV, SIGNAL(clicked()), this, SLOT(on_btnCSVClicked()));
 
 	ui->txtGiftCardAmount->setValidator( new QIntValidator(0, 100000000, this) );
 	ui->txtZip->setValidator( new QIntValidator(9999, 99999, this) );
@@ -128,10 +129,7 @@ void MailSendDialog::on_btnSubmit_clicked()
 	dmTo.ClosingSalutation = GUIUtil::FROMQS(ui->txtClosingSalutation->text());
 
 	bool fDryRun = !(ui->chkDeliver->checkState());
-	// Temporary while in testnet:
-	fDryRun = false;
-
-
+	
 	std::string sError;
 	
 	if (dmTo.Name.length() < 3)
@@ -169,7 +167,7 @@ void MailSendDialog::on_btnSubmit_clicked()
 	if (sError.empty())
 	{
 		// Todo Harvest: change true to fDryRun = !fSend
-		DACResult b = MailLetter(dmFrom, dmTo, true);
+		DACResult b = MailLetter(dmFrom, dmTo, fDryRun);
 		sError = ExtractXML(b.Response, "<error>", "</error>");
 		sPDF = ExtractXML(b.Response, "<pdf>", "</pdf>");
 	}
@@ -183,6 +181,20 @@ void MailSendDialog::on_btnSubmit_clicked()
 	{
 		clear();
 		on_TypeChanged(0);
+	}
+}
+
+void MailSendDialog::on_btnCSVClicked()
+{
+    QString sFileName = GUIUtil::getOpenFileName(this, tr("Select CSV file to import"), "", "", nullptr);
+    if (sFileName.isEmpty())
+        return;
+	std::string sFN = GUIUtil::FROMQS(sFileName);
+	std::vector<DMAddress> dm = ImportGreetingCardCSVFile(sFN);
+	for (int i = 0; i < dm.size(); i++)
+	{
+		std::string sRow = dm[i].Name + dm[i].AddressLine1 + dm[i].City + dm[i].State + dm[i].Zip;
+		QMessageBox::warning(this, tr("Mail"), GUIUtil::TOQS(sRow), QMessageBox::Ok, QMessageBox::Ok);
 	}
 }
 

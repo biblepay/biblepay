@@ -3804,6 +3804,67 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes."));
 
 	}
+	else if (sItem == "testinvoice")
+	{
+		Invoice i;
+		i.sFromAddress = DefaultRecAddress("Christian-Public-Key");
+		i.sToAddress = "ye5Q19NvrCouYhEfFHeVaEG3LqzePrTt9H";
+		i.nAmount = 5000 * COIN;
+		i.sDescription = "Cat bathing.";
+		i.nTime = GetAdjustedTime();
+		DACResult r = SendInvoice(i);
+		results.push_back(Pair("1", r.TXID));
+		results.push_back(Pair("1e", r.ErrorCode));
+
+		Invoice j;
+		j.sFromAddress = DefaultRecAddress("Christian-Public-Key");
+		j.sToAddress = "ye5Q19NvrCouYhEfFHeVaEG3LqzePrTt9H";
+		j.nAmount = 4000 * COIN;
+		j.nTime = GetAdjustedTime();
+		j.sDescription = "Cat drying.";
+
+		r = SendInvoice(j);
+
+		results.push_back(Pair("2", r.TXID));
+		results.push_back(Pair("2e", r.ErrorCode));
+
+		Payment p;
+		p.sFromAddress = i.sToAddress;
+		p.sToAddress = i.sFromAddress;
+		p.nAmount = 7777 * COIN;
+		p.nTime = GetAdjustedTime();
+		r = SendPayment(p);
+
+		results.push_back(Pair("3", r.TXID));
+		results.push_back(Pair("3e", r.ErrorCode));
+
+	}
+	else if (sItem == "testreadinvoice")
+	{
+		std::vector<Invoice> vI = GetInvoices();
+		std::vector<Payment> vP = GetPayments();
+		for (auto inv : vI)
+			{
+				UniValue o(UniValue::VOBJ);
+				inv.ToJson(o);
+				results.push_back(Pair(inv.GetHash().GetHex(), o));
+			}
+
+			for (auto pay : vP)
+			{
+				UniValue o(UniValue::VOBJ);
+				pay.ToJson(o);
+
+				results.push_back(Pair(pay.GetHash().GetHex(), o));
+			}
+	}
+	else if (sItem == "teststatement")
+	{
+		std::string sSvcAddress = DefaultRecAddress("Christian-Public-Key");
+		std::string sMyAddress = "ye5Q19NvrCouYhEfFHeVaEG3LqzePrTt9H";
+		std::string sInfo = "getstatement " + sSvcAddress + " " + sMyAddress;
+		results.push_back(Pair("info", sInfo));
+	}
 	else if (sItem == "testhy")
 	{
 		double nAmount = cdbl(request.params[1].get_str(), 2);
@@ -3841,9 +3902,7 @@ UniValue exec(const JSONRPCRequest& request)
 		// 1a. Create the new deterministic-sanctuary reward address
 		std::string sPayAddress = DefaultRecAddress(sSancName + "-d"); //d means deterministic
 		CScript baPayAddress = GetScriptForDestination(DecodeDestination(sPayAddress));
-
 		std::string sVotingAddress = DefaultRecAddress(sSancName + "-v"); //v means voting
-	
 		std::string sError;
 		std::string sData = "<protx></protx>";  // Reserved for future use
 
@@ -3870,7 +3929,7 @@ UniValue exec(const JSONRPCRequest& request)
 		// Pro-tx-register_prepare preparation format: protx register_prepare 1.55mm_collateralHash 1.55mm_index_collateralIndex ipv4:port_ipAndPort home_voting_address_ownerKeyAddr blsPubKey_operatorPubKey delegate_or_home_votingKeyAddr 0_pctOf_operatorReward payout_address_payoutAddress optional_(feeSourceAddress_of_Pro_tx_fee)
 
 		/*
-		            + GetHelpString(1, "collateralHash")
+            + GetHelpString(1, "collateralHash")
             + GetHelpString(2, "collateralIndex")
             + GetHelpString(3, "ipAndPort")
             + GetHelpString(4, "ownerAddress")
@@ -3879,8 +3938,7 @@ UniValue exec(const JSONRPCRequest& request)
             + GetHelpString(7, "operatorReward")
             + GetHelpString(8, "payoutAddress_register")
             + GetHelpString(9, "feeSourceAddress") +
-
-			*/
+		*/
 
 		newRequest.params.push_back("register_prepare");
 		newRequest.params.push_back(sCollateralTXID);
@@ -4281,3 +4339,4 @@ DMAddress DeserializeFrom()
 	dmFrom.Zip = vD[4];
 	return dmFrom;
 }
+

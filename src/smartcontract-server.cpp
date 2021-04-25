@@ -503,7 +503,6 @@ double ExtractAPM(int nHeight)
 	int nNextSuperblock = 0;
 	int nLastSuperblock = GetLastGSCSuperblockHeight(nHeight, nNextSuperblock);
 	double nAPM = cdbl(ExtractXML(ExtractBlockMessage(nLastSuperblock), "<qtphase>", "</qtphase>"), 0);
-	LogPrintf("\nExtractAPM Height %f=%f ", nHeight, nAPM);
 	return nAPM;
 }
 

@@ -30,6 +30,14 @@ bool findStringCaseInsensitive(const std::string & strHaystack, const std::strin
 CAmount GetBBPValueUSD(double nUSD, double nMask);
 std::string RSADecryptHQURL(std::string sEncData, std::string& sError);
 std::string RSAEncryptHQURL(std::string sSourceData, std::string& sError);
+std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
+std::string GenerateXMLSignature(std::string sPrimaryKey, std::string sSigningPublicKey);
+std::vector<std::string> Split(std::string s, std::string delim);
+double cdbl(std::string s, int place);
+std::string AmountToString(const CAmount& amount);
+double AmountToDouble(const CAmount& amount);
+CTransactionRef GetTxRef(uint256 hash);
+CAmount GetTxTotalFromAddress(CTransactionRef ctx, std::string sAddress);
 
 struct UserVote
 {
@@ -124,6 +132,202 @@ struct NFT
 			obj.push_back(Pair("Elapsed", nElapsed));
 		}
     }
+};
+
+struct LineItem
+{
+	std::string Description;
+	CAmount nLineAmount = 0;
+	int nLineNumber = 0;
+};
+
+struct Invoice
+{
+	std::string sFromAddress;
+	std::string sToAddress;
+	std::string sName;
+	std::string sDescription;
+	std::vector<LineItem> vLineItems;
+	CAmount nAmount;
+	bool found = false;
+	uint64_t nTime = 0;
+	std::string GetKey()
+	{
+		std::string sKey = sFromAddress + "-" + sToAddress + "-" + RoundToString(nTime, 0);
+		return sKey;
+	}
+
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sKey = GetKey();
+	    std::vector<unsigned char> vchD = std::vector<unsigned char>(sKey.begin(), sKey.end());
+		sha256.Write(&vchD[0], vchD.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+	
+	void AddLineItem(int LineNumber, CAmount nLineAmount, std::string sDesc)
+	{
+		LineItem l;
+		l.nLineNumber = LineNumber;
+		l.nLineAmount = nLineAmount;
+		l.Description = sDesc;
+		vLineItems.push_back(l);
+	}
+
+	void clear()
+	{
+		sFromAddress = "";
+		sToAddress = "";
+		sName = "";
+		sDescription = "";
+		nAmount = 0;
+		found = false;
+		nTime = 0;
+		vLineItems.clear();
+	}
+
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("FromAddress", sFromAddress));
+		obj.push_back(Pair("ToAddress", sToAddress));
+		obj.push_back(Pair("Name", sName));
+		obj.push_back(Pair("Description", sDescription));
+		obj.push_back(Pair("Time", nTime));
+		UniValue li(UniValue::VOBJ);
+		for (int i = 0; i < vLineItems.size(); i++)
+		{
+			li.push_back(Pair(RoundToString(vLineItems[i].nLineNumber, 0) + ": " + AmountToString(vLineItems[i].nLineAmount), vLineItems[i].Description));
+		}
+		obj.push_back(Pair("LineItems", li));
+		obj.push_back(Pair("Amount", AmountToDouble(nAmount)));
+    }
+	std::string ToXML()
+	{
+		std::string XML;
+		std::string sFrom1(sFromAddress.c_str());
+		std::string sMyKey  = GetKey();
+		uint256 hash = GetHash();
+		std::string sSig = GenerateXMLSignature(sMyKey, sFrom1);
+		XML = "<MT>INVOICE</MT><MK>"+ GetKey() + "</MK><MV><invoice><FromAddress>" + sFromAddress + "</FromAddress><ToAddress>"+ sToAddress + "</ToAddress><Name>" 
+			+ sName + "</Name><Description>" + sDescription + "</Description><Time>"
+			+ RoundToString(nTime, 0) + "</Time><Amount>" + AmountToString(nAmount) + "</Amount>";
+		std::string sLI = "<lineitems>";
+		for (int i = 0; i < vLineItems.size(); i++)
+		{
+			sLI += "<lineitem><linenumber>"+ RoundToString(vLineItems[i].nLineNumber, 0) + "</linenumber><lineamount>" + AmountToString(vLineItems[i].nLineAmount) 
+				+ "</lineamount><description>"+ vLineItems[i].Description + "</description></lineitem>";
+		}
+		XML += sLI + "</lineitems>" + sSig + "</invoice></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		sFromAddress = ExtractXML(XML, "<FromAddress>", "</FromAddress>");
+		sToAddress = ExtractXML(XML, "<ToAddress>", "</ToAddress>");
+		sName = ExtractXML(XML, "<Name>", "</Name>");
+		sDescription = ExtractXML(XML, "<Description>", "</Description>");
+		nTime = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		nAmount = cdbl(ExtractXML(XML, "<Amount>", "</Amount>"), 2) * COIN;
+		std::string lineItems = ExtractXML(XML, "<lineitems>", "</lineitems>");
+		std::vector<std::string> vLI = Split(lineItems.c_str(), "<lineitem>");
+		for (int i = 0; i < vLI.size(); i++)
+		{
+			LineItem l;
+			l.nLineAmount = cdbl(ExtractXML(vLI[i], "<lineamount>", "</lineamount>"), 2) * COIN;
+			l.nLineNumber = cdbl(ExtractXML(vLI[i], "</linenumber>", "</linenumber>"), 0);
+			l.Description = ExtractXML(vLI[i], "<description>", "</description>");
+			if (l.nLineNumber > 0)
+			{
+				vLineItems.push_back(l);
+			}
+		}
+		if (nTime > 0)
+			found = true;
+	}
+};
+
+struct Payment
+{
+	std::string sFromAddress;
+	std::string sToAddress;
+	int64_t nTime = 0;
+	bool found = false;
+	
+	CAmount nAmount;
+	std::string sNotes;
+	std::string sInvoiceNumber;
+	uint256 TXID;
+	std::string GetKey()
+	{
+		std::string sKey = sFromAddress + "-" + sToAddress + "-" + RoundToString(nTime, 0);
+		return sKey;
+	}
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sKey = GetKey();
+	    std::vector<unsigned char> vchD = std::vector<unsigned char>(sKey.begin(), sKey.end());
+		sha256.Write(&vchD[0], vchD.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+
+	void clear()
+	{
+		nTime = 0;
+		sFromAddress = "";
+		sToAddress = "";
+		nAmount = 0;
+		sNotes = "";
+		sInvoiceNumber = "";
+		TXID = uint256S("0x0");
+	}
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("FromAddress", sFromAddress));
+		obj.push_back(Pair("ToAddress", sToAddress));
+		obj.push_back(Pair("Notes", sNotes));
+		obj.push_back(Pair("InvoiceNumber", sInvoiceNumber));
+		obj.push_back(Pair("Time", nTime));
+		obj.push_back(Pair("Amount", AmountToDouble(nAmount)));
+		obj.push_back(Pair("TXID", TXID.GetHex()));
+    }
+	std::string ToXML()
+	{
+		std::string XML;
+		
+		std::string sSig = GenerateXMLSignature(GetKey(), sFromAddress);
+		XML = "<MT>PAYMENT</MT><MK>" + GetKey() + "</MK><MV><payment><FromAddress>" + sFromAddress + "</FromAddress><ToAddress>" 
+			+ sToAddress + "</ToAddress><Notes>" + sNotes 
+			+ "</Notes><InvoiceNumber>"+ sInvoiceNumber + "</InvoiceNumber><Time>"
+			+ RoundToString(nTime, 0) + "</Time><Amount>" + AmountToString(nAmount) + "</Amount>"
+			+ sSig + "</payment></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		sFromAddress = ExtractXML(XML, "<FromAddress>", "</FromAddress>");
+		sToAddress = ExtractXML(XML, "<ToAddress>", "</ToAddress>");
+		sNotes = ExtractXML(XML, "<Notes>", "</Notes>");
+		sInvoiceNumber = ExtractXML(XML, "<InvoiceNumber>", "</InvoiceNumber>");
+		nTime = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		// nAmount = cdbl(ExtractXML(XML, "<Amount>", "</Amount>"), 2) * COIN;
+		TXID = uint256S("0x" + ExtractXML(XML, "<txid>", "</txid>"));
+		CTransactionRef tx1 = GetTxRef(TXID);
+		nAmount = GetTxTotalFromAddress(tx1, sToAddress);
+		if (nTime > 0)
+			found = true;
+	}
 };
 
 struct ReferralCode
@@ -488,9 +692,6 @@ double Round(double d, int place);
 void SerializePrayersToFile(int nHeight);
 CBlockIndex* FindBlockByHeight(int nHeight);
 std::string rPad(std::string data, int minWidth);
-double cdbl(std::string s, int place);
-std::string AmountToString(const CAmount& amount);
-std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
 bool Contains(std::string data, std::string instring);
 bool CheckNonce(bool f9000, unsigned int nNonce, int nPrevHeight, int64_t nPrevBlockTime, int64_t nBlockTime, const Consensus::Params& params);
 bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nValue, bool fSubtractFeeFromAmount, CWalletTx& wtxNew, bool fUseInstantSend=false, std::string sOptionalData = "", double nCoinAge = 0);
@@ -500,7 +701,6 @@ bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout);
 std::string GetElement(std::string sIn, std::string sDelimiter, int iPos);
 bool CopyFile(std::string sSrc, std::string sDest);
 std::string Caption(std::string sDefault, int iMaxLen);
-std::vector<std::string> Split(std::string s, std::string delim);
 void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool fColdBoot, bool fDuringSanctuaryQuorum);
 double GetBlockVersion(std::string sXML);
 std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, int iTimeoutSecs, int iBOE, 
@@ -516,7 +716,6 @@ std::map<std::string, CPK> GetGSCMap(std::string sGSCObjType, std::string sSearc
 void WriteCacheDouble(std::string sKey, double dValue);
 double ReadCacheDouble(std::string sKey);
 double GetVINCoinAge(int64_t nBlockTime, CTransactionRef tx, bool fDebug);
-CAmount GetTitheAmount(CTransactionRef ctx);
 CPK GetCPK(std::string sData);
 std::string GetCPKData(std::string sProjectId, std::string sPK);
 CAmount GetRPCBalance();
@@ -640,5 +839,10 @@ DACResult MakeDerivedKey(std::string sPhrase);
 DACResult ReadAccountingEntry(std::string sKey, std::string sKey2);
 bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount);
 DMAddress DeserializeFrom();
+std::vector<DMAddress> ImportGreetingCardCSVFile(std::string sFullPath);
+DACResult SendInvoice(Invoice i);
+DACResult SendPayment(Payment p);
+std::vector<Invoice> GetInvoices();
+std::vector<Payment> GetPayments();
 
 #endif

@@ -221,7 +221,6 @@ extern std::string msQuestionAnswer;
 extern std::string msPagedFrom;
 extern int mlPaged;
 extern int mlPagedEncrypted;
-
 extern std::map<std::string, std::pair<std::string, int64_t>> mvApplicationCache;
 extern int PRAYER_MODULUS;
 extern int miGlobalPrayerIndex;
