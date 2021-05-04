@@ -589,7 +589,8 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 						c.sAddress = d.CPK;
 						c.sNickName = u.NickName;
 						// Referral codes
-						ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, d.CPK);
+						UniValue details;
+						ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, d.CPK, details);
 
 						double nPoints = d.nValue * rc1.ReferralRewards;
 

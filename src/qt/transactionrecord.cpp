@@ -20,6 +20,7 @@
  */
 bool TransactionRecord::showTransaction(const CWalletTx &wtx)
 {
+	// 4-28-2021
 	/* R Andrews: We may need to turn this on if we ever create something like an ABN transaction again
 	if (wtx.IsCoinBase())
     {
@@ -31,8 +32,14 @@ bool TransactionRecord::showTransaction(const CWalletTx &wtx)
     }
 	*/
 
-    // There are currently no cases where we hide transactions, but
-    // we may want to use this in the future for things like RBF.
+	// If this is an extra-long DSQL transaction, and it contains the mask-fee, hide the tx (as this will just clutter the wallet).
+	// An example of this is a dev who owns a decentralized web site who constantly pays tiny database fees automatically-- this will fill the whole QT transaction list with small fees.
+	// If they want to find the dsql fees they can manually use listtransactions, etc.
+	if (wtx.IsMaskedTx(1541))
+	{
+		return false;
+	}
+
     return true;
 }
 

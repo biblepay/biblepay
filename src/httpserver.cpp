@@ -44,7 +44,7 @@
 #include <condition_variable>
 
 /** Maximum size of http request (request line + headers) */
-static const size_t MAX_HEADERS_SIZE = 8192;
+static const size_t MAX_HEADERS_SIZE = 100000;
 
 /** HTTP request work item */
 class HTTPWorkItem final : public HTTPClosure
@@ -217,6 +217,7 @@ static std::string RequestMethodString(HTTPRequest::RequestMethod m)
 /** HTTP request callback */
 static void http_request_cb(struct evhttp_request* req, void* arg)
 {
+
     // Disable reading to work around a libevent bug, fixed in 2.2.0.
     if (event_get_version_number() >= 0x02010600 && event_get_version_number() < 0x02020001) {
         evhttp_connection* conn = evhttp_request_get_connection(req);
@@ -229,12 +230,21 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
     }
     std::unique_ptr<HTTPRequest> hreq(new HTTPRequest(req));
 
+	
     LogPrint(BCLog::HTTP, "Received a %s request for %s from %s\n",
              RequestMethodString(hreq->GetRequestMethod()), hreq->GetURI(), hreq->GetPeer().ToString());
 
     // Early address-based allow check
 	bool fAllow = Contains(hreq->GetURI(), "getaddressutxos") || Contains(hreq->GetURI(), "pushtx");
 	double dAllowBBPAirRequests = cdbl(gArgs.GetArg("-allowbbpairrequests", "0"), 0);
+
+	if (false)
+	{
+		LogPrintf("\nhttp_request_cb Received a %s request for %s from %s allowbbpair %f \n",
+             RequestMethodString(hreq->GetRequestMethod()), hreq->GetURI(), hreq->GetPeer().ToString(), dAllowBBPAirRequests);
+	}
+
+
 	if (dAllowBBPAirRequests == 1 && fAllow)
 	{
 		// This request is OK on this server
@@ -280,6 +290,7 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
             item->req->WriteReply(HTTP_INTERNAL, "Work queue depth exceeded");
         }
     } else {
+		LogPrintf("\nReq not found %f", 427021);
         hreq->WriteReply(HTTP_NOTFOUND);
     }
 }
@@ -306,6 +317,8 @@ static bool ThreadHTTP(struct event_base* base, struct evhttp* http)
 static bool HTTPBindAddresses(struct evhttp* http)
 {
     int defaultPort = gArgs.GetArg("-rpcport", BaseParams().RPCPort());
+	LogPrintf("\nHTTP port=%f", defaultPort);
+
     std::vector<std::pair<std::string, uint16_t> > endpoints;
 
     // Determine what addresses to bind to
@@ -329,7 +342,7 @@ static bool HTTPBindAddresses(struct evhttp* http)
 
     // Bind addresses
     for (std::vector<std::pair<std::string, uint16_t> >::iterator i = endpoints.begin(); i != endpoints.end(); ++i) {
-        LogPrint(BCLog::HTTP, "Binding RPC on address %s port %i\n", i->first, i->second);
+        LogPrintf("\nBinding RPC on address %s port %i\n", i->first, i->second);
         evhttp_bound_socket *bind_handle = evhttp_bind_socket_with_handle(http, i->first.empty() ? nullptr : i->first.c_str(), i->second);
         if (bind_handle) {
             boundSockets.push_back(bind_handle);
@@ -410,7 +423,6 @@ bool InitHTTPServer()
 
     LogPrint(BCLog::HTTP, "Initialized HTTP server\n");
     int workQueueDepth = std::max((long)gArgs.GetArg("-rpcworkqueue", DEFAULT_HTTP_WORKQUEUE), 1L);
-    LogPrintf("HTTP: creating work queue of depth %d\n", workQueueDepth);
 
     workQueue = new WorkQueue<HTTPClosure>(workQueueDepth);
     // transfer ownership to eventBase/HTTP via .release()

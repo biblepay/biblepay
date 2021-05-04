@@ -295,6 +295,76 @@ static bool rest_chaininfo(HTTPRequest* req, const std::string& strURIPart)
     }
 }
 
+static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
+{
+	// This API call is used by our air wallet to push a transaction into the network 
+	if (!CheckWarmup(req))
+        return false;
+    std::string sHex = req->ReadBody();
+	sHex = strReplace(sHex, "tx_hex=", "");
+	CMutableTransaction mtx;
+	if (!DecodeHexTx(mtx, sHex))
+		    return RESTERR(req, HTTP_NOT_FOUND, "Rest-Tx Decode Failed");
+    CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
+	const uint256& hashTx = tx->GetHash();
+	CAmount nMaxRawTxFee = maxTxFee;
+	bool fInstantSend = false;
+	bool fBypassLimits = false;
+	CCoinsViewCache &view = *pcoinsTip;
+	bool fHaveChain = false;
+	for (size_t o = 0; !fHaveChain && o < tx->vout.size(); o++) 
+	{
+        const Coin& existingCoin = view.AccessCoin(COutPoint(hashTx, o));
+        fHaveChain = !existingCoin.IsSpent();
+    }
+	bool fHaveMempool = mempool.exists(hashTx);
+	if (!fHaveMempool && !fHaveChain) 
+	{
+		CValidationState state;
+		bool fMissingInputs;
+		if (!AcceptToMemoryPool(mempool, state, std::move(tx), nullptr, !fBypassLimits, nMaxRawTxFee)) 
+		{
+			if (state.IsInvalid()) 
+			{
+				return RESTERR(req, HTTP_NOT_FOUND, strprintf("%i: %s", state.GetRejectCode(), state.GetRejectReason()));
+		    }
+			else 
+			{
+                if (fMissingInputs) 
+				{
+					return RESTERR(req, HTTP_NOT_FOUND, "MISSING_INPUTS");
+                }
+			}
+	   	}
+	}
+	else if (fHaveChain) 
+	{
+		return RESTERR(req, HTTP_NOT_FOUND, "transaction already in block chain");
+    }
+    if(!g_connman)
+	{
+		return RESTERR(req, HTTP_NOT_FOUND, "P2P Functionality missing or disabled");
+	}
+
+    g_connman->RelayTransaction(*tx);
+
+	// Return data
+	UniValue mempoolInfoObject = mempoolInfoToJSON();
+	req->WriteHeader("Content-Type", "application/json");
+	req->WriteHeader("Access-Control-Allow-Origin", "*");
+    UniValue objPush(UniValue::VOBJ);
+    objPush.push_back(Pair("txid", hashTx.GetHex()));
+    /* LogPrintf("\nRest::PushTx::Success TXID %s\n", hashTx.GetHex()); */
+	std::string strJSON = objPush.write() + "\n";
+	req->WriteReply(HTTP_OK, strJSON);
+	return true;
+}
+
+bool height_sort(std::pair<CAddressUnspentKey, CAddressUnspentValue> a,
+                std::pair<CAddressUnspentKey, CAddressUnspentValue> b) {
+    return a.second.blockHeight < b.second.blockHeight;
+}
+
 static bool rest_mempool_info(HTTPRequest* req, const std::string& strURIPart)
 {
     if (!CheckWarmup(req))
@@ -386,6 +456,130 @@ static bool rest_tx(HTTPRequest* req, const std::string& strURIPart)
         return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: " + AvailableDataFormatsString() + ")");
     }
     }
+}
+
+bool getIndexKey(const std::string& str, uint160& hashBytes, int& type);
+bool getAddressFromIndex(const int &type, const uint160 &hash, std::string &address);
+
+static bool rest_getaddressutxos(HTTPRequest* req, const std::string& strURIPart)
+{
+	// This API call is used to retrieve UTXO information by Address
+	// NOTE:  You must enabled the addressindex=1 in the biblepay.conf (and reindex=1 once only on start) to use this functionality.
+
+    if (!CheckWarmup(req))
+        return false;
+
+    std::string sAddress;
+    ParseDataFormat(sAddress, strURIPart);
+	std::vector<std::pair<uint160, int> > addresses;
+
+    uint160 hashBytes;
+    int type = 0;
+    if (!getIndexKey(sAddress, hashBytes, type)) 
+	{
+		return RESTERR(req, HTTP_NOT_FOUND, "Invalid Address");
+	}
+    addresses.push_back(std::make_pair(hashBytes, type));
+
+    std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > unspentOutputs;
+
+    for (std::vector<std::pair<uint160, int> >::iterator it = addresses.begin(); it != addresses.end(); it++) 
+	{
+        if (!GetAddressUnspent((*it).first, (*it).second, unspentOutputs)) 
+		{
+			return RESTERR(req, HTTP_NOT_FOUND, "No information available for address");
+        }
+    }
+
+    std::sort(unspentOutputs.begin(), unspentOutputs.end(), height_sort);
+    UniValue result(UniValue::VARR);
+    for (std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> >::const_iterator it=unspentOutputs.begin(); it!=unspentOutputs.end(); it++) 
+	{
+        UniValue output(UniValue::VOBJ);
+        std::string address;
+		if (!getAddressFromIndex(it->first.type, it->first.hashBytes, address)) 
+		{
+			return RESTERR(req, HTTP_NOT_FOUND, "Unknown Address Type");
+	    }
+		output.push_back(Pair("address", address));
+		output.push_back(Pair("txid", it->first.txhash.GetHex()));
+		output.push_back(Pair("outputIndex", (int)it->first.index));
+		output.push_back(Pair("script", HexStr(it->second.script.begin(), it->second.script.end())));
+		output.push_back(Pair("satoshis", it->second.satoshis));
+		double nValue = (double)it->second.satoshis / COIN;
+		output.push_back(Pair("value", nValue));
+		output.push_back(Pair("height", it->second.blockHeight));
+		result.push_back(output);
+    }
+
+	req->WriteHeader("Content-Type", "application/json");
+	req->WriteHeader("Access-Control-Allow-Origin", "*");
+
+	std::string strJSON = result.write() + "\n";
+	req->WriteReply(HTTP_OK, strJSON);
+	return true;
+}
+
+static bool rest_mempool_imagetest(HTTPRequest* req, const std::string& strURIPart)
+{
+    if (!CheckWarmup(req))
+        return false;
+    std::string param;
+    const RetFormat rf = ParseDataFormat(param, strURIPart);
+	
+    switch (rf) {
+    case RF_JSON: {
+        UniValue mempoolInfoObject = mempoolInfoToJSON();
+		std::string strJSON = mempoolInfoObject.write() + "\n";
+		req->WriteHeader("Content-Type", "application/json");
+        req->WriteReply(HTTP_OK, strJSON);
+        return true;
+    }
+    default: {
+        return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: json)");
+    }
+    }
+
+    // not reached
+    return true; // continue to process further HTTP reqs on this cxn
+}
+
+
+static bool rest_dsqlquery(HTTPRequest* req, const std::string& strURIPart)
+{
+	if (!CheckWarmup(req))
+        return false;
+
+	std::string param;
+    const RetFormat rf = ParseDataFormat(param, strURIPart);
+    std::vector<std::string> uriParts;
+	std::string sFilter;
+
+    if (param.length() > 1)
+    {
+        std::string strUriParams = param.substr(1);
+        boost::split(uriParts, strUriParams, boost::is_any_of("/"));
+		// Harvest Mission critical todo:  Ensure the filter works
+		if (param.length() > 4)
+		{
+			sFilter = uriParts[5];
+			LogPrintf("\nrest_mempool uripart %s param %s filter %s ", strURIPart, param, sFilter);
+		}
+    }
+
+	std::vector<CDSQLQuery> d = DSQLQuery(sFilter);
+	UniValue m(UniValue::VOBJ);
+
+	for (int i = 0; i < d.size(); i++)
+	{
+		UniValue oDSQLObject(UniValue::VOBJ);
+		oDSQLObject.read(d[i].sData);
+		m.push_back(Pair(d[i].GetKey(), oDSQLObject));
+	}
+	std::string strJSON = m.write() + "\n";
+	req->WriteHeader("Content-Type", "application/json");
+	req->WriteReply(HTTP_OK, strJSON);
+	return true;
 }
 
 static bool rest_getutxos(HTTPRequest* req, const std::string& strURIPart)
@@ -579,8 +773,12 @@ static const struct {
       {"/rest/block/", rest_block_extended},
       {"/rest/chaininfo", rest_chaininfo},
       {"/rest/mempool/info", rest_mempool_info},
-      {"/rest/mempool/contents", rest_mempool_contents},
+	  {"/rest/mempool/imagetest", rest_mempool_imagetest},
+	  {"/rest/mempool/contents", rest_mempool_contents},
       {"/rest/headers/", rest_headers},
+	  {"/rest/pushtx/", rest_pushtx},
+	  {"/rest/dsqlquery/", rest_dsqlquery},
+	  {"/rest/getaddressutxos/", rest_getaddressutxos},
       {"/rest/getutxos", rest_getutxos},
 };
 

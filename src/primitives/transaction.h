@@ -301,6 +301,14 @@ public:
 		return (nDecPart == 1527);
 	}
 
+	bool IsMaskedTx(int nMaskType) const
+	{
+		double nWhaleReward = (double)GetValueOut()/COIN;
+		double nWholePart = floor(nWhaleReward);
+		double nDecPart = nWhaleReward - nWholePart;
+		return (nDecPart == nMaskType);
+	}
+
 	bool IsSuperblockPayment() const
 	{
 		// Determine if this is a monthly governance superblock payment

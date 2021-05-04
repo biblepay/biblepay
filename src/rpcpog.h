@@ -330,6 +330,80 @@ struct Payment
 	}
 };
 
+struct CDSQLQuery
+{
+	int64_t nTime = 0;
+	bool found = false;
+	
+	std::string sData;
+	std::string sOwnerAddress;
+	std::string sTable;
+	std::string sID;
+	uint256 TXID;
+	std::string GetKey()
+	{
+		std::string sKey = sTable + "-" + sOwnerAddress + "-" + sID;
+		return sKey;
+	}
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sKey = GetKey();
+	    std::vector<unsigned char> vchD = std::vector<unsigned char>(sKey.begin(), sKey.end());
+		sha256.Write(&vchD[0], vchD.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+
+	void clear()
+	{
+		nTime = 0;
+		sOwnerAddress = "";
+		sTable = "";
+		sID = "";
+		sData = "";
+		TXID = uint256S("0x0");
+	}
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("Data", sData));
+		obj.push_back(Pair("OwnerAddress", sOwnerAddress));
+		obj.push_back(Pair("Table", sTable));
+		obj.push_back(Pair("ID", sID));
+		obj.push_back(Pair("Time", nTime));
+		obj.push_back(Pair("TXID", TXID.GetHex()));
+    }
+	std::string ToXML()
+	{
+		std::string XML;
+		
+		std::string sSig = GenerateXMLSignature(GetKey(), sOwnerAddress);
+		XML = "<MT>DSQL</MT><MK>" + GetKey() + "</MK><MV><dsql><OwnerAddress>" + sOwnerAddress + "</OwnerAddress>" 
+			+ "<ID>"+ sID + "</ID><Time>"
+			+ RoundToString(nTime, 0) + "</Time><data>" + sData + "</data><table>" + sTable + "</table>"
+			+ sSig + "</dsql></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		sOwnerAddress = ExtractXML(XML, "<OwnerAddress>", "</OwnerAddress>");
+		sID = ExtractXML(XML, "<ID>", "</ID>");
+		sData = ExtractXML(XML, "<data>", "</data>");
+		sTable = ExtractXML(XML, "<table>", "</table>");
+		nTime = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		TXID = uint256S("0x" + ExtractXML(XML, "<txid>", "</txid>"));
+		CTransactionRef tx1 = GetTxRef(TXID);
+		if (nTime > 0)
+			found = true;
+		//LogPrintf("\nDSQL::From %s to Q %s", XML, sData);
+
+	}
+};
+
 struct ReferralCode
 {
 	std::string CPK;
@@ -828,7 +902,7 @@ int64_t GetTxTime1(uint256 hash, int ordinal);
 std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload);
 std::string SendReferralCode(std::string& sError);
 CAmount CheckReferralCode(std::string sCode);
-ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK);
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details);
 std::string ClaimReferralCode(std::string sCode, std::string& sError);
 double GetReferralCodeEffectivity(int nPortfolioTime);
 uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sCPK, CAmount& nBBPSize);
@@ -844,5 +918,8 @@ DACResult SendInvoice(Invoice i);
 DACResult SendPayment(Payment p);
 std::vector<Invoice> GetInvoices();
 std::vector<Payment> GetPayments();
+DACResult SendDSQL(UniValue& oDSQLObject, std::string sTable, std::string ID);
+std::vector<CDSQLQuery> DSQLQuery(std::string sFilter);
+void ProcessDSQLInstantSendTransaction(CTransaction tx);
 
 #endif

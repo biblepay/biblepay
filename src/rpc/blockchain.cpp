@@ -3534,6 +3534,8 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "funddsql")
 	{
+		// Harvest Todo Mission Critical Remove
+
 		if (request.params.size() != 2)
 			throw std::runtime_error("funddsql: Make a DSQL payment.  Usage:  funddsql amount.");
 		CAmount nAmount = cdbl(request.params[1].get_str(), 2) * COIN;
@@ -3838,6 +3840,32 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("3", r.TXID));
 		results.push_back(Pair("3e", r.ErrorCode));
 
+	}
+	else if (sItem == "testdsql1")
+	{
+		// Make a 15,000 byte message
+		
+		UniValue oDSQL(UniValue::VOBJ);
+		oDSQL.push_back(Pair("address", "1001 main"));
+		oDSQL.push_back(Pair("city", "sewickly"));
+		oDSQL.push_back(Pair("zip", "15001"));
+		
+		DACResult d = SendDSQL(oDSQL, "Property", "12345");
+
+		results.push_back(Pair("q", d.ErrorCode));
+
+		d = SendDSQL(oDSQL, "Property", "12346");
+		results.push_back(Pair("q", d.ErrorCode));
+
+
+	}
+	else if (sItem == "testreaddsql")
+	{
+		std::vector<CDSQLQuery> d = DSQLQuery("");
+		for (int i = 0; i < d.size(); i++)
+		{
+			results.push_back(Pair("q", d[i].sData));
+		}
 	}
 	else if (sItem == "testreadinvoice")
 	{

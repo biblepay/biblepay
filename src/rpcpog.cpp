@@ -16,6 +16,8 @@
 #include "netbase.h" // for LookupHost
 #include "randomx_bbp.h"
 
+#include <policy/policy.h>
+
 #include "rpc/server.h"
 #include "rpcpog.h"
 #include "spork.h"
@@ -1141,14 +1143,12 @@ UniValue GetDataList(std::string sType, int iMaxAgeInDays, int& iSpecificEntry, 
 	if (nEpoch < 0) nEpoch = 0;
     UniValue ret(UniValue::VOBJ);
 	boost::to_upper(sType);
-	if (sType == "PRAYERS")
-		sType = "PRAYER";  // Just in case the user specified PRAYERS
 	ret.push_back(Pair("DataList",sType));
 	int iPos = 0;
 	int iTotalRecords = 0;
 	for (auto ii : mvApplicationCache) 
 	{
-		if (Contains(ii.first, sType))
+		if (Contains(ii.first, sType + "[-]"))
 		{
 			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
 			int64_t nTimestamp = v.second;
@@ -1582,16 +1582,21 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 		LogPrintf("\nAcceptPrayer::INVOICE bosigvalid %f for %s", t.fPassedSecurityCheck, t.sMessageValue);
 		// Harvest what do we do to map shortcut to invoices (from mvApplicationCache) etc...
 	}
+	else if (t.sMessageType == "DSQL")
+	{
+		std::string sMsg = ExtractXML(t.sMessageValue, "<BOMSG>", "</BOMSG>");
+		std::string sError;
+		t.fPassedSecurityCheck = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
+		t.sMessageValue += "<txid>" + tx1->GetHash().GetHex() + "</txid>";
+		// LogPrintf("\nAcceptPrayer::DSQL bosigvalid %f for %s", t.fPassedSecurityCheck, t.sMessageValue);
+	}
 	else if (t.sMessageType == "PAYMENT")
 	{
 		std::string sMsg = ExtractXML(t.sMessageValue, "<BOMSG>", "</BOMSG>");
 		std::string sError;
 		t.fPassedSecurityCheck = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
 		t.sMessageValue += "<txid>" + tx1->GetHash().GetHex() + "</txid>";
-
-		LogPrintf("\nAcceptPrayer::PAYMENT bosigvalid %f for %s  ", 
-			t.fPassedSecurityCheck, t.sMessageValue);
-		// Harvest Mission Critical todo - make this area conditional on sig.
+		// LogPrintf("\nAcceptPrayer::PAYMENT bosigvalid %f for %s  ", 			t.fPassedSecurityCheck, t.sMessageValue);
 	}
 	else if (t.sMessageType == "REFERRALCODE" || t.sMessageType == "CLAIMREFERRALCODE")
 	{
@@ -1599,7 +1604,7 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 		std::string sError;
 		t.fBOSigValid = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
 		t.fPassedSecurityCheck = t.fBOSigValid;
-		LogPrintf("\nAcceptPrayer::%s, %s, %s, %f ",t.sMessageType, t.sBOSigner, sMsg, (int)t.fBOSigValid);
+		//LogPrintf("\nAcceptPrayer::%s, %s, %s, %f ",t.sMessageType, t.sBOSigner, sMsg, (int)t.fBOSigValid);
 	}
 	else if (t.sMessageType == "NFT")
 	{
@@ -3709,6 +3714,35 @@ bool ApproveUTXOSpendTransaction(CTransaction tx)
 	return true;
 }
 
+void ProcessDSQLInstantSendTransaction(CTransaction tx)
+{
+	// Immediately process DSQL database updates for transactions that are paid
+	CAmount nAmountBurned = 0;
+	CTransactionRef tx1 = MakeTransactionRef(std::move(tx));
+	nAmountBurned = GetBurnedTotal(tx);
+	CAmount MIN_DSQL_FEE = 1 * COIN;
+	std::string XML = GetTransactionMessage(tx1);
+	std::string sMsgType = ExtractXML(XML, "<MT>", "</MT>");
+	
+	if (sMsgType == "DSQL" && nAmountBurned >= MIN_DSQL_FEE)
+	{
+		std::string sMsg = ExtractXML(XML, "<BOMSG>", "</BOMSG>");
+		std::string sBOSigner = ExtractXML(XML, "<BOSIGNER>", "</BOSIGNER>");
+		std::string sBOSig = ExtractXML(XML, "<BOSIG>", "</BOSIG>");
+		std::string sMsgKey = ExtractXML(XML, "<MK>", "</MK>");
+		std::string sMV = ExtractXML(XML, "<MV>", "</MV>");
+		std::string sError;
+		CWallet * const pwallet = GetWalletForGenericRequest();
+
+		bool fPassedSecurityCheck = pwallet->CheckStakeSignature(sBOSigner, sBOSig, sMsg, sError);
+		if (fPassedSecurityCheck)
+		{
+			sMV += "<txid>" + tx.GetHash().GetHex() + "</txid>";
+			WriteCache(sMsgType, sMsgKey, sMV, GetAdjustedTime(), true);
+		}
+	}
+}
+
 bool ApproveSanctuaryRevivalTransaction(CTransaction tx)
 {
 	double nOrphanBanning = GetSporkDouble("EnableOrphanSanctuaryBanning", 0);
@@ -4264,6 +4298,25 @@ DACResult SendPayment(Payment p)
 	return dr;
 }
 
+DACResult SendDSQL(UniValue& oDSQLObject, std::string sTable, std::string ID)
+{
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	DACResult dr;
+	CDSQLQuery qe;
+	qe.sData = oDSQLObject.write().c_str();
+	qe.nTime = GetAdjustedTime();
+	qe.sOwnerAddress = DefaultRecAddress("Christian-Public-Key");
+	qe.sTable = sTable;
+	qe.sID = ID;
+	// Push back required fields
+	oDSQLObject.push_back(Pair("time", qe.nTime));
+	oDSQLObject.push_back(Pair("id", qe.sID));
+	oDSQLObject.push_back(Pair("table", sTable));
+
+	dr.TXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, false, dr.ErrorCode, qe.ToXML());
+	return dr;
+}
+
 DACResult SendInvoice(Invoice i)
 {
 	DACResult d;
@@ -4736,7 +4789,8 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
 	std::vector<ReferralCode> uRC = GetReferralCodes();
-	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, sCPK);
+	UniValue details;
+	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, sCPK, details);
 
 	double nTotal = 0;
 	int nCount = 0;
@@ -4830,7 +4884,9 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 		+ "<br>Total Foreign Stake Weight: " + RoundToString(nForeignStakeWeight, 2) + " (" + RoundToString(nForeignPortfolioPctg * 100, 2) + " %)";
 	sSummary += "<br>Foreign Quantities: " + sForeignQuants + "</br>" + "<br>Total USD Value: $" + RoundToString(nTotal, 2) + "</br>"
 		+ "<br>Total Stake Weight: " + RoundToString(nTotalStakeWeight, 2) + "</br><br>Portfolio High Risk %: " + RoundToString(nHighRiskPctg*100, 2) 
-		+ "<br>Portfolio DWU: " + RoundToString(nDWUAvg * 100, 2) + "<br>Referral Rewards: " + RoundToString(rc1.ReferralRewards, 2) + "</br>";
+		+ "<br>Portfolio DWU: " + RoundToString(nDWUAvg * 100, 2) + "<br>Referral Rewards: " + RoundToString(rc1.ReferralRewards, 10) + "</br>";
+	
+	sSummary += "<br>Referral BBP Claimed: "+ RoundToString((double)rc1.TotalClaimed/COIN, 2) + "<br>Referral BBP Earned: "+ RoundToString((double)rc1.TotalEarned/COIN, 2);
 	
 	return sSummary;
 }
@@ -5567,8 +5623,22 @@ std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun
 	CWallet * const pwallet = GetWalletForGenericRequest();
 	
 	CScript scr = GetScriptForDestination(DecodeDestination(sToAddress));
+	// Support for super long tx's:
+	double nReq = ceil(sPayload.length() / MAX_BBP_VOUT_MESSAGE_LENGTH);
+
 	CRecipient rec = {scr, nAmount, false, fSubtractFee};
 	vec.push_back(rec);
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+	CAmount nLgMsgFee = 1541 + (1 * COIN);  // 1541 is the mask for DSQL
+	if (nReq > 1)
+	{
+		for (int i = 0; i <= nReq; i++)
+		{
+			CScript scrBA = GetScriptForDestination(DecodeDestination(consensusParams.BurnAddress));
+			CRecipient rec = {scrBA, nLgMsgFee, false, fSubtractFee};
+			vec.push_back(rec);
+		}
+	}
 	CAmount nFeeRequired = 0;
 	CReserveKey reserveKey(pwallet);
     CCoinControl coinControl;
@@ -5749,11 +5819,13 @@ double GetReferralCodeEffectivity(int nPortfolioTime)
 	if (nDecay < .01)
 		nDecay = .01;
 	double nDWUFactor = 1.0 - nDecay;
-	double nBonus = .10 * nDWUFactor;
+	double nDWU = .20;
+
+	double nBonus = nDWU * nDWUFactor;
 	if (nBonus < .01)
 		nBonus = 0;
-	if (nBonus > .10)
-		nBonus = .10;
+	if (nBonus > nDWU)
+		nBonus = nDWU;
 	return nBonus;
 }
 
@@ -5840,8 +5912,26 @@ std::vector<Payment> GetPayments()
 	return vP;
 }
 
+std::vector<CDSQLQuery> DSQLQuery(std::string sFilter)
+{
+	std::vector<CDSQLQuery> vSQL;
+	for (auto ii : mvApplicationCache) 
+	{
+		if (Contains(ii.first, "DSQL[-]"))
+		{
+			if (Contains(ii.first, sFilter) || sFilter.empty())
+			{
+				std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+				CDSQLQuery q;
+				q.FromXML(v.first);
+				vSQL.push_back(q);
+			}
+		}
+	}
+	return vSQL;
+}
 
-ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK)
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details)
 {
 	// Given a CPK (this is a pointer to a portfolio), assess the portfolio determining the impact of the collection of referral codes when applied.
 	// A user may have multiple referral codes cashed in.  Each one has a different max size based on the originators portfolio.
@@ -5851,22 +5941,54 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 	ReferralCode r;
 	uint64_t nPortfolioTime = GetPortfolioTimeAndSize(vU, sCPK, nBBPSize);
 	r.ReferralEffectivity = GetReferralCodeEffectivity(nPortfolioTime);
+	std::vector<std::string> vCPKEarned;
+	std::vector<std::string> vCPKClaimed;
+
+	// Step 1 - Process earnings from attached codes 
+	std::string sType;
+	
 	for (auto rc : vRC)
 	{
-		if (rc.found)
+		bool fUsed = std::find(vCPKClaimed.begin(), vCPKClaimed.end(), rc.CPK) != vCPKClaimed.end();
+		if (rc.found && !fUsed)
 		{
-			// Case 1:  This is when a user has claimed a referral code:
-			if (rc.CPK == sCPK && rc.OriginatorCPK != sCPK)
+			CAmount nSize = 0;
+			uint64_t nT1 = GetPortfolioTimeAndSize(vU, rc.OriginatorCPK, nSize);
+			// This is when a user has attached a referral code:
+			if (findStringCaseInsensitive(rc.CPK, sCPK) && !findStringCaseInsensitive(rc.OriginatorCPK, sCPK))
 			{
-				r.TotalClaimed += rc.Size;
-			}
-			// Case 2:  This is when a user has used a referralcode and received a reward that the originator generated:
-			if (rc.CPK != sCPK && rc.OriginatorCPK != sCPK)
-			{
-				r.TotalEarned += rc.Size;
+				r.TotalClaimed += nSize;
+				vCPKClaimed.push_back(rc.CPK);
+				sType = "Claimed";
+				details.push_back(Pair(rc.Code + "-" + sType + "-Originator "+ rc.OriginatorCPK + "-Consumer "+ rc.CPK, AmountToDouble(nSize)));
 			}
 		}
 	}
+
+	// Step 2 - Process earnings from others
+	for (auto rc : vRC)
+	{
+		bool fUsed = std::find(vCPKEarned.begin(), vCPKEarned.end(), rc.OriginatorCPK) != vCPKEarned.end();
+		if (rc.found && !fUsed)
+		{
+			CAmount nSize = 0;
+			uint64_t nT1 = GetPortfolioTimeAndSize(vU, rc.CPK, nSize);
+			// Case 2:  This is when the originator earns because other people have attached:
+			if (findStringCaseInsensitive(rc.OriginatorCPK, sCPK) && !findStringCaseInsensitive(rc.CPK, sCPK))
+			{
+				r.TotalEarned += nSize;
+				vCPKEarned.push_back(rc.OriginatorCPK);
+				sType = "Earned";
+
+				std::string sRow = RoundToString((double)rc.Size/COIN, 2);
+				details.push_back(Pair(rc.Code + "-" + sType + "-Originator "+ rc.OriginatorCPK + "-Consumer "+ rc.CPK, AmountToDouble(nSize)));
+			}
+		}
+	}
+
+	details.push_back(Pair("Referral BBP Claimed", (double)r.TotalClaimed/COIN));
+	details.push_back(Pair("Referral BBP Earned", (double)r.TotalEarned/COIN));
+
 	r.TotalReferralReward = r.TotalClaimed + r.TotalEarned;
 	if (r.TotalReferralReward > nBBPSize)
 		r.TotalReferralReward = nBBPSize;
@@ -5879,6 +6001,12 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 		r.ReferralRewards = 1.0;
 	if (r.ReferralRewards > 1.5)
 		r.ReferralRewards = 1.5;
+
+	details.push_back(Pair("Total BBP in Portfolio affected", (double)r.TotalReferralReward/COIN));
+	details.push_back(Pair("Portfolio % affected by rewards", r.PercentageAffected * 100));
+	details.push_back(Pair("Referral Code Effectivity %", r.ReferralEffectivity * 100));
+	details.push_back(Pair("Total Portfolio DWU Impact %", r.ReferralRewards * 100));
+	
 	return r;
 }
 

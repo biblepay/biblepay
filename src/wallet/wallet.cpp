@@ -4023,13 +4023,41 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
                         return false;
                     }
                     txNew.vout.push_back(txout);
+			    }
 
-					if (!sPayload.empty() && txNew.vout.size() > 0)
+				// BIBLEPAY - VOUTS
+				if (!sPayload.empty() && txNew.vout.size() > 0)
+				{
+					int nReq = ceil(sPayload.length() / (MAX_BBP_VOUT_MESSAGE_LENGTH));
+					//Check string size limit in transaction.h HARVEST
+					if (txNew.vout.size() >= nReq)
 					{
-						txNew.vout[0].sTxOutMessage = sPayload;
+						if (sPayload.length() <= MAX_BBP_VOUT_MESSAGE_LENGTH)
+						{
+							txNew.vout[0].sTxOutMessage = sPayload;
+						}
+						else
+						{
+							for (int iReq = 0; iReq <= nReq && iReq < txNew.vout.size(); iReq++)
+							{
+								int nPointer = iReq * MAX_BBP_VOUT_MESSAGE_LENGTH;
+								if (nPointer < sPayload.length())
+								{
+									std::string sChunk = Mid(sPayload, nPointer, MAX_BBP_VOUT_MESSAGE_LENGTH);
+									txNew.vout[iReq].sTxOutMessage = sChunk;
+								}
+							}
+						}
 					}
+					else
+					{
+						strFailReason = _("ERROR::Message is too long");
+						LogPrintf("\nERROR::CreateTransaction Failed::[%s] containing [%s]", strFailReason, sPayload);
+						return false;
+					}
+				}
+				// END OF BIBLEPAY
 
-                }
 
                 // Choose coins to use
                 if (pick_new_inputs) {
@@ -5592,8 +5620,7 @@ std::string CWallet::SignBBPUTXO(std::string sUTXO, std::string& sError)
       sError = "Private key not available.";
 	  return "";
 	}
-
-
+	
 	CHashWriter ss(SER_GETHASH, 0);
 	ss << strMessageMagic;
 	ss << sUTXO;

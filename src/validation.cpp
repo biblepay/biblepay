@@ -856,6 +856,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 				LogPrintf("\nAcceptToMemoryPool::REJECTED::UTXO Spend Tx %s\n", tx.GetHash().GetHex());
 				return false;
 			}
+			ProcessDSQLInstantSendTransaction(tx);
 		}
 		// End of BiblePay Memory Pool
 

@@ -2355,8 +2355,8 @@ UniValue generatereferralcode(const JSONRPCRequest& request)
 
 UniValue listattachedreferralcodes(const JSONRPCRequest& request)
 {
-    if (request.fHelp) 
-		throw std::runtime_error("You may specify listattachedreferralcodes\nShows a list of attached referral codes to your portfolio.  Shows the total impact to your portfolio from these codes. ");
+    if (request.fHelp || request.params.size() > 2) 
+		throw std::runtime_error("You may specify listattachedreferralcodes [optional=cpk]\nShows a list of attached referral codes to your portfolio.  Shows the total impact to your portfolio from these codes. ");
 	UniValue results(UniValue::VOBJ);
 	
 	// Given a CPK (this is a pointer to a portfolio), assess the portfolio determining the impact of the collection of referral codes when applied.
@@ -2369,51 +2369,15 @@ UniValue listattachedreferralcodes(const JSONRPCRequest& request)
 	CAmount nBBPSize = 0;
 	ReferralCode r;
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(vRC, vU, sCPK);
+	if (request.params.size() > 0)
+		sCPK = request.params[0].get_str();
 
-	uint64_t nPortfolioTime = GetPortfolioTimeAndSize(vU, sCPK, nBBPSize);
-	r.ReferralEffectivity = GetReferralCodeEffectivity(nPortfolioTime);
-	for (auto rc : vRC)
-	{
-		bool nType = 0;
-		std::string sType;
-		if (rc.found)
-		{
-			// Case 1:  This is when a user has claimed a referral code:
-			if (rc.CPK == sCPK && rc.OriginatorCPK != sCPK)
-			{
-				r.TotalClaimed += rc.Size;
-				sType = "Claimed";
-			}
-			// Case 2:  This is when a user has used a referralcode and received a reward that the originator generated:
-			if (rc.CPK != sCPK && rc.OriginatorCPK != sCPK)
-			{
-				r.TotalEarned += rc.Size;
-				sType = "Earned";
-			}
-		}
-		if (!sType.empty())
-		{
-			std::string sRow = RoundToString((double)rc.Size/COIN, 2);
-			results.push_back(Pair(rc.Code + "-" + sType, sRow));
-		}
-	}
-	r.TotalReferralReward = r.TotalClaimed + r.TotalEarned;
-	r.PercentageAffected = (double)(r.TotalReferralReward/COIN) / (double)((nBBPSize+1)/COIN);
-	if (r.PercentageAffected > 1)
-		r.PercentageAffected = 1;
-	// Calculate the Total ReferralRewards
-	r.ReferralRewards = (r.PercentageAffected * r.ReferralEffectivity);
-	results.push_back(Pair("Referral BBP Claimed", (double)r.TotalClaimed/COIN));
-	results.push_back(Pair("Referral BBP Earned", (double)r.TotalEarned/COIN));
-	results.push_back(Pair("Total BBP in Portfolio affected", (double)r.TotalReferralReward/COIN));
-	results.push_back(Pair("Portfolio % affected by rewards", r.PercentageAffected*100));
-	results.push_back(Pair("Referral Code Effectivity %", r.ReferralEffectivity * 100));
-	results.push_back(Pair("Total Portfolio DWU Impact %", r.ReferralRewards * 100));
+	UniValue details(UniValue::VOBJ);
+	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(vRC, vU, sCPK, details);
+	results.push_back(Pair("Details", details));
 	results.push_back(Pair("Portfolio Rewards Modifier", rc1.ReferralRewards));
 
 	return results;
-
 }
 
 UniValue checkreferralcode(const JSONRPCRequest& request)
