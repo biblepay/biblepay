@@ -312,7 +312,7 @@ void Proposals::slotViewProposal()
     int row = ui->tableWidget->selectionModel()->currentIndex().row();
     if(row >= 0)
     {
-        QString Url = ui->tableWidget->item(row,8)->text();
+        QString Url = ui->tableWidget->item(row, 14)->text();
         QUrl pUrl(Url);
         QDesktopServices::openUrl(pUrl);
     }

@@ -820,6 +820,196 @@ int GetNextSuperblock()
 	return nNextSuperblock;
 }
 
+
+UniValue GetJsonObjectFromURL(std::string sURL1, std::string sURL2, bool& fInvalid)
+{
+
+	UniValue o(UniValue::VOBJ);
+    DACResult b;
+	std::map<std::string, std::string> mapRequestHeaders;
+	b.Response = Uplink(false, "", sURL1, sURL2, 443, 30, 4, mapRequestHeaders, "", true);
+	std::size_t i1 = b.Response.find("{\"");
+	if (i1 < 1)
+	{
+		fInvalid = true;
+		return o;
+	}
+	std::string sData = Mid(b.Response, i1 - 2, 1000000);
+	fInvalid = Contains(b.Response, "sending too many requests") || Contains(b.Response, "blacklisted due to exceeding usage");
+	o.read(sData);
+	return o;
+}
+
+std::string BlockChairTickerToName(std::string sTicker)
+{
+      if (sTicker == "DOGE")
+      {
+            return "dogecoin";
+      }
+      else if(sTicker == "BTC")
+      {
+            return "bitcoin";
+      }
+      else if (sTicker == "DASH")
+      {
+           return "dash";
+      }
+	  else if (sTicker == "LTC")
+	  {
+		  return "litecoin";
+	  }
+      return "";
+}
+
+void LogIt(SimpleUTXO u)
+{
+	LogPrintf("\nSimpleUTXO::TXID %s, Amount %f, Ticker %s, Address %s, AssetType %s", 
+		u.TXID, (double)u.nAmount/COIN, u.Ticker, u.Address, u.AssetType);
+}
+
+
+SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime)
+{
+	std::string sURL = "https://" + GetSporkValue("bms");
+	std::string sR = "Server?action=QUERY_UTXO";
+	std::string sXML = "<ticker>" + sTicker + "</ticker><amount>" + RoundToString(nAmount, 20) + "</amount><address>" + sAddress + "</address><utxotime>" + RoundToString(nTime, 0) + "</utxotime>";
+	std::string sResponse = Uplink(false, sXML, sURL, sR, SSL_PORT, 25, 1);
+	SimpleUTXO u;
+	u.nAmount = cdbl(ExtractXML(sResponse, "<amount>", "</amount>"), 18) * COIN;
+	u.TXID = ExtractXML(sResponse, "<txid>", "</txid>");
+	u.nOrdinal = cdbl(ExtractXML(sResponse, "<ordinal>", "</ordinal>"), 0);
+	u.Height = cdbl(ExtractXML(sResponse, "<height>", "</height>"), 0);
+	u.Trace = cdbl(ExtractXML(sResponse, "<trace>", "</trace>"), 0);
+	return u;
+}
+
+SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime)
+{
+	double nConfig = GetSporkDouble("utxoqueryresilience", 0);
+	if (nConfig == 0)
+	{
+		SimpleUTXO u = QueryUTXO3(sTicker, sAddress, nAmount, nTime);
+		if (u.Trace != 1)
+		{
+			u = QueryUTXO2(sTicker, sAddress, nAmount);
+		}
+		return u;
+	}
+	else if (nConfig == 1)
+	{
+		SimpleUTXO u = QueryUTXO2(sTicker, sAddress, nAmount);
+		if (u.Trace != 1)
+		{
+			u = QueryUTXO3(sTicker, sAddress, nAmount, nTime);
+		}
+		return u;
+	}
+	else
+	{
+		SimpleUTXO u;
+		return u;
+	}
+}
+
+SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount)
+{
+	boost::to_upper(sTicker);
+	std::string sURL1 = "https://api.blockchair.com";
+	std::string sURL2;
+
+	UniValue o(UniValue::VOBJ);
+	SimpleUTXO u;
+	u.Trace = 1;
+	bool fInvalid = false;
+
+	if (sTicker == "XLM")
+    {
+		// With Stellar, the user must have one transaction matching the amount (with their pin suffix) and they must not have other transactions.
+	    sURL2 = "stellar/raw/account/" + sAddress + "?transactions=true";
+		o = GetJsonObjectFromURL(sURL1, sURL2, fInvalid);
+		if (fInvalid)
+			u.Trace = 0;
+		UniValue oBalances = o["data"][sAddress]["account"]["balances"];
+		UniValue oTx = o["data"][sAddress]["transactions"];
+		u.TxCount = oTx.size();
+		for (int i = 0; i < oBalances.size(); i++)
+		{
+              u.Ticker = sTicker;
+              u.Address = sAddress;
+              u.nAmount = cdbl(oBalances[i]["balance"].getValStr(), 18) * COIN;
+              // u.Account = oBalances[i]["asset_issuer"].getValStr();
+              // u.TXID = GetSha256Hash(u.Account + u.Amount.ToString());
+			  u.AssetType = oBalances["asset_type"].getValStr();
+			  if (u.AssetType == "native")
+              {
+                  if (u.nAmount == nAmount && u.TxCount <= 1)
+                       return u;
+              }
+			  LogIt(u);
+        }
+	}
+    else if (sTicker == "XRP")
+    {
+         // With Ripple, the user must have one total matching balance(to the pin) and no extra transactions.
+         sURL2 = "ripple/raw/account/" + sAddress + "?transactions=true";
+		 o = GetJsonObjectFromURL(sURL1, sURL2, fInvalid);
+	 	if (fInvalid)
+			u.Trace = 0;
+	
+		 UniValue oBalances = o["data"][sAddress]["account"]["account_data"];
+		 UniValue oTx = o["data"][sAddress]["transactions"];
+		 u.TxCount = oTx.size();
+		 u.Ticker = sTicker;
+         u.Address = sAddress;
+         u.nAmount = cdbl(oBalances["Balance"].getValStr(), 18) / 1000000 * COIN;
+         // u.TXID = GetSha256Hash(sAddress + u.Amount.ToString());
+	     if (u.nAmount == nAmount && u.TxCount <= 1)
+                  return u;
+		 LogIt(u);
+    }
+    else if (sTicker == "DOGE" || sTicker == "BTC" || sTicker == "DASH" || sTicker == "LTC")
+    {
+         std::string sTickerName = BlockChairTickerToName(sTicker);
+	     sURL2 = sTickerName + "/dashboards/address/" + sAddress;
+         o = GetJsonObjectFromURL(sURL1, sURL2, fInvalid);
+	 	if (fInvalid)
+			u.Trace = 0;
+	
+	     UniValue oBalances = o["data"][sAddress]["utxo"];
+		 for (int i = 0; i < oBalances.size(); i++)
+		 {
+              u.Ticker = sTicker;
+              u.Address = sAddress;
+              u.nAmount = cdbl(oBalances[i]["value"].getValStr(), 18) / 100000000 * COIN;
+              u.TXID = oBalances[i]["transaction_hash"].getValStr();
+              u.nOrdinal = cdbl(oBalances[i]["index"].getValStr(), 0);
+              u.Height = cdbl(oBalances[i]["block_id"].getValStr(), 0);
+              if (u.nAmount == nAmount)
+                        return u;
+			  LogIt(u);
+         }
+	}
+    else if (sTicker == "ETH")
+    {
+		 boost::to_lower(sAddress);
+         sURL2 = "ethereum/dashboards/address/" + sAddress;
+         o = GetJsonObjectFromURL(sURL1, sURL2, fInvalid);
+	 	if (fInvalid)
+			u.Trace = 0;
+	
+	     UniValue oBalance = o["data"][sAddress]["address"];
+		 u.Ticker = sTicker;
+         u.Address = sAddress;
+   		 u.nAmount = cdbl(oBalance["balance"].getValStr(), 18) / 100000000 / 10000000000 * COIN;
+		 int nTxCount = cdbl(o["data"][sAddress]["address"]["transaction_count"].getValStr(), 0);
+		 //u.TXID = GetSha256Hash(u.Amount.ToString());
+		 if (u.nAmount == nAmount && nTxCount <= 1)
+             return u;
+    }
+    return u;
+}
+
+
 SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst)
 {
 	// If the caller sends the UTXO, we search by that, but otoh, if they send the target_amount we search by that instead.  Note:  When sancs check by target_amount, they also verify the Pin.  
@@ -1604,7 +1794,7 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 		std::string sError;
 		t.fBOSigValid = pwallet->CheckStakeSignature(t.sBOSigner, t.sBOSig, sMsg, sError);
 		t.fPassedSecurityCheck = t.fBOSigValid;
-		//LogPrintf("\nAcceptPrayer::%s, %s, %s, %f ",t.sMessageType, t.sBOSigner, sMsg, (int)t.fBOSigValid);
+		LogPrintf("\nAP::ClaimReferralCode::%s, %s, %s, %f ",t.sMessageType, t.sBOSigner, sMsg, (int)t.fBOSigValid);
 	}
 	else if (t.sMessageType == "NFT")
 	{
@@ -1713,7 +1903,8 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 			if (!t.fBOSigValid) 
 				t.sMessageValue = "";
 			t.fPassedSecurityCheck = t.fBOSigValid;
-			LogPrintf("\nMemorizeBlockchainPrayers::UNHANDLED type %s, key %s, valid %f", t.sMessageType, t.sMessageKey, (int)t.fPassedSecurityCheck);
+			if (false)
+				LogPrintf("\nMemorizeBlockchainPrayers::UNHANDLED type %s, key %s, valid %f", t.sMessageType, t.sMessageKey, (int)t.fPassedSecurityCheck);
 		}
 	}
 
@@ -1978,6 +2169,7 @@ bool TermPeekFound(std::string sData, int iBOEType)
 	else if (iBOEType == 4)
 	{
 		if (sData.find("tx_url") != std::string::npos) bFound = true;
+		if (sData.find("request_cost") != std::string::npos) bFound = true;
 	}
 	return bFound;
 }
@@ -3076,8 +3268,11 @@ UTXOStake GetUTXOStake(CTransactionRef tx1)
 				}
 				w.nBBPValueUSD = nUSDBBP * ((double)w.nBBPAmount / COIN);
 				w.nForeignValueUSD = nUSDForeign * ((double)w.nForeignAmount / COIN);
-				LogPrint(BCLog::NET, "\nGetUTXOStake::Values USD %f, Foreign USD %f, ForeignPrice %f, USDForeign %f, Foreign Amount %s", w.nBBPValueUSD, w.nForeignValueUSD, nForeignPrice, 
-					nUSDForeign, AmountToString(w.nForeignAmount));
+				if (false)
+				{
+					LogPrint(BCLog::NET, "\nGetUTXOStake::Values USD %f, Foreign USD %f, ForeignPrice %f, USDForeign %f, Foreign Amount %s", w.nBBPValueUSD, w.nForeignValueUSD, nForeignPrice, 
+						nUSDForeign, AmountToString(w.nForeignAmount));
+				}
 			}
 
 			w.BBPAddress = ExtractXML(w.XML, "<bbpaddress>", "</bbpaddress>");
@@ -3261,7 +3456,10 @@ std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool)
 				if (w.found && w.nBBPAmount > 0)
 				{
 					uStakes.push_back(w);
-					LogPrint(BCLog::NET,"\nGetUtxoStakes::UTXO-BURN found %s %f", sTXID,  (double)w.nBBPAmount/COIN);
+					if (false)
+					{
+						LogPrint(BCLog::NET,"\nGetUtxoStakes::UTXO-BURN found %s %f", sTXID,  (double)w.nBBPAmount/COIN);
+					}
 				}
 				else
 				{
@@ -4439,7 +4637,7 @@ bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string
 	sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, fDryRun, sError, sPayload);
 	if (!sError.empty())
 	{
-		 sError += " NOTE: In this version, you must have an extra unspent coin between 1bbp-9999bbp to pay for the UTXO stake lock (in addition to the UTXO itself).  So please type 'exec bankroll 5 10' and this will create 5 coins worth 10 bbp for you, then try the stake again after those coins are 1 deep.  Thank you for being with BIBLEPAY.  ";
+		 sError += " NOTE: In this version, you must have an extra unspent coin between 1bbp-9999bbp to pay for the UTXO stake lock (in addition to the UTXO itself).  So please type 'bankroll 5 10' and this will create 5 coins worth 10 bbp for you, then try the stake again after those coins are 1 deep.  Thank you for being with BIBLEPAY.  ";
 	}
 	return (sError.empty());
 }
@@ -4753,6 +4951,12 @@ int AssimilateUTXO(UTXOStake d)
 			{
 				nStatus++;
 			}
+			// 5-11-2021
+
+			SimpleUTXO s2 = QueryUTXO3(d.ForeignTicker, d.ForeignAddress, (double)d.nForeignAmount/COIN, d.Time);
+		
+			LogPrintf("\nAssimilateUTXO::Ticker %s, Address %s, Amount %f, Status %f, UTXO2Amount %f", d.ForeignTicker, d.ForeignAddress, AmountToString(s.nAmount), nStatus, AmountToString(s2.nAmount));
+
 		}
 	}
 	mapUTXOStatus[d.TXID] = nStatus;
@@ -5776,7 +5980,13 @@ std::string ClaimReferralCode(std::string sCode, std::string& sError)
 		sError = "Unable to sign " + sCPK;
 		return std::string();
 	}
+
 	std::string sOriginatorCPK = ExtractCPKFromReferralCode(sCode);
+	if (sOriginatorCPK.empty())
+	{
+		sError = "Unable to find referral code.";
+		return std::string();
+	}
 
 	if (sOriginatorCPK == sCPK)
 	{
@@ -5813,14 +6023,14 @@ double GetReferralCodeEffectivity(int nPortfolioTime)
 	
 	int64_t nPortfolioAgeSecs = GetAdjustedTime() - nPortfolioTime;
 	double nDays = nPortfolioAgeSecs / 86400;
-	double nDecay = .0027 * nDays;
+	// Our decay rate is currently set at two years, meaning in two years, the portfolios are all mature.
+	double nDecay = .00135 * nDays;
 	if (nDecay > 1)
 		nDecay = 1;
 	if (nDecay < .01)
 		nDecay = .01;
 	double nDWUFactor = 1.0 - nDecay;
 	double nDWU = .20;
-
 	double nBonus = nDWU * nDWUFactor;
 	if (nBonus < .01)
 		nBonus = 0;
@@ -5871,8 +6081,11 @@ std::vector<ReferralCode> GetReferralCodes()
 			// LogPrintf("\nGetReferralCodes cpk=%s, Size %f, Orig %s", r.CPK, (double)r.Size/COIN, r.OriginatorCPK);
 			GetPortfolioTimeAndSize(vU, r.OriginatorCPK, nSize);
 			r.Size = ((double)nSize/COIN) * .10 * COIN;
-			r.found = true;
-			vRC.push_back(r);
+			if (!r.CPK.empty() && !r.OriginatorCPK.empty() && nSize > 0)
+			{
+				r.found = true;
+				vRC.push_back(r);
+			}
 		}
 	}
 	return vRC;
@@ -5949,18 +6162,22 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 	
 	for (auto rc : vRC)
 	{
-		bool fUsed = std::find(vCPKClaimed.begin(), vCPKClaimed.end(), rc.CPK) != vCPKClaimed.end();
-		if (rc.found && !fUsed)
+		if (rc.found)
 		{
-			CAmount nSize = 0;
-			uint64_t nT1 = GetPortfolioTimeAndSize(vU, rc.OriginatorCPK, nSize);
-			// This is when a user has attached a referral code:
-			if (findStringCaseInsensitive(rc.CPK, sCPK) && !findStringCaseInsensitive(rc.OriginatorCPK, sCPK))
+			// Block multiple codes originating from the same foreign CPK here: (but allow the user to attach more than one code from DISTINCT cpks):
+			bool fUsed = std::find(vCPKClaimed.begin(), vCPKClaimed.end(), rc.OriginatorCPK) != vCPKClaimed.end();
+			if (!fUsed)
 			{
-				r.TotalClaimed += nSize;
-				vCPKClaimed.push_back(rc.CPK);
-				sType = "Claimed";
-				details.push_back(Pair(rc.Code + "-" + sType + "-Originator "+ rc.OriginatorCPK + "-Consumer "+ rc.CPK, AmountToDouble(nSize)));
+				CAmount nSize = 0;
+				uint64_t nT1 = GetPortfolioTimeAndSize(vU, rc.OriginatorCPK, nSize);
+				// This is when a user has attached a referral code:
+				if (findStringCaseInsensitive(rc.CPK, sCPK) && !findStringCaseInsensitive(rc.OriginatorCPK, sCPK))
+				{
+					r.TotalClaimed += nSize;
+					vCPKClaimed.push_back(rc.OriginatorCPK);
+					sType = "Claimed";
+					details.push_back(Pair(rc.Code + "-" + sType + "-Originator " + rc.OriginatorCPK + "-Consumer " + rc.CPK, AmountToDouble(nSize)));
+				}
 			}
 		}
 	}
@@ -5968,20 +6185,24 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 	// Step 2 - Process earnings from others
 	for (auto rc : vRC)
 	{
-		bool fUsed = std::find(vCPKEarned.begin(), vCPKEarned.end(), rc.OriginatorCPK) != vCPKEarned.end();
-		if (rc.found && !fUsed)
+		if (rc.found)
 		{
-			CAmount nSize = 0;
-			uint64_t nT1 = GetPortfolioTimeAndSize(vU, rc.CPK, nSize);
-			// Case 2:  This is when the originator earns because other people have attached:
-			if (findStringCaseInsensitive(rc.OriginatorCPK, sCPK) && !findStringCaseInsensitive(rc.CPK, sCPK))
+			// Block duplicate foreign portfolio earnings here:
+			bool fUsed = std::find(vCPKEarned.begin(), vCPKEarned.end(), rc.CPK) != vCPKEarned.end();
+			if (!fUsed)
 			{
-				r.TotalEarned += nSize;
-				vCPKEarned.push_back(rc.OriginatorCPK);
-				sType = "Earned";
+				CAmount nSize = 0;
+				uint64_t nT1 = GetPortfolioTimeAndSize(vU, rc.CPK, nSize);
+				// Case 2:  This is when the originator earns because other people have attached:
+				if (findStringCaseInsensitive(rc.OriginatorCPK, sCPK) && !findStringCaseInsensitive(rc.CPK, sCPK))
+				{
+					r.TotalEarned += nSize;
+					vCPKEarned.push_back(rc.CPK);
+					sType = "Earned";
 
-				std::string sRow = RoundToString((double)rc.Size/COIN, 2);
-				details.push_back(Pair(rc.Code + "-" + sType + "-Originator "+ rc.OriginatorCPK + "-Consumer "+ rc.CPK, AmountToDouble(nSize)));
+					std::string sRow = RoundToString((double)rc.Size/COIN, 2);
+					details.push_back(Pair(rc.Code + "-" + sType + "-Originator " + rc.OriginatorCPK + "-Consumer " + rc.CPK, AmountToDouble(nSize)));
+				}
 			}
 		}
 	}
@@ -6006,6 +6227,8 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 	details.push_back(Pair("Portfolio % affected by rewards", r.PercentageAffected * 100));
 	details.push_back(Pair("Referral Code Effectivity %", r.ReferralEffectivity * 100));
 	details.push_back(Pair("Total Portfolio DWU Impact %", r.ReferralRewards * 100));
+	std::string sNarr = "You are earning " + RoundToString((r.ReferralRewards - 1)* 100, 2) + "% in referral rewards sourced from " + RoundToString(r.TotalClaimed/COIN, 0) + " claimed and " + RoundToString(r.TotalEarned/COIN, 0) + " earned.";
+	details.push_back(Pair("Summary", sNarr));
 	
 	return r;
 }
@@ -6181,6 +6404,8 @@ std::string RemoveQuotesAndConvertCommas(std::string sData)
 
 		sOut += sChar;
 	}
+	sOut = strReplace(sOut, "\r", "");
+	sOut = strReplace(sOut, "\n", "");
 	return sOut;
 }
 
@@ -6213,8 +6438,11 @@ std::vector<DMAddress> ImportGreetingCardCSVFile(std::string sFullPath)
 			d1.State = v[4];
 			d1.Zip = v[5];
 			d.push_back(d1);
+			linenumber++;
 		}
     }
+	LogPrintf("\nImportGreetingCards - Imported %f Lines", linenumber);
+
     streamCSV.close();
 	return d;
 }

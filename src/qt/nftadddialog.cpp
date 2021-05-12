@@ -32,7 +32,8 @@ NFTAddDialog::NFTAddDialog(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->setupUi(this);
 	// Add/Edit NFT section
 	ui->cmbNFTType->clear();
-	ui->cmbNFTType->addItem("Digital Good (MP3, PNG, GIF, JPEG, PDF)");
+	ui->cmbNFTType->addItem("Digital Goods (MP3, PNG, GIF, JPEG, PDF)");
+	ui->cmbNFTType->addItem("Social Media (Tweet, Post, URL)");
 	ui->cmbNFTType->addItem("Orphan (Child to be sponsored)");
 	ui->txtMinimumBidAmount->setValidator( new QIntValidator(0, 100000000, this) );
 	ui->txtReserveAmount->setValidator( new QIntValidator(0, 100000000, this) );

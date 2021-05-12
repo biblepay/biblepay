@@ -228,7 +228,7 @@ void CChainLocksHandler::CheckActiveState()
 	LOCK(cs_main);
     {
         //fDIP0008Active = chainActive.Tip() && VersionBitsState(chainActive.Tip()->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == THRESHOLD_ACTIVE;
-		fDIP0008Active = chainActive.Tip()->pprev->nHeight > Params().GetConsensus().DIP0008Height;
+		fDIP0008Active = chainActive.Tip() && chainActive.Tip()->pprev && chainActive.Tip()->pprev->nHeight > Params().GetConsensus().DIP0008Height;
     }
 
     LOCK(cs);

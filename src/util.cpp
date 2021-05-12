@@ -972,7 +972,7 @@ fs::path GetDefaultDataDir()
 
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "BiblePayTest";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "Biblepay";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -982,10 +982,10 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/BiblePayTest";
+    return pathRet / "Library/Application Support/Biblepay";
 #else
     // Unix
-    return pathRet / ".biblepaytest";
+    return pathRet / ".biblepay";
 #endif
 #endif
 }

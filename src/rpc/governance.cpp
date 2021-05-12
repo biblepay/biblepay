@@ -1068,7 +1068,9 @@ UniValue getgovernanceinfo(const JSONRPCRequest& request)
     obj.push_back(Pair("superblockcycle", Params().GetConsensus().nSuperblockCycle));
     obj.push_back(Pair("lastsuperblock", nLastSuperblock));
     obj.push_back(Pair("nextsuperblock", nNextSuperblock));
-
+	// BIBLEPAY
+	CAmount nNextLimit = CSuperblock::GetPaymentsLimit(nNextSuperblock, true);
+	obj.push_back(Pair("next_payments_limit", (double)nNextLimit/COIN));
     return obj;
 }
 

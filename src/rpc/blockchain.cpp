@@ -4156,6 +4156,30 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("APM_Extract", dAPM3));
 		results.push_back(Pair("APM as of Next Superblock " + RoundToString(iNextSuperblock, 0), dAPM2));
 	}
+	else if (sItem == "utxotest2")
+	{
+		std::string sAddress3 = "DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c";
+		SimpleUTXO u = QueryUTXO2("DOGE", sAddress3, 777);
+		results.push_back(Pair("DOGE", (double)u.nAmount/COIN));
+
+
+        //ETH
+		std::string sAddress4 = "0xaFe8C2709541E72F245e0DA0035f52DE5bdF3ee5";
+        SimpleUTXO u6 = QueryUTXO2("ETH", sAddress4, 0);
+		results.push_back(Pair("ETH", (double)u6.nAmount/COIN));
+
+		//BTC
+		std::string sAddress5 = "1Hz96kJKF2HLPGY15JWLB5m9qGNxvt8tHJ";
+		SimpleUTXO u7 = QueryUTXO2("BTC", sAddress5, 0);
+		results.push_back(Pair("BTC", (double)u7.nAmount/COIN));
+
+
+        std::string sAddress6 = "XjsyPuaU6hVS63AVsZVjTYMkqYDYAcE3dp";
+		SimpleUTXO u8 = QueryUTXO2("DASH", sAddress6, 0);
+		results.push_back(Pair("DASH", (double)u8.nAmount/COIN));
+		MilliSleep(2000);
+
+	}
 	else if (sItem == "poostest")
 	{
 		std::string sBio = request.params[1].get_str();
@@ -4168,6 +4192,15 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sRestfulURL = "BMS/LAST_MANDATORY_VERSION";
 		std::string sResponse = Uplink(false, "", sURL, sRestfulURL, SSL_PORT, 25, 1);
 		results.push_back(Pair(sRestfulURL, sResponse));
+	}
+	else if (sItem == "testutxo1")
+	{
+		std::string sAddress = "DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c";
+		std::string sXML = "<ticker>DOGE</ticker><amount>777</amount><address>" + sAddress + "</address>";
+		std::string sURL = "https://" + GetSporkValue("bms");
+		std::string sR = "Server?action=QUERY_UTXO";
+		std::string sResponse = Uplink(false, sXML, sURL, sR, SSL_PORT, 25, 1);
+		results.push_back(Pair("q", sResponse));
 	}
 	else if (sItem == "sendmessage")
 	{

@@ -341,22 +341,23 @@ public:
 		// Harvest
 		//consensus.BIP34Height = 123200;  // Unable to create duplicate coinbases (tx-malleability protection)
 		// BiblePay had this activated since 123200, but the BIP34+DIP3 rule (bad-cb-height) stops harvest from syncing in prod @ height 134041
-		consensus.BIP34Height = 300000;
 		consensus.BIP34Hash = uint256();
 		
-		consensus.HARVEST_HEIGHT = 300000;  // Go live height for BiblePay-Harvest
-		consensus.DIP0001Height = 300000;
+		consensus.BIP34Height = 300000;
 		consensus.DIP0003Height = 300000;
 		consensus.LLMQHeight = 300000; // The first attempt at llmq quorums that conform to voting out bad quorum members
 		consensus.DIP0003EnforcementHeight = 300000;
+		consensus.HARVEST_HEIGHT = 300000;  // Go live height for BiblePay-Harvest
 		consensus.HARVEST_HEIGHT2 = 300000; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
+		// Chainlock enforcement:
+		consensus.DIP0008Height = 310000;
 
+		consensus.DIP0001Height = 300000;
+	
 		// ToDo : set this to the actual LLMQ go live height
         consensus.DIP0003EnforcementHash = uint256S("0x0");
 
 		// Mission Critical to do: verify each switch in getblockchaininfo (dip activation):
-		// Chainlock enforcement:
-		consensus.DIP0008Height = 310000;
 		// End of Harvest
 
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 

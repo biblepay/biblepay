@@ -248,11 +248,18 @@ bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockH
 
 bool CQuorumBlockProcessor::UndoBlock(const CBlock& block, const CBlockIndex* pindex)
 {
-    AssertLockHeld(cs_main);
+	// BBP
+	if (pindex && pindex->nHeight + 1 < Params().GetConsensus().DIP0003Height) 
+	{
+		return true;
+	}
 
+    AssertLockHeld(cs_main);
+	
     std::map<Consensus::LLMQType, CFinalCommitment> qcs;
     CValidationState dummy;
     if (!GetCommitmentsFromBlock(block, pindex, qcs, dummy)) {
+		LogPrintf("\nUndoBlock::ERROR %f", 5112030);
         return false;
     }
 

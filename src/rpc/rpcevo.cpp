@@ -1841,7 +1841,8 @@ UniValue easybbpstake(const JSONRPCRequest& request)
 	results.push_back(Pair("BBP UTXO", sBBPUTXO));
 	results.push_back(Pair("BBP Address", sBBPAddress));
 	results.push_back(Pair("BBP Amount", (double)nBBPReturnAmount/COIN));
-	results.push_back(Pair("Commitment Days", nDays));
+	if (nDays > 0)
+		results.push_back(Pair("Commitment Days", nDays));
 	double nDWU = CalculateUTXOReward(1, nDays);
 	results.push_back(Pair("DWU", nDWU * 100));
 	std::string sWarning = GetHighYieldWarning(nDays);
@@ -2019,13 +2020,13 @@ UniValue listexpenses(const JSONRPCRequest& request)
 UniValue getpin(const JSONRPCRequest& request)
 {
 	if (request.fHelp || (request.params.size() != 1))
-		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, or ERC-20: ETH, etc. \r\n");
+		throw std::runtime_error("You must specify getpin receive_address.  \r\nYou may use any base58 receiving address such as BBP, BTC, DOGE, LTC, XRP, XLM, or ERC-20: ETH, etc. \r\n");
 
 	UniValue results(UniValue::VOBJ);
 	std::string s2 = request.params[0].get_str();
-	if (s2.length() != 34 && s2.length() != 42)
+	if (s2.length() != 34 && s2.length() != 42 && s2.length() != 33 && s2.length() != 56)
 	{
-		throw std::runtime_error("Address must be 34 characters long (BTC/ALTCOIN) or 42 characters long (ETH). ");
+		throw std::runtime_error("Address must be 34 characters long (BTC/ALTCOIN) or 33 (XRP-Ripple) or 42 characters long (ETH) or 56 characters long (XLM/Stellar). ");
 	}
 	double nPin = AddressToPin(s2);
 	results.push_back(Pair("pin", nPin));
@@ -2260,8 +2261,7 @@ UniValue attachreferralcode(const JSONRPCRequest& request)
 	std::string sError;
 	std::string sCode = request.params[0].get_str();
 	std::string sResponse = ClaimReferralCode(sCode, sError);
-	// 4-6-2021
-
+	
 	if (sError.empty())
 	{
 		results.push_back(Pair("Attached", sResponse));
@@ -2270,6 +2270,18 @@ UniValue attachreferralcode(const JSONRPCRequest& request)
 	{
 		results.push_back(Pair("Error", sError));
 	}
+	return results;
+}
+
+UniValue getvalue(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1) 
+		throw std::runtime_error("You may specify getvalue amount_usd$");
+	UniValue results(UniValue::VOBJ);
+	double nUSD = cdbl(request.params[0].get_str(), 0);
+	CAmount nCost = GetBBPValueUSD(nUSD, 0);
+	results.push_back(Pair("USD", nUSD));
+	results.push_back(Pair("BBP", (double)nCost/COIN));
 	return results;
 }
 
@@ -2534,6 +2546,7 @@ static const CRPCCommand commands[] =
 	{ "evo",                "hexblocktocoinbase",           &hexblocktocoinbase,       {}  },
 	{ "evo",                "faucetcode",                   &faucetcode,               {}  },
 	{ "evo",                "price",                        &price,                    {}  },
+	{ "evo",                "getvalue",                     &getvalue,                 {}  },
 	{ "evo",                "trackdashpay",                 &trackdashpay,             {}  },
 	{ "evo",                "versionreport",                &versionreport,            {}  },
 };

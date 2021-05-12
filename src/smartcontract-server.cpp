@@ -560,6 +560,8 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	std::map<std::string, double> mCampaignPoints;
 	std::map<std::string, CPK> mCPKCampaignPoints;
 	std::map<std::string, double> mCampaigns;
+	std::map<std::string, int> mUsedUTXO;
+
 	double dDebugLevel = cdbl(gArgs.GetArg("-debuglevel", "0"), 0);
 	std::string sAnalyzeUser = ReadCache("analysis", "user");
 	std::string sAnalysisData1;
@@ -575,11 +577,24 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		for (int i = 0; i < uStakes.size(); i++)
 		{
 			UTXOStake d = uStakes[i];
-			if (d.found && d.nValue > 0)
+			// BBP (Extra Anti Duplication prevention)
+			bool fUsed = false;
+			if (!d.BBPUTXO.empty() && mUsedUTXO[d.BBPUTXO] == 1)
+				fUsed = true;
+			if (!d.ForeignUTXO.empty() && mUsedUTXO[d.ForeignUTXO] == 1)
+				fUsed = true;
+			// End of BBP (Extra Anti Duplication)
+
+			if (d.found && d.nValue > 0 && !fUsed)
 			{
 				int nStatus = GetUTXOStatus(d.TXID);
 				if (nStatus > 0)
 				{
+					if (!d.BBPUTXO.empty())
+						mUsedUTXO[d.BBPUTXO] = 1;
+					if (!d.ForeignUTXO.empty())
+						mUsedUTXO[d.ForeignUTXO] = 1;
+
 					// Entry into the UTXO campaign
 					UserRecord u = GetUserRecord(d.CPK);
 					{

@@ -608,8 +608,14 @@ struct SimpleUTXO
 {
 	std::string TXID;
 	int nOrdinal = 0;
+	int TxCount = 0;
+	std::string AssetType;
 	CAmount nAmount = 0;
+	int Height = 0;
+	int Trace = 0;
 	double ValueUSD = 0;
+	std::string Address;
+	std::string Ticker;
 };
 
 struct UTXOStake
@@ -921,5 +927,8 @@ std::vector<Payment> GetPayments();
 DACResult SendDSQL(UniValue& oDSQLObject, std::string sTable, std::string ID);
 std::vector<CDSQLQuery> DSQLQuery(std::string sFilter);
 void ProcessDSQLInstantSendTransaction(CTransaction tx);
+SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount);
+SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime);
+SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime);
 
 #endif

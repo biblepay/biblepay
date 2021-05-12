@@ -61,7 +61,7 @@ private:
     const PlatformStyle *platformStyle;
 
 private Q_SLOTS:
-    void on_btnSubmit_clicked();
+    void on_btnSubmit_clicked(bool fAutomatic);
 	void on_TypeChanged(int iType);
 	void on_btnCSVClicked();
 

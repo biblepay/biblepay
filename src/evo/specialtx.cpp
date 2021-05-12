@@ -80,6 +80,11 @@ bool ProcessSpecialTx(const CTransaction& tx, const CBlockIndex* pindex, CValida
 
 bool UndoSpecialTx(const CTransaction& tx, const CBlockIndex* pindex)
 {
+
+	// BBP:
+	if (pindex->nHeight < Params().GetConsensus().LLMQHeight)
+		return true;
+
     if (tx.nVersion != 3 || tx.nType == TRANSACTION_NORMAL) {
         return true;
     }

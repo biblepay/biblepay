@@ -100,6 +100,10 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 	std::string sXML = GUIUtil::FROMQS(pStr);
 	std::string msNickName = ExtractXML(sXML, "<my_nickname>","</my_nickname>");
     ui->tableWidget->setRowCount(rows + iFooterRow);
+	
+	if (pMatrix.size() < 1)
+		return;
+
     int cols = pMatrix[0].size();
     ui->tableWidget->setColumnCount(cols);
     ui->tableWidget->setHorizontalHeaderLabels(headers);

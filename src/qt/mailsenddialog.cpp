@@ -109,10 +109,9 @@ std::string CleanseMe(std::string sStr)
 	return sStr;
 }
 
-void MailSendDialog::on_btnSubmit_clicked()
+void MailSendDialog::on_btnSubmit_clicked(bool fAutomatic)
 {
 	DMAddress dmFrom = DeserializeFrom();
-
 	DMAddress dmTo;
 	dmTo.Name = GUIUtil::FROMQS(ui->txtName->text());
 	dmTo.AddressLine1 = GUIUtil::FROMQS(ui->txtAddressLine1->text());
@@ -176,11 +175,14 @@ void MailSendDialog::on_btnSubmit_clicked()
 		+ sPDF + "' style='text-decoration:none;color:pink;font-size:150%'><b>Click HERE to Review PROOF</b></a><br>Thank you for using BiblePay Physical Mail Delivery." : sError;
 
 	ui->txtInfo->setText(GUIUtil::TOQS(sNarr));
- 	QMessageBox::warning(this, tr("Mail Delivery Result"), GUIUtil::TOQS(sNarr), QMessageBox::Ok, QMessageBox::Ok);
-	if (sError.empty())
+	if (!fAutomatic)
 	{
-		clear();
-		on_TypeChanged(0);
+ 		QMessageBox::warning(this, tr("Mail Delivery Result"), GUIUtil::TOQS(sNarr), QMessageBox::Ok, QMessageBox::Ok);
+		if (sError.empty())
+		{
+			clear();
+			on_TypeChanged(0);
+		}
 	}
 }
 
@@ -188,13 +190,50 @@ void MailSendDialog::on_btnCSVClicked()
 {
     QString sFileName = GUIUtil::getOpenFileName(this, tr("Select CSV file to import"), "", "", nullptr);
     if (sFileName.isEmpty())
+	{
+		LogPrintf("\nCSV::User entered empty filename %f", 5092021);
         return;
+	}
 	std::string sFN = GUIUtil::FROMQS(sFileName);
 	std::vector<DMAddress> dm = ImportGreetingCardCSVFile(sFN);
+	int iQuestion = 0;
+	bool fConfirming = true;
+	bool fCancelled = false;
 	for (int i = 0; i < dm.size(); i++)
 	{
-		std::string sRow = dm[i].Name + dm[i].AddressLine1 + dm[i].City + dm[i].State + dm[i].Zip;
-		QMessageBox::warning(this, tr("Mail"), GUIUtil::TOQS(sRow), QMessageBox::Ok, QMessageBox::Ok);
+		std::string sRow = dm[i].Name + "," + dm[i].AddressLine1 + "," + dm[i].City + "," + dm[i].State + "," + dm[i].Zip;
+		if (fConfirming)
+		{
+			iQuestion++;
+			std::string sConfirm = "Warning #" + RoundToString(iQuestion, 0) + ":  <br>We will confirm the first 5 addresses, giving you a chance to cancel the batch.  <br><br>After the fifth prompt, we will process the rest unless you CANCEL.  <br><br>"
+				+ "The next record looks like: " + sRow + ".  <br><br>Press [OK] to process this record and continue, or [CANCEL] to cancel the entire batch.  ";
+
+			int ret = QMessageBox::warning(this, tr("Automated Mail Delivery System"), GUIUtil::TOQS(sConfirm), QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Ok);
+
+			if (ret==QMessageBox::Ok)
+			{
+				if (iQuestion == 5)
+				{
+					fConfirming = false;
+				}
+			}
+			else if (ret == QMessageBox::Cancel)
+			{
+				fCancelled = true;
+				break;
+			}
+		}
+
+		if (!fCancelled)
+		{
+			ui->txtName->setText(GUIUtil::TOQS(dm[i].Name));
+			ui->txtAddressLine1->setText(GUIUtil::TOQS(dm[i].AddressLine1));
+			ui->txtAddressLine2->setText(GUIUtil::TOQS(dm[i].AddressLine2));
+			ui->txtCity->setText(GUIUtil::TOQS(dm[i].City));
+			ui->txtState->setText(GUIUtil::TOQS(dm[i].State));
+			ui->txtZip->setText(GUIUtil::TOQS(dm[i].Zip));
+			on_btnSubmit_clicked(true);
+		}
 	}
 }
 

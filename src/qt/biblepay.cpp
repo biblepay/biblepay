@@ -575,9 +575,21 @@ int main(int argc, char *argv[])
 
     SetupEnvironment();
 
+	//  1.1.  BiblePay - If EXE name is "-test" then we want to force a launch in testnet mode:
+	std::string sLaunchEXE = argv[0];
+	std::cout << sLaunchEXE << std::endl;
+	gArgs.ParseParameters(argc, argv);
+	// If the EXE contains the word test... launch in testnet mode:
+    if (sLaunchEXE.find("test") != std::string::npos) 
+	{
+		gArgs.SoftSetArg("-testnet", "1");
+
+		std::cout << "Launching in testnet mode..." << std::endl;
+	}
+
     /// 1. Parse command-line options. These take precedence over anything else.
     // Command-line options take precedence:
-    gArgs.ParseParameters(argc, argv);
+	LogPrintf("\nQTLaunch %s", sLaunchEXE);
 
     // Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
 

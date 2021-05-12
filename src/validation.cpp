@@ -1757,7 +1757,9 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
     bool fDIP0003Active = pindex->nHeight >= Params().GetConsensus().DIP0003Height;
     bool fHasBestBlock = evoDb->VerifyBestBlock(pindex->GetBlockHash());
 
-    if (fDIP0003Active && !fHasBestBlock) {
+    if (fDIP0003Active && !fHasBestBlock) 
+	{
+		LogPrintf("\nEvoDbInconsistency %f %f", pindex->nHeight, Params().GetConsensus().DIP0003Height);
         // Nodes that upgraded after DIP3 activation will have to reindex to ensure evodb consistency
         AbortNode("Found EvoDB inconsistency, you must reindex to continue");
         return DISCONNECT_FAILED;
@@ -1767,11 +1769,14 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
 
     CBlockUndo blockUndo;
     if (!UndoReadFromDisk(blockUndo, pindex)) {
+		LogPrintf("\nDisconnectBlock undodata %f", 5112021);
         error("DisconnectBlock(): failure reading undo data");
         return DISCONNECT_FAILED;
     }
 
     if (blockUndo.vtxundo.size() + 1 != block.vtx.size()) {
+		
+		LogPrintf("\nDisconnectBlock undodata inconsistent %f", 5112022);
         error("DisconnectBlock(): block and undo data inconsistent");
         return DISCONNECT_FAILED;
     }
@@ -1781,6 +1786,8 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
     std::vector<std::pair<CSpentIndexKey, CSpentIndexValue> > spentIndex;
 
     if (!UndoSpecialTxsInBlock(block, pindex)) {
+		LogPrintf("\nDisconnectBlock undodata inconsistent %f", 5112023);
+
         return DISCONNECT_FAILED;
     }
 
@@ -1842,6 +1849,8 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
         if (i > 0) { // not coinbases
             CTxUndo &txundo = blockUndo.vtxundo[i-1];
             if (txundo.vprevout.size() != tx.vin.size()) {
+				LogPrintf("\nDisconnectBlock undodata inconsistent %f", 5112024);
+
                 error("DisconnectBlock(): transaction and undo data inconsistent");
                 return DISCONNECT_FAILED;
             }
@@ -1898,6 +1907,8 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
 
     if (fSpentIndex) {
         if (!pblocktree->UpdateSpentIndex(spentIndex)) {
+				LogPrintf("\nDisconnectBlock undodata inconsistent %f", 5112025);
+
             AbortNode("Failed to delete spent index");
             return DISCONNECT_FAILED;
         }
@@ -1905,10 +1916,14 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
 
     if (fAddressIndex) {
         if (!pblocktree->EraseAddressIndex(addressIndex)) {
+			LogPrintf("\nDisconnectBlock undodata inconsistent %f", 5112026);
+
             AbortNode("Failed to delete address index");
             return DISCONNECT_FAILED;
         }
         if (!pblocktree->UpdateAddressUnspentIndex(addressUnspentIndex)) {
+			LogPrintf("\nDisconnectBlock undodata inconsistent %f", 5112027);
+
             AbortNode("Failed to write address unspent index");
             return DISCONNECT_FAILED;
         }

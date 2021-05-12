@@ -306,9 +306,7 @@ void pop3_RETR(std::string sNo)
 	else
 	{
 		std::string sID = "Message-Id: <" + e.GetHash().GetHex() + ">";
-		// if (fDebuggingEmail)		LogPrint(BCLog::NET, "\r\nFound Email %s", Mid(e.Body, 0, 100));
-
-
+		
 		// Check for decryption if this is Encrypted
 		if (e.nVersion == 3)
 		{
