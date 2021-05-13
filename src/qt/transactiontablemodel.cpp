@@ -547,22 +547,32 @@ QString TransactionTableModel::formatTxAmount(const TransactionRecord *wtx, bool
 QVariant TransactionTableModel::amountColor(const TransactionRecord *rec) const
 {
     switch (rec->type) {
-    case TransactionRecord::Generated:
-    case TransactionRecord::RecvWithPrivateSend:
-    case TransactionRecord::RecvWithAddress:
-    case TransactionRecord::RecvFromOther:
-        return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::GREEN);
-    case TransactionRecord::PrivateSend:
-    case TransactionRecord::SendToAddress:
-    case TransactionRecord::SendToOther:
-    case TransactionRecord::Other:
-        return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::RED);
-    case TransactionRecord::SendToSelf:
-    case TransactionRecord::PrivateSendDenominate:
-    case TransactionRecord::PrivateSendCollateralPayment:
-    case TransactionRecord::PrivateSendMakeCollaterals:
-    case TransactionRecord::PrivateSendCreateDenominations:
-        return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::ORANGE);
+		case TransactionRecord::Generated:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::RecvWithPrivateSend:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::RecvWithAddress:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::RecvFromOther:
+			return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::GREEN);
+		case TransactionRecord::PrivateSend:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::SendToAddress:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::SendToOther:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::Other:
+			return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::RED);
+		case TransactionRecord::SendToSelf:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::PrivateSendDenominate:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::PrivateSendCollateralPayment:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::PrivateSendMakeCollaterals:
+			    return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
+		case TransactionRecord::PrivateSendCreateDenominations:
+			return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::ORANGE);
     }
     return GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT);
 }

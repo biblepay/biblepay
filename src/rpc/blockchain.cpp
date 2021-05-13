@@ -3419,7 +3419,6 @@ UniValue exec(const JSONRPCRequest& request)
 
 		if (sType.empty() || sPrimaryKey.empty() || sValue.empty())
 			throw std::runtime_error(sError);
-		sError;
 		double dFee = fProd ? 10 : 5001;
 		// Allows a datastore chain value to be saved if blank (an edit)
 		if (sValue == "[null]")

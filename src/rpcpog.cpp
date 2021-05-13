@@ -1159,7 +1159,7 @@ int64_t GETFILESIZE(std::string sPath)
 
 bool CheckNonce(bool f9000, unsigned int nNonce, int nPrevHeight, int64_t nPrevBlockTime, int64_t nBlockTime, const Consensus::Params& params)
 {
-	if (!f9000 || nPrevHeight > params.EVOLUTION_CUTOVER_HEIGHT && nPrevHeight <= params.ANTI_GPU_HEIGHT) 
+	if (!f9000 || (nPrevHeight > params.EVOLUTION_CUTOVER_HEIGHT && nPrevHeight <= params.ANTI_GPU_HEIGHT))
 		return true;
 
 	if (nPrevHeight >= params.RANDOMX_HEIGHT)
@@ -4663,6 +4663,7 @@ std::string FormatURL(std::string URL, int iPart)
 
 	if (iPart == 1)
 		return sPage;
+	return URL;
 }
 
 bool IntToBool(int nValue)

@@ -708,7 +708,12 @@ recover:
 			bool fTitheBlocksActive;
 			GetMiningParams(pindexPrev->nHeight, f7000, f8000, f9000, fTitheBlocksActive);
 			const Consensus::Params& consensusParams = Params().GetConsensus();
-			
+
+bool fAllowedToMine = true;
+#if defined(MAC_OSX)
+	fAllowedToMine = false;
+#endif
+
 			while (true)
 			{
 				while (true)
@@ -719,7 +724,7 @@ recover:
 					
 					nHashesDone += 1;
 
-					if (UintToArith256(ComputeRandomXTarget(hash, pindexPrev->nTime, pblock->GetBlockTime())) <= hashTarget)
+					if (fAllowedToMine && UintToArith256(ComputeRandomXTarget(hash, pindexPrev->nTime, pblock->GetBlockTime())) <= hashTarget)
 					{
 						bool fNonce = CheckNonce(f9000, pblock->nNonce, pindexPrev->nHeight, pindexPrev->nTime, pblock->GetBlockTime(), consensusParams);
 						if (fNonce)

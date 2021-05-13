@@ -42,15 +42,18 @@ BITCOIN_INCLUDES=-I$(builddir) $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFL
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
 BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
 
-#BLS_LIBS=-lchiabls -lgmp
 #-L$(srcdir)/crypto/RandomX/build
 
-if TARGET_WINDOWS
-BLS_LIBS=-lchiabls -lgmp -L$(srcdir)/crypto/RandomX/buildwin64 -lrandomx
-else
-BLS_LIBS=-lchiabls -lgmp -L$(srcdir)/crypto/RandomX/build -lrandomx
-endif
+BLS_LIBS=-lchiabls -lgmp
 
+if TARGET_LINUX
+$(info 'building on linux')
+BLS_LIBS += -L$(srcdir)/crypto/RandomX/build -lrandomx
+endif
+if TARGET_WINDOWS
+$(info 'building on windows')
+BLS_LIBS += -L$(srcdir)/crypto/RandomX/buildwin64 -lrandomx
+endif
 
 LIBBITCOIN_SERVER=libbiblepay_server.a
 LIBBITCOIN_COMMON=libbiblepay_common.a

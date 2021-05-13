@@ -3669,7 +3669,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams) && nHeight > 1000)
 	{
 		bool fGrandfather = false;
-		if (nHeight < 1000 || nHeight > 33400 && nHeight < 33500)
+		if (nHeight < 1000 || (nHeight > 33400 && nHeight < 33500))
 			fGrandfather = true;
 		if (!fGrandfather)
 			return state.DoS(21, false, REJECT_INVALID, "bad-diffbits", false, strprintf("incorrect proof of work at %d", nHeight));
