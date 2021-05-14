@@ -2303,8 +2303,9 @@ bool AppInitMain()
         return false;
     }
 
-	double dDisableSMTP = cdbl(gArgs.GetArg("-disablesmtp", "0"), 0);
-	double dDisablePOP3 = cdbl(gArgs.GetArg("-disablepop3", "0"), 0);
+	// For now, Im disabling pop3 and smtp decentralized email by default.  If the user wants to use it, set 'disablesmtp=0'.  Set 'disablepop3=0'.
+	double dDisableSMTP = cdbl(gArgs.GetArg("-disablesmtp", "1"), 0);
+	double dDisablePOP3 = cdbl(gArgs.GetArg("-disablepop3", "1"), 0);
 
 	LogPrintf("\nPop3 %f SMTP %f Servers ", dDisableSMTP, dDisablePOP3);
 
