@@ -868,14 +868,15 @@ void LogIt(SimpleUTXO u)
 }
 
 
-SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime)
+SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, CAmount nAmount, int64_t nTime)
 {
 	std::string sURL = "https://" + GetSporkValue("bms");
 	std::string sR = "Server?action=QUERY_UTXO";
-	std::string sXML = "<ticker>" + sTicker + "</ticker><amount>" + RoundToString(nAmount, 20) + "</amount><address>" + sAddress + "</address><utxotime>" + RoundToString(nTime, 0) + "</utxotime>";
+	std::string sXML = "<ticker>" + sTicker + "</ticker><amount>" 
+		+ AmountToString(nAmount) + "</amount><address>" + sAddress + "</address><utxotime>" + RoundToString(nTime, 0) + "</utxotime>";
 	std::string sResponse = Uplink(false, sXML, sURL, sR, SSL_PORT, 25, 1);
 	SimpleUTXO u;
-	u.nAmount = cdbl(ExtractXML(sResponse, "<amount>", "</amount>"), 18) * COIN;
+	u.nAmount = StringToAmount(ExtractXML(sResponse, "<amount>", "</amount>"));
 	u.TXID = ExtractXML(sResponse, "<txid>", "</txid>");
 	u.nOrdinal = cdbl(ExtractXML(sResponse, "<ordinal>", "</ordinal>"), 0);
 	u.Height = cdbl(ExtractXML(sResponse, "<height>", "</height>"), 0);
@@ -883,7 +884,7 @@ SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, double nAmount,
 	return u;
 }
 
-SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime)
+SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, CAmount nAmount, int64_t nTime)
 {
 	double nConfig = GetSporkDouble("utxoqueryresilience", 0);
 	if (nConfig == 0)
@@ -911,7 +912,7 @@ SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, double nAm
 	}
 }
 
-SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount)
+SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, CAmount nAmount)
 {
 	boost::to_upper(sTicker);
 	std::string sURL1 = "https://api.blockchair.com";
@@ -936,9 +937,8 @@ SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount)
 		{
               u.Ticker = sTicker;
               u.Address = sAddress;
-              u.nAmount = cdbl(oBalances[i]["balance"].getValStr(), 18) * COIN;
-              // u.Account = oBalances[i]["asset_issuer"].getValStr();
-              // u.TXID = GetSha256Hash(u.Account + u.Amount.ToString());
+              u.nAmount = cdbl(oBalances[i]["balance"].getValStr(), 8) * COIN;
+		      u.TXID = GetSHA256Hash(u.Address + AmountToString(u.nAmount)).GetHex();
 			  u.AssetType = oBalances["asset_type"].getValStr();
 			  if (u.AssetType == "native")
               {
@@ -961,8 +961,8 @@ SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount)
 		 u.TxCount = oTx.size();
 		 u.Ticker = sTicker;
          u.Address = sAddress;
-         u.nAmount = cdbl(oBalances["Balance"].getValStr(), 18) / 1000000 * COIN;
-         // u.TXID = GetSha256Hash(sAddress + u.Amount.ToString());
+         u.nAmount = cdbl(oBalances["Balance"].getValStr(), 8) / 1000000 * COIN;
+    	 u.TXID = GetSHA256Hash(u.Address + AmountToString(u.nAmount)).GetHex();
 	     if (u.nAmount == nAmount && u.TxCount <= 1)
                   return u;
 		 LogIt(u);
@@ -980,7 +980,7 @@ SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount)
 		 {
               u.Ticker = sTicker;
               u.Address = sAddress;
-              u.nAmount = cdbl(oBalances[i]["value"].getValStr(), 18) / 100000000 * COIN;
+              u.nAmount = cdbl(oBalances[i]["value"].getValStr(), 8) / 100000000 * COIN;
               u.TXID = oBalances[i]["transaction_hash"].getValStr();
               u.nOrdinal = cdbl(oBalances[i]["index"].getValStr(), 0);
               u.Height = cdbl(oBalances[i]["block_id"].getValStr(), 0);
@@ -1000,9 +1000,9 @@ SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount)
 	     UniValue oBalance = o["data"][sAddress]["address"];
 		 u.Ticker = sTicker;
          u.Address = sAddress;
-   		 u.nAmount = cdbl(oBalance["balance"].getValStr(), 18) / 100000000 / 10000000000 * COIN;
+   		 u.nAmount = cdbl(oBalance["balance"].getValStr(), 8) / 100000000 / 10000000000 * COIN;
 		 int nTxCount = cdbl(o["data"][sAddress]["address"]["transaction_count"].getValStr(), 0);
-		 //u.TXID = GetSha256Hash(u.Amount.ToString());
+		 u.TXID = GetSHA256Hash(u.Address + AmountToString(u.nAmount)).GetHex();
 		 if (u.nAmount == nAmount && nTxCount <= 1)
              return u;
     }
@@ -1010,9 +1010,8 @@ SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount)
 }
 
 
-SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst)
+SimpleUTXO QueryUTXO(int64_t nTargetLockTime, CAmount nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst)
 {
-	// If the caller sends the UTXO, we search by that, but otoh, if they send the target_amount we search by that instead.  Note:  When sancs check by target_amount, they also verify the Pin.  
 	SimpleUTXO s;
 
 	std::string sURL1;
@@ -1092,12 +1091,10 @@ SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string 
 			CAmount caAmount = 0;
 			if (sTicker=="ETH")
 			{
-				nValue = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 18) / COIN / 10000000000;
 				caAmount = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 18) / 10000000000;
 			}
 			else
 			{			
-				nValue = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12) / COIN;
 				caAmount = (double)cdbl(o["txrefs"][i]["value"].getValStr(), 12);
 			}
 			std::string sAmount = o["txrefs"][i]["value"].getValStr();
@@ -1117,7 +1114,7 @@ SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string 
 					s.nAmount = caAmount;
 					return s;
 				}
-				else if (sUTXO.empty() && (nTargetAmount == nValue))
+				else if (sUTXO.empty() && (nTargetAmount == caAmount))
 				{
 					s.TXID = sTxId;
 					s.nOrdinal = nOut;
@@ -1369,6 +1366,31 @@ UniValue GetDataList(std::string sType, int iMaxAgeInDays, int& iSpecificEntry, 
 	return ret;
 }
 
+std::map<std::string, std::string> SearchForDataList(std::string sType, std::string sSearch)
+{
+	boost::to_upper(sType);
+	std::map<std::string, std::string> mData;
+
+	for (auto ii : mvApplicationCache) 
+	{
+		std::string sKey1 = GetElement(ii.first, "[-]", 0);
+		std::string sKey2 = GetElement(ii.first, "[-]", 1);
+
+		if (sKey1 == sType)
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			int64_t nTimestamp = v.second;
+			std::string sTimestamp = TimestampToHRDate((double)nTimestamp);
+			if (Contains(sKey2, sSearch) || Contains(v.first, sSearch))
+			{
+				mData[ii.first] = v.first;
+			}
+		}
+	}
+	return mData;
+}
+
+
 void SerializePrayersToFile(int nHeight)
 {
 	if (nHeight < 100) return;
@@ -1458,13 +1480,17 @@ CAmount GetTxTotalFromAddress(CTransactionRef ctx, std::string sAddress)
 	return nTotal;
 }
 
-
 CAmount StringToAmount(std::string sValue)
 {
-	if (sValue.empty()) return 0;
+	if (sValue.empty()) 
+		return 0;
     CAmount amount;
-    if (!ParseFixedPoint(sValue, 8, &amount)) return 0;
-    if (!MoneyRange(amount)) throw std::runtime_error("AMOUNT OUT OF MONEY RANGE");
+    if (!ParseFixedPoint(sValue, 8, &amount)) 
+		return 0;
+    if (!MoneyRange(amount))
+	{
+		return 0; // TODO:  Rather than crash.
+	}
     return amount;
 }
 
@@ -4530,7 +4556,7 @@ DACResult SendInvoice(Invoice i)
 }
 
 
-bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
+bool SendUTXOStake(CAmount nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
 	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake, int nCommitmentDays)
 {
 	const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -4936,11 +4962,11 @@ int AssimilateUTXO(UTXOStake d)
 	}
 	else
 	{
-		if (nBBPAmount > 0 && nBBPAmount > std::floor(d.nBBPAmount/COIN))
+		if (nBBPAmount > 0 && nBBPAmount >= d.nBBPAmount)
 				nStatus++;
 		if (!d.ForeignTicker.empty())
 		{
-			SimpleUTXO s = QueryUTXO(d.Time, (double)d.nForeignAmount/COIN, d.ForeignTicker, d.ForeignAddress, GetElement(d.ForeignUTXO, "-", 0), cdbl(GetElement(d.ForeignUTXO, "-", 1), 0), sError);
+			SimpleUTXO s = QueryUTXO(d.Time, d.nForeignAmount, d.ForeignTicker, d.ForeignAddress, GetElement(d.ForeignUTXO, "-", 0), cdbl(GetElement(d.ForeignUTXO, "-", 1), 0), sError);
 			if (!sError.empty())
 			{
 				LogPrintf("\nAssimilateUTXO Bad Ticker %s , %s ", d.ForeignTicker, sError);
@@ -4952,9 +4978,8 @@ int AssimilateUTXO(UTXOStake d)
 			{
 				nStatus++;
 			}
-			// 5-11-2021
 
-			SimpleUTXO s2 = QueryUTXO3(d.ForeignTicker, d.ForeignAddress, (double)d.nForeignAmount/COIN, d.Time);
+			SimpleUTXO s2 = QueryUTXO3(d.ForeignTicker, d.ForeignAddress, d.nForeignAmount, d.Time);
 		
 			LogPrintf("\nAssimilateUTXO::Ticker %s, Address %s, Amount %f, Status %f, UTXO2Amount %f", d.ForeignTicker, d.ForeignAddress, AmountToString(s.nAmount), nStatus, AmountToString(s2.nAmount));
 
@@ -6448,3 +6473,12 @@ std::vector<DMAddress> ImportGreetingCardCSVFile(std::string sFullPath)
 	return d;
 }
 
+uint256 GetSHA256Hash(std::string sData)
+{
+	uint256 h;
+    CSHA256 sha256;
+    std::vector<unsigned char> vch1 = std::vector<unsigned char>(sData.begin(), sData.end());
+	sha256.Write(&vch1[0], vch1.size());
+    sha256.Finalize(h.begin());
+	return h;
+}

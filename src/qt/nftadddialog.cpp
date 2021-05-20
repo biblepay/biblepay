@@ -63,14 +63,13 @@ void NFTAddDialog::UpdateDisplay(std::string sAction, uint256 nftHash)
 		ui->txtName->setText(GUIUtil::TOQS(n.sName));
 		ui->txtDescription->setPlainText(GUIUtil::TOQS(n.sDescription));
 		ui->txtLoQualityURL->setText(GUIUtil::TOQS(n.sLoQualityURL));
-		ui->txtHiQualityURL->setText("");  // User has to set this every time they edit.
+		ui->txtHiQualityURL->setText(GUIUtil::TOQS(n.sHiQualityURL));  // User has to set this every time they edit.
 		ui->txtReserveAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nReserveAmount/COIN, 2)));
 		ui->txtBuyItNowAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nBuyItNowAmount/COIN, 2)));
 		ui->txtMinimumBidAmount->setText(GUIUtil::TOQS(RoundToString((double)n.nMinimumBidAmount/COIN, 2)));
 		ui->chkMarketable->setChecked(n.fMarketable);
 		ui->chkDeleted->setChecked(n.fDeleted);
 		ui->cmbNFTType->setCurrentIndex(ui->cmbNFTType->findText(GUIUtil::TOQS(n.sType)));
-
 	}
 	std::string sInfo = "Note: It costs 100 BBP to create or edit an NFT.";
 	ui->txtInfo->setText(GUIUtil::TOQS(sInfo));
@@ -99,15 +98,6 @@ void NFTAddDialog::clear()
 	ui->chkMarketable->setChecked(false);
 }
 
-std::string CleansePhrase2(std::string sPhrase)
-{
-	// Remove special characters from the passphrase so they can't hose it up between machines.
-	sPhrase = SanitizeString(sPhrase);
-	sPhrase = strReplace(sPhrase, "\r", "");
-	sPhrase = strReplace(sPhrase, "\n", "");
-	return sPhrase;
-}
-
 void NFTAddDialog::on_btnSubmit_clicked()
 {
 	NFT n;
@@ -117,9 +107,9 @@ void NFTAddDialog::on_btnSubmit_clicked()
 	n.nMinimumBidAmount = cdbl(GUIUtil::FROMQS(ui->txtMinimumBidAmount->text()), 2) * COIN;
 	n.nReserveAmount = cdbl(GUIUtil::FROMQS(ui->txtReserveAmount->text()), 2) * COIN;
 	n.nBuyItNowAmount = cdbl(GUIUtil::FROMQS(ui->txtBuyItNowAmount->text()), 2) * COIN;
-	n.sLoQualityURL = CleansePhrase2(GUIUtil::FROMQS(ui->txtLoQualityURL->text()));
 	std::string sError1;
-	n.sHiQualityURL = RSAEncryptHQURL(CleansePhrase2(GUIUtil::FROMQS(ui->txtHiQualityURL->text())), sError1);
+	n.sLoQualityURL = SanitizeString(GUIUtil::FROMQS(ui->txtLoQualityURL->text()), SAFE_CHARS_URL);
+	n.sHiQualityURL = RSAEncryptHQURL(SanitizeString(GUIUtil::FROMQS(ui->txtHiQualityURL->text()), SAFE_CHARS_URL), sError1);
 	n.sDescription = GUIUtil::FROMQS(ui->txtDescription->toPlainText());
 	n.fMarketable = ui->chkMarketable->checkState();
 	n.fDeleted = ui->chkDeleted->checkState();

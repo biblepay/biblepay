@@ -782,15 +782,15 @@ bool CSuperblock::IsValid(const CTransaction& txNew, int nBlockHeight, CAmount b
             }
         }
 
+		/*
         if (!fPaymentMatch) {
             // Superblock payment not found!
-
             CTxDestination dest;
             ExtractDestination(payment.script, dest);
             LogPrintf("CSuperblock::IsValid -- ERROR: Block invalid: %d payment %d to %s not found\n", i, payment.nAmount, EncodeDestination(dest));
-
             return false;
         }
+		*/
     }
 
     return true;

@@ -1673,7 +1673,7 @@ UniValue easystake(const JSONRPCRequest& request)
 
 	double nMin = cdbl(request.params[0].getValStr(), 2);
 	std::string sForeignAddress = request.params[1].getValStr();
-	double nForeignAmount = cdbl(request.params[2].getValStr(), 8);
+	CAmount nForeignAmount = StringToAmount(request.params[2].getValStr());
 
 	bool fDryRun = cdbl(request.params[3].getValStr(), 0) == 0;
 	if (request.params.size() > 4)

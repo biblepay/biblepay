@@ -860,8 +860,8 @@ double GetDACDonationsByRange(int nStartHeight, int nRange);
 UserRecord GetMyUserRecord();
 bool WriteDataToFile(std::string sPath, std::string data);
 std::vector<char> ReadAllBytesFromFile(char const* filename);
-SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst = false);
-bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
+SimpleUTXO QueryUTXO(int64_t nTargetLockTime, CAmount nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst = false);
+bool SendUTXOStake(CAmount nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
 	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake, int nCommitmentDays);
 std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
 int AssimilateUTXO(UTXOStake d);
@@ -927,8 +927,10 @@ std::vector<Payment> GetPayments();
 DACResult SendDSQL(UniValue& oDSQLObject, std::string sTable, std::string ID);
 std::vector<CDSQLQuery> DSQLQuery(std::string sFilter);
 void ProcessDSQLInstantSendTransaction(CTransaction tx);
-SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, double nAmount);
-SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime);
-SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, double nAmount, int64_t nTime);
+SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, CAmount nAmount);
+SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, CAmount nAmount, int64_t nTime);
+SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, CAmount nAmount, int64_t nTime);
+std::map<std::string, std::string> SearchForDataList(std::string sType, std::string sSearch);
+uint256 GetSHA256Hash(std::string sData);
 
 #endif

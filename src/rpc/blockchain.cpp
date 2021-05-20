@@ -2640,19 +2640,6 @@ UniValue exec(const JSONRPCRequest& request)
 		bool fExist = NickNameExists("cpk", sNN, fIsMine);
 		results.push_back(Pair("ismine", fIsMine));
 	}
-	else if (sItem == "testutxo")
-	{
-		std::string sError;
-		std::string sTicker = request.params[1].get_str();
-		std::string sAddress = request.params[2].get_str();
-		double nTargetAmount = cdbl(request.params[3].get_str(), 8);
-		int nOut = (int)cdbl(request.params[4].get_str(), 0);
-		SimpleUTXO s = QueryUTXO(GetAdjustedTime(), nTargetAmount, sTicker, sAddress, "", nOut, sError);
-		results.push_back(Pair("value", s.nAmount * COIN));
-		results.push_back(Pair("txid", s.TXID));
-		results.push_back(Pair("ordinal", s.nOrdinal));
-		results.push_back(Pair("Err", sError));
-	}
 	else if (sItem == "testrsa")
 	{
 		std::string sPubPath =  GetSANDirectory2() + "pubkey.pub";
@@ -3393,14 +3380,32 @@ UniValue exec(const JSONRPCRequest& request)
 		if (request.params.size() != 2 && request.params.size() != 3)
 			throw std::runtime_error("You must specify type: IE 'exec search PRAYER'.  Optionally you may enter a search phrase: IE 'exec search PRAYER MOTHER'.");
 		std::string sType = request.params[1].get_str();
-		std::string sSearch = "";
+		std::string sSearch;
 		if (request.params.size() == 3) 
 			sSearch = request.params[2].get_str();
-		int iSpecificEntry = 0;
-		std::string sEntry = "";
-		int iDays = 30;
-		UniValue aDataList = GetDataList(sType, iDays, iSpecificEntry, sSearch, sEntry);
-		return aDataList;
+		std::map<std::string, std::string> mData = SearchForDataList(sType, sSearch);
+		for (auto kv : mData)
+		{
+			results.push_back(Pair(kv.first, kv.second));
+		}
+	}
+	else if (sItem == "cleanseoldpkvalue")
+	{
+		if (request.params.size() != 2 && request.params.size() != 3)
+			throw std::runtime_error("You must specify type: IE 'exec cleanseoldpkvalue pk1 pk2'");
+		std::string sPK1 = request.params[1].get_str();
+		std::string sPK2 = request.params[2].get_str();
+		std::map<std::string, std::string> mData = SearchForDataList(sPK1, sPK2);
+		for (auto kv : mData)
+		{
+			results.push_back(Pair(kv.first, kv.second));
+			std::string s1 = GetElement(kv.first, "[-]", 0);
+			std::string s2 = GetElement(kv.first, "[-]", 1);
+			std::string sError;
+			std::string sResult = SendBlockchainMessage(s1, s2, " ", 1000, 1, "", sError);
+			results.push_back(Pair("Results", sResult + " " + sError));
+			break;
+		}
 	}
 	else if (sItem == "getsporkdouble")
 	{
@@ -4155,13 +4160,28 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("APM_Extract", dAPM3));
 		results.push_back(Pair("APM as of Next Superblock " + RoundToString(iNextSuperblock, 0), dAPM2));
 	}
+	else if (sItem == "sha2561")
+	{
+		std::string s1 = request.params[1].get_str();
+		uint256 h = GetSHA256Hash(s1);
+		results.push_back(Pair("hash", h.GetHex()));
+	}
+	else if (sItem == "testutxo1")
+	{
+		std::string sTicker = request.params[1].get_str();  
+		std::string sAddress = request.params[2].get_str();
+		CAmount nAmount = StringToAmount(request.params[3].get_str());
+		results.push_back(Pair("foreign amount", AmountToString(nAmount)));
+		SimpleUTXO u = QueryUTXO3(sTicker, sAddress, nAmount, GetAdjustedTime());
+		results.push_back(Pair(sTicker, AmountToString(u.nAmount)));
+		results.push_back(Pair("TXID", u.TXID));
+    }
 	else if (sItem == "utxotest2")
 	{
+		// exec testutxo1 DOGE DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c 777
 		std::string sAddress3 = "DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c";
-		SimpleUTXO u = QueryUTXO2("DOGE", sAddress3, 777);
+		SimpleUTXO u = QueryUTXO2("DOGE", sAddress3, 777 * COIN);
 		results.push_back(Pair("DOGE", (double)u.nAmount/COIN));
-
-
         //ETH
 		std::string sAddress4 = "0xaFe8C2709541E72F245e0DA0035f52DE5bdF3ee5";
         SimpleUTXO u6 = QueryUTXO2("ETH", sAddress4, 0);
