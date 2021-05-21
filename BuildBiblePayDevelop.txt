@@ -24,7 +24,7 @@ sudo apt-get install libdb4.8-dev libdb4.8++-dev
 Step 2: Find a place on your hard drive that will be YOUR APPLICATION ROOT DIR (also known as the root of your github repository).
 
 It is highly recommended that you make it "~/biblepay-develop", so that you can refer to this document (and so that the develop branch stays separate from the master branch.
-NOTE: Your blocks and wallet will be stored in "~/.biblepay".  This located is called your "DATA DIRECTORY".  About your Wallet.dat:  It will be here:  "~/.biblepay/wallet.dat".  Where are the blocks?  "~/.biblepay/blocks".
+NOTE: Your blocks and wallet will be stored in "~/.biblepay".  This location is called your "DATA DIRECTORY".  Where is my wallet.dat?  It will be here:  "~/.biblepay/wallet.dat".  And note that your testnet wallet will be here:  ~/.biblepay/testnet3/wallet.dat.   Where are the blocks?  "~/.biblepay/blocks".
 
 
 STEP 3:  Create the root Application Directory for Biblepay develop:
