@@ -1,0 +1,102 @@
+How To Build the BiblePay DEVELOP BRANCH - Ubuntu          May 21st, 2021                                                
+_________________________________________________
+
+
+#Note: If you have less then 3gb of ram, please see our instructions "BuildBiblePay.txt" and we recommend that you set up Swap Space first, otherwise your system will page with low ram.
+
+
+#Building for Ubuntu 20, 18, and 17 on Linux:
+
+
+Step 1:  Install the Ubuntu dependencies:
+
+apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils
+apt-get install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+apt-get install git
+apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
+
+sudo add-apt-repository ppa:bitcoin/bitcoin
+sudo apt-get update
+sudo apt-get install libdb4.8-dev libdb4.8++-dev
+
+
+Step 2: Find a place on your hard drive that will be YOUR APPLICATION ROOT DIR (also known as the root of your github repository).
+
+It is highly recommended that you make it "~/biblepay-develop", so that you can refer to this document (and so that the develop branch stays separate from the master branch.
+NOTE: Your blocks and wallet will be stored in "~/.biblepay".  This located is called your "DATA DIRECTORY".  About your Wallet.dat:  It will be here:  "~/.biblepay/wallet.dat".  Where are the blocks?  "~/.biblepay/blocks".
+
+
+STEP 3:  Create the root Application Directory for Biblepay develop:
+cd ~
+mkdir ~/biblepay-develop
+cd biblepay-develop
+
+STEP 4: GIT CLONE: (This sets up the github repository in this location):
+git clone --branch develop https://github.com/biblepay/biblepay
+ 
+# OPTIONAL NOTE! If you already have git cloned the master branch by accident without using the --branch develop argument above, cd to your repository root and type "git pull origin develop" next.  
+# (YOU DO NOT HAVE TO DO THIS IF YOU GIT CLONE --BRANCH develop as mentioned above!)
+
+STEP 5: Compile RANDOMX:
+
+cd ~/biblepay-develop/biblepay/src/crypto/RandomX
+mkdir build && cd build
+cmake -DARCH=native ..
+make
+# end of RandomX Part
+
+STEP 6: SET UP THE MACHINE PREFIX: (In this case we are using 64 bit ubuntu):  (We also have one for mac and one for windows).
+
+prefix=x86_64-pc-linux-gnu
+cd ~/biblepay-develop/biblepay/depends
+make -j 4 # Choose a good -j value, depending on the number of CPU cores available
+cd ..
+./autogen.sh
+
+#Note: if echo `pwd` does not return your current working directory, replace it with your working directory such as ~/biblepay-develop/biblepay
+
+./configure --prefix `pwd`/depends/x86_64-pc-linux-gnu
+
+make -j 4
+
+#If you have trouble compiling, see more here:
+https://github.com/biblepay/biblepay/blob/master/doc/build-unix.md
+
+***************** WHERE ARE THE COMPILED FILES? *********************************
+To run QT, do this:
+cd ~/biblepay-develop/biblepay/src/qt
+./biblepay-qt -testnet=1
+
+To run the biblepay daemon go here:
+cd ~/biblepay-develop/biblepay/src
+./biblepayd -testnet=1
+
+To run the biblepay command line client go here:
+cd ~/biblepay-develop/biblepay/src
+./biblepay-cli getinfo
+
+
+### Good luck, and God Bless you! ###
+
+
+
+*************************************************** OPTIONAL - UPGRADING ONLY *********************************************************************************
+How do I upgrade Biblepay after the devs push a leisure Upgrade notification on the forum?     
+#NOTE: DO NOT DO THIS IF YOU ARE BUILDING THE FIRST TIME, THIS IS ONLY NECESSARY AFTER WE NOTIFY EVERYONE FOR AN UPGRADE:
+cd ~/biblepay-develop
+git pull origin develop
+cd src
+make -j 4
+
+
+
+*** NOTE:   Watchman-on-the-wall is no longer required in BiblePay (as it is compiled as a part of our wallet now) **** (Hurray, that would have been more work!)
+
+
+
+*** TROUBLESHOOTING ****
+
+## Reserved for Future Use
+
+
