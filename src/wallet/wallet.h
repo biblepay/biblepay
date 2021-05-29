@@ -959,7 +959,7 @@ public:
     bool GetCollateralTxDSIn(CTxDSIn& txdsinRet, CAmount& nValueRet) const;
     bool SelectDenominatedAmounts(CAmount nValueMax, std::set<CAmount>& setAmountsRet) const;
 	std::string GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress, CAmount& nReturnAmount);
-	void LockGifts();
+	void LockByMask(int nMask);
 	void UnlockGift(std::string sAddress);
 	bool InitLoadWallet();
 

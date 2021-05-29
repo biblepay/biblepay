@@ -506,6 +506,15 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 			vecSend.push_back(recPenalty);
 			newTx = transaction.getTransaction();
 			fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, nChangePosRet, strFailReason, coinControl, true, 0, sOptPrayer);
+			if (!fCreated)
+			{
+				double nProjAmt = total - nFeeRequired - nPenalty;
+				/* We don't have high risk stakes (they were being considered... but never enabled):
+				strFailReason = "Due to a high-risk UTXO stake penalty, you cannot spend this much of this one coin.  Please decrease the amount being spent to less than " 
+					+ AmountToString(nProjAmt) + " BBP ($" + RoundToString(GetUSDValueBBP(nFeeRequired), 2) + " USD Penalty), then try again.  You will receive a warning dialog with a detailed explanation.  ";
+					*/
+				strFailReason = "Transaction Creation failed.";
+			}
 		}
 		transaction.setTransactionFee(nFeeRequired);
         if (fSubtractFeeFromAmount && fCreated)

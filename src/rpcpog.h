@@ -19,13 +19,14 @@
 #include <boost/algorithm/string/trim.hpp>
 
 class CWallet;
+struct SimpleUTXO;
 
 std::string RetrieveMd5(std::string s1);
 uint256 CoordToUint256(int row, int col);
 std::string RoundToString(double d, int place);
 std::string AmountToString(const CAmount& amount);
-double CalculateUTXOReward(int nStakeCount, int nDays);
-int GetUTXOStatus(uint256 txid);
+double CalculateUTXOReward();
+std::vector<SimpleUTXO> GetUTXOStatus(std::string sAddress);
 bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle);
 CAmount GetBBPValueUSD(double nUSD, double nMask);
 std::string RSADecryptHQURL(std::string sEncData, std::string& sError);
@@ -464,6 +465,8 @@ struct CPK
   std::string sError;
   std::string sChildId;
   std::string sOptData;
+  std::string sCurrencyAddress;
+  CAmount nCurrencyAmount = 0;
   double nProminence = 0;
   double nPoints = 0;
   bool fValid = false;
@@ -523,16 +526,6 @@ struct IPFSTransaction
 	std::string CPK;
 	int nHeight = 0;
 	std::map<std::string, std::string> mapRegions;
-};
-
-struct DashUTXO
-{
-	std::string TXID = std::string();
-	CAmount Amount = 0;
-	std::string Address = std::string();
-	std::string Network = std::string();
-	bool Spent = false;
-	bool Found = false;
 };
 
 struct DACResult
@@ -614,111 +607,103 @@ struct SimpleUTXO
 	int Height = 0;
 	int Trace = 0;
 	double ValueUSD = 0;
+	int64_t AssimilationTime = 0;
+	
 	std::string Address;
 	std::string Ticker;
-};
-
-struct UTXOStake
-{
-	std::string XML = std::string();
-	CAmount nBBPAmount = 0;
-	CAmount nForeignAmount = 0;
-	int64_t Time = 0;
-	int64_t Age = 0;
-	double DaysElapsed = 0;
-	double CommitmentFulfilledPctg = 0;
-	int Height = 0;
-	int nType = 0;
-	bool fBBPSpent = false;
-	std::string CPK = std::string();
-	std::string SignatureNarr = std::string();
-	bool found = false;
-	std::string ForeignTicker = std::string();
-	std::string ReportTicker = std::string();
-	std::string BBPUTXO = std::string();
-	std::string ForeignUTXO = std::string();
-	std::string BBPAddress = std::string();
-	std::string ForeignAddress = std::string();
-	std::string BBPSignature = std::string();
-	std::string ForeignSignature = std::string();
-	std::string sType = std::string();
-	double nBBPPrice = 0;
-	double nForeignPrice = 0;
-	double nBTCPrice = 0;
-	double nBBPValueUSD = 0;
-	double nForeignValueUSD = 0;
-	double nValue = 0;
-	double nCommitment = 0;
-	double nDWU = 0;
-	int nStatus = 0;
-	bool BBPSignatureValid = false;
-	bool ForeignSignatureValid = false;
-	bool SignatureValid = false;
-	uint256 TXID = uint256S("0x0");
+	std::string Error;
 	void ToJson(UniValue& obj)
 	{
 		obj.clear();
 		obj.setObject();
-		obj.push_back(Pair("RiskType", sType));
-		nDWU = CalculateUTXOReward(nType, nCommitment); //nType contains stake-type (1=bbp only, 2=foreign+bbp)
-		nStatus = GetUTXOStatus(TXID);
-			
-		obj.push_back(Pair("DWU", nDWU * 100));
-		obj.push_back(Pair("Sigs", SignatureNarr));
-		obj.push_back(Pair("TotalValue", nValue));
-		obj.push_back(Pair("Ticker", ReportTicker));
-	    obj.push_back(Pair("Status", nStatus));
-		obj.push_back(Pair("CPK", CPK));
-		obj.push_back(Pair("BBPAmount", AmountToString(nBBPAmount)));
-		obj.push_back(Pair("ForeignAmount", AmountToString(nForeignAmount)));
-		obj.push_back(Pair("BBPValue", RoundToString(nBBPValueUSD, 2)));
-		obj.push_back(Pair("ForeignValue", RoundToString(nForeignValueUSD, 2)));
-		obj.push_back(Pair("Commitment", nCommitment));
-		obj.push_back(Pair("Fulfilled %", CommitmentFulfilledPctg * 100));
-		obj.push_back(Pair("Time", Time));
-		obj.push_back(Pair("Spent", fBBPSpent));
-    }
+		obj.push_back(Pair("Txid", TXID));
+		obj.push_back(Pair("Address", Address));
+		obj.push_back(Pair("Amount", AmountToString(nAmount)));
+		obj.push_back(Pair("Ticker", Ticker));
+	}
 };
 
-struct DashStake
+struct UTXOStake
 {
+	std::string Address = std::string();
 	std::string XML = std::string();
-	CAmount nBBPAmount = 0;
-	CAmount nDashAmount = 0;
-	double MonthlyEarnings = 0;
 	int64_t Time = 0;
-	int64_t MaturityTime = 0;
-	int MaturityHeight = 0;
 	int Height = 0;
-	int Duration = 0;
 	std::string CPK = std::string();
-	std::string ReturnAddress = std::string();
 	bool found = false;
-	bool expired = false;
-	bool spent = false;
-	double DWU = 0;
-	double ActualDWU = 0;
-	std::string BBPUTXO = std::string();
-	std::string DashUTXO = std::string();
-	std::string BBPAddress = std::string();
-	std::string DashAddress = std::string();
-	std::string BBPSignature = std::string();
-	std::string DashSignature = std::string();
-	double nBBPPrice = 0;
-	double nDashPrice = 0;
-	double nBTCPrice = 0;
-	double nBBPValueUSD = 0;
-	double nDashValueUSD = 0;
-	double nBBPQty = 0;
-	bool BBPSignatureValid = false;
-	bool DashSignatureValid = false;
-	bool SignatureValid = false;
+	std::string Ticker = std::string();
+	int nStatus = 0;
 	uint256 TXID = uint256S("0x0");
+	// Memory Only
+	double nValueUSD = 0;
+	CAmount nNativeTotal = 0;
+	CAmount nForeignTotal = 0;
+	double nCoverage = 0;
+	double nNativeTotalUSD = 0;
+	double nForeignTotalUSD = 0;
+	double nNativeUSDGrandTotal = 0;
+	double nForeignUSDGrandTotal = 0;
+
+	void clear()
+	{
+		Height = 0;
+		nValueUSD = 0;
+		Time = 0;
+		nNativeTotal = 0;
+		nForeignTotal = 0;
+		nValueUSD = 0;
+		CPK = "";
+		Ticker = "";
+		found = false;
+		nStatus = 0;
+		TXID = uint256S("0x0");
+	}
+
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("CPK", CPK));
+		obj.push_back(Pair("Ticker", Ticker));
+		obj.push_back(Pair("Address", Address));	
+		obj.push_back(Pair("Value", nValueUSD));	
+		obj.push_back(Pair("NativeAmount", AmountToDouble(nNativeTotal)));
+		obj.push_back(Pair("ForeignAmount", AmountToDouble(nForeignTotal)));
+		obj.push_back(Pair("Coverage", nCoverage));
+		obj.push_back(Pair("Time", Time));
+    }
+
+	std::string GetKey()
+	{
+		std::string sKey = Address;
+		return sKey;
+	}
+
+	std::string ToXML()
+	{
+		std::string XML;
+		std::string sSig = GenerateXMLSignature(GetKey(), CPK);
+		XML = "<MT>UTXOSTAKE3</MT><MK>" + GetKey() + "</MK><MV><utxostake3><Address>" + Address + "</Address>"
+			+ "<Time>" + RoundToString(Time, 0) + "</Time><CPK>" + CPK + "</CPK><ticker>" + Ticker + "</ticker>" + sSig + "</utxostake3></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		Address = ExtractXML(XML, "<Address>", "</Address>");
+		Time = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		CPK = ExtractXML(XML, "<CPK>", "</CPK>");
+		Ticker = ExtractXML(XML, "<ticker>", "</ticker>");
+		TXID = uint256S("0x" + ExtractXML(XML, "<txid>", "</txid>"));
+		if (Time > 0)
+			found = true;
+	}
+
+
 };
+
 
 static double MAX_DAILY_DAC_DONATIONS = 40000000;
-
-
 struct DACProposal
 {
 	std::string sName;
@@ -846,7 +831,6 @@ std::string FormatURL(std::string URL, int iPart);
 void SyncSideChain(int nHeight);
 std::string GetUTXO(std::string sHash, int nOrdinal, CAmount& nValue, std::string& sError);
 bool IsDuplicateUTXO(std::string UTXO);
-UTXOStake GetUTXOStakeByUTXO2(std::vector<UTXOStake>& utxoStakes, std::string UTXO, bool fIncludeSpent);
 void SendChat(CChat chat);
 UserRecord GetUserRecord(std::string sSourceCPK);
 RSAKey GetMyRSAKey();
@@ -860,10 +844,7 @@ double GetDACDonationsByRange(int nStartHeight, int nRange);
 UserRecord GetMyUserRecord();
 bool WriteDataToFile(std::string sPath, std::string data);
 std::vector<char> ReadAllBytesFromFile(char const* filename);
-SimpleUTXO QueryUTXO(int64_t nTargetLockTime, CAmount nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst = false);
-bool SendUTXOStake(CAmount nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
-	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake, int nCommitmentDays);
-std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
+std::vector<UTXOStake> GetUTXOStakes(bool fWithPrices = false);
 int AssimilateUTXO(UTXOStake d);
 UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
 std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQty);
@@ -905,7 +886,7 @@ double GetHighDWURewardPercentage(double dCommitment);
 CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAmountBurned);
 void LockUTXOStakes();
 int64_t GetTxTime1(uint256 hash, int ordinal);
-std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload);
+std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload, std::string sOptFundAddress = "", CAmount nOptFundAmount = 0);
 std::string SendReferralCode(std::string& sError);
 CAmount CheckReferralCode(std::string sCode);
 ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details);
@@ -932,5 +913,10 @@ SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, CAmount nAmount
 SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, CAmount nAmount, int64_t nTime);
 std::map<std::string, std::string> SearchForDataList(std::string sType, std::string sSearch);
 uint256 GetSHA256Hash(std::string sData);
+std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp);
+double GetUSDValueBBP(CAmount nBBP);
+std::vector<SimpleUTXO> GetAddressUTXOs_BBP(std::string sAddress);
+void AddUTXOStake(UTXOStake& u, bool fDryRun, std::string& sError, std::string sOptFundAddress, CAmount nOptFundAmount);
+UTXOStake GetUTXOStakeByAddress(std::string Address);
 
 #endif

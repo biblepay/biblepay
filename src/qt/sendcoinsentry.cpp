@@ -50,7 +50,6 @@ SendCoinsEntry::SendCoinsEntry(QWidget* parent) :
     connect(ui->useAvailableBalanceButton, SIGNAL(clicked()), this, SLOT(useAvailableBalanceClicked()));
 
 	connect(ui->chkDonate, SIGNAL(toggled(bool)), this, SLOT(updateFoundationAddress()));
-	connect(ui->chkDWS, SIGNAL(toggled(bool)), this, SLOT(updateBurnAddress()));
 	connect(ui->chkDiary, SIGNAL(toggled(bool)), this, SLOT(diaryEntry()));
 	// Anti-Censorship Features (ACF)
 	// connect(ui->btnAttach, SIGNAL(clicked()), this, SLOT(attachFile()));
@@ -90,6 +89,7 @@ void SendCoinsEntry::updateFoundationAddress()
 	}
 }
 
+/*
 void SendCoinsEntry::updateBurnAddress()
 {
 	const CChainParams& chainparams = Params();
@@ -108,6 +108,8 @@ void SendCoinsEntry::updateBurnAddress()
         ui->payAmount->setFocus();
 	}
 }
+*/
+
 
 SendCoinsEntry::~SendCoinsEntry()
 {
@@ -250,7 +252,7 @@ SendCoinsRecipient SendCoinsEntry::getValue()
 	recipient.fTithe = (ui->chkTithe->checkState() == Qt::Checked);
 	recipient.fPrayer = (ui->chkPrayer->checkState() == Qt::Checked);
 	recipient.fDiary = (ui->chkDiary->checkState() == Qt::Checked);
-	recipient.fDWS = (ui->chkDWS->checkState() == Qt::Checked);
+	recipient.fDWS = false;
 	// End of BBP
     return recipient;
 }

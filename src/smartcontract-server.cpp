@@ -549,6 +549,7 @@ double CalculateAPM(int nHeight)
 	return nResult;
 }
 
+
 std::string AssessBlocks(int nHeight, bool fCreatingContract)
 {
 	LogPrint(BCLog::NET, "\nAssessBlocks Height %f time=%f", nHeight, GetAdjustedTime());
@@ -568,57 +569,59 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	std::string sDiaries;
 	
 	// UTXO STAKING
+	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
+	std::vector<ReferralCode> uRC = GetReferralCodes();
+	
 	double dEnabled = GetSporkDouble("UTXOStakingEnabled", 0);
+	std::map<std::string, std::string> mapSubCampaigns;
+
 	if (dEnabled == 1)
 	{
-		std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
-		std::vector<ReferralCode> uRC = GetReferralCodes();
-		std::string sThisCampaign = "UTXO";
-		for (int i = 0; i < uStakes.size(); i++)
+		for (auto d: uStakes)
 		{
-			UTXOStake d = uStakes[i];
-			// BBP (Extra Anti Duplication prevention)
 			bool fUsed = false;
-			if (!d.BBPUTXO.empty() && mUsedUTXO[d.BBPUTXO] == 1)
-				fUsed = true;
-			if (!d.ForeignUTXO.empty() && mUsedUTXO[d.ForeignUTXO] == 1)
+			if (!d.Address.empty() && mUsedUTXO[d.Address] == 1)
 				fUsed = true;
 			// End of BBP (Extra Anti Duplication)
-
-			if (d.found && d.nValue > 0 && !fUsed)
+			if (!fUsed && d.nValueUSD > 0)
 			{
-				int nStatus = GetUTXOStatus(d.TXID);
-				if (nStatus > 0)
+				if (!d.Address.empty())
+						mUsedUTXO[d.Address] = 1;
+				std::string sThisCampaign = "UTXO";
+				std::string sSubCampaign = d.Ticker;
+
+				mapSubCampaigns[sSubCampaign] = sSubCampaign;
+				// Entry into the UTXO campaign
+				UserRecord u = GetUserRecord(d.CPK);
 				{
-					if (!d.BBPUTXO.empty())
-						mUsedUTXO[d.BBPUTXO] = 1;
-					if (!d.ForeignUTXO.empty())
-						mUsedUTXO[d.ForeignUTXO] = 1;
+					// CPK high level campaign reward
+					CPK c = mPoints[d.CPK];
+					c.sCampaign = sThisCampaign;
+					c.sAddress = d.CPK;
+					c.sNickName = u.NickName;
+					// Referral codes
+					UniValue details;
+					ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, d.CPK, details);
+					// HARVEST MISSION CRITICAL nValueUSD * coverage  * rc1.ReferralRewards;
+					double nPoints = d.nValueUSD * d.nCoverage;
+					c.nPoints += nPoints;
+					c.nCurrencyAmount += d.nForeignTotal + d.nNativeTotal;
 
-					// Entry into the UTXO campaign
-					UserRecord u = GetUserRecord(d.CPK);
-					{
-						// Legacy code that adds a CPK reward, then a CPK-Campgin reward
-						CPK c = mPoints[d.CPK];
-						c.sCampaign = sThisCampaign;
-						c.sAddress = d.CPK;
-						c.sNickName = u.NickName;
-						// Referral codes
-						UniValue details;
-						ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, d.CPK, details);
+					c.sCurrencyAddress = d.Address;
+					mCampaignPoints[sThisCampaign] += nPoints;
+					mPoints[d.CPK] = c;
+					LogPrintf("\nAssessBlocks-highlevel cpk %s addr %s amount %f ", d.CPK, d.Address, d.nValueUSD);
 
-						double nPoints = d.nValue * rc1.ReferralRewards;
+					// Details for CPK-Campaign-Address
+					CPK cCPKCampaignPoints = mCPKCampaignPoints[d.CPK + sSubCampaign];
+					cCPKCampaignPoints.sAddress = d.CPK;
+					cCPKCampaignPoints.sNickName = c.sNickName;
+					cCPKCampaignPoints.nPoints += nPoints;
+					cCPKCampaignPoints.sCurrencyAddress = d.Address;
+					cCPKCampaignPoints.nCurrencyAmount = d.nForeignTotal + d.nNativeTotal;
+					mCPKCampaignPoints[d.CPK + sSubCampaign] = cCPKCampaignPoints;
+					LogPrintf("\nAssessBlocks-lowlevel cpk %s addr %s amount %f  subcampaign %s", d.CPK, d.Address, d.nValueUSD, sSubCampaign);
 
-						c.nPoints += nPoints;
-						mCampaignPoints[sThisCampaign] += nPoints;
-						mPoints[d.CPK] = c;
-						// CPK-Campaign
-						CPK cCPKCampaignPoints = mCPKCampaignPoints[d.CPK + sThisCampaign];
-						cCPKCampaignPoints.sAddress = d.CPK;
-						cCPKCampaignPoints.sNickName = c.sNickName;
-						cCPKCampaignPoints.nPoints += nPoints;
-						mCPKCampaignPoints[d.CPK + sThisCampaign] = cCPKCampaignPoints;
-					}
 				}
 			}
 		}
@@ -636,26 +639,30 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	{
 		std::string sCampaignName = myCampaign.first;
 		double nCampaignPercentage = GetSporkDouble(sCampaignName + "campaignpercentage", 0);
-		if (nCampaignPercentage < 0) nCampaignPercentage = 0;
 		double nCampaignPoints = mCampaignPoints[sCampaignName];
 		nCampaignPoints += 1;
 		nTotalPoints += nCampaignPoints;
 		for (auto Members : mPoints)
 		{
-			std::string sKey = Members.second.sAddress + sCampaignName;
-			
-			double nP = (mCPKCampaignPoints[sKey].nPoints / nCampaignPoints) * nCampaignPercentage;
-			mCPKCampaignPoints[sKey].nProminence = nP;
-			
-			std::string sRow = sCampaignName + "|" + Members.second.sAddress + "|" + RoundToString(mCPKCampaignPoints[sKey].nPoints, 0) + "|" 
-				+ RoundToString(mCPKCampaignPoints[sKey].nProminence, 8) + "|" + Members.second.sNickName + "|" + 
-				RoundToString(nCampaignPoints, 0) + "\n";
-			if (!sAnalyzeUser.empty() && sAnalyzeUser == Members.second.sNickName)
+			for (auto subCampaign1 : mapSubCampaigns)
 			{
-				sAnalysisData2 += sRow;
+				std::string sKey = Members.second.sAddress + subCampaign1.second;
+				if (mCPKCampaignPoints[sKey].nPoints > 0)
+				{
+					double nP = (mCPKCampaignPoints[sKey].nPoints / nCampaignPoints) * nCampaignPercentage;
+					mCPKCampaignPoints[sKey].nProminence = nP;
+					std::string sRow = subCampaign1.second + "|" + Members.second.sAddress + "|" + RoundToString(mCPKCampaignPoints[sKey].nPoints, 0) + "|" 
+							+ RoundToString(mCPKCampaignPoints[sKey].nProminence, 8) + "|" + Members.second.sNickName + "|" + 
+							RoundToString(nCampaignPoints, 0) + "|" + Mid(mCPKCampaignPoints[sKey].sCurrencyAddress, 0, 12)
+							+ "|" + RoundToString((double)mCPKCampaignPoints[sKey].nCurrencyAmount/COIN, 8) + "\n";
+					if (!sAnalyzeUser.empty() && sAnalyzeUser == Members.second.sNickName)
+					{
+						sAnalysisData2 += sRow;
+					}
+					if (mCPKCampaignPoints[sKey].nProminence > 0)
+						sDetails += sRow;
+				}
 			}
-			if (mCPKCampaignPoints[sKey].nProminence > 0)
-				sDetails += sRow;
 		}
 	}
 	WriteCache("analysis", "data_1", sAnalysisData1, GetAdjustedTime());
@@ -669,7 +676,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	
 	// Create the Daily Contract
 	// Allow room for a QT change between contract creation time and superblock generation time
-	double nMaxContractPercentage = .98;
+	double nMaxContractPercentage = .999;
 	std::string sAddresses;
 	std::string sPayments;
 	std::string sProminenceExport = "<PROMINENCE>";
@@ -697,7 +704,10 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 			std::string sRow =  "ALL|" + Members.second.sAddress + "|" + RoundToString(Members.second.nPoints, 0) + "|" 
 				+ RoundToString(Members.second.nProminence, 4) + "|" 
 				+ localCPK.sNickName + "|" 
-				+ RoundToString((double)nPayment / COIN, 2) + "\n";
+				+ RoundToString((double)nPayment / COIN, 2) + "|"
+				+ Mid(Members.second.sCurrencyAddress, 0, 12) + "|"
+				+ RoundToString((double)Members.second.nCurrencyAmount/COIN, 8)
+				+ "\n";
 			sGenData += sRow;
 			nTotalProminence += Members.second.nProminence;
 			sProminenceExport += "<CPK>" + Members.second.sAddress + "|" + RoundToString(Members.second.nPoints, 0) + "|" + RoundToString(Members.second.nProminence, 4) + "|" + localCPK.sNickName + "</CPK>";
@@ -1226,7 +1236,7 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 	std::vector<std::string> vData = Split(sData.c_str(), "\n");
 	std::vector<std::string> vDetails = Split(sDetails.c_str(), "\n");
 	std::vector<std::string> vDiaries = Split(sDiaries.c_str(), "\n");
-	results.push_back(Pair("Prominence v1.1", "Details"));
+	results.push_back(Pair("Prominence v1.2", "Details"));
 	// DETAIL ROW FORMAT: sCampaignName + "|" + Members.Address + "|" + nPoints + "|" + nProminence + "|" + NickName + "|\n";
 	std::string sMyCPK = DefaultRecAddress("Christian-Public-Key");
 
@@ -1248,6 +1258,10 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 				results.push_back(Pair(sNarr, RoundToString(nProminence, 2) + "%"));
 		}
 	}
+
+	// ToDo : Move healing diaries to a widget
+
+	/*
 	if (vDiaries.size() > 0)
 		results.push_back(Pair("Healing", "Diary Entries"));
 	for (int i = 0; i < vDiaries.size(); i++)
@@ -1260,10 +1274,11 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 				results.push_back(Pair(Caption(vRow[1], 10), vRow[2]));
 		}
 	}
-
+	*/
+	
 	double dTotalPaid = 0;
-	// Allow room for a change in QT between first contract creation time and next superblock
-	double nMaxContractPercentage = .98;
+
+	double nMaxContractPercentage = .99;
 	results.push_back(Pair("Prominence", "Totals"));
 	for (int i = 0; i < vData.size(); i++)
 	{
@@ -1280,7 +1295,7 @@ UniValue GetProminenceLevels(int nHeight, std::string sFilterNickName)
 				sNickName = "N/A";
 			CAmount nOwed = nPaymentsLimit * (nProminence / 100) * nMaxContractPercentage;
 			std::string sNarr = sCampaign + ": " + sCPK + " [" + Caption(sNickName, 10) + "]" + ", Pts: " + RoundToString(nPoints, 2) 
-				+ ", Reward: " + RoundToString(nPayment, 3);
+				+ ", CurAddr: " + vRow[6] + ", CurAmt: " + vRow[7] + ", Reward: " + RoundToString(nPayment, 3);
 			if (Included(sFilterNickName, sCPK))
 				results.push_back(Pair(sNarr, RoundToString(nProminence, 3) + "%"));
 		}

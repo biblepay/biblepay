@@ -56,9 +56,7 @@ void BusinessObjectList::UpdateObject(int nType)
 		return;
 	std::string sMyType = nType == 0 ? "pog" : "pog_leaderboard";
 
-	LogPrintf("\nUpdateObject %s ", sMyType);
-
-	std::string sFields = "campaign,nickname,cpk,points,owed,prominence";
+	std::string sFields = "campaign,nickname,cpk,cur. addr,amount,points,owed,prominence";
     QStringList pHeaders = GetHeaders(sFields);
     QString pString = GUIUtil::TOQS(GetPOGBusinessObjectList(sMyType, sFields));
 	//QTimer::singleShot(700000, this, SLOT(()));
@@ -94,7 +92,7 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
     pMatrix = SplitData(pStr);
 	int rows = pMatrix.size();
 	int iFooterRow = 0;
-	int iAmountCol = 3;
+	int iAmountCol = 5;
 	int iNameCol = 1;
 	iFooterRow += 6;
 	std::string sXML = GUIUtil::FROMQS(pStr);
@@ -107,6 +105,7 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
     int cols = pMatrix[0].size();
     ui->tableWidget->setColumnCount(cols);
     ui->tableWidget->setHorizontalHeaderLabels(headers);
+	
     QString s;
 	double dGrandTotal = 0;
 	int iHighlighted = 0;
@@ -116,7 +115,7 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
     int iSortColumn = ui->tableWidget->horizontalHeader()->sortIndicatorSection();
     Qt::SortOrder soDefaultOrder = Qt::DescendingOrder;
     Qt::SortOrder soCurrentOrder = ui->tableWidget->horizontalHeader()->sortIndicatorOrder();
-	ui->tableWidget->setSortingEnabled(true);
+	ui->tableWidget->setSortingEnabled(false);
 	
     if (soDefaultOrder == soCurrentOrder && iSortColumn == default_sort_column && iSortColumn > 1)   
 	{
@@ -135,11 +134,24 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
         for(int j = 0; j < cols; j++)
 		{
 			QTableWidgetItem* q = new QTableWidgetItem();
-			bool bNumeric = (j == 3 || j == 4 || j == 5);
+			bool bNumeric = (j == 6 || j == 4 || j == 5 || j == 7);
             if (bNumeric) 
 			{
-				double theValue = cdbl(GUIUtil::FROMQS(pMatrix[i][j]), 2);
+				double theValue = cdbl(GUIUtil::FROMQS(pMatrix[i][j]), 8);
 				q->setData(Qt::DisplayRole, theValue);
+				// For column 4, this value can get really high and shows in scientific notation
+				if (j == 4 && theValue > 1000000)
+				{
+					std::string sMMValue = RoundToString(theValue/1000000, 4) + "MM";
+					q->setData(Qt::DisplayRole, GUIUtil::TOQS(sMMValue));
+				}
+				/*
+				else if (j==4)
+				{
+					std::string sMMValue = RoundToString(theValue, 8);
+					q->setData(Qt::DisplayRole, GUIUtil::TOQS(sMMValue));
+				}
+				*/
             }
             else 
 			{
@@ -156,7 +168,7 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 
 		if (iAmountCol > -1)
 		{
-			dGrandTotal += cdbl(GUIUtil::FROMQS(pMatrix[i][iAmountCol]), 2);
+			dGrandTotal += cdbl(GUIUtil::FROMQS(pMatrix[i][iAmountCol]), 5);
 		}
 	}
 	
@@ -176,7 +188,7 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 		}
 		std::string sLowBlock = ExtractXML(sXML, "<lowblock>", "</lowblock>");
 		std::string sHighBlock = ExtractXML(sXML, "<highblock>", "</highblock>");
-		std::string sHeading = "Leaderboard v1.0 - Range " + sLowBlock + " to " + sHighBlock;
+		std::string sHeading = "Leaderboard v1.2 - Range " + sLowBlock + " to " + sHighBlock;
 		// Label Heading
 		ui->lblLeaderboard->setText(GUIUtil::TOQS(sHeading));
 	}

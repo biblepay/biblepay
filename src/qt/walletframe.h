@@ -77,6 +77,7 @@ public Q_SLOTS:
 	/** Switch to Proposal Add Page */
 	void gotoProposalAddPage();
 	void gotoNFTAddPage(std::string sAction, uint256 h);
+	void gotoUTXOAddPage();
 	void gotoMailSendPage(std::string sAction);
 	void gotoNFTListPage();
 	void gotoUserEditPage();

@@ -59,18 +59,24 @@ void RequestMissingEmails()
 void SanctuaryOracleProcess()
 {
 	// Sanctuary side UTXO Oracle Process
-	std::vector<UTXOStake> uStakes = GetUTXOStakes(false);
-	for (int i = 0; i < uStakes.size(); i++)
+	std::vector<UTXOStake> uStakes = GetUTXOStakes();
+	for (auto u : uStakes)	
 	{
-		UTXOStake d = uStakes[i];
-		if (d.found)
+		std::vector<SimpleUTXO> vUTXO = GetUTXOStatus(u.Address);
+		int64_t nLastAssimilation = 0;
+		if (vUTXO.size() > 0)
 		{
-			int nStatus = GetUTXOStatus(d.TXID);
-			if (nStatus == 0)
-			{
-				AssimilateUTXO(d);
-			}
+			nLastAssimilation = vUTXO[0].AssimilationTime;
 		}
+		int64_t nAssimilationAge = GetAdjustedTime() - nLastAssimilation;
+		bool fSkip = false;
+		int64_t nAge = GetAdjustedTime() - u.Time;
+		if (nAge > (60 * 60 * 24 * 30) && vUTXO.size() > 0 && nLastAssimilation < (60 * 60 * 8))
+		{
+			fSkip = true;
+		}
+		/*	if  (!fSkip)  */
+		AssimilateUTXO(u);
 	}
 	fUTXOSTested = true;
 	// End of Sanctuary side UTXO Oracle Process
@@ -101,7 +107,6 @@ void ThreadPOOS(CConnman& connman)
 				// Once every 24 hours we clear the POOS statuses and start over (in case sanctuaries dropped out or added, or if the entire POOS system was disabled etc).
 				mapPOOSStatus.clear();
 				nPoosProcessTime = GetAdjustedTime();
-				mapUTXOStatus.clear();
 				fUTXOSTested = false;
 				SanctuaryOracleProcess();
 			}

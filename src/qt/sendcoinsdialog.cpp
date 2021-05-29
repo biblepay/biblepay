@@ -335,7 +335,7 @@ bool SendCoinsDialog::ConfirmUTXO(QList<SendCoinsRecipient> recipients, CAmount&
 	questionString.append(BitcoinUnits::formatHtmlWithUnit(model->getOptionsModel()->getDisplayUnit(), nUTXOAmount));
 	questionString.append("</span> ");
 	questionString.append(tr(" added as a UTXO Stake"));
-	double nDWU = CalculateUTXOReward(1, 0);
+	double nDWU = CalculateUTXOReward();
 	std::string sQuote = "<br>UTXO approximate DWU " + RoundToString(nDWU * 100, 4) + "%<br>";
 	questionString.append(QString::fromStdString(sQuote));
     questionString.append("<hr />");
@@ -394,6 +394,8 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 		clear();
 		return;
 	}
+
+	/*
 	else if (prepareStatus.status == WalletModel::TransactionCommitFailed && prepareStatus.reasonCommitFailed == "DWS_FAIL")
 	{
 		// UTXO Mining - R Andrews - BiblePay 1-5-2021
@@ -448,6 +450,8 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 		}
 
 	}
+	*/
+
 	// End of BIBLEPAY
 
 
@@ -539,7 +543,7 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 		// This is a premature spend of a high yield UTXO stake
 		// First verify the user will approve to pay for this
 		std::string sNarr = "<hr><font color=red>!ATTENTION!</font><br><br>You are attempting to spend locked coins from a high-risk UTXO stake that is not fulfilled.  <font color=gold>BiblePay will charge a <b>" 
-			+ RoundToString((double)nPenalty/COIN, 2) + "</b> BBP fee for this transaction.</font>  "
+			+ RoundToString((double)nPenalty/COIN, 2) + " or $" + RoundToString(GetUSDValueBBP(nPenalty), 2) + " USD</b> BBP fee for this transaction.</font>  "
 			+ " The fee will go directly to our burn address, which will help us pay for other participants staking fees.  "
 			+ " Do you approve this additional transaction fee to be SPENT? Clicking Yes means BIBLEPAY will spend this additional amount. <br> <hr>";
 		questionString.append(GUIUtil::TOQS(sNarr));

@@ -174,6 +174,13 @@ void WalletFrame::gotoNFTAddPage(std::string sAction, uint256 h)
         i.value()->gotoNFTAddPage(sAction, h);
 }
 
+void WalletFrame::gotoUTXOAddPage()
+{
+    QMap<QString, WalletView*>::const_iterator i;
+    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
+        i.value()->gotoUTXOAddPage();
+}
+
 void WalletFrame::gotoUserEditPage()
 {
     QMap<QString, WalletView*>::const_iterator i;

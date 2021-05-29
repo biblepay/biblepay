@@ -15,7 +15,6 @@
 #include <consensus/validation.h>
 #include <validation.h>
 #include <core_io.h>
-// #include <rpc/index/txindex.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
 #include <primitives/transaction.h>
@@ -3029,18 +3028,6 @@ UniValue exec(const JSONRPCRequest& request)
 		double nPin = AddressToPin(s2);
 		results.push_back(Pair("pin", nPin));
 	}
-	else if (sItem == "getbestutxo")
-	{
-		// Minimum Stake Amount
-		double nMin = cdbl(request.params[1].getValStr(), 2);
-		std::string sAddress;
-		CAmount nReturnAmount;
-		CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
-		std::string sUTXO = pwallet->GetBestUTXO(nMin * COIN, .01, sAddress, nReturnAmount);
-		results.push_back(Pair("UTXO", sUTXO));
-		results.push_back(Pair("Address", sAddress));
-		results.push_back(Pair("Amount", (double)nReturnAmount/COIN));
-	}
 	else if (sItem == "listorphans")
 	{
 		std::string sEntry;
@@ -4166,13 +4153,25 @@ UniValue exec(const JSONRPCRequest& request)
 		uint256 h = GetSHA256Hash(s1);
 		results.push_back(Pair("hash", h.GetHex()));
 	}
+	else if (sItem == "testutxo3")
+	{
+		std::string sAddress = request.params[1].get_str();
+		std::vector<SimpleUTXO> l = GetAddressUTXOs_BBP(sAddress);
+		for (auto i : l)
+		{
+			UniValue o(UniValue::VOBJ);
+			i.ToJson(o);
+			results.push_back(Pair(i.TXID, o));
+		}
+
+	}
 	else if (sItem == "testutxo1")
 	{
 		std::string sTicker = request.params[1].get_str();  
 		std::string sAddress = request.params[2].get_str();
 		CAmount nAmount = StringToAmount(request.params[3].get_str());
 		results.push_back(Pair("foreign amount", AmountToString(nAmount)));
-		SimpleUTXO u = QueryUTXO3(sTicker, sAddress, nAmount, GetAdjustedTime());
+		SimpleUTXO u = QueryUTXOMaster(sTicker, sAddress, nAmount, GetAdjustedTime());
 		results.push_back(Pair(sTicker, AmountToString(u.nAmount)));
 		results.push_back(Pair("TXID", u.TXID));
     }
@@ -4180,24 +4179,22 @@ UniValue exec(const JSONRPCRequest& request)
 	{
 		// exec testutxo1 DOGE DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c 777
 		std::string sAddress3 = "DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c";
-		SimpleUTXO u = QueryUTXO2("DOGE", sAddress3, 777 * COIN);
+		SimpleUTXO u = QueryUTXOMaster("DOGE", sAddress3, 777 * COIN, GetAdjustedTime());
 		results.push_back(Pair("DOGE", (double)u.nAmount/COIN));
         //ETH
 		std::string sAddress4 = "0xaFe8C2709541E72F245e0DA0035f52DE5bdF3ee5";
-        SimpleUTXO u6 = QueryUTXO2("ETH", sAddress4, 0);
+        SimpleUTXO u6 = QueryUTXOMaster("ETH", sAddress4, .04207600,0);
 		results.push_back(Pair("ETH", (double)u6.nAmount/COIN));
 
 		//BTC
 		std::string sAddress5 = "1Hz96kJKF2HLPGY15JWLB5m9qGNxvt8tHJ";
-		SimpleUTXO u7 = QueryUTXO2("BTC", sAddress5, 0);
+		SimpleUTXO u7 = QueryUTXOMaster("BTC", sAddress5, 7.51994662,0);
 		results.push_back(Pair("BTC", (double)u7.nAmount/COIN));
 
 
         std::string sAddress6 = "XjsyPuaU6hVS63AVsZVjTYMkqYDYAcE3dp";
-		SimpleUTXO u8 = QueryUTXO2("DASH", sAddress6, 0);
+		SimpleUTXO u8 = QueryUTXOMaster("DASH", sAddress6, 0,0);
 		results.push_back(Pair("DASH", (double)u8.nAmount/COIN));
-		MilliSleep(2000);
-
 	}
 	else if (sItem == "poostest")
 	{

@@ -62,6 +62,7 @@ const QString ZAPTXES1("-zapwallettxes=1 -persistmempool=0");
 const QString ZAPTXES2("-zapwallettxes=2 -persistmempool=0");
 const QString UPGRADEWALLET("-upgradewallet");
 const QString REINDEX("-reindex");
+const QString ERASECHAIN("-erasechain=1");
 
 namespace {
 
@@ -495,6 +496,7 @@ RPCConsole::RPCConsole(QWidget* parent, Qt::WindowFlags flags) :
     connect(ui->btn_zapwallettxes2, SIGNAL(clicked()), this, SLOT(walletZaptxes2()));
     connect(ui->btn_upgradewallet, SIGNAL(clicked()), this, SLOT(walletUpgrade()));
     connect(ui->btn_reindex, SIGNAL(clicked()), this, SLOT(walletReindex()));
+	connect(ui->btn_erasechain, SIGNAL(clicked()), this, SLOT(eraseChain()));
 
     // set library version labels
 #ifdef ENABLE_WALLET
@@ -804,6 +806,12 @@ void RPCConsole::walletReindex()
     buildParameterlist(REINDEX);
 }
 
+/** Restart wallet with "-erasechain=1" */
+void RPCConsole::eraseChain()
+{
+	buildParameterlist(ERASECHAIN);
+}
+
 /** Build command-line parameter list for restart */
 void RPCConsole::buildParameterlist(QString arg)
 {
@@ -818,6 +826,7 @@ void RPCConsole::buildParameterlist(QString arg)
     args.removeAll(ZAPTXES2);
     args.removeAll(UPGRADEWALLET);
     args.removeAll(REINDEX);
+	args.removeAll(ERASECHAIN);
 
     // Append repair parameter to command line.
     args.append(arg);

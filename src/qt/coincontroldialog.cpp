@@ -372,8 +372,6 @@ void CoinControlDialog::lockCoin()
 // context menu action: unlock coin
 void CoinControlDialog::unlockCoin()
 {
-	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
-
     COutPoint outpt(uint256S(contextMenuItem->data(COLUMN_ADDRESS, TxHashRole).toString().toStdString()), contextMenuItem->data(COLUMN_ADDRESS, VOutRole).toUInt());
     model->unlockCoin(outpt);
     contextMenuItem->setDisabled(false);
@@ -764,7 +762,7 @@ void CoinControlDialog::updateView()
         fHideAdditional = false;
         ui->hideButton->setVisible(false);
     }
-	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
+	//std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
     QString strHideButton;
     switch (mode) {
     case Mode::NORMAL:
@@ -927,6 +925,7 @@ void CoinControlDialog::updateView()
 
 			bool fGift = CompareMask2(out.tx->tx->vout[out.i].nValue, 1537);
 
+			/*
 			std::string sUTXO = txhash.GetHex() + "-" + RoundToString(out.i, 0);
 			UTXOStake u1 = GetUTXOStakeByUTXO2(uStakes, sUTXO, false);
 			if (u1.found)
@@ -943,13 +942,14 @@ void CoinControlDialog::updateView()
 						itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_hiyield", GUIUtil::ThemedColor::RED));
 					}
 				}
-				else
 				{
 	            	itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("utxo_lock_closed", GUIUtil::ThemedColor::RED));
 				}
 				nTotalUTXOCoins += out.tx->tx->vout[out.i].nValue;
 			}
-			else if (fGift)
+			*/
+
+			if (fGift)
 			{
             	itemOutput->setIcon(COLUMN_CHECKBOX, GUIUtil::getIcon("reward232", GUIUtil::ThemedColor::RED));
 			}

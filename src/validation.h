@@ -201,6 +201,7 @@ static const int MINIMUM_EMAIL_LENGTH = 5;
 static const int BLOCKS_PER_DAY = 205;
 static const int SANCTUARY_COLLATERAL = 4500001;
 static int64_t MAX_BLOCK_SUBSIDY = 20000;
+static const int UTXO_COST = 500;
 
 static const int SPORK8_HEIGHT = 23000;
 // The highest value in a daily superblock to trigger a daily payment icon
@@ -246,10 +247,12 @@ extern int nSideChainHeight;
 class CEmail;
 struct IPFSTransaction;
 struct QueuedProposal;
+struct SimpleUTXO;
 
 extern std::map<uint256, CEmail> mapEmails;
 extern std::map<std::string, int> mapPOOSStatus;
-extern std::map<uint256, int> mapUTXOStatus;
+extern std::map<std::string, std::vector<SimpleUTXO>> mapUTXOStatus;
+
 extern std::map<std::string, IPFSTransaction> mapSidechainTransactions;
 extern std::vector<QueuedProposal> mvQueuedProposals;
 

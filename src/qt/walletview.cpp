@@ -36,6 +36,7 @@
 #include "generictabledialog.h"
 #include "proposaladddialog.h"
 #include "nftadddialog.h"
+#include "utxodialog.h"
 #include "mailsenddialog.h"
 #include "userdialog.h"
 #include "memorizescripturedialog.h"
@@ -91,6 +92,7 @@ WalletView::WalletView(QWidget* parent) :
 	// BiblePay
 	proposalAddPage = new ProposalAddDialog(platformStyle);
 	nftAddPage = new NFTAddDialog(platformStyle);
+	utxoAddPage = new UTXODialog(platformStyle);
 	mailSendPage = new MailSendDialog(platformStyle);
 	userEditPage = new UserDialog(platformStyle);
 	
@@ -111,6 +113,7 @@ WalletView::WalletView(QWidget* parent) :
 	addWidget(userEditPage);
 	addWidget(proposalAddPage);
 	addWidget(nftAddPage);
+	addWidget(utxoAddPage);
 	addWidget(mailSendPage);
 	addWidget(nftListPage);
 
@@ -300,6 +303,12 @@ void WalletView::gotoNFTAddPage(std::string sAction, uint256 hash)
 {
 	setCurrentWidget(nftAddPage);
 	nftAddPage->UpdateDisplay(sAction, hash);
+}
+
+void WalletView::gotoUTXOAddPage()
+{
+	setCurrentWidget(utxoAddPage);
+	utxoAddPage->UpdateDisplay();
 }
 
 void WalletView::gotoUserEditPage()

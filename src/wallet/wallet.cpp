@@ -3650,8 +3650,9 @@ int CWallet::CountInputsWithAmount(CAmount nInputAmount) const
     return nTotal;
 }
 
-void CWallet::LockGifts()
+void CWallet::LockByMask(int nMask)
 {
+	// Gifts are 1537, other pins vary by address
 	CCoinControl coin_control;
 	std::vector<COutput> vAvailableCoins;
 	
@@ -3667,7 +3668,7 @@ void CWallet::LockGifts()
 		COutPoint out1(out.tx->GetHash(), out.i);
 	
 		CAmount nAmount = pcoin->tx->vout[out.i].nValue;
-		bool fGift = CompareMask2(nAmount, 1537);
+		bool fGift = CompareMask2(nAmount, nMask);
 		bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
 		if (!fLocked && fGift)
 		{
@@ -3704,6 +3705,7 @@ void CWallet::UnlockGift(std::string sAddress)
 
 std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::string& sAddress, CAmount& nReturnAmount)
 {
+	/*
 	CAmount MIN_UTXO_AMOUNT = 10000 * COIN;
 	CAmount MAX_UTXO_AMOUNT = 10000000 * COIN;
 	std::vector<COutput> vAvailableCoins;
@@ -3718,7 +3720,7 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 	double nFoundCoinAge = 0;
 	std::sort(vAvailableCoins.rbegin(), vAvailableCoins.rend(), CompareByCoinValue());
 	std::string sUTXO;
-	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
+	std::vector<UTXOStake> uStakes = GetUTXOStakes();
 
 	for (auto out : vAvailableCoins)
     {
@@ -3756,6 +3758,7 @@ std::string CWallet::GetBestUTXO(CAmount nMinimumAmount, double nMinAge, std::st
 	
 	sAddress = "";
 	nReturnAmount = 0;
+	*/
 	return "";
 }
 

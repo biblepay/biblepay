@@ -360,10 +360,6 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 	return true;
 }
 
-bool height_sort(std::pair<CAddressUnspentKey, CAddressUnspentValue> a,
-                std::pair<CAddressUnspentKey, CAddressUnspentValue> b) {
-    return a.second.blockHeight < b.second.blockHeight;
-}
 
 static bool rest_mempool_info(HTTPRequest* req, const std::string& strURIPart)
 {
@@ -458,6 +454,11 @@ static bool rest_tx(HTTPRequest* req, const std::string& strURIPart)
     }
 }
 
+bool height_sort2(std::pair<CAddressUnspentKey, CAddressUnspentValue> a,
+                std::pair<CAddressUnspentKey, CAddressUnspentValue> b) {
+    return a.second.blockHeight < b.second.blockHeight;
+};
+
 bool getIndexKey(const std::string& str, uint160& hashBytes, int& type);
 bool getAddressFromIndex(const int &type, const uint160 &hash, std::string &address);
 
@@ -491,7 +492,7 @@ static bool rest_getaddressutxos(HTTPRequest* req, const std::string& strURIPart
         }
     }
 
-    std::sort(unspentOutputs.begin(), unspentOutputs.end(), height_sort);
+    std::sort(unspentOutputs.begin(), unspentOutputs.end(), height_sort2);
     UniValue result(UniValue::VARR);
     for (std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> >::const_iterator it=unspentOutputs.begin(); it!=unspentOutputs.end(); it++) 
 	{

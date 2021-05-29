@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>769</width>
-    <height>485</height>
+    <height>556</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1495,6 +1495,35 @@
        </property>
        <property name="text">
         <string>Wallet Path</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_erasechain">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>410</y>
+         <width>301</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Erase Chain and Resynchronize</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_repair_erasechain_1">
+       <property name="geometry">
+        <rect>
+         <x>330</x>
+         <y>400</y>
+         <width>411</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>-erasechain=1: Erase the chain and governance files and resync (this is the most accurate way to resync).</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
        </property>
       </widget>
      </widget>

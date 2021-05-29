@@ -213,7 +213,8 @@ private:
 std::map<std::string, std::pair<std::string, int64_t>> mvApplicationCache;
 std::map<std::string, IPFSTransaction> mapSidechainTransactions;
 std::map<std::string, int> mapPOOSStatus;
-std::map<uint256, int> mapUTXOStatus;
+std::map<std::string, std::vector<SimpleUTXO>> mapUTXOStatus;
+
 bool fProd = false;
 bool fUTXOSTested = false;
 bool fWarmBootFinished;

@@ -130,6 +130,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle *networkStyle, QWidget *parent) :
 	univAction(0),
 	proposalAddMenuAction(0),
 	nftAddMenuAction(0),
+	utxoAddMenuAction(0),
 	listNFTMenuAction(0),
 	mailSendMenuAction(0),
 	userEditMenuAction(0),
@@ -642,6 +643,10 @@ void BitcoinGUI::createActions()
     nftAddMenuAction->setStatusTip(tr("Add NFT"));
     nftAddMenuAction->setEnabled(false);
 
+	utxoAddMenuAction = new QAction(QIcon(":/icons/address-book"), tr("Portfolio Builder"), this);
+    utxoAddMenuAction->setStatusTip(tr("Add UTXO"));
+    utxoAddMenuAction->setEnabled(false);
+	
 	listNFTMenuAction = new QAction(QIcon(":/icons/address-book"), tr("List My NFTs"), this);
     listNFTMenuAction->setStatusTip(tr("List My NFTs"));
     listNFTMenuAction->setEnabled(false);
@@ -767,6 +772,7 @@ void BitcoinGUI::createActions()
 	connect(proposalListAction, SIGNAL(triggered()), this, SLOT(gotoProposalListPage()));
 	connect(proposalAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoProposalAddPage()));
 	connect(nftAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoNFTAddPage()));
+	connect(utxoAddMenuAction, SIGNAL(triggered()), this, SLOT(gotoUTXOAddPage()));
 	connect(listNFTMenuAction, SIGNAL(triggered()), this, SLOT(gotoNFTListPage()));
 	connect(mailSendMenuAction, SIGNAL(triggered()), this, SLOT(gotoMailSendPage()));
 	connect(userEditMenuAction, SIGNAL(triggered()), this, SLOT(gotoUserEditPage()));
@@ -890,6 +896,7 @@ void BitcoinGUI::createMenuBar()
 
 		QMenu *misc = appMenuBar->addMenu(tr("Misc."));
 		misc->addAction(mailSendMenuAction);
+		misc->addAction(utxoAddMenuAction);
 
 		QMenu *useredit = appMenuBar->addMenu(tr("User Record"));
 		useredit->addAction(userEditMenuAction);
@@ -1160,6 +1167,7 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
 
 	proposalAddMenuAction->setEnabled(enabled);
 	nftAddMenuAction->setEnabled(enabled);
+	utxoAddMenuAction->setEnabled(enabled);
 	listNFTMenuAction->setEnabled(enabled);
 	mailSendMenuAction->setEnabled(enabled);
 
@@ -1416,6 +1424,15 @@ void BitcoinGUI::gotoNFTAddPage()
     nftAddMenuAction->setChecked(true);
     if (walletFrame)
 		walletFrame->gotoNFTAddPage("CREATE", uint256S("0x0"));
+}
+
+void BitcoinGUI::gotoUTXOAddPage()
+{
+	if (!clientModel)
+		return;
+    utxoAddMenuAction->setChecked(true);
+    if (walletFrame)
+		walletFrame->gotoUTXOAddPage();
 }
 
 void BitcoinGUI::gotoMailSendPage()
