@@ -414,9 +414,12 @@ struct ReferralCode
 	CAmount TotalClaimed = 0;
 	CAmount TotalEarned = 0;
 	CAmount TotalReferralReward = 0;
+	CAmount GiftAmount = 0;
 	double ReferralEffectivity = 0;
 	double PercentageAffected = 0;
 	double ReferralRewards = 0;
+	int64_t Expiration = 0;
+	int64_t Time = 0;
 	bool found;
 };
 
@@ -607,6 +610,7 @@ struct SimpleUTXO
 	int Height = 0;
 	int Trace = 0;
 	double ValueUSD = 0;
+	CAmount nTotalBalance = 0;
 	int64_t AssimilationTime = 0;
 	
 	std::string Address;
@@ -887,7 +891,7 @@ CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAm
 void LockUTXOStakes();
 int64_t GetTxTime1(uint256 hash, int ordinal);
 std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload, std::string sOptFundAddress = "", CAmount nOptFundAmount = 0);
-std::string SendReferralCode(std::string& sError);
+std::string SendReferralCode(std::string& sError, double nGiftAmount);
 CAmount CheckReferralCode(std::string sCode);
 ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details);
 std::string ClaimReferralCode(std::string sCode, std::string& sError);
@@ -908,15 +912,16 @@ std::vector<Payment> GetPayments();
 DACResult SendDSQL(UniValue& oDSQLObject, std::string sTable, std::string ID);
 std::vector<CDSQLQuery> DSQLQuery(std::string sFilter);
 void ProcessDSQLInstantSendTransaction(CTransaction tx);
-SimpleUTXO QueryUTXO2(std::string sTicker, std::string sAddress, CAmount nAmount);
-SimpleUTXO QueryUTXO3(std::string sTicker, std::string sAddress, CAmount nAmount, int64_t nTime);
-SimpleUTXO QueryUTXOMaster(std::string sTicker, std::string sAddress, CAmount nAmount, int64_t nTime);
 std::map<std::string, std::string> SearchForDataList(std::string sType, std::string sSearch);
 uint256 GetSHA256Hash(std::string sData);
-std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp);
 double GetUSDValueBBP(CAmount nBBP);
 std::vector<SimpleUTXO> GetAddressUTXOs_BBP(std::string sAddress);
 void AddUTXOStake(UTXOStake& u, bool fDryRun, std::string& sError, std::string sOptFundAddress, CAmount nOptFundAmount);
 UTXOStake GetUTXOStakeByAddress(std::string Address);
+std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp);
+std::vector<SimpleUTXO> QueryUTXOListA(std::string sTicker, std::string sAddress, int64_t nTimestamp);
+std::vector<SimpleUTXO> QueryUTXOListB(std::string sTicker, std::string sAddress, int64_t nTimestamp);
+std::map<std::string, CAmount> GetImpactFromReferralCodeGifts(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU);
+ReferralCode DeserializeReferralCode(std::string sCode);
 
 #endif

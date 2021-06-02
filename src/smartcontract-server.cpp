@@ -603,7 +603,7 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 					UniValue details;
 					ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, d.CPK, details);
 					// HARVEST MISSION CRITICAL nValueUSD * coverage  * rc1.ReferralRewards;
-					double nPoints = d.nValueUSD * d.nCoverage;
+					double nPoints = d.nValueUSD * d.nCoverage * rc1.ReferralRewards;
 					c.nPoints += nPoints;
 					c.nCurrencyAmount += d.nForeignTotal + d.nNativeTotal;
 

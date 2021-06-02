@@ -4155,46 +4155,27 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "testutxo3")
 	{
-		std::string sAddress = request.params[1].get_str();
+		std::string sTicker = request.params[1].get_str();
+		std::string sAddress = request.params[2].get_str();
+
 		std::vector<SimpleUTXO> l = GetAddressUTXOs_BBP(sAddress);
-		for (auto i : l)
+		std::vector<SimpleUTXO> lA = QueryUTXOListA(sTicker, sAddress, 0);
+		std::vector<SimpleUTXO> lB = QueryUTXOListB(sTicker, sAddress, 0);
+		
+		for (auto i : lA)
 		{
 			UniValue o(UniValue::VOBJ);
 			i.ToJson(o);
-			results.push_back(Pair(i.TXID, o));
+			results.push_back(Pair("A:" + i.TXID, o));
 		}
 
-	}
-	else if (sItem == "testutxo1")
-	{
-		std::string sTicker = request.params[1].get_str();  
-		std::string sAddress = request.params[2].get_str();
-		CAmount nAmount = StringToAmount(request.params[3].get_str());
-		results.push_back(Pair("foreign amount", AmountToString(nAmount)));
-		SimpleUTXO u = QueryUTXOMaster(sTicker, sAddress, nAmount, GetAdjustedTime());
-		results.push_back(Pair(sTicker, AmountToString(u.nAmount)));
-		results.push_back(Pair("TXID", u.TXID));
-    }
-	else if (sItem == "utxotest2")
-	{
-		// exec testutxo1 DOGE DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c 777
-		std::string sAddress3 = "DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c";
-		SimpleUTXO u = QueryUTXOMaster("DOGE", sAddress3, 777 * COIN, GetAdjustedTime());
-		results.push_back(Pair("DOGE", (double)u.nAmount/COIN));
-        //ETH
-		std::string sAddress4 = "0xaFe8C2709541E72F245e0DA0035f52DE5bdF3ee5";
-        SimpleUTXO u6 = QueryUTXOMaster("ETH", sAddress4, .04207600,0);
-		results.push_back(Pair("ETH", (double)u6.nAmount/COIN));
+		for (auto i : lB)
+		{
+			UniValue o(UniValue::VOBJ);
+			i.ToJson(o);
+			results.push_back(Pair("B:" + i.TXID, o));
+		}
 
-		//BTC
-		std::string sAddress5 = "1Hz96kJKF2HLPGY15JWLB5m9qGNxvt8tHJ";
-		SimpleUTXO u7 = QueryUTXOMaster("BTC", sAddress5, 7.51994662,0);
-		results.push_back(Pair("BTC", (double)u7.nAmount/COIN));
-
-
-        std::string sAddress6 = "XjsyPuaU6hVS63AVsZVjTYMkqYDYAcE3dp";
-		SimpleUTXO u8 = QueryUTXOMaster("DASH", sAddress6, 0,0);
-		results.push_back(Pair("DASH", (double)u8.nAmount/COIN));
 	}
 	else if (sItem == "poostest")
 	{
