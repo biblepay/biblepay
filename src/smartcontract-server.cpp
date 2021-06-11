@@ -360,7 +360,6 @@ std::map<std::string, double> DACEngine(std::map<std::string, Orphan>& mapOrphan
 	return mapDAC;
 }
 
-
 std::string GetGSCContract(int nHeight, bool fCreating)
 {
 	int nNextSuperblock = 0;
@@ -602,16 +601,24 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 					// Referral codes
 					UniValue details;
 					ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(vGRC, uRC, uStakes, d.CPK, details);
-					double nAdjAmt = d.Ticker == "BBP" ? GetUSDValueBBP(rc1.dGiftAmount * COIN) : 0;
-					double nUSDValue = d.nValueUSD + nAdjAmt;
+					CAmount nCurGiftAmount = 0;
+					double nUSDCurGiftAmount = 0;
+					if (d.Ticker == "BBP")
+					{
+						nCurGiftAmount = rc1.dGiftAmount * COIN;
+						nUSDCurGiftAmount = GetUSDValueBBP(nCurGiftAmount);
+					}
+					double nUSDValue = d.nValueUSD + nUSDCurGiftAmount;
 					double nPoints = nUSDValue * d.nCoverage * rc1.ReferralRewards;
 					c.nPoints += nPoints;
-					c.nCurrencyAmount += d.nForeignTotal + d.nNativeTotal;
+					c.nCurrencyAmount += d.nForeignTotal + d.nNativeTotal + nCurGiftAmount;
 
 					c.sCurrencyAddress = d.Address;
 					mCampaignPoints[sThisCampaign] += nPoints;
 					mPoints[d.CPK] = c;
+					/*
 					LogPrintf("\nAssessBlocks::Cpk %s addr %s amount %f AdjAmount %f, Points %f, GiftAmt %f ", d.CPK, d.Address, d.nValueUSD, nAdjAmt, nPoints, rc1.dGiftAmount);
+					*/
 
 					// Details for CPK-Campaign-Address
 					CPK cCPKCampaignPoints = mCPKCampaignPoints[d.CPK + sSubCampaign];
@@ -619,9 +626,12 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 					cCPKCampaignPoints.sNickName = c.sNickName;
 					cCPKCampaignPoints.nPoints += nPoints;
 					cCPKCampaignPoints.sCurrencyAddress = d.Address;
-					cCPKCampaignPoints.nCurrencyAmount = d.nForeignTotal + d.nNativeTotal;
+					
+					cCPKCampaignPoints.nCurrencyAmount = d.nForeignTotal + d.nNativeTotal + nCurGiftAmount;
 					mCPKCampaignPoints[d.CPK + sSubCampaign] = cCPKCampaignPoints;
+					/*
 					LogPrintf("\nAssessBlocks-lowlevel cpk %s addr %s amount %f  subcampaign %s", d.CPK, d.Address, d.nValueUSD, sSubCampaign);
+					*/
 
 				}
 			}

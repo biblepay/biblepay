@@ -154,10 +154,10 @@ void UTXODialog::on_btnQuery_clicked()
 	u.Time = 1;
 	AssimilateUTXO(u, 1);
 	std::vector<SimpleUTXO> l = GetUTXOStatus(u.Address);
-	std::string sHTML = "<table style='border=1px'><tr><th>TXID<th>Amount</tr>";
+	std::string sHTML = "<table style='background-color:maroon;color:gold;border=1px'><tr><th>TXID<th>Amount</tr>";
 	for (auto s : l)
 	{
-		std::string sRow = "<tr><td>" + s.TXID + "</td><td>" + AmountToString(s.nAmount) + "</td></tr>";
+		std::string sRow = "<tr><td>" + Mid(s.TXID, 0, 20) + "&nbsp;</td><td>" + AmountToString(s.nAmount) + "</td></tr>";
 		sHTML += sRow;
 	}
 	if (l.size() == 0)
