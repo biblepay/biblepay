@@ -33,6 +33,7 @@ UTXODialog::UTXODialog(const PlatformStyle *platformStyle, QWidget *parent) :
 	ui->cmbTicker->clear();
 	ui->cmbTicker->addItem("");
 	ui->cmbTicker->addItem("BBP (BiblePay)");
+	ui->cmbTicker->addItem("BCH (Bitcoin-Cash)");
 	ui->cmbTicker->addItem("BTC (Bitcoin)");
 	ui->cmbTicker->addItem("DASH (Dashpay)");
 	ui->cmbTicker->addItem("DOGE (Dogecoin)");
@@ -40,6 +41,8 @@ UTXODialog::UTXODialog(const PlatformStyle *platformStyle, QWidget *parent) :
 	ui->cmbTicker->addItem("LTC (Litecoin)");
 	ui->cmbTicker->addItem("XLM (Stellar Lumens)");
 	ui->cmbTicker->addItem("XRP (Ripple)");
+	ui->cmbTicker->addItem("ZEC (Z-Cash)");
+
 	ui->txtPin->setValidator( new QIntValidator(0, 99999, this) );
 	ui->txtAmount->setValidator( new QIntValidator(5000, 20000000, this) );
 	ui->cmbTicker->setCurrentIndex(-1);
@@ -119,6 +122,53 @@ void UTXODialog::clear()
 	ui->chkAdvanced->setChecked(false);
 }
 
+void UTXODialog::on_btnQuery_clicked()
+{
+	std::string sError;
+	std::string sTicker = GetElement(GUIUtil::FROMQS(ui->cmbTicker->currentText()), " ", 0);
+	if (sTicker.empty()) 
+		sError += "Ticker must be chosen. ";
+	UTXOStake u;
+	u.Address = GUIUtil::FROMQS(ui->txtAddress->text());
+	
+	if (u.Address.empty())
+		sError += "Address must be populated. ";
+
+	if (u.Address.length() > 128)
+		sError += "Address too long. ";
+
+	boost::to_upper(sTicker);
+	
+	bool fAddressValid = ValidateAddress3(sTicker, u.Address);
+	if (!fAddressValid)
+	{
+		sError += "Address invalid. ";
+	}
+	if (!sError.empty())
+	{
+		QMessageBox::warning(this, tr("Error"), GUIUtil::TOQS(sError), QMessageBox::Ok, QMessageBox::Ok);
+		return;
+	}
+
+	u.Ticker = sTicker;
+	u.Time = 1;
+	AssimilateUTXO(u, 1);
+	std::vector<SimpleUTXO> l = GetUTXOStatus(u.Address);
+	std::string sHTML = "<table style='border=1px'><tr><th>TXID<th>Amount</tr>";
+	for (auto s : l)
+	{
+		std::string sRow = "<tr><td>" + s.TXID + "</td><td>" + AmountToString(s.nAmount) + "</td></tr>";
+		sHTML += sRow;
+	}
+	if (l.size() == 0)
+	{
+		sHTML = "This address has no UTXOs. ";
+	}
+
+	QMessageBox::warning(this, tr("UTXO Status"), GUIUtil::TOQS(sHTML), QMessageBox::Ok, QMessageBox::Ok);
+
+}
+
 void UTXODialog::on_btnSubmit_clicked()
 {
 	std::string sError;
@@ -136,6 +186,13 @@ void UTXODialog::on_btnSubmit_clicked()
 		sError += "Address too long. ";
 
 	boost::to_upper(sTicker);
+	
+	bool fAddressValid = ValidateAddress3(sTicker, u.Address);
+	if (!fAddressValid)
+	{
+		sError += "Address invalid. ";
+	}
+
 	double nAmount = cdbl(GUIUtil::FROMQS(ui->txtAmount->text()), 0);
 	u.Ticker = sTicker;
 

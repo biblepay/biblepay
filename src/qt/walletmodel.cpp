@@ -335,11 +335,6 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             CScript scriptPubKey = GetScriptForDestination(DecodeDestination(rcp.address.toStdString()));
             CRecipient recipient = {scriptPubKey, rcp.amount, rcp.fSubtractFeeFromAmount};
 
-
-
-
-
-
 			// BiblePay
 			recipient.txtMessage = GUIUtil::FROMQS(rcp.txtMessage);
 			if (rcp.fDiary)

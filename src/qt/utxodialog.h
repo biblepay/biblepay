@@ -44,6 +44,7 @@ public Q_SLOTS:
 	void ChangeCurrency(int i);
 	void onAddressChanged();
     void on_btnSubmit_clicked();
+	void on_btnQuery_clicked();
 
 private:
     Ui::UTXODialog *ui;

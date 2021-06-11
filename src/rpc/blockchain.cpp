@@ -3523,25 +3523,6 @@ UniValue exec(const JSONRPCRequest& request)
 		if (!fAdv)
 			results.push_back(Pair("Error", sError));
 	}
-	else if (sItem == "funddsql")
-	{
-		// Harvest Todo Mission Critical Remove
-
-		if (request.params.size() != 2)
-			throw std::runtime_error("funddsql: Make a DSQL payment.  Usage:  funddsql amount.");
-		CAmount nAmount = cdbl(request.params[1].get_str(), 2) * COIN;
-		if (nAmount < 1)
-			throw std::runtime_error("Amount must be > 0.");
-		// Ensure the DSQL server knows about it
-		std::string sResult = BIPFS_Payment(nAmount, "", "");
-		std::string sHash = ExtractXML(sResult, "<hash>", "</hash>");
-		std::string sErrorsDSQL = ExtractXML(sResult, "<ERRORS>", "</ERRORS>");
-		std::string sTXID = ExtractXML(sResult, "<TXID>", "</TXID>");
-		results.push_back(Pair("TXID", sTXID));
-		if (!sErrorsDSQL.empty())
-			results.push_back(Pair("DSQL Errors", sErrorsDSQL));
-		results.push_back(Pair("DSQL Hash", sHash));
-	}
 	else if (sItem == "blscommand")
 	{
 		if (request.params.size() != 2)	
@@ -4152,30 +4133,6 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string s1 = request.params[1].get_str();
 		uint256 h = GetSHA256Hash(s1);
 		results.push_back(Pair("hash", h.GetHex()));
-	}
-	else if (sItem == "testutxo3")
-	{
-		std::string sTicker = request.params[1].get_str();
-		std::string sAddress = request.params[2].get_str();
-
-		std::vector<SimpleUTXO> l = GetAddressUTXOs_BBP(sAddress);
-		std::vector<SimpleUTXO> lA = QueryUTXOListA(sTicker, sAddress, 0);
-		std::vector<SimpleUTXO> lB = QueryUTXOListB(sTicker, sAddress, 0);
-		
-		for (auto i : lA)
-		{
-			UniValue o(UniValue::VOBJ);
-			i.ToJson(o);
-			results.push_back(Pair("A:" + i.TXID, o));
-		}
-
-		for (auto i : lB)
-		{
-			UniValue o(UniValue::VOBJ);
-			i.ToJson(o);
-			results.push_back(Pair("B:" + i.TXID, o));
-		}
-
 	}
 	else if (sItem == "poostest")
 	{

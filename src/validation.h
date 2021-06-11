@@ -195,7 +195,6 @@ static const std::string BUSINESS_OBJECTS = "BUSINESS_OBJECTS";
 static const int SSL_PORT = 443;
 static const int APM_REWARD = 7;
 static const int APM2_REWARD = 2500;
-// Harvest Release TODO - Mission Critical - Change to 250
 static const int APM3_REWARD = 250;
 static const int MINIMUM_EMAIL_LENGTH = 5; 
 static const int BLOCKS_PER_DAY = 205;

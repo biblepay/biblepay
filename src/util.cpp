@@ -968,7 +968,6 @@ fs::path GetDefaultDataDir()
     // Windows >= Vista: C:\Users\Username\AppData\Roaming\BiblePayCore
     // Mac: ~/Library/Application Support/BiblePayCore
     // Unix: ~/.biblepaycore
-	// Todo: Change this to ~/.biblepay during go live (mission critical todo)
 
 #ifdef WIN32
     // Windows

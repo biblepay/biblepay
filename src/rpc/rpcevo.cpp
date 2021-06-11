@@ -1907,7 +1907,7 @@ UniValue listutxostakes(const JSONRPCRequest& request)
 		}
 		if (nMineType == 3)
 		{
-			AssimilateUTXO(d);
+			AssimilateUTXO(d, 1);
 		}
 	}
 	for (const auto& kv : mapAmounts) 
@@ -1992,6 +1992,8 @@ UniValue price(const JSONRPCRequest& request)
 	double dDASH = GetCryptoPrice("dash");
 	double dXMR = GetCryptoPrice("xmr");
 	double dDOGE = GetCryptoPrice("doge");
+	double dBCH = GetCryptoPrice("bch");
+	double dZEC = GetCryptoPrice("zec");
 	double dLTC = GetCryptoPrice("ltc");
 	double dETH = GetCryptoPrice("eth");
 	double dStellar = GetCryptoPrice("xlm");
@@ -2005,6 +2007,8 @@ UniValue price(const JSONRPCRequest& request)
 	results.push_back(Pair("ETH/BTC", dETH));
 	results.push_back(Pair("XRP/BTC", dRipple));
 	results.push_back(Pair("XLM/BTC", dStellar));
+	results.push_back(Pair("ZEC/BTC", dZEC));
+	results.push_back(Pair("BCH/BTC", dBCH));
 	results.push_back(Pair("BTC/USD", dBTC));
 	
 	double nPrice = GetBBPUSDPrice();
@@ -2015,6 +2019,8 @@ UniValue price(const JSONRPCRequest& request)
 	double nXRPPriceUSD = dBTC * dRipple;
 	double nXLMPriceUSD = dBTC * dStellar;
 	double nLTCPriceUSD = dBTC * dLTC;
+	double nBCHPriceUSD = dBTC * dBCH;
+	double nZECPriceUSD = dBTC * dZEC;
 	std::string sAPM = GetAPMNarrative();
 	results.push_back(Pair("APM", sAPM));
 	results.push_back(Pair("DASH/USD", nDashPriceUSD));
@@ -2024,6 +2030,8 @@ UniValue price(const JSONRPCRequest& request)
 	results.push_back(Pair("XRP/USD", nXRPPriceUSD));
 	results.push_back(Pair("DOGE/USD", nDOGEPriceUSD));
 	results.push_back(Pair("LTC/USD", nLTCPriceUSD));
+	results.push_back(Pair("ZEC/USD", nZECPriceUSD));
+	results.push_back(Pair("BCH/USD", nBCHPriceUSD));
 	results.push_back(Pair(CURRENCY_TICKER + "/USD", nPrice));
 	return results;
 }
@@ -2089,7 +2097,8 @@ UniValue listattachedreferralcodes(const JSONRPCRequest& request)
 	// A user may have multiple referral codes cashed in.  Each one has a different max size based on the originators portfolio.
 	// Next the age of this users portfolio determines the effectiveness of each coupon.
 	// The coupon originator also gets a portfolio bonus for coupon utilization by others.
-	std::vector<ReferralCode> vRC = GetReferralCodes();
+	std::vector<ReferralCode> vCRC = GetClaimedReferralCodes();
+	std::vector<ReferralCode> vGRC = GetGeneratedReferralCodes();
 	std::vector<UTXOStake> vU = GetUTXOStakes(true);
 	
 	CAmount nBBPSize = 0;
@@ -2099,16 +2108,9 @@ UniValue listattachedreferralcodes(const JSONRPCRequest& request)
 		sCPK = request.params[0].get_str();
 
 	UniValue details(UniValue::VOBJ);
-	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(vRC, vU, sCPK, details);
+	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(vGRC, vCRC, vU, sCPK, details);
 	results.push_back(Pair("Details", details));
 	results.push_back(Pair("Portfolio Rewards Modifier", rc1.ReferralRewards));
-	std::map<std::string, CAmount> mapGifts = GetImpactFromReferralCodeGifts(vRC, vU);
-	results.push_back(Pair("Gifts", AmountToDouble(mapGifts[sCPK])));
-	for (auto g : mapGifts)
-	{
-		results.push_back(Pair(g.first, AmountToDouble(g.second)));
-	}
-
 	return results;
 }
 
@@ -2134,7 +2136,7 @@ UniValue queryutxobyaddress(const JSONRPCRequest& request)
 		throw std::runtime_error("You may specify queryutxobyaddress symbol address\r\nWhere symbol is the ticker related to the cryptocurrency, and address is your cryptocurrency address containing the proposed stake.");
 	std::string sTicker = request.params[0].get_str();
 	std::string sAddress = request.params[1].get_str();
-	std::vector<SimpleUTXO> l = QueryUTXOList(sTicker, sAddress, 0);
+	std::vector<SimpleUTXO> l = QueryUTXOList(sTicker, sAddress, 0, 1);
 	UniValue results(UniValue::VOBJ);
 	
 	for (auto s : l)

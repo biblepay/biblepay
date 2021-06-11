@@ -836,9 +836,6 @@ UniValue GetJsonObjectFromURL(std::string sURL1, std::string sURL2, bool& fInval
 	}
 	std::string sData = Mid(b.Response, i1 - 2, 1000000);
 	fInvalid = Contains(b.Response, "sending too many requests") || Contains(b.Response, "blacklisted due to exceeding usage");
-	// Mission Critical Harvest
-	LogPrintf("\nGJOFU::%s", sData);
-
 	o.read(sData);
 	return o;
 }
@@ -865,6 +862,14 @@ std::string BlockChairTickerToName(std::string sTicker)
 	  {
 		  return "ethereum";
 	  }
+	  else if (sTicker == "ZEC")
+	  {
+		  return "zcash";
+	  }
+	  else if (sTicker == "BCH")
+	  {
+		  return "bitcoin-cash";
+	  }
       return "";
 }
 
@@ -875,9 +880,12 @@ void LogIt(SimpleUTXO u)
 }
 
 
-std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp)
+std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp, int nConfiguration)
 {
 	double nConfig = GetSporkDouble("utxoqueryresilience", 0);
+	if (nConfiguration > 0)
+		nConfig = nConfiguration;
+
 	std::vector<SimpleUTXO> l;
 	if (nConfig == 0)
 	{
@@ -931,7 +939,6 @@ std::vector<SimpleUTXO> QueryUTXOListB(std::string sTicker, std::string sAddress
 		{
 			l.push_back(u);
 		}
-		LogPrintf("\nSimpleUTXO::Address %s amount %f", sAddress, (double)u.nAmount/COIN);
 	}
 	return l;
 }
@@ -1003,7 +1010,7 @@ std::vector<SimpleUTXO> QueryUTXOListA(std::string sTicker, std::string sAddress
 			}
 		}
     }
-    else if (sTicker == "DOGE" || sTicker == "BTC" || sTicker == "DASH" || sTicker == "LTC")
+    else if (sTicker == "DOGE" || sTicker == "BTC" || sTicker == "DASH" || sTicker == "LTC" || sTicker == "BCH" || sTicker == "ZEC")
     {
         std::string sTickerName = BlockChairTickerToName(sTicker);
 	    sURL2 = sTickerName + "/dashboards/address/" + sAddress;
@@ -1789,8 +1796,8 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 				// However we require that the owner of the CPK signed this edit
 				NFT oldNFT = GetSpecificNFT(n.GetHash());
 				bool fOrphan = findStringCaseInsensitive(oldNFT.sType, "orphan");
-				// HARVEST Mission Critical ToDO:  We may possibly want to remove the ability to edit an orphan.  Force the user to do it all during create; then the orphan expires
-				// as of the duration after the sponsor occurs.  This simplifies the whole thing (as we are going to run into issues with Reserve, Buy It now, edit security, etc.)
+				// We made it impossible to edit an orphan.  Force the user to do it all during create; then the orphan expires after s/he is sponsored for the first time.  
+				// This simplifies the process flow (for Reserve, Buy It now, edit security, etc.).  The orphanage can still delete an orphan who is no longer sponsorable.
 				if (t.fBOSigValid)
 				{
 					t.fPassedSecurityCheck = true;
@@ -1814,7 +1821,6 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 				// During buy, the NFT is a duplicate, and we do not check the signature of the BUYER, 
 				// However, the buy amount must be > than the buy_it_now amount (or the reserve price), and the item must be marketable
 				NFT oldNFT = GetSpecificNFT(n.GetHash());
-				// 4-17-2021
 				bool fOrphan = findStringCaseInsensitive(oldNFT.sType, "orphan");
 				if (oldNFT.fMarketable && oldNFT.found && oldNFT.nMinimumBidAmount > 0 && !oldNFT.fDeleted)
 				{
@@ -1968,7 +1974,6 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 		CBlock block;
 		if (ReadBlockFromDisk(block, pindex, consensusParams)) 
 		{
-			// Harvest Mission Critial :: Revert
 			if (pindex->nHeight % 25000 == 0 || true)
 				LogPrintf(" MBCP %f @ %f, ", pindex->nHeight, GetAdjustedTime());
 			for (unsigned int n = 0; n < block.vtx.size(); n++)
@@ -1991,13 +1996,10 @@ void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool f
 					{		
 						nTotalBurned += block.vtx[n]->vout[i].nValue;
 					}
-		
 					ProcessLegacyUtxoData(block.vtx[n]->GetHash().GetHex(), sPrayer, sPK, pindex->nHeight, n, i, dAmount);
 				}
-				
 				double dAge = GetAdjustedTime() - block.GetBlockTime();
 				ProcessTxMessage(block.vtx[n], sPrayer, block.GetBlockTime(), 0, block.vtx[n]->GetHash().GetHex(), dTotalSent, dFoundationDonation, pindex->nHeight, nTotalBurned);
-
 			}
 	 	}
 	}
@@ -3178,7 +3180,6 @@ NFT GetNFT(CTransactionRef tx1)
 	{
 		sData += tx1->vout[i].sTxOutMessage;
 	}
-	//	std::string sPK = PubKeyToAddress(tx1->vout[i].scriptPubKey);
 	w.sXML = ExtractXML(sData, "<nft>", "</nft>");
 	w.sCPK = ExtractXML(w.sXML, "<cpk>", "</cpk>");
 	w.sName = ExtractXML(w.sXML, "<name>", "</name>");
@@ -3188,6 +3189,7 @@ NFT GetNFT(CTransactionRef tx1)
 	w.sLoQualityURL = ExtractXML(w.sXML, "<loqualityurl>", "</loqualityurl>");
 	w.sHiQualityURL = ExtractXML(w.sXML, "<hiqualityurl>", "</hiqualityurl>");
 	w.fMarketable = cdbl(ExtractXML(w.sXML, "<marketable>", "</marketable>"), 0) == 1 ? true : false;
+	w.nIteration = cdbl(ExtractXML(w.sXML, "<iteration>", "</iteration>"), 0);
 	w.fDeleted = cdbl(ExtractXML(w.sXML, "<deleted>", "</deleted>"), 0) == 1 ? true : false;
 	w.nMinimumBidAmount = cdbl(ExtractXML(w.sXML, "<minbidamount>", "</minbidamount>"), 2) * COIN;
 	w.nReserveAmount = cdbl(ExtractXML(w.sXML, "<reserveamount>", "</reserveamount>"), 2) * COIN;
@@ -4647,13 +4649,13 @@ std::vector<SimpleUTXO> GetUTXOStatus(std::string sAddress)
 	}
 }
 
-int AssimilateUTXO(UTXOStake d)
+int AssimilateUTXO(UTXOStake d, int nConfiguration)
 {
 	int nStatus = 0;
 	std::string sError;
 	CAmount nBBPAmount = 0;
 	std::string sErr;
-	mapUTXOStatus[d.Address] = QueryUTXOList(d.Ticker, d.Address, d.Time);
+	mapUTXOStatus[d.Address] = QueryUTXOList(d.Ticker, d.Address, d.Time, nConfiguration);
 	for (auto & su : mapUTXOStatus[d.Address])
 	{
 		su.AssimilationTime = GetAdjustedTime();
@@ -4685,9 +4687,10 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 	CWallet * const pwallet = GetWalletForGenericRequest();
 
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
-	std::vector<ReferralCode> uRC = GetReferralCodes();
+	std::vector<ReferralCode> uRC = GetClaimedReferralCodes();
+	std::vector<ReferralCode> uGRC = GetGeneratedReferralCodes();
 	UniValue details;
-	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, sCPK, details);
+	ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uGRC, uRC, uStakes, sCPK, details);
 
 	double nTotal = 0;
 	int nCount = 0;
@@ -4723,8 +4726,8 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 		
 	std::string sSummary = "Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0);
 	sSummary += "<br>Total Stake Weight: " + RoundToString(nTotalStakeWeight, 2) 
-			+ "<br>Portfolio DWU: " + RoundToString(nDWU * 100, 2) + "<br>Referral Rewards: " + RoundToString(rc1.ReferralRewards, 10) + "</br>";
-	
+			 +  "<br>Portfolio DWU: " + RoundToString(nDWU * 100, 2) + "<br>Referral Rewards: " + RoundToString(rc1.ReferralRewards, 10) + "</br>";
+	sSummary += "<br>Gifts: " + RoundToString(rc1.dGiftAmount, 2) + "</br>";
 	sSummary += "<br>Referral BBP Claimed: "+ RoundToString((double)rc1.TotalClaimed/COIN, 2) + "<br>Referral BBP Earned: "+ RoundToString((double)rc1.TotalEarned/COIN, 2);
 	
 	return sSummary;
@@ -5192,6 +5195,51 @@ bool ValidateAddress2(std::string sAddress)
 	return IsValidDestination(dest);
 }
 
+bool ValidateAddressLength(std::string sAddress, int nReqLength)
+{
+	int nLen = sAddress.length();
+	if (nLen != nReqLength)
+		return false;
+	return true;
+}
+
+bool ValidateAddress3(std::string sTicker, std::string sAddress)
+{
+	if (sTicker == "BBP")
+	{
+		return ValidateAddress2(sAddress);
+	}
+	if (sAddress.empty())
+		return false;
+
+	bool fValidateTicker = ValidateTicker(sTicker);
+	if (!fValidateTicker)
+		return false;
+
+	if (sTicker == "DASH" || sTicker == "BTC" || sTicker == "DOGE" || sTicker == "LTC")
+	{
+		return ValidateAddressLength(sAddress, 34);
+	}
+	else if (sTicker == "ETH" || sTicker == "BCH")
+	{
+		return ValidateAddressLength(sAddress, 42);
+	}
+	else if (sTicker == "XRP")
+	{
+		return ValidateAddressLength(sAddress, 34);
+	}
+	else if (sTicker == "XLM")
+	{
+		return ValidateAddressLength(sAddress, 56);
+	}
+	else if (sTicker == "ZEC")
+	{
+		return ValidateAddressLength(sAddress, 35);
+	}
+	
+	return false;
+}
+
 bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string& sError, std::string& sSignature)
 {
 	CWallet * const pwallet = GetWalletForGenericRequest();
@@ -5343,9 +5391,11 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		}
 		nft.fMarketable = false;
 		nft.fDeleted = false;
-		nft.nMinimumBidAmount = 0;
-		nft.nReserveAmount = 0;
-		nft.nBuyItNowAmount = 0;
+		/*
+			nft.nMinimumBidAmount = 0;
+			nft.nReserveAmount = 0;
+			nft.nBuyItNowAmount = 0;
+		*/
 		if (!ValidateAddress2(sSellerCPK))
 		{
 			sError = "Invalid seller Address " + sSellerCPK;
@@ -5361,12 +5411,15 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 		return false;
 	}
 
+	nft.nIteration++;
+
 	std::string sPayload = "<MT>NFT</MT><MK>" + sPK + "</MK><MV><nft><cpk>" + sBuyerCPK + "</cpk><name>" + nft.sName + "</name><description>" 
 		+ nft.sDescription + "</description><loqualityurl>" 
 		+ nft.sLoQualityURL + "</loqualityurl><hiqualityurl>" + nft.sHiQualityURL 
 		+ "</hiqualityurl><deleted>" + (nft.fDeleted ? "1" : "0") + "</deleted><marketable>" + (nft.fMarketable ? "1" : "0")
 		+ "</marketable><time>" + RoundToString(GetAdjustedTime(), 0) + "</time><type>" 
-		+ nft.sType + "</type><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
+		+ nft.sType + "</type><iteration>" + RoundToString(nft.nIteration, 0) + "</iteration><minbidamount>" 
+		+ RoundToString((double)nft.nMinimumBidAmount/COIN, 2) + "</minbidamount>"
 		+ "<reserveamount>" + RoundToString((double)nft.nReserveAmount/COIN, 2) + "</reserveamount><buyitnowamount>" 
 		+ RoundToString((double)nft.nBuyItNowAmount/COIN, 2) + "</buyitnowamount>"
 		+ "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" 
@@ -5720,7 +5773,34 @@ uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sC
 	return (int64_t)nAvg;
 }
 
-std::vector<ReferralCode> GetReferralCodes()
+std::vector<ReferralCode> GetGeneratedReferralCodes()
+{
+	std::vector<ReferralCode> vRC;
+	std::vector<UTXOStake> vU = GetUTXOStakes(true);
+	for (auto ii : mvApplicationCache) 
+	{
+		if (Contains(ii.first, "REFERRALCODE[-]"))
+		{
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			ReferralCode r;
+			std::string sID = GetElement(ii.first, "[-]", 1);
+			r.CPK = GetElement(sID, "-", 1);
+			r.Code = GetElement(sID, "-", 2);
+			CAmount nSize = 0;
+			ReferralCode rc = DeserializeReferralCode(r.Code);
+			
+			//LogPrintf("\n cpk=%s, Size %f, Orig %s, Gift Amount %s,Expiration %f, Found %f",				r.CPK, (double)r.Size/COIN, r.OriginatorCPK, AmountToString(r.GiftAmount), rc.Expiration, rc.found);
+			if (rc.found)
+			{
+				vRC.push_back(rc);
+			}
+		}
+	}
+	return vRC;
+}
+
+
+std::vector<ReferralCode> GetClaimedReferralCodes()
 {
 	std::vector<ReferralCode> vRC;
 	std::vector<UTXOStake> vU = GetUTXOStakes(true);
@@ -5733,18 +5813,14 @@ std::vector<ReferralCode> GetReferralCodes()
 			std::string sID = GetElement(ii.first, "[-]", 1);
 			r.CPK = GetElement(sID, "-", 1);
 			r.Code = GetElement(sID, "-", 2);
-			
 			CAmount nSize = 0;
-			double nGiftAmount = 0;
 			ReferralCode rc = DeserializeReferralCode(r.Code);
-
 			r.OriginatorCPK = rc.CPK;
-			// LogPrintf("\nGetReferralCodes cpk=%s, Size %f, Orig %s", r.CPK, (double)r.Size/COIN, r.OriginatorCPK);
 			GetPortfolioTimeAndSize(vU, r.OriginatorCPK, nSize);
 			r.Size = ((double)nSize/COIN) * .10 * COIN;
-			r.GiftAmount = nGiftAmount * COIN;
+			r.GiftAmount = rc.GiftAmount;
 			r.Time = v.second;
-	
+			//LogPrintf("\n cpk=%s, Size %f, Orig %s, Gift Amount %s,Expiration %f, Found %f",				r.CPK, (double)r.Size/COIN, r.OriginatorCPK, AmountToString(r.GiftAmount), rc.Expiration, rc.found);
 			if (GetAdjustedTime() < rc.Expiration && rc.found)
 			{
 				if (!r.CPK.empty() && !r.OriginatorCPK.empty() && nSize > 0)
@@ -5799,9 +5875,10 @@ std::vector<CDSQLQuery> DSQLQuery(std::string sFilter)
 	{
 		if (Contains(ii.first, "DSQL[-]"))
 		{
-			if (Contains(ii.first, sFilter) || sFilter.empty())
+			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
+			bool fContains = Contains(v.first, sFilter);
+			if (fContains || sFilter.empty())
 			{
-				std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
 				CDSQLQuery q;
 				q.FromXML(v.first);
 				vSQL.push_back(q);
@@ -5812,61 +5889,84 @@ std::vector<CDSQLQuery> DSQLQuery(std::string sFilter)
 }
 
 
-std::map<std::string, CAmount> GetImpactFromReferralCodeGifts(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU)
+std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU)
 {
 	// Gifts expire in 30 days; regular referrals expire in 365 days
 	// Gifts subtract BBP from one portfolio and gives to the community subset who 'attached' the referral code
-	std::map<std::string, CAmount> mapGiftImpact;
-
+	std::map<std::string, double> mapGiftImpact;
+	std::map<std::string, CAmount> mapRCClaimed;
 	double nPR = GetSporkDouble("referralrewards", 0);
 	ReferralCode r;
 	if (nPR == 86)
 	{
 		return mapGiftImpact;
 	}
-	CAmount nTotalGifts = 0;
+
 	double nTotalConsumers = 0;
-	// Pre-discover how many gifts are here
-	for (auto rc : vRC)
+	CAmount nTotalGiftsAvailable = 0;
+	// Pre-discover how many gifts are attached here
+
+	for (auto rc : vCRC)
 	{
 		if (rc.found && AmountToDouble(rc.GiftAmount) > 0)
 		{
 			CAmount nSize = 0;
 			GetPortfolioTimeAndSize(vU, rc.OriginatorCPK, nSize);
+			// Ensure they still have a portfolio that supports the gift amount
 			if (AmountToDouble(nSize) > AmountToDouble(rc.GiftAmount))
 			{
-					nTotalConsumers++;
-					nTotalGifts += rc.GiftAmount;
+				nTotalConsumers++;
+				boost::to_lower(rc.OriginatorCPK);
+				mapRCClaimed[rc.OriginatorCPK] = rc.GiftAmount;
 			}
 		}
 	}
-	double nAmountAvailablePerCPK = AmountToDouble(nTotalGifts) / (nTotalConsumers+.01);
-	CAmount nAA = nAmountAvailablePerCPK * COIN;
+	for (auto claimed : mapRCClaimed)
+	{
+		nTotalGiftsAvailable += mapRCClaimed[claimed.first];
+	}
+	double nAmountAvailPerCPK = AmountToDouble(nTotalGiftsAvailable) / (nTotalConsumers+.01);
+	LogPrintf("\r\nGIFRCG::TotalGifts %s, TotalConsumers %f, AmountPerCPK %f", AmountToString(nTotalGiftsAvailable), 
+		nTotalConsumers, nAmountAvailPerCPK);
 
-	for (auto rc : vRC)
+	for (auto rc : vCRC)
 	{
 		if (rc.found && AmountToDouble(rc.GiftAmount) > 0)
 		{
 			CAmount nSize = 0;
 			GetPortfolioTimeAndSize(vU, rc.OriginatorCPK, nSize);
+			// Originator has a portfolio that supports the gift
 			if (AmountToDouble(nSize) > AmountToDouble(rc.GiftAmount))
 			{
-				CAmount nTheirSize = 0;
-				GetPortfolioTimeAndSize(vU, rc.CPK, nTheirSize);
+				CAmount nConsumerSize = 0;
+				GetPortfolioTimeAndSize(vU, rc.CPK, nConsumerSize);
+				double dConsumerSize = AmountToDouble(nConsumerSize);
+				double dCapAmount = nAmountAvailPerCPK;
+				if (dCapAmount > dConsumerSize)
+					dCapAmount = dConsumerSize;
 				// credit rc.cpk, debit rc.originatorcpk
-				CAmount nCapAmount = nAA;
-				if (nCapAmount > nTheirSize)
-					nCapAmount = nTheirSize;
-				// harvest mission critical, can we store a negative camount?
-				mapGiftImpact[rc.CPK] += nCapAmount;
-				mapGiftImpact[rc.OriginatorCPK] -= nCapAmount;
+				mapGiftImpact[rc.CPK] += dCapAmount;
+				mapGiftImpact[rc.OriginatorCPK] += -1 * dCapAmount;
+				//LogPrintf("\r\nGIFRCG2::cpk %s, gift %f", rc.CPK, dCapAmount);
 			}
 		}
 	}
 	return mapGiftImpact;
 }
 
-ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details)
+double GetGiftAmountFromReferralMap(std::map<std::string, double>& mapGifts, std::string sCPK)
+{
+	for (auto g : mapGifts)
+	{
+		if (findStringCaseInsensitive(g.first, sCPK))
+		{
+			return g.second;
+		}
+	}
+	return 0;
+}
+
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details)
 {
 	double nPR = GetSporkDouble("referralrewards", 0);
 	ReferralCode r;
@@ -5875,6 +5975,9 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 		r.ReferralRewards = 1.0;
 		return r;
 	}
+
+	std::map<std::string, double> mapGifts = GetImpactFromReferralCodeGifts(vGRC, vCRC, vU);
+	
 	// Given a CPK (this is a pointer to a portfolio), assess the portfolio determining the impact of the collection of referral codes when applied.
 	// A user may have multiple referral codes cashed in.  Each one has a different max size based on the originators portfolio.
 	// Next the age of this users portfolio determines the effectiveness of each coupon.
@@ -5888,7 +5991,7 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 	// Step 1 - Process earnings from attached codes 
 	std::string sType;
 	
-	for (auto rc : vRC)
+	for (auto rc : vCRC)
 	{
 		if (rc.found)
 		{
@@ -5911,7 +6014,7 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 	}
 
 	// Step 2 - Process earnings from others
-	for (auto rc : vRC)
+	for (auto rc : vCRC)
 	{
 		if (rc.found)
 		{
@@ -5937,7 +6040,10 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 
 	details.push_back(Pair("Referral BBP Claimed", AmountToString(r.TotalClaimed)));
 	details.push_back(Pair("Referral BBP Earned", AmountToString(r.TotalEarned)));
-
+	// Gifts
+	r.dGiftAmount = GetGiftAmountFromReferralMap(mapGifts, sCPK);
+	details.push_back(Pair("Gifts", r.dGiftAmount));
+	
 	r.TotalReferralReward = r.TotalClaimed + r.TotalEarned;
 	if (r.TotalReferralReward > nBBPSize)
 		r.TotalReferralReward = nBBPSize;
@@ -6259,7 +6365,7 @@ std::vector<SimpleUTXO> GetAddressUTXOs_BBP(std::string sAddress)
 	return v;
 }
 
-static std::string sTickers = "DASH,BTC,DOGE,ETH,LTC,XRP,XLM,BBP";
+static std::string sTickers = "DASH,BTC,DOGE,ETH,LTC,XRP,XLM,BBP,ZEC,BCH";
 	
 bool ValidateTicker(std::string sTicker)
 {

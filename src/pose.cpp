@@ -76,7 +76,7 @@ void SanctuaryOracleProcess()
 			fSkip = true;
 		}
 		/*	if  (!fSkip)  */
-		AssimilateUTXO(u);
+		AssimilateUTXO(u, 0);
 	}
 	fUTXOSTested = true;
 	// End of Sanctuary side UTXO Oracle Process

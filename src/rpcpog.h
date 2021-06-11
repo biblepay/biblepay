@@ -39,6 +39,7 @@ std::string AmountToString(const CAmount& amount);
 double AmountToDouble(const CAmount& amount);
 CTransactionRef GetTxRef(uint256 hash);
 CAmount GetTxTotalFromAddress(CTransactionRef ctx, std::string sAddress);
+std::string TimestampToHRDate(double dtm);
 
 struct UserVote
 {
@@ -62,6 +63,7 @@ struct NFT
 	CAmount nMinimumBidAmount = 0;
 	CAmount nReserveAmount = 0;
 	CAmount nBuyItNowAmount = 0;
+	int nIteration = 0;
 	bool fMarketable = false;
 	bool fDeleted = false;
 	bool found = false;
@@ -111,26 +113,36 @@ struct NFT
 	    obj.push_back(Pair("Lo Quality URL", sLoQualityURL));
 		std::string sError;
 		std::string sHiQ = RSADecryptHQURL(sHiQualityURL, sError);
-
-		obj.push_back(Pair("Hi Quality URL", sHiQ));
+		bool fOrphan = findStringCaseInsensitive(sType, "orphan");
+		
+		if (!fOrphan)
+			obj.push_back(Pair("Hi Quality URL", sHiQ));
 		obj.push_back(Pair("TXID", TXID.GetHex()));
 		obj.push_back(Pair("Hash", GetHash().GetHex()));
-		obj.push_back(Pair("MinimumBidAmount", (double)nMinimumBidAmount/COIN));
-		obj.push_back(Pair("ReserveAmount", (double)nReserveAmount/COIN));
-		obj.push_back(Pair("BuyItNowAmount", (double)nBuyItNowAmount/COIN));
-		obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
-		obj.push_back(Pair("Marketable", fMarketable));
+		obj.push_back(Pair("Iteration", nIteration));
+		if (!fOrphan)
+		{
+			obj.push_back(Pair("MinimumBidAmount", (double)nMinimumBidAmount/COIN));
+			obj.push_back(Pair("ReserveAmount", (double)nReserveAmount/COIN));
+			obj.push_back(Pair("BuyItNowAmount", (double)nBuyItNowAmount/COIN));
+			obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
+			obj.push_back(Pair("Marketable", fMarketable));
+		}
+		else
+		{
+			obj.push_back(Pair("SponsorshipAmount", (double)nBuyItNowAmount/COIN));
+			obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
+		}
+
 		obj.push_back(Pair("Deleted", fDeleted));
 		obj.push_back(Pair("Time", nTime));
-		bool fOrphan = findStringCaseInsensitive(sType, "orphan");
-		if (fOrphan)
+		if (fOrphan && nIteration == 2)
 		{
 			// Remaining Sponsorship days
 			CAmount nAmountPerDay = GetBBPValueUSD(40, 1538);
-			double nDays = (nBuyItNowAmount/COIN) / ((nAmountPerDay/COIN) + .01);
 			double nElapsed = (GetAdjustedTime() - nTime) / 86400;
-			obj.push_back(Pair("Sponsorship Length", nDays));
-			obj.push_back(Pair("Elapsed", nElapsed));
+			obj.push_back(Pair("Sponsor Date", TimestampToHRDate(nTime)));
+			obj.push_back(Pair("Elapsed (Days)", nElapsed));
 		}
     }
 };
@@ -414,7 +426,8 @@ struct ReferralCode
 	CAmount TotalClaimed = 0;
 	CAmount TotalEarned = 0;
 	CAmount TotalReferralReward = 0;
-	CAmount GiftAmount = 0;
+	CAmount GiftAmount = 0; // Used by referral codes
+	double dGiftAmount = 0; // Used by block assessor
 	double ReferralEffectivity = 0;
 	double PercentageAffected = 0;
 	double ReferralRewards = 0;
@@ -749,7 +762,6 @@ std::string ReadCacheWithMaxAge(std::string sSection, std::string sKey, int64_t 
 void ClearCache(std::string sSection);
 void WriteCache(std::string sSection, std::string sKey, std::string sValue, int64_t locktime, bool IgnoreCase=true);
 std::string GetSporkValue(std::string sKey);
-std::string TimestampToHRDate(double dtm);
 std::string GetArrayElement(std::string s, std::string delim, int iPos);
 void GetMiningParams(int nPrevHeight, bool& f7000, bool& f8000, bool& f9000, bool& fTitheBlocksActive);
 bool SubmitProposalToNetwork(uint256 txidFee, int64_t nStartTime, std::string sHex, std::string& sError, std::string& out_sGovObj);
@@ -849,7 +861,7 @@ UserRecord GetMyUserRecord();
 bool WriteDataToFile(std::string sPath, std::string data);
 std::vector<char> ReadAllBytesFromFile(char const* filename);
 std::vector<UTXOStake> GetUTXOStakes(bool fWithPrices = false);
-int AssimilateUTXO(UTXOStake d);
+int AssimilateUTXO(UTXOStake d, int nConfiguration);
 UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
 std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQty);
 std::string ScanBlockForNewUTXO(const CBlock& block);
@@ -893,11 +905,9 @@ int64_t GetTxTime1(uint256 hash, int ordinal);
 std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload, std::string sOptFundAddress = "", CAmount nOptFundAmount = 0);
 std::string SendReferralCode(std::string& sError, double nGiftAmount);
 CAmount CheckReferralCode(std::string sCode);
-ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details);
 std::string ClaimReferralCode(std::string sCode, std::string& sError);
 double GetReferralCodeEffectivity(int nPortfolioTime);
 uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sCPK, CAmount& nBBPSize);
-std::vector<ReferralCode> GetReferralCodes();
 CAmount GetBBPSizeFromPortfolio(std::string sCPK);
 DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun);
 DACResult MakeDerivedKey(std::string sPhrase);
@@ -918,10 +928,17 @@ double GetUSDValueBBP(CAmount nBBP);
 std::vector<SimpleUTXO> GetAddressUTXOs_BBP(std::string sAddress);
 void AddUTXOStake(UTXOStake& u, bool fDryRun, std::string& sError, std::string sOptFundAddress, CAmount nOptFundAmount);
 UTXOStake GetUTXOStakeByAddress(std::string Address);
-std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp);
+std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp, int nConfiguration);
 std::vector<SimpleUTXO> QueryUTXOListA(std::string sTicker, std::string sAddress, int64_t nTimestamp);
 std::vector<SimpleUTXO> QueryUTXOListB(std::string sTicker, std::string sAddress, int64_t nTimestamp);
-std::map<std::string, CAmount> GetImpactFromReferralCodeGifts(std::vector<ReferralCode>& vRC, std::vector<UTXOStake>& vU);
+std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU);
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details);
+
+std::vector<ReferralCode> GetGeneratedReferralCodes();
+std::vector<ReferralCode> GetClaimedReferralCodes();
 ReferralCode DeserializeReferralCode(std::string sCode);
+
+bool ValidateAddress3(std::string sTicker, std::string sAddress);
+bool ValidateTicker(std::string sTicker);
 
 #endif

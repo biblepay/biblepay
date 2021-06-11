@@ -545,41 +545,50 @@ static bool rest_mempool_imagetest(HTTPRequest* req, const std::string& strURIPa
     return true; // continue to process further HTTP reqs on this cxn
 }
 
+static bool fDSQLExecuting = false;
 
 static bool rest_dsqlquery(HTTPRequest* req, const std::string& strURIPart)
 {
 	if (!CheckWarmup(req))
         return false;
 
+	if (fDSQLExecuting)
+	{
+		for (int i = 0; i < 10 && fDSQLExecuting; i++)
+		{
+			MilliSleep(1000);
+		}
+	}
+
+	fDSQLExecuting = true;
+
 	std::string param;
     const RetFormat rf = ParseDataFormat(param, strURIPart);
     std::vector<std::string> uriParts;
 	std::string sFilter;
 
-    if (param.length() > 1)
-    {
-        std::string strUriParams = param.substr(1);
-        boost::split(uriParts, strUriParams, boost::is_any_of("/"));
-		// Harvest Mission critical todo:  Ensure the filter works
-		if (param.length() > 4)
-		{
-			sFilter = uriParts[5];
-			LogPrintf("\nrest_mempool uripart %s param %s filter %s ", strURIPart, param, sFilter);
-		}
-    }
+    boost::split(uriParts, strURIPart, boost::is_any_of("/"));
+	if (uriParts.size() > 1)
+	{
+		sFilter = uriParts[0];
+		sFilter = strReplace(sFilter, "\r", "");
+		sFilter = strReplace(sFilter, "\n", "");
+		LogPrintf("\nrest_mempool sfilter [%s]", sFilter);
+	}
 
 	std::vector<CDSQLQuery> d = DSQLQuery(sFilter);
 	UniValue m(UniValue::VOBJ);
 
-	for (int i = 0; i < d.size(); i++)
+	for (auto q : d)
 	{
 		UniValue oDSQLObject(UniValue::VOBJ);
-		oDSQLObject.read(d[i].sData);
-		m.push_back(Pair(d[i].GetKey(), oDSQLObject));
+		oDSQLObject.read(q.sData);
+		m.push_back(Pair(q.GetKey(), oDSQLObject));
 	}
 	std::string strJSON = m.write() + "\n";
 	req->WriteHeader("Content-Type", "application/json");
 	req->WriteReply(HTTP_OK, strJSON);
+	fDSQLExecuting = false;
 	return true;
 }
 

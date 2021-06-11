@@ -570,8 +570,8 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 	
 	// UTXO STAKING
 	std::vector<UTXOStake> uStakes = GetUTXOStakes(true);
-	std::vector<ReferralCode> uRC = GetReferralCodes();
-	
+	std::vector<ReferralCode> uRC = GetClaimedReferralCodes();
+	std::vector<ReferralCode> vGRC = GetGeneratedReferralCodes();
 	double dEnabled = GetSporkDouble("UTXOStakingEnabled", 0);
 	std::map<std::string, std::string> mapSubCampaigns;
 
@@ -601,16 +601,17 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 					c.sNickName = u.NickName;
 					// Referral codes
 					UniValue details;
-					ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(uRC, uStakes, d.CPK, details);
-					// HARVEST MISSION CRITICAL nValueUSD * coverage  * rc1.ReferralRewards;
-					double nPoints = d.nValueUSD * d.nCoverage * rc1.ReferralRewards;
+					ReferralCode rc1 = GetTotalPortfolioImpactFromReferralCodes(vGRC, uRC, uStakes, d.CPK, details);
+					double nAdjAmt = d.Ticker == "BBP" ? GetUSDValueBBP(rc1.dGiftAmount * COIN) : 0;
+					double nUSDValue = d.nValueUSD + nAdjAmt;
+					double nPoints = nUSDValue * d.nCoverage * rc1.ReferralRewards;
 					c.nPoints += nPoints;
 					c.nCurrencyAmount += d.nForeignTotal + d.nNativeTotal;
 
 					c.sCurrencyAddress = d.Address;
 					mCampaignPoints[sThisCampaign] += nPoints;
 					mPoints[d.CPK] = c;
-					LogPrintf("\nAssessBlocks-highlevel cpk %s addr %s amount %f ", d.CPK, d.Address, d.nValueUSD);
+					LogPrintf("\nAssessBlocks::Cpk %s addr %s amount %f AdjAmount %f, Points %f, GiftAmt %f ", d.CPK, d.Address, d.nValueUSD, nAdjAmt, nPoints, rc1.dGiftAmount);
 
 					// Details for CPK-Campaign-Address
 					CPK cCPKCampaignPoints = mCPKCampaignPoints[d.CPK + sSubCampaign];

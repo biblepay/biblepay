@@ -48,33 +48,43 @@
       </item>
       <item>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="9" column="1">
-         <widget class="QPushButton" name="btnSubmit">
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>0</height>
-           </size>
-          </property>
+        <item row="9" column="2">
+         <widget class="QCheckBox" name="chkAdvanced">
           <property name="maximumSize">
            <size>
-            <width>150</width>
+            <width>777</width>
             <height>16777215</height>
            </size>
           </property>
           <property name="text">
-           <string>&amp;Submit</string>
+           <string>Show Advanced Features?</string>
           </property>
          </widget>
         </item>
-        <item row="9" column="0">
+        <item row="6" column="2">
+         <widget class="QLineEdit" name="txtPin">
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>This is the pin corresponding to your receive address.  You may send an amount with a suffix of this pin, for example to send 1000 Doge with a pin of 12345, send 1000.12345 or 1000.012345 or 1000.00012345.</string>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
          <widget class="QLabel" name="label_7">
           <property name="text">
            <string/>
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="7" column="0">
          <widget class="QLabel" name="label_213">
           <property name="maximumSize">
            <size>
@@ -93,11 +103,11 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
+        <item row="7" column="2">
          <widget class="QLineEdit" name="txtAddress">
           <property name="maximumSize">
            <size>
-            <width>500</width>
+            <width>600</width>
             <height>16777215</height>
            </size>
           </property>
@@ -125,7 +135,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
+        <item row="3" column="2">
          <widget class="QComboBox" name="cmbTicker">
           <property name="maximumSize">
            <size>
@@ -157,7 +167,7 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
+        <item row="4" column="2">
          <widget class="QLineEdit" name="txtAmount">
           <property name="maximumSize">
            <size>
@@ -173,7 +183,7 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
+        <item row="6" column="0">
          <widget class="QLabel" name="label_912">
           <property name="toolTip">
            <string>Pin</string>
@@ -189,46 +199,55 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
-         <widget class="QLineEdit" name="txtPin">
-          <property name="maximumSize">
-           <size>
-            <width>100</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>This is the pin corresponding to your receive address.  You may send an amount with a suffix of this pin, for example to send 1000 Doge with a pin of 12345, send 1000.12345 or 1000.012345 or 1000.00012345.</string>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="8" column="1">
-         <widget class="QCheckBox" name="chkAdvanced">
-          <property name="maximumSize">
-           <size>
-            <width>777</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Show Advanced Features?</string>
-          </property>
-         </widget>
-        </item>
-        <item row="10" column="0">
+        <item row="14" column="0">
          <widget class="QLabel" name="lblInfoPre">
           <property name="text">
            <string/>
           </property>
          </widget>
         </item>
-        <item row="10" column="1">
+        <item row="14" column="2">
          <widget class="QLabel" name="lblInfo">
           <property name="text">
            <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <widget class="QPushButton" name="btnQuery">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>&amp;Query UTXO</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="2">
+         <widget class="QPushButton" name="btnSubmit">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>&amp;Submit</string>
           </property>
          </widget>
         </item>
@@ -292,7 +311,6 @@
   <tabstop>txtAddress</tabstop>
   <tabstop>cmbTicker</tabstop>
   <tabstop>chkAdvanced</tabstop>
-  <tabstop>btnSubmit</tabstop>
  </tabstops>
  <resources>
   <include location="../biblepay.qrc"/>

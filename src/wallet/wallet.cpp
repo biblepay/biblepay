@@ -5615,8 +5615,7 @@ std::string CWallet::SignBBPUTXO(std::string sUTXO, std::string& sError)
 	}
 
 	const CKeyID *keyID = boost::get<CKeyID>(&destAddr);
-	//mission critical to do : test this
-
+	
     CKey key;
     if (!GetKey(*keyID, key)) 
 	{
