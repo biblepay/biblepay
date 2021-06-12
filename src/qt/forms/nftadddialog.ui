@@ -51,7 +51,7 @@
         <item row="4" column="2">
          <widget class="QLineEdit" name="txtName">
           <property name="toolTip">
-           <string>Address</string>
+           <string></string>
           </property>
           <property name="inputMethodHints">
            <set>Qt::ImhNone</set>
@@ -96,7 +96,7 @@
         <item row="6" column="0">
          <widget class="QLabel" name="label_912">
           <property name="toolTip">
-           <string>Reserve Amount</string>
+           <string></string>
           </property>
           <property name="text">
            <string>Buy-it-Now Amount:</string>
@@ -119,10 +119,11 @@
         <item row="7" column="2">
          <widget class="QLineEdit" name="txtReserveAmount">
           <property name="toolTip">
-           <string>Reserve Amount</string>
+           <string>The lowest price you will Consider in an auction; If the auction ends with a bid ABOVE YOUR RESERVE price, the item will be sold to the highest bidder.</string>
           </property>
          </widget>
         </item>
+        
         <item row="7" column="0">
          <widget class="QLabel" name="label_512">
           <property name="toolTip">
@@ -139,7 +140,7 @@
         <item row="8" column="2">
          <widget class="QLineEdit" name="txtMinimumBidAmount">
           <property name="toolTip">
-           <string>Enter Reserve Amount (The auction price you will accept that triggers a sale)</string>
+           <string>The lowest allowable bid in our marketplace for this item.           </string>
           </property>
           <property name="inputMethodHints">
            <set>Qt::ImhDigitsOnly</set>
@@ -149,7 +150,7 @@
         <item row="8" column="0">
          <widget class="QLabel" name="label_212">
           <property name="toolTip">
-           <string>The lowest bid you will consider.</string>
+           <string></string>
           </property>
           <property name="text">
            <string>Minimum Bid Amount:</string>
@@ -181,7 +182,7 @@
         <item row="9" column="2">
          <widget class="QLineEdit" name="txtLoQualityURL">
           <property name="toolTip">
-           <string>LoQuality URL</string>
+           <string>The URL displayed in the marketplace for previewing the item.</string>
           </property>
          </widget>
         </item>
@@ -197,14 +198,14 @@
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
           <property name="buddy">
-           <cstring>txtHiQualityURL</cstring>
+           <cstring></cstring>
           </property>
          </widget>
         </item>
         <item row="10" column="2">
          <widget class="QLineEdit" name="txtHiQualityURL">
           <property name="toolTip">
-           <string>HiQuality URL</string>
+           <string>The URL given to the user upon successful purchase of the item.</string>
           </property>
          </widget>
         </item>

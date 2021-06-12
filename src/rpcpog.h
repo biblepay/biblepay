@@ -122,14 +122,15 @@ struct NFT
 		obj.push_back(Pair("Iteration", nIteration));
 		if (!fOrphan)
 		{
-			obj.push_back(Pair("MinimumBidAmount", (double)nMinimumBidAmount/COIN));
-			obj.push_back(Pair("ReserveAmount", (double)nReserveAmount/COIN));
-			obj.push_back(Pair("BuyItNowAmount", (double)nBuyItNowAmount/COIN));
-			obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
+			obj.push_back(Pair("MinimumBidAmount", AmountToDouble(nMinimumBidAmount)));
+			obj.push_back(Pair("ReserveAmount", AmountToDouble(nReserveAmount)));
+			obj.push_back(Pair("BuyItNowAmount", AmountToDouble(nBuyItNowAmount)));
+			obj.push_back(Pair("LowestAcceptableAmount", AmountToDouble(LowestAcceptableAmount())));
 			obj.push_back(Pair("Marketable", fMarketable));
 		}
 		else
 		{
+			obj.push_back(Pair("Sponsorable", fMarketable));
 			obj.push_back(Pair("SponsorshipAmount", (double)nBuyItNowAmount/COIN));
 			obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
 		}

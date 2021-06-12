@@ -1656,7 +1656,7 @@ UniValue easystake(const JSONRPCRequest& request)
 	{
 		// Apply mask
 		double nPin = AddressToPin(u.Address);
-		nOptFund = nPin + (nAmount * COIN);  
+		nOptFund = nAmount + nPin;
 		sOptFundAddress = u.Address;
 		results.push_back(Pair("BBP Amount", AmountToString(nOptFund)));
 	}
@@ -2039,7 +2039,7 @@ UniValue price(const JSONRPCRequest& request)
 UniValue listnfts(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2) 
-		throw std::runtime_error("You may specify listnfts 0=mine/1=all 0=marketable(for sale)/1=all");
+		throw std::runtime_error("You may specify listnfts 0=mine/1=all 0=marketable(for sale)/1=all/2=orphans_only");
 	UniValue results(UniValue::VOBJ);
 	double nMineType = cdbl(request.params[0].get_str(), 0);
 	double nMarketableType = cdbl(request.params[1].get_str(), 0);
@@ -2050,7 +2050,9 @@ UniValue listnfts(const JSONRPCRequest& request)
 		NFT n = uNFTs[i];
 		if (n.found && !n.fDeleted)
 		{
-			if ((nMineType == 0 && sCPK == n.sCPK) || nMineType != 0)
+			bool fOrphan = findStringCaseInsensitive(n.sType, "orphan");
+
+			if ((nMineType == 0 && sCPK == n.sCPK) || nMineType != 0 || (nMarketableType == 2 && fOrphan))
 			{
 				if (nMarketableType == 1 || (nMarketableType == 0 && n.fMarketable))
 				{

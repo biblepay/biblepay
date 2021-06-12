@@ -49,6 +49,7 @@ void NFTAddDialog::UpdateDisplay(std::string sAction, uint256 nftHash)
 	if (sAction == "CREATE")
 	{
 		ui->lblAction->setText(GUIUtil::TOQS("Add new NFT"));
+		clear();
 	}
 	else if (sAction == "EDIT")
 	{
