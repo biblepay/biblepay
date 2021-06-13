@@ -2051,10 +2051,9 @@ UniValue listnfts(const JSONRPCRequest& request)
 		if (n.found && !n.fDeleted)
 		{
 			bool fOrphan = findStringCaseInsensitive(n.sType, "orphan");
-
-			if ((nMineType == 0 && sCPK == n.sCPK) || nMineType != 0 || (nMarketableType == 2 && fOrphan))
+			if ((nMineType == 0 && sCPK == n.sCPK) || nMineType != 0)
 			{
-				if (nMarketableType == 1 || (nMarketableType == 0 && n.fMarketable))
+				if (nMarketableType == 1 || (nMarketableType == 0 && n.fMarketable) || (nMarketableType == 2 && fOrphan))
 				{
 				    UniValue o(UniValue::VOBJ);
 					n.ToJson(o);

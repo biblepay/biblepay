@@ -1822,7 +1822,7 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 				// However, the buy amount must be > than the buy_it_now amount (or the reserve price), and the item must be marketable
 				NFT oldNFT = GetSpecificNFT(n.GetHash());
 				bool fOrphan = findStringCaseInsensitive(oldNFT.sType, "orphan");
-				if (oldNFT.fMarketable && oldNFT.found && oldNFT.nMinimumBidAmount > 0 && !oldNFT.fDeleted)
+				if (oldNFT.fMarketable && oldNFT.found && oldNFT.LowestAcceptableAmount() > 0 && !oldNFT.fDeleted)
 				{
 					CAmount nPaid = GetAmountPaidToRecipient(tx1, oldNFT.sCPK);
 					LogPrintf("\nAcceptPrayer::ProcessNFT::Buy Old NFT found min bid amount %f ", oldNFT.nMinimumBidAmount/COIN);
@@ -1840,7 +1840,7 @@ TxMessage ProcessTxMessage(CTransactionRef tx1, std::string sMessage, int64_t nT
 						else
 						{
 							t.fPassedSecurityCheck = true;
-							LogPrintf("\nProfessNFT:Succeeded-BUY-%s", t.sMessageValue);
+							LogPrintf("\nProcessNFT:Succeeded-BUY-%s", t.sMessageValue);
 						}
 					}
 				}
