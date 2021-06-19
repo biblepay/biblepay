@@ -334,7 +334,6 @@ private Q_SLOTS:
 	void JesusConciseCommandmentsClicked();
 	
 	void showAccountability();
-	void showDecentralizedWeb();
 	void showExchange();
 	void openChatGeneralClicked();
 	void openChatPMClicked();

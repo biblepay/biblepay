@@ -503,8 +503,7 @@ int64_t GETFILESIZE2(std::string sPath)
 	return (int64_t)boost::filesystem::file_size(sPath);
 }
 
-
-std::string GetSANDirectory3()
+std::string GetSANDirectory()
 {
 	 boost::filesystem::path pathConfigFile(gArgs.GetArg("-conf", GetConfFileName()));
      if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
@@ -725,7 +724,7 @@ std::string RSA_Encrypt_String_With_Key(std::string sPubKey, std::string sData, 
 		sError = "Public Key Empty";
 		return "-2";
 	}
-	std::string sPath = GetSANDirectory3();
+	std::string sPath = GetSANDirectory();
 	std::string sPubKeyPath = sPath + "pubkey_temp.pub";
 	std::ofstream fd(sPubKeyPath.c_str());
 	fd.write((const char*)sPubKey.c_str(), sPubKey.length());
@@ -746,7 +745,7 @@ std::string RSA_Decrypt_String_With_Key(std::string sPrivKey, std::string sData,
 		sError = "Encryption data empty.";
 		return "-4";
 	}
-	std::string sPath = GetSANDirectory3();
+	std::string sPath = GetSANDirectory();
 	std::string sPrivKeyPath = sPath + "privkey_temp.priv";
 	std::ofstream fd(sPrivKeyPath.c_str());
 	fd.write((const char*)sPrivKey.c_str(), sPrivKey.length());

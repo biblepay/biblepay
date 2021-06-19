@@ -429,6 +429,7 @@ struct ReferralCode
 	CAmount TotalReferralReward = 0;
 	CAmount GiftAmount = 0; // Used by referral codes
 	double dGiftAmount = 0; // Used by block assessor
+	std::string GiftDetails;
 	double ReferralEffectivity = 0;
 	double PercentageAffected = 0;
 	double ReferralRewards = 0;
@@ -814,15 +815,11 @@ std::vector<std::string> GetVectorOfFilesInDirectory(const std::string &dirPath,
 std::string GetAttachmentData(std::string sPath, bool fEncrypted);
 std::string Path_Combine(std::string sPath, std::string sFileName);
 void ProcessBLSCommand(CTransactionRef tx);
-DACResult GetDecentralizedURL();
-std::string BIPFS_Payment(CAmount nAmount, std::string sTXID, std::string sXML);
 DACResult DSQL_ReadOnlyQuery(std::string sXMLSource);
 DACResult DSQL_ReadOnlyQuery(std::string sEndpoint, std::string sXML);
 std::string TeamToName(int iTeamID);
-std::string GetEPArg(bool fPublic);
 CoinVin GetCoinVIN(COutPoint o, int64_t nTxTime);
 bool GetTxDAC(uint256 txid, CTransactionRef& tx1);
-std::string SearchChain(int nBlocks, std::string sDest);
 uint256 ComputeRandomXTarget(uint256 hash, int64_t nPrevBlockTime, int64_t nBlockTime);
 std::string ReverseHex(std::string const & src);
 uint256 GetRandomXHash(std::string sHeaderHex, uint256 key, uint256 hashPrevBlock, int iThreadID);
@@ -853,7 +850,6 @@ UserRecord GetUserRecord(std::string sSourceCPK);
 RSAKey GetMyRSAKey();
 RSAKey GetTestRSAKey();
 std::string Mid(std::string data, int nStart, int nLength);
-std::string GetSANDirectory4();
 void WriteUnsignedBytesToFile(char const* filename, std::vector<unsigned char> outchar);
 bool PayEmailFees(CEmail email);
 void SendEmail(CEmail email);
@@ -884,11 +880,9 @@ bool GetTransactionTimeAndAmount(uint256 txhash, int nVout, int64_t& nTime, CAmo
 std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, int nSign, std::string sExtraPayload, std::string& sError);
 std::string ToYesNo(bool bValue);
 bool VoteForGobject(uint256 govobj, std::string sVoteOutcome, std::string& sError);
-int64_t GetDCCFileAge();
-std::string GetSANDirectory2();
-bool CreateLegacyGSCTransmission(std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError);
+int64_t GetFileAge(std::string sPath);
+bool CreateLegacyGSCTransmission(CAmount nAmount, std::string sAddress, std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError);
 bool ValidateAddress2(std::string sAddress);
-std::string GetReleaseSuffix();
 boost::filesystem::path GetDeterministicConfigFile();
 boost::filesystem::path GetMasternodeConfigFile();
 CAmount ARM64();
@@ -941,5 +935,6 @@ ReferralCode DeserializeReferralCode(std::string sCode);
 
 bool ValidateAddress3(std::string sTicker, std::string sAddress);
 bool ValidateTicker(std::string sTicker);
+std::string GetSANDirectory1();
 
 #endif

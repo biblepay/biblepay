@@ -119,5 +119,64 @@ Changes between 1.5.2.9-1.5.4.4:
 - Enforce 3meg email limit
 - Bump version and cutover height for prod
 - Decrease quorum size to be more reflective of our Paid-sponsorship-orphan sanctuary model
+
 1.5.4.5b - Mandatory Upgrade for Entire Network
 - Ensure Pop3 class can be disabled (for sancs with shared hosting)
+
+1.6.0.1-Transition to Dash 0.16.1.1
+- Merge all Dash commits up to Nov 15, 2020 commit: 43d2973
+- Rebase biblepay-core
+
+Changes between 1.6.0.1b - 1.6.2.1
+
+- Adjust toolbar for the mac, fix CSS to work with vertical menu
+- Add png images for UTXO staking
+- Add LLMQ params for chainlocks and LLMQ-instantsend
+- Enable the Wallet on hot sanctuaries (allows sancs to work as UTXO oracles)
+- Add ETHereum staking
+- Implement new payment at HARVEST_HEIGHT2: // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
+- Allow incoming connections to masternodes on TESTNET during syncing (allows us to bootstrap ourselves if all nodes are down)
+- Provide a better UTXO error message when the foreign amount is empty
+- Remove invalid getchaininfo responses
+- Fix display width of masternodelist UI gride columns, Recaption Masternode to sanctuary
+- Add NFT 1.0 (Non-Fungible Tokens)
+- Improve coin-control display of locked stakes with commitments (added a chained lock)
+- Add Referral Codes 1.0 (allow user to generatereferralcode, listattachedreferralcodes, checkreferralcode, claimreferralcode)
+- Add biblepay mail delivery (Christmas Cards) and phrase protected virtual gift cards, Add Send Greeting Card UI
+- Add lo/hi quality NFT URLs, add deleted field, and businessobject processing for the new fields.
+- Modify listutxostakes to actually be JSON
+- Raise BBP block fees from dust levels to small levels (they were at dust in testnet, should be about 1 bbp per 1K of size now - similar to prod) 
+- Add tier2 payment for non POOS sancs.  This gives tier2 a 250bbp reward to run a sanc that does not sponsor an orphan, simply for network stability.
+- Recaption Duffs to Pence (This gives a name to our microcoins)
+- Coin Control: Display gift icon when it is a gift
+- Auto unlock the gift if they 'acceptgift', lock gifts on wallet boot by default (this prevents gifts from being spent by the giver).  Add gift key to givers wallet so they can recall the gift if it is never redeemed.
+- Add NFT Auctions (Buy It Now Amount and Reserve Price)
+- Add orphan sponsorship duration to 'listnfts'
+- Add Christmas, Easter and Kittens Greeting cards.  Make the greeting card fields customizable by the user.  
+- Add Invoicing and Payments and Statements v1.0
+- Add rpc getstatement
+- Add DSQL to server side (this supports an insert and a read). 
+- Make referralcode calculation easier to understand
+- Add rest pushtx, getaddressutxo.   This allows a decentralized client to relay a tx, and allows a decentralized c# consumer to query utxos, and query DSQL data.
+- Add Ripple and Stellar support for UTXO staking (v1.0), and modify getpin for this also
+- Make referralrewards bonus decay over 2 years
+- Fix listattachedreferralcodes to be nicer with a narrative
+- Add preview to Greeting Card CSV process (from Greeting card UI)
+- Add social media NFT type
+- Add rpc getvalue command to allow you to convert from BBP to USD if you are an orphanage for example
+- Remove Randomx calls on MAC making it an SPV client (due to incompatibility with /crypto/randomx on mac)
+- Update icon for mac build
+- Update build instructions for mac cross compiling
+- Disable smtp and pop3 by default to prevent mac-testnet from crashing
+- Merge in very upstream bitcoin commit that prevents crash on intel atom during startup of sha256
+- Pre-merge changes coming for Stellar
+- Add Build Biblepay Develop instructions
+- Add Trust Wallet Integration (UTXO staking 2.0)
+- Add BBP Crypto Index
+- Add erasechain UI (wallet tools)
+- Add bitcoincash + zcash to portfolio builder
+- Optimize dsql query filter
+- Fix cosmetic items on the 'mission critical todo' list
+- Add Query button to utxodialog
+
+

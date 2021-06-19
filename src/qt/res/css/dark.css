@@ -78,13 +78,14 @@ QToolBar {
 background-color:#971B20;
 border:0px solid #000;
 height:700px;
-overflow:hidden;
+/* overflow:hidden; */
 /*min-height:840px;*/
-width:180px;
-max-width:180px;
-/*font-size:20%;*/
+width:190px;
+max-width:190px;
+text-align:left;
+font-size: small;
 margin:0;
-padding-bottom:100px;
+padding-bottom:90px;
 }
 
 

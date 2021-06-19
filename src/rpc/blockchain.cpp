@@ -241,18 +241,24 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
 {
     AssertLockHeld(cs_main);
     UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
+	if (blockindex)
+		result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
     int confirmations = -1;
     // Only report confirmations if the block is on the main chain
-    if (chainActive.Contains(blockindex))
+    if (blockindex && chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
     result.push_back(Pair("confirmations", confirmations));
     result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION)));
-    result.push_back(Pair("height", blockindex->nHeight));
+	if (blockindex)
+		 result.push_back(Pair("height", blockindex->nHeight));
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
-	bool chainLock = llmq::chainLocksHandler->HasChainLock(blockindex->nHeight, blockindex->GetBlockHash());
+	bool chainLock = false;
+	if (blockindex)
+	{
+		chainLock = llmq::chainLocksHandler->HasChainLock(blockindex->nHeight, blockindex->GetBlockHash());
+	}
     UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {
@@ -278,21 +284,25 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
         }
     }
     result.push_back(Pair("time", block.GetBlockTime()));
-    result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
+	if (blockindex)
+		result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
 	result.push_back(Pair("hrtime", TimestampToHRDate(block.GetBlockTime())));
     result.push_back(Pair("nonce", (uint64_t)block.nNonce));
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
-    result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
-    result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    result.push_back(Pair("nTx", (uint64_t)blockindex->nTx));
-	result.push_back(Pair("subsidy", block.vtx[0]->vout[0].nValue/COIN));
+	if (blockindex)
+	{
+		result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
+		result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
+		result.push_back(Pair("nTx", (uint64_t)blockindex->nTx));
+	}
+    result.push_back(Pair("subsidy", block.vtx[0]->vout[0].nValue/COIN));
 	result.push_back(Pair("blockversion", GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage)));
 	if (block.vtx.size() > 1)
 		result.push_back(Pair("sanctuary_reward", block.vtx[0]->vout[1].nValue/COIN));
 	// BiblePay
 	bool bShowPrayers = true;
     
-	if (blockindex->pprev)
+	if (blockindex && blockindex->pprev)
 	{
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
 		const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -320,23 +330,23 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
 		*/
     }
 
-
-    CBlockIndex *pnext = chainActive.Next(blockindex);
-    if (pnext)
-        result.push_back(Pair("nextblockhash", pnext->GetBlockHash().GetHex()));
-
-	// Genesis Block only:
-	if (blockindex && blockindex->nHeight==0)
+	if (blockindex)
 	{
-		int iStart=0;
-		int iEnd=0;
-		// Display a verse from Genesis 1:1 for The Genesis Block:
-		GetBookStartEnd("gen", iStart, iEnd);
-		std::string sVerse = GetVerse("gen", 1, 1, iStart - 1, iEnd);
-		boost::trim(sVerse);
-		result.push_back(Pair("verses", sVerse));
+		CBlockIndex *pnext = chainActive.Next(blockindex);
+		if (pnext)
+			result.push_back(Pair("nextblockhash", pnext->GetBlockHash().GetHex()));
+		// Genesis Block only:
+		if (blockindex && blockindex->nHeight==0)
+		{
+			int iStart=0;
+			int iEnd=0;
+			// Display a verse from Genesis 1:1 for The Genesis Block:
+			GetBookStartEnd("gen", iStart, iEnd);
+			std::string sVerse = GetVerse("gen", 1, 1, iStart - 1, iEnd);
+			boost::trim(sVerse);
+			result.push_back(Pair("verses", sVerse));
+		}
 	}
-
     result.push_back(Pair("chainlock", chainLock));
 
     return result;
@@ -2641,8 +2651,8 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "testrsa")
 	{
-		std::string sPubPath =  GetSANDirectory2() + "pubkey.pub";
-		std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
+		std::string sPubPath =  GetSANDirectory1() + "pubkey.pub";
+		std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 		std::string sError;
 		std::string sData = "1234567890-1234567890-1234567890";
 		std::string sEnc = RSA_Encrypt_String(sPubPath, sData ,sError);
@@ -2662,7 +2672,7 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sError;
 		std::string sEnc = RSA_Encrypt_String_With_Key(rsa2.PublicKey, s, sError);
 		results.push_back(Pair("enc", sEnc));
-		std::string sPrivPath =  GetSANDirectory2() + "privkeytest.priv";
+		std::string sPrivPath =  GetSANDirectory1() + "privkeytest.priv";
 
 		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
 		results.push_back(Pair("dec", sDec));
@@ -4193,7 +4203,9 @@ UniValue exec(const JSONRPCRequest& request)
 		CBlock block;
         if (!DecodeHexBlk(block, sHex))
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
-        return blockToJSON(block, NULL, true);
+		UniValue obj(UniValue::VOBJ);
+		obj = blockToJSON(block, NULL, true);
+		results.push_back(obj);
 	}
 	else if (sItem == "hextxtojson")
 	{

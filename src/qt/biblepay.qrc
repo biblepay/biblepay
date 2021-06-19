@@ -31,8 +31,15 @@
         <file alias="remove">res/icons/remove.png</file>
         <file alias="lock_closed">res/icons/lock_closed.png</file>
         <file alias="lock_open">res/icons/lock_open.png</file>
+        <file alias="overview">res/icons/overview.png</file>
+        <file alias="send">res/icons/send.png</file>
+        <file alias="history">res/icons/history.png</file>
+        <file alias="masternodes">res/icons/masternodes.png</file>
+        <file alias="account32">res/icons/account32.png</file>
+        <file alias="edit">res/icons/edit.png</file>
         <file alias="utxo_lock_closed">res/icons/utxo_lock_closed.png</file>
         <file alias="utxo_lock_hiyield">res/icons/locked_hiyield.png</file>
+        <file alias="notsynced">res/icons/notsynced.png</file>
         <file alias="verify">res/icons/verify.png</file>
         <file alias="hd_enabled">res/icons/hd_enabled.png</file>
         <file alias="fontbigger">res/icons/fontbigger.png</file>

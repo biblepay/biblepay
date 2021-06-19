@@ -24,11 +24,10 @@ void RequestMissingEmails()
 			std::string sTXID = GetElement(ii.first, "[-]", 1);
 			uint256 hashInput = uint256S(sTXID);
 			std::string sFileName = "email_" + hashInput.GetHex() + ".eml";
-			std::string sTarget = GetSANDirectory4() + sFileName;
+			std::string sTarget = GetSANDirectory1() + sFileName;
 			int64_t nSz = GETFILESIZE(sTarget);
 			if (nSz <= 0)
 			{
-				//LogPrintf("\nSMTP::Requesting Missing Email %s ", sFileName);
 				CEmailRequest erequest;
 				erequest.RequestID = hashInput;
 				bool nSent = false;

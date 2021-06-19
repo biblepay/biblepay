@@ -91,7 +91,7 @@ std::string ChatDialog::Decrypt(std::string sEnc)
 	if (fEncryptedChat)
 	{
 		std::string sError;
-		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+		std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
 		sMessage = "(Encrypted) " + sDec;
 		if (!sError.empty())

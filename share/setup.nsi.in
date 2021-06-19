@@ -51,9 +51,9 @@ Var StartMenuGroup
 # Installer attributes
 OutFile @abs_top_srcdir@/@PACKAGE_TARNAME@-${VERSION}-win@WINDOWS_BITS@-setup.exe
 !if "@WINDOWS_BITS@" == "64"
-InstallDir $PROGRAMFILES64\BiblePayCore
+InstallDir $PROGRAMFILES64\BiblePay
 !else
-InstallDir $PROGRAMFILES\BiblePayCore
+InstallDir $PROGRAMFILES\BiblePay
 !endif
 CRCCheck on
 XPStyle on

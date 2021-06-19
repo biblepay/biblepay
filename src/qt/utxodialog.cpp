@@ -94,12 +94,14 @@ void UTXODialog::UpdateDisplay()
 	// This generates a biblepay cryptocurrency index chart containing the weighted index over the last 6 months for each of the tickers (we have 8 as of May 28th, 2021)
 	std::string sURL = "https://foundation.biblepay.org";
 	std::string sPage = "Images/index.png";
-	std::string sTargPath =  GetSANDirectory2() + "index.png";
+	std::string sTargPath =  GetSANDirectory1() + "index.png";
 	DACResult d = DownloadFile(sURL, sPage, 443, 30000, sTargPath, false);
 	QString qsLoc = GUIUtil::TOQS(sTargPath);
 	QPixmap img(qsLoc);
 	QLabel *label = new QLabel(this);
 	ui->lblIndex->setPixmap(img);
+	std::string sDWU = "DWU: " + RoundToString(CalculateUTXOReward() * 100, 2) + "%";
+	ui->lblInfo->setText(GUIUtil::TOQS(sDWU));
 }
 
 void UTXODialog::setModel(WalletModel *model)

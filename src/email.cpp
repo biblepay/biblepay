@@ -184,14 +184,14 @@ double CEmail::getMemoryUsage()
 std::string CEmail::GetFileName()
 {
 	std::string sFileName = "email_" + GetHash().GetHex() + ".eml";
-	std::string sTarget = GetSANDirectory4() + sFileName;
+	std::string sTarget = GetSANDirectory1() + sFileName;
 	return sTarget;
 }
 
 int CEmail::EDeserialize(uint256 Hash)
 {
 	std::string sFileName = "email_" + Hash.GetHex() + ".eml";
-	std::string sSource = GetSANDirectory4() + sFileName;
+	std::string sSource = GetSANDirectory1() + sFileName;
 	int64_t nSz = GETFILESIZE(sSource);
 	if (nSz <= 0)
 	{
@@ -244,7 +244,7 @@ bool CEmail::IsMine()
 	if (findStringCaseInsensitive(ToEmail, msMyInternalEmailAddress) && nVersion == 3 && !msMyInternalEmailAddress.empty())
 	{
 		// Check for decryption
-		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+		std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 		std::string sError;
 		std::string sDec = RSA_Decrypt_String(sPrivPath, Body, sError);
 		bool fScan = findStringCaseInsensitive(sDec, "subject:");

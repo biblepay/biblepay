@@ -689,7 +689,7 @@ void RPCConsole::setClientModel(ClientModel *model)
         showOrHideBanTableIfRequired();
 
         // Provide initial values
-        ui->clientVersion->setText(model->formatFullVersion() + GUIUtil::TOQS(GetReleaseSuffix()));
+        ui->clientVersion->setText(model->formatFullVersion());
         ui->clientUserAgent->setText(model->formatSubVersion());
         ui->dataDir->setText(model->dataDir());
         ui->startupTime->setText(model->formatClientStartupTime());

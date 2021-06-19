@@ -1316,7 +1316,7 @@ void SerializePrayersToFile(int nHeight)
 {
 	if (nHeight < 100) return;
 	std::string sSuffix = fProd ? "_prod" : "_testnet";
-	std::string sTarget = GetSANDirectory2() + "prayers3" + sSuffix;
+	std::string sTarget = GetSANDirectory1() + "prayers3" + sSuffix;
 	FILE *outFile = fopen(sTarget.c_str(), "w");
 	LogPrintf("Serializing Prayers... %f ", GetAdjustedTime());
 	for (auto ii : mvApplicationCache) 
@@ -1346,7 +1346,7 @@ int DeserializePrayersFromFile()
 {
 	LogPrintf("\nDeserializing prayers from file %f", GetAdjustedTime());
 	std::string sSuffix = fProd ? "_prod" : "_testnet";
-	std::string sSource = GetSANDirectory2() + "prayers3" + sSuffix;
+	std::string sSource = GetSANDirectory1() + "prayers3" + sSuffix;
 
 	boost::filesystem::path pathIn(sSource);
     std::ifstream streamIn;
@@ -2950,69 +2950,6 @@ std::string Path_Combine(std::string sPath, std::string sFileName)
 	return sFullPath;
 }
 
-DACResult GetDecentralizedURL()
-{
-	DACResult b;
-	b.Response = "https://" + GetSporkValue("bms");
-	return b;
-}
-
-std::string BIPFS_Payment(CAmount nAmount, std::string sTXID1, std::string sXML1)
-{
-	// Create BIPFS ChristianObject
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-	std:: string sCPK = DefaultRecAddress("PUBLIC-FUNDING-ADDRESS");
-	std::string sXML = "<cpk>" + sCPK + "</cpk><type>dsql</type>";
-
-	bool fSubtractFee = false;
-	bool fInstantSend = true;
-    CWalletTx wtx;
-	std::string sError;
-	UniValue u(UniValue::VOBJ);
-	u.push_back(Pair("CPK", sCPK));
-	DACResult b = DSQL(u, "");
-	std::string sObjHash = ExtractXML(b.Response, "<hash>", "</hash>");
-	if (sObjHash.empty())
-	{
-		return "<ERRORS>Unable to sign empty DSQL hash.</ERRORS>";
-	}
-	CScript spkFPA = GetScriptForDestination(DecodeDestination(consensusParams.FoundationPODSAddress));
-
-	bool fSent = RPCSendMoney(sError, spkFPA, nAmount, fSubtractFee, wtx, fInstantSend, sXML);
-	if (!sError.empty() || !fSent)
-	{
-		return "<ERRORS>" + sError + "</ERRORS>";
-	}
-	// Funds were successful, submit signed object with TXID:
-	std::string sTXID = wtx.GetHash().GetHex().c_str();
-	sXML += "<txid>" + sTXID + "</txid>";
-
-	u.push_back(Pair("TXID", sTXID));
-	double dAmount = (double)nAmount / COIN;
-	u.push_back(Pair("PaymentAmount", RoundToString(-1 * dAmount, 2)));
-	u.push_back(Pair("TableName", "accounting"));
-	u.push_back(Pair("Timestamp", RoundToString(GetAdjustedTime(), 0)));
-	b = DSQL(u, "");
-	sObjHash = ExtractXML(b.Response, "<hash>", "</hash>");
-
-	// Sign
-	std::string sSignature = SignMessageEvo(sCPK, sObjHash, sError);
-	if (sObjHash.empty())
-	{
-		return "<ERRORS>Unable to sign empty hash.</ERRORS>";
-	}
-	if (!sError.empty())
-	{
-		return "<ERRORS>" + sError + "</ERRORS>";
-	}
-	// Dry run is complete - now sign the object 
-	std::string sPayload = "<signature>" + sSignature + "</signature>";
-	// Release the funds
-	b = DSQL(u, sPayload);
-	b.Response += "<TXID>" + sTXID + "</TXID>";
-	return b.Response;
-}
-
 std::string GetResElement(std::string data, int iElement)
 {
 	if (data.empty())
@@ -3066,21 +3003,6 @@ UserRecord GetUserRecord(std::string sSourceCPK)
 		}
 	}
 	return u;
-}
-
-std::string GetEPArg(bool fPublic)
-{
-	std::string sEPA = gArgs.GetArg("-externalpurse", "");
-	if (sEPA.empty() || sEPA.length() < 8)
-		return std::string();
-	std::string sPubFile = gArgs.GetArg("-externalpubkey" + sEPA.substr(0,8), "");
-	if (fPublic)
-		return sPubFile;
-	std::string sPrivFile = gArgs.GetArg("-externalprivkey" + sEPA.substr(0,8), "");
-	if (sPrivFile.empty())
-		return std::string();
-	std::string sUsable = DecryptAES256(sPrivFile, sEPA);
-	return sUsable;
 }
 
 int64_t GetTxTime(uint256 blockHash, int& iHeight)
@@ -3145,31 +3067,6 @@ std::string GetUTXO(std::string sHash, int nOrdinal, CAmount& nValue, std::strin
 	sError = "Unable to find UTXO Coin";
 	return "";
 }
-
-/*
-int CalculateKeyType(std::string sForeignTicker)
-{
-	int nKeyType = 0;
-	boost::to_upper(sForeignTicker);
-	if (sForeignTicker == "BTC")
-	{
-		nKeyType = 0;
-	}
-	else if (sForeignTicker == "DASH")
-	{
-		nKeyType = 76;
-	}
-	else if (sForeignTicker == "BBP")
-	{
-		nKeyType = fProd ? 25 : 140;
-	}
-	else 
-	{
-		nKeyType = 25;
-	}
-	return nKeyType;
-}
-*/
 
 NFT GetNFT(CTransactionRef tx1)
 {
@@ -3494,49 +3391,6 @@ CoinVin GetCoinVIN(COutPoint o, int64_t nTxTime)
 	return b;
 }
 	
-std::string SearchChain(int nBlocks, std::string sDest)
-{
-	if (!chainActive.Tip()) 
-		return std::string();
-	int nMaxDepth = chainActive.Tip()->nHeight;
-	int nMinDepth = nMaxDepth - nBlocks;
-	if (nMinDepth < 1) 
-		nMinDepth = 1;
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-	std::string sData;
-	CBlockIndex* pindex = FindBlockByHeight(nMinDepth);
-	while (pindex && pindex->nHeight < nMaxDepth)
-	{
-		if (pindex->nHeight < chainActive.Tip()->nHeight) 
-			pindex = chainActive.Next(pindex);
-		CBlock block;
-		if (ReadBlockFromDisk(block, pindex, consensusParams)) 
-		{
-			for (unsigned int n = 0; n < block.vtx.size(); n++)
-			{
-				std::string sMsg = GetTransactionMessage(block.vtx[n]);
-				std::string sCPK = ExtractXML(sMsg, "<cpk>", "</cpk>");
-				std::string sUSD = ExtractXML(sMsg, "<amount_usd>", "</amount_usd>");
-				std::string sChildID = ExtractXML(sMsg, "<childid>", "</childid>");
-				boost::trim(sChildID);
-
-				for (int i = 0; i < block.vtx[n]->vout.size(); i++)
-				{
-					double dAmount = block.vtx[n]->vout[i].nValue / COIN;
-					std::string sPK = PubKeyToAddress(block.vtx[n]->vout[i].scriptPubKey);
-					if (sPK == sDest && dAmount > 0 && !sChildID.empty())
-					{
-						std::string sRow = "<row><block>" + RoundToString(pindex->nHeight, 0) + "</block><destination>" + sPK + "</destination><cpk>" + sCPK + "</cpk><childid>" 
-							+ sChildID + "</childid><amount>" + RoundToString(dAmount, 2) + "</amount><amount_usd>" 
-							+ sUSD + "</amount_usd><txid>" + block.vtx[n]->GetHash().GetHex() + "</txid></row>";
-						sData += sRow;
-					}
-				}
-			}
-		}
-	}
-	return sData;
-}
 
 uint256 ComputeRandomXTarget(uint256 dac_hash, int64_t nPrevBlockTime, int64_t nBlockTime)
 {
@@ -3839,7 +3693,9 @@ bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& 
 		ERROR_OUT = "Invalid outcome (Yes, No, Abstain).";
 		return false;
 	}
-	CreateLegacyGSCTransmission("coinagevote", sGobjectID, sOutcome, "", sError);
+	const Consensus::Params& consensusParams = Params().GetConsensus();
+
+	CreateLegacyGSCTransmission(1*COIN, consensusParams.BurnAddress, "coinagevote", sGobjectID, sOutcome, "", sError);
 	if (!sError.empty())
 	{
 		LogPrintf("\nVoteWithCoinAge::ERROR %f, WARNING %s, Campaign %s, Error [%s].\n", GetAdjustedTime(), "coinagevote", sError, sWarning);
@@ -3966,12 +3822,26 @@ std::string GetAPMNarrative()
 	return std::string();
 }
 
+std::string GetSANDirectory1()
+{
+	 boost::filesystem::path pathConfigFile(gArgs.GetArg("-conf", GetConfFileName()));
+     if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
+	 boost::filesystem::path dir = pathConfigFile.parent_path();
+	 std::string sDir = dir.string() + "/SAN/";
+	 boost::filesystem::path pathSAN(sDir);
+	 if (!boost::filesystem::exists(pathSAN))
+	 {
+		 boost::filesystem::create_directory(pathSAN);
+	 }
+	 return sDir;
+}
+
 bool RelinquishSpace(std::string sPath)
 {
 	if (sPath.empty())
 		return false;
 	std::string sMD5 = RetrieveMd5(sPath);
-    std::string sDir = GetSANDirectory2() + sMD5;
+    std::string sDir = GetSANDirectory1() + sMD5;
 	boost::filesystem::path pathIPFS = sDir;
 	boost::filesystem::remove_all(pathIPFS);
     return true;
@@ -4083,7 +3953,7 @@ static int MAX_PART_SIZE = 10000000;
 std::string SplitFile(std::string sPath)
 {
 	std::string sMD5 = RetrieveMd5(sPath);
-    std::string sDir = GetSANDirectory2() + sMD5;
+    std::string sDir = GetSANDirectory1() + sMD5;
 	boost::filesystem::path pathSAN(sDir);
     if (!boost::filesystem::exists(pathSAN))
 	{
@@ -4380,8 +4250,6 @@ DACResult SendInvoice(Invoice i)
 	return d;
 }
 
-
-
 std::string FormatURL(std::string URL, int iPart)
 {
 	if (URL.empty())
@@ -4446,11 +4314,10 @@ void ProcessSidechainData(std::string sData, int nSyncHeight)
 	}
 }
 
-
 RSAKey GetMyRSAKey()
 {
-	std::string sPubPath =  GetSANDirectory2() + "pubkey.pub";
-	std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
+	std::string sPubPath = GetSANDirectory1() + "pubkey.pub";
+	std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 	int64_t nPub = GETFILESIZE(sPubPath);
 	int64_t nPriv = GETFILESIZE(sPrivPath);
 	RSAKey RSA;
@@ -4482,8 +4349,8 @@ RSAKey GetMyRSAKey()
 RSAKey GetTestRSAKey()
 {
 	// Note:  We can remove this function once we go to prod.  This just lets the devs test a prod RSA key against a second prod RSA key (simulating user->user encrypted traffic).
-	std::string sPubPath =  GetSANDirectory2() + "pubkeytest.pub";
-	std::string sPrivPath = GetSANDirectory2() + "privkeytest.priv";
+	std::string sPubPath = GetSANDirectory1() + "pubkeytest.pub";
+	std::string sPrivPath = GetSANDirectory1() + "privkeytest.priv";
 	int64_t nPub = GETFILESIZE(sPubPath);
 	int64_t nPriv = GETFILESIZE(sPrivPath);
 	RSAKey RSA;
@@ -4576,21 +4443,6 @@ bool PayEmailFees(CEmail email)
 
 	bool fValid = sError.empty() && !sResult.empty();
 	return fValid;
-}
-
-
-std::string GetSANDirectory4()
-{
-	 boost::filesystem::path pathConfigFile(gArgs.GetArg("-conf", GetConfFileName()));
-     if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
-	 boost::filesystem::path dir = pathConfigFile.parent_path();
-	 std::string sDir = dir.string() + "/SAN/";
-	 boost::filesystem::path pathSAN(sDir);
-	 if (!boost::filesystem::exists(pathSAN))
-	 {
-		 boost::filesystem::create_directory(pathSAN);
-	 }
-	 return sDir;
 }
 
 void WriteUnsignedBytesToFile(char const* filename, std::vector<unsigned char> outchar)
@@ -4727,7 +4579,7 @@ std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQuantity)
 	std::string sSummary = "Tickers: " + sTickers + "<br>Total Stake Count: " + RoundToString(nCount, 0);
 	sSummary += "<br>Total Stake Weight: " + RoundToString(nTotalStakeWeight, 2) 
 			 +  "<br>Portfolio DWU: " + RoundToString(nDWU * 100, 2) + "<br>Referral Rewards: " + RoundToString(rc1.ReferralRewards, 10) + "</br>";
-	sSummary += "<br>Gifts: " + RoundToString(rc1.dGiftAmount, 2) + "</br>";
+	sSummary += "<br>Gifts: " + RoundToString(rc1.dGiftAmount, 2) + "</br><br>Gift Details: " + rc1.GiftDetails + "</br>";
 	sSummary += "<br>Referral BBP Claimed: "+ RoundToString((double)rc1.TotalClaimed/COIN, 2) + "<br>Referral BBP Earned: "+ RoundToString((double)rc1.TotalEarned/COIN, 2);
 	
 	return sSummary;
@@ -4796,7 +4648,6 @@ double CalculateUTXOReward()
 	double nTotal = SumUTXO(nNativeTotal);
 	double nBTCPrice = GetCryptoPrice("btc");
 	double nBBPPrice = GetCryptoPrice("bbp");
-	//double nHSMultiplier = GetHighDWURewardPercentage(nCommitment);
 	double nUSDBBP = nBTCPrice * nBBPPrice;
 	double nAnnualReward = (nPaymentsLimit/COIN) * 365 * nUSDBBP;
 	double nDWU = nAnnualReward / (nTotal+.01);
@@ -4894,7 +4745,7 @@ PriceQuote GetPriceQuote(std::string sForeignSymbol, CAmount xBBPQty, CAmount xF
 void AppendStorageFile(std::string sDataStoreName, std::string sData)
 {
 	std::string sSuffix = fProd ? "_prod" : "_testnet";
-	std::string sTarget = GetSANDirectory2() + sDataStoreName + sSuffix;
+	std::string sTarget = GetSANDirectory1() + sDataStoreName + sSuffix;
 	FILE *outFile = fopen(sTarget.c_str(), "a");
 	std::string sRow = sData + "\r\n";
 	fputs(sRow.c_str(), outFile);
@@ -4914,7 +4765,7 @@ bool findStringCaseInsensitive(const std::string & strHaystack, const std::strin
 bool HashExistsInDataFile(std::string sDataStoreName, std::string sHash)
 {
 	std::string sSuffix = fProd ? "_prod" : "_testnet";
-	std::string sTarget = GetSANDirectory2() + sDataStoreName + sSuffix;
+	std::string sTarget = GetSANDirectory1() + sDataStoreName + sSuffix;
 	int iFileSize = GETFILESIZE(sTarget);
 	if (iFileSize < 1)
 		return false;
@@ -4990,22 +4841,6 @@ std::string GetPopUpVerses(std::string sRange)
 	return sTotalVerses;
 }
 
-std::string GetSANDirectory2()
-{
-	 std::string prefix = CURRENCY_NAME;
-	 boost::to_lower(prefix);
-	 boost::filesystem::path pathConfigFile(gArgs.GetArg("-conf", prefix + ".conf"));
-     if (!pathConfigFile.is_complete()) 
-		 pathConfigFile = GetDataDir(false) / pathConfigFile;
-	 boost::filesystem::path dir = pathConfigFile.parent_path();
-	 std::string sDir = dir.string() + "/SAN/";
-	 boost::filesystem::path pathSAN(sDir);
-	 if (!boost::filesystem::exists(pathSAN))
-	 {
-		 boost::filesystem::create_directory(pathSAN);
-	 }
-	 return sDir;
-}
 
 std::string ToYesNo(bool bValue)
 {
@@ -5152,10 +4987,9 @@ std::string rPad(std::string data, int minWidth)
 	return sOut;
 }
 
-int64_t GetDCCFileAge()
+int64_t GetFileAge(std::string sPath)
 {
-	std::string sRACFile = GetSANDirectory2() + "rac.rac";
-	boost::filesystem::path pathFiltered(sRACFile);
+	boost::filesystem::path pathFiltered(sPath);
 	if (!boost::filesystem::exists(pathFiltered)) 
 		return GetAdjustedTime() - 0;
 	int64_t nTime = last_write_time(pathFiltered);
@@ -5163,16 +4997,7 @@ int64_t GetDCCFileAge()
 	return nAge;
 }
 
-double UserSetting(std::string sName, double dDefault)
-{
-	boost::to_lower(sName);
-	double dConfigSetting = cdbl(gArgs.GetArg("-" + sName, "0"), 4);
-	if (dConfigSetting == 0) 
-		dConfigSetting = dDefault;
-	return dConfigSetting;
-}
-
-bool CreateLegacyGSCTransmission(std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError)
+bool CreateLegacyGSCTransmission(CAmount nAmount, std::string sAddress, std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError)
 {
 	std::string sSignature;
 	std::string sCPK = DefaultRecAddress("Christian-Public-Key"); 
@@ -5180,7 +5005,7 @@ bool CreateLegacyGSCTransmission(std::string sCampaign, std::string sGobjectID, 
 		+ sCPK + "</abncpk><gsccampaign>" 
 		+ sCampaign + "</gsccampaign><diary>" + sDiary + "</diary>";
 	const Consensus::Params& consensusParams = Params().GetConsensus();
-	std::string sTXID = RPCSendMessage(1*COIN, consensusParams.BurnAddress, false, sError, sXML);
+	std::string sTXID = RPCSendMessage(nAmount, sAddress, false, sError, sXML);
 
 	if (!sError.empty())
 	{
@@ -5656,9 +5481,7 @@ std::string SendReferralCode(std::string& sError, double nGiftAmount)
 		sError = "Sorry, you must have an established portfolio to generate a referral code. ";
 		return std::string();
 	}
-	// If they have no portfolio, reject the creation procedure.
-	// I suppose they can dynamically make their portfolio as big as they want after this point, so no need to be strict.  Just give them a code if they have a portfolio.
-	// People cannot use more than 10% of a portfolio anyway as we will dynamically check portfolios daily.
+	// People cannot use more than 10% of a portfolio
 	std::string sPayload = "<MT>REFERRALCODE</MT><MK>" + sPK + "</MK><MV><referralcode><time>" + RoundToString(GetAdjustedTime(), 0) + "</time><height>" 
 			+ RoundToString(chainActive.Tip()->nHeight, 0) + "</height><giftamount>" + RoundToString(nGiftAmount, 0) 
 			+ "</giftamount><cpk>" + sCPK + "</cpk>"
@@ -5784,7 +5607,6 @@ std::vector<ReferralCode> GetGeneratedReferralCodes()
 			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
 			ReferralCode r;
 			std::string sID = GetElement(ii.first, "[-]", 1);
-			r.CPK = GetElement(sID, "-", 1);
 			r.Code = GetElement(sID, "-", 2);
 			CAmount nSize = 0;
 			ReferralCode rc = DeserializeReferralCode(r.Code);
@@ -5809,24 +5631,24 @@ std::vector<ReferralCode> GetClaimedReferralCodes()
 		if (Contains(ii.first, "CLAIMREFERRALCODE[-]"))
 		{
 			std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
-			ReferralCode r;
 			std::string sID = GetElement(ii.first, "[-]", 1);
-			r.CPK = GetElement(sID, "-", 1);
-			r.Code = GetElement(sID, "-", 2);
+			ReferralCode rClaimed;
+			rClaimed.Code = GetElement(sID, "-", 2);
 			CAmount nSize = 0;
-			ReferralCode rc = DeserializeReferralCode(r.Code);
-			r.OriginatorCPK = rc.CPK;
-			GetPortfolioTimeAndSize(vU, r.OriginatorCPK, nSize);
-			r.Size = ((double)nSize/COIN) * .10 * COIN;
-			r.GiftAmount = rc.GiftAmount;
-			r.Time = v.second;
+			ReferralCode rcOriginal = DeserializeReferralCode(rClaimed.Code);
+			rClaimed.CPK = ExtractXML(v.first, "<cpk>", "</cpk>");
+			rClaimed.OriginatorCPK = rcOriginal.CPK;
+			GetPortfolioTimeAndSize(vU, rClaimed.OriginatorCPK, nSize);
+			rClaimed.Size = ((double)nSize/COIN) * .10 * COIN;
+			rClaimed.GiftAmount = rcOriginal.GiftAmount;
+			rClaimed.Time = v.second;
 			//LogPrintf("\n cpk=%s, Size %f, Orig %s, Gift Amount %s,Expiration %f, Found %f",				r.CPK, (double)r.Size/COIN, r.OriginatorCPK, AmountToString(r.GiftAmount), rc.Expiration, rc.found);
-			if (GetAdjustedTime() < rc.Expiration && rc.found)
+			if (GetAdjustedTime() < rcOriginal.Expiration && rcOriginal.found)
 			{
-				if (!r.CPK.empty() && !r.OriginatorCPK.empty() && nSize > 0)
+				if (!rClaimed.CPK.empty() && !rClaimed.OriginatorCPK.empty() && nSize > 0)
 				{
-					r.found = true;
-					vRC.push_back(r);
+					rClaimed.found = true;
+					vRC.push_back(rClaimed);
 				}
 			}
 		}
@@ -5888,6 +5710,7 @@ std::vector<CDSQLQuery> DSQLQuery(std::string sFilter)
 	return vSQL;
 }
 
+static std::map<std::string, std::string> mapGiftDetails;
 
 std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU)
 {
@@ -5895,6 +5718,8 @@ std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<Referra
 	// Gifts subtract BBP from one portfolio and gives to the community subset who 'attached' the referral code
 	std::map<std::string, double> mapGiftImpact;
 	std::map<std::string, CAmount> mapRCClaimed;
+	mapGiftDetails.clear();
+
 	double nPR = GetSporkDouble("referralrewards", 0);
 	ReferralCode r;
 	if (nPR == 86)
@@ -5926,8 +5751,7 @@ std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<Referra
 		nTotalGiftsAvailable += mapRCClaimed[claimed.first];
 	}
 	double nAmountAvailPerCPK = AmountToDouble(nTotalGiftsAvailable) / (nTotalConsumers+.01);
-	LogPrintf("\r\nGIFRCG::TotalGifts %s, TotalConsumers %f, AmountPerCPK %f", AmountToString(nTotalGiftsAvailable), 
-		nTotalConsumers, nAmountAvailPerCPK);
+	/* LogPrintf("\r\nGIFRCG::TotalGifts %s, TotalConsumers %f, AmountPerCPK %f", AmountToString(nTotalGiftsAvailable), 		nTotalConsumers, nAmountAvailPerCPK); */
 
 	for (auto rc : vCRC)
 	{
@@ -5947,6 +5771,10 @@ std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<Referra
 				// credit rc.cpk, debit rc.originatorcpk
 				mapGiftImpact[rc.CPK] += dCapAmount;
 				mapGiftImpact[rc.OriginatorCPK] += -1 * dCapAmount;
+				std::string sRow = rc.OriginatorCPK + "=" + RoundToString(dCapAmount, 2) + ", ";
+				std::string sRow2 = rc.CPK + "=" + RoundToString(-1*dCapAmount, 2) + ", ";
+				mapGiftDetails[rc.CPK] += sRow;		
+				mapGiftDetails[rc.OriginatorCPK] += sRow2;
 				//LogPrintf("\r\nGIFRCG2::cpk %s, gift %f", rc.CPK, dCapAmount);
 			}
 		}
@@ -5954,17 +5782,6 @@ std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<Referra
 	return mapGiftImpact;
 }
 
-double GetGiftAmountFromReferralMap(std::map<std::string, double>& mapGifts, std::string sCPK)
-{
-	for (auto g : mapGifts)
-	{
-		if (findStringCaseInsensitive(g.first, sCPK))
-		{
-			return g.second;
-		}
-	}
-	return 0;
-}
 
 ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details)
 {
@@ -6007,7 +5824,9 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 					r.TotalClaimed += nSize;
 					vCPKClaimed.push_back(rc.OriginatorCPK);
 					sType = "Claimed";
-					details.push_back(Pair(rc.Code + "-" + sType + "-Originator " + rc.OriginatorCPK + "-Consumer " + rc.CPK, AmountToDouble(nSize)));
+					std::string sRow = "PortfolioSize: " + AmountToString(nSize) + ", Value: " + AmountToString(rc.Size) + ", Gift: " + AmountToString(rc.GiftAmount);
+
+					details.push_back(Pair(rc.Code + "-" + sType + "-Originator " + rc.OriginatorCPK + "-Consumer " + rc.CPK, sRow));
 				}
 			}
 		}
@@ -6030,9 +5849,8 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 					r.TotalEarned += nSize;
 					vCPKEarned.push_back(rc.CPK);
 					sType = "Earned";
-
-					std::string sRow = AmountToString(rc.Size);
-					details.push_back(Pair(rc.Code + "-" + sType + "-Originator " + rc.OriginatorCPK + "-Consumer " + rc.CPK, AmountToDouble(nSize)));
+					std::string sRow = "PortfolioSize: " + AmountToString(nSize) + ", Value: " + AmountToString(rc.Size) + ", Gift: " + AmountToString(rc.dGiftAmount);
+					details.push_back(Pair(rc.Code + "-" + sType + "-Originator " + rc.OriginatorCPK + "-Consumer " + rc.CPK, sRow));
 				}
 			}
 		}
@@ -6040,10 +5858,11 @@ ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>&
 
 	details.push_back(Pair("Referral BBP Claimed", AmountToString(r.TotalClaimed)));
 	details.push_back(Pair("Referral BBP Earned", AmountToString(r.TotalEarned)));
-	// Gifts
-	r.dGiftAmount = GetGiftAmountFromReferralMap(mapGifts, sCPK);
-	details.push_back(Pair("Gifts", r.dGiftAmount));
-	
+	details.push_back(Pair("Gifts", mapGifts[sCPK]));
+	details.push_back(Pair("Gift Details", mapGiftDetails[sCPK]));
+	r.GiftDetails = mapGiftDetails[sCPK];
+	r.dGiftAmount = mapGifts[sCPK];
+
 	r.TotalReferralReward = r.TotalClaimed + r.TotalEarned;
 	if (r.TotalReferralReward > nBBPSize)
 		r.TotalReferralReward = nBBPSize;
@@ -6201,14 +6020,6 @@ DACResult ReadAccountingEntry(std::string sKey, std::string sKey2)
 	return d;
 }
 
-std::string GetReleaseSuffix()
-{
-	// Strictly for minor leisures where we do not want to increment the version; Most of the time we should leave this empty.
-	// For example when we fix a typo, or for example if we are doing an emergency fix on just released code where compile time is of the essence.  
-	// (Incrementing the version increases compile time dramatically).
-	return "";
-}
-
 std::string RSAEncryptHQURL(std::string sSourceData, std::string& sError)
 {
 	std::string sFoundation = "foundation"; // This is not a literal yet because we may have more than one marketplace.  We need to discuss this.
@@ -6224,7 +6035,7 @@ std::string RSAEncryptHQURL(std::string sSourceData, std::string& sError)
 
 std::string RSADecryptHQURL(std::string sEncData, std::string& sError)
 {
-	std::string sPrivPath = GetSANDirectory2() + "privkey.priv";
+	std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 	std::string sDec = RSA_Decrypt_String(sPrivPath, sEncData, sError);
 	return sDec;
 }
@@ -6335,7 +6146,6 @@ std::vector<SimpleUTXO> GetAddressUTXOs_BBP(std::string sAddress)
     }
 
     std::sort(unspentOutputs.begin(), unspentOutputs.end(), height_sort);
-
 	UniValue result(UniValue::VARR);
     for (std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> >::const_iterator it=unspentOutputs.begin(); it!=unspentOutputs.end(); it++) 
 	{
@@ -6366,7 +6176,6 @@ std::vector<SimpleUTXO> GetAddressUTXOs_BBP(std::string sAddress)
 }
 
 static std::string sTickers = "DASH,BTC,DOGE,ETH,LTC,XRP,XLM,BBP,ZEC,BCH";
-	
 bool ValidateTicker(std::string sTicker)
 {
 	std::vector<std::string> vTickers = Split(sTickers.c_str(), ",");
@@ -6396,7 +6205,6 @@ void AddUTXOStake(UTXOStake& u, bool fDryRun, std::string& sError, std::string s
 		sError = "Ticker must be " + sTickers;
 		return;
 	}
-
 
 	if (u.Ticker == "BBP")
 	{

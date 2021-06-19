@@ -310,7 +310,7 @@ void pop3_RETR(std::string sNo)
 		// Check for decryption if this is Encrypted
 		if (e.nVersion == 3)
 		{
-			std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+			std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 			std::string sError;
 			std::string sDec = RSA_Decrypt_String(sPrivPath, e.Body, sError);
 			if (!sError.empty())
@@ -811,7 +811,7 @@ void ThreadPOP3(CConnman& connman)
 {
 	// This is BiblePay's Decentralized version of the Pop3 protocol.
 	// This allows BiblePay Core to deliver encrypted e-mails into your favorite E-mail client's inbox.
-	// The message is encrypted up to the point when your e-mail Client asks for it, and, at that very point we decrypt it with your RSA key (in the local biblepaycore wallet).
+	// The message is encrypted up to the point when your e-mail Client asks for it, and, at that very point we decrypt it with your RSA key (in the local biblepay wallet).
 	// As long as you have your PST file set up locally on your drive, and, you trust your e-mail client program, theoretically the message will be entirely secure end-to-end.
 	// If you want even more security you can use the biblepay core wallet inbox.  You can also look into opensource e-mail clients like firebird if you do not trust outlook.
 	int nPOP3Port = (int)cdbl(gArgs.GetArg("-smtpport", "30110"), 0);

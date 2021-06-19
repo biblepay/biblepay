@@ -868,8 +868,6 @@ QToolBar / QToolButton
 QToolBar {
     background-color: red;
     border: none;
-/*    width: 100%;
-    max-width:1900px;*/
     padding: 0;
     margin: 0;
     spacing: 0;
@@ -882,9 +880,8 @@ QToolBar > QToolButton {
     border: none;
     min-height: 50px;
     max-height: 50px;
-    /*width: 100%;*/
     padding: 1px;
-    text-align: center;
+    text-align: left;
 }
 
 QToolBar > QToolButton:hover:!checked {

@@ -439,6 +439,9 @@ void BitcoinGUI::createActions()
     overviewAction->setStatusTip(tr("Show general overview of wallet"));
     overviewAction->setToolTip(overviewAction->statusTip());
     overviewAction->setCheckable(true);
+	overviewAction->setIcon(QIcon(":/icons/overview"));
+	overviewAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	overviewAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     tabGroup->addButton(overviewAction);
 
     sendCoinsAction = new QToolButton(this);
@@ -446,6 +449,10 @@ void BitcoinGUI::createActions()
     sendCoinsAction->setStatusTip(tr("Send coins to a BiblePay address"));
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
     sendCoinsAction->setCheckable(true);
+	sendCoinsAction->setIcon(QIcon(":/icons/send"));
+	sendCoinsAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	sendCoinsAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
 	tabGroup->addButton(sendCoinsAction);
 
     sendCoinsMenuAction = new QAction(sendCoinsAction->text(), this);
@@ -479,7 +486,11 @@ void BitcoinGUI::createActions()
     historyAction->setStatusTip(tr("Browse transaction history"));
     historyAction->setToolTip(historyAction->statusTip());
     historyAction->setCheckable(true);
-    tabGroup->addButton(historyAction);
+	historyAction->setIcon(QIcon(":/icons/history"));
+	historyAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	historyAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+	tabGroup->addButton(historyAction);
 
 #ifdef ENABLE_WALLET
     QSettings settings;
@@ -489,6 +500,11 @@ void BitcoinGUI::createActions()
         masternodeAction->setStatusTip(tr("Browse Sanctuaries"));
         masternodeAction->setToolTip(masternodeAction->statusTip());
         masternodeAction->setCheckable(true);
+
+		masternodeAction->setIcon(QIcon(":/icons/masternodes"));
+		masternodeAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		masternodeAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
         tabGroup->addButton(masternodeAction);
         connect(masternodeAction, SIGNAL(clicked()), this, SLOT(showNormalIfMinimized()));
         connect(masternodeAction, SIGNAL(clicked()), this, SLOT(gotoMasternodePage()));
@@ -507,44 +523,58 @@ void BitcoinGUI::createActions()
 	webAction->setVisible(false);
 	tabGroup->addButton(webAction);
 
-	// Adding the QIcons to each toolbar button blows out the width, and therefore removes the text.  Commenting out for now.
-    leaderboardAction = new QToolButton(this);
-	// leaderboardAction->setIcon(QIcon(":/icons/address-book"));
-	// leaderboardAction->setIconSize(QSize(60,30));
+	leaderboardAction = new QToolButton(this);
+	leaderboardAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	leaderboardAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
 	leaderboardAction->setText(tr("&Leaderboard"));
 	leaderboardAction->setStatusTip(tr("Leaderboard"));
+	leaderboardAction->setIcon(QIcon(":/icons/address-book"));
+
 	leaderboardAction->setCheckable(true);
 	leaderboardAction->setVisible(true);
 	tabGroup->addButton(leaderboardAction);
 	connect(leaderboardAction, SIGNAL(clicked()), this, SLOT(gotoBusinessObjectListPage()));
 
 	proposalListAction = new QToolButton(this);
-	//proposalListAction->setIcon(QIcon(":/icons/addressbook"));
+	proposalListAction->setIcon(QIcon(":/icons/address-book"));
+	proposalListAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	proposalListAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
 	proposalListAction->setText(tr("&Proposals"));
 	proposalListAction->setStatusTip(tr("Show Proposals"));
 	proposalListAction->setToolTip(proposalListAction->statusTip());
 	proposalListAction->setCheckable(true);
+
+	proposalListAction->setIcon(QIcon(":/icons/edit"));
+	proposalListAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	proposalListAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+	
 	tabGroup->addButton(proposalListAction);
 	connect(proposalListAction, SIGNAL(clicked()), this, SLOT(gotoProposalListPage()));
 
 	orphanAction = new QToolButton(this);
-	//orphanAction->setIcon(QIcon(":/icons/edit"));
-	//orphanAction->setIconSize(QSize(60, 30));
 	orphanAction->setText("&Accounting");
 	orphanAction->setStatusTip(tr("Show Accountability Page"));
 	orphanAction->setToolTip(orphanAction->statusTip());
 	orphanAction->setCheckable(true);
 	orphanAction->setVisible(true);
+	orphanAction->setIcon(QIcon(":/icons/editcopy"));
+	orphanAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	orphanAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 	tabGroup->addButton(orphanAction);
 	connect(orphanAction, SIGNAL(clicked()), this, SLOT(showAccountability()));
 
 	exchangeAction = new QToolButton(this);
-	//exchangeAction->setIcon(QIcon(":/icons/notsynced"));
-	//exchangeAction->setIconSize(QSize(25, 25));
+
 	exchangeAction->setText(tr("&Exchange"));
 	exchangeAction->setStatusTip(tr("Show Exchange"));
 	exchangeAction->setToolTip(exchangeAction->statusTip());
 	exchangeAction->setCheckable(true);
+	exchangeAction->setIcon(QIcon(":/icons/notsynced"));
+	exchangeAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	exchangeAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+	
 	tabGroup->addButton(exchangeAction);
 	connect(exchangeAction, SIGNAL(clicked()), this, SLOT(showExchange()));
 
@@ -1370,12 +1400,6 @@ void BitcoinGUI::OneClickMiningClicked()
         sNarr = fSuccess ? "Configuration Succeeded" : "Configuration Failed.";
         QMessageBox::warning(this, GUIUtil::TOQS(sNarr), GUIUtil::TOQS(sNarr), QMessageBox::Ok, QMessageBox::Ok);
     }
-}
-
-void BitcoinGUI::showDecentralizedWeb()
-{
-	DACResult b = GetDecentralizedURL();
-	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(b.Response)));
 }
 
 void BitcoinGUI::showAccountability()

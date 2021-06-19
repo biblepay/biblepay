@@ -964,10 +964,10 @@ void PrintExceptionContinue(const std::exception_ptr pex, const char* pszExcepti
 
 fs::path GetDefaultDataDir()
 {
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\BiblePayCore
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\BiblePayCore
-    // Mac: ~/Library/Application Support/BiblePayCore
-    // Unix: ~/.biblepaycore
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Biblepay
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Biblepay
+    // Mac: ~/Library/Application Support/Biblepay
+    // Unix: ~/.biblepay
 
 #ifdef WIN32
     // Windows

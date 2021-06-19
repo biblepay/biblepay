@@ -262,6 +262,7 @@ bool WalletModel::validateAddress(const QString &address)
 WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction &transaction, const CCoinControl& coinControl, CAmount& nPenalty)
 {
     CAmount total = 0;
+	std::string sPrimaryAddress;
     bool fSubtractFeeFromAmount = false;
     QList<SendCoinsRecipient> recipients = transaction.getRecipients();
     std::vector<CRecipient> vecSend;
@@ -330,6 +331,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
                 return InvalidAmount;
             }
             setAddress.insert(rcp.address);
+			sPrimaryAddress = rcp.address.toStdString();
             ++nAddresses;
 
             CScript scriptPubKey = GetScriptForDestination(DecodeDestination(rcp.address.toStdString()));
@@ -436,7 +438,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 		// Create the client side transaction here
 		std::string sError;
 		std::string sWarning;
-		bool fCreated = CreateLegacyGSCTransmission("HEALING", "", "", sOptPrayer, sError);
+		bool fCreated = CreateLegacyGSCTransmission(total, sPrimaryAddress, "HEALING", "", "", sOptPrayer, sError);
 
 		int iMsg = fCreated ? CClientUIInterface::MSG_INFORMATION : CClientUIInterface::MSG_ERROR;
 		std::string sNarr = fCreated ? "Created Diary Entry for GSC Transmission" : sError;

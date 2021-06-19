@@ -579,11 +579,10 @@ bool CreateBlockForStratum(std::string sAddress, uint256 uRandomXKey, std::vecto
 	// Create Evo block
 	std::string sMinerGuid;
 	int iThreadID = 0;
-	//boost::shared_ptr<CReserveScript> coinbaseScript;
 	std::shared_ptr<CReserveScript> coinbaseScript;
 	CWallet * const pwallet = GetWalletForGenericRequest();
 	pwallet->GetScriptForMining(coinbaseScript);
-	//    GetMainSignals().GetScriptForMining(coinbaseScript);
+	// GetMainSignals().GetScriptForMining(coinbaseScript);
 	std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, sAddress, uRandomXKey, vRandomXHeader));
 	std::string sUTXO = ScanBlockForNewUTXO(pblocktemplate->block);
 	if (!sUTXO.empty())

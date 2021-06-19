@@ -543,8 +543,10 @@ double CalculateAPM(int nHeight)
 		nResult = 3;
 	}
 
+	/*
 	LogPrintf("CalculateAPM::Result==%f::LastHeight %f Price %s, Current Price %s", 
 		nResult, nHeight, RoundToString(dLastPrice, 12), RoundToString(out_BBP, 12));
+		*/
 	return nResult;
 }
 
