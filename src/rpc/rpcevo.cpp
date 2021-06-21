@@ -2249,6 +2249,7 @@ struct WhaleStakeReport
 	double TotalStakes = 0;
 	double TotalPaid = 0;
 	double TotalPayments = 0;
+	int FutureHeight = 0;
 	std::string Details = "";
 };
 
@@ -2266,9 +2267,9 @@ std::map<std::string, WhaleStakeReport> MemorizeWhaleStakePayments()
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	std::map<std::string, WhaleStakeReport> mapWhales;
 
-	for (int i = 150000; i < chainActive.Tip()->nHeight; i++)
+	for (int h = 150000; h < chainActive.Tip()->nHeight; h++)
 	{
-		CBlockIndex* pindex = FindBlockByHeight(i);
+		CBlockIndex* pindex = FindBlockByHeight(h);
 		if (pindex)
 		{
 			CBlock block;
@@ -2276,18 +2277,18 @@ std::map<std::string, WhaleStakeReport> MemorizeWhaleStakePayments()
 			if (ReadBlockFromDisk(block, pindex, consensusParams)) 
 			{
 				double dFoundationDonation = 0;
-				for (unsigned int i = 0; i < block.vtx[0]->vout.size(); i++)
+				for (unsigned int z = 0; z < block.vtx[0]->vout.size(); z++)
 				{
-					sMsg += block.vtx[0]->vout[i].sTxOutMessage;
-					double dAmount = (double)block.vtx[0]->vout[i].nValue / COIN;
-					std::string sAmt = AmtToString(block.vtx[0]->vout[i].nValue);
+					sMsg += block.vtx[0]->vout[z].sTxOutMessage;
+					double dAmount = (double)block.vtx[0]->vout[z].nValue / COIN;
+					std::string sAmt = AmtToString(block.vtx[0]->vout[z].nValue);
 					bool fWhaleReward = Contains(sAmt, "1527");
 					if (fWhaleReward)
 					{
-						std::string sPK = PubKeyToAddress(block.vtx[0]->vout[i].scriptPubKey);
+						std::string sPK = PubKeyToAddress(block.vtx[0]->vout[z].scriptPubKey);
 						mapWhales[sPK].TotalPaid += dAmount;
 						mapWhales[sPK].TotalPayments++;
-						std::string sRow = "height:" + RoundToString(i, 0) + ", amount: " + RoundToString(dAmount, 2) + "\r\n";
+						std::string sRow = "height:" + RoundToString(h, 0) + ", amount: " + RoundToString(dAmount, 2) + "\r\n";
 						mapWhales[sPK].Details += sRow;
 					}
 				}
@@ -2391,7 +2392,7 @@ UniValue whalestakefinalreport(const JSONRPCRequest& request)
 	// And will provide any discrepencies for final payment for use on the day DWS is retired
 
 	if (request.fHelp) 
-		throw std::runtime_error("You must specify whalestakefinalreport; 0=summary/1=details");
+		throw std::runtime_error("You must specify whalestakefinalreport; 0=summary/1=details/3=owed_only/4=future_only");
 	UniValue results(UniValue::VOBJ);
 	std::map<std::string, WhaleStakeReport> mapWhales;
 	std::vector<WhaleStake> w = GetDWS(true);
@@ -2416,10 +2417,18 @@ UniValue whalestakefinalreport(const JSONRPCRequest& request)
 		mapWhales[ws.ReturnAddress].TotalOwed += ws.TotalOwed;
 		mapWhales[ws.ReturnAddress].TotalStakes++;
 		mapWhales[ws.ReturnAddress].Details += sRow + "\r\n";
+		if (ws.MaturityHeight > chainActive.Tip()->nHeight)
+		{
+			mapWhales[ws.ReturnAddress].FutureHeight = ws.MaturityHeight;
+		}
 		nTotalOwed += ws.TotalOwed;
 	}
 	for (const auto& kv : mapWhales) 
 	{
+		bool fInclude = ((dReportType == 4 && kv.second.FutureHeight > 0) || (dReportType != 4));
+		if (!fInclude)
+			continue;
+
 		if (dReportType != 3)
 		{
 			results.push_back(Pair(kv.first + " burned", kv.second.TotalBurned));

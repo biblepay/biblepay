@@ -309,12 +309,11 @@ static bool rest_chaininfo(HTTPRequest* req, const std::string& strURIPart)
 
 static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 {
-	// This API call is used by our air wallet to push a transaction into the network 
+	// This API call allows transactions to be pushed in via REST 
 	if (!CheckWarmup(req))
         return false;
     std::string sHex = req->ReadBody();
 	sHex = strReplace(sHex, "tx_hex=", "");
-	LogPrintf("rest_pushtx rec [%s]", sHex); 
 	CMutableTransaction mtx;
 	if (!DecodeHexTx(mtx, sHex))
 		    return RESTERR(req, HTTP_NOT_FOUND, "Rest-Tx Decode Failed");
@@ -372,7 +371,7 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 	req->WriteHeader("Access-Control-Allow-Origin", "*");
     UniValue objPush(UniValue::VOBJ);
     objPush.push_back(Pair("txid", hashTx.GetHex()));
-    LogPrintf("\nRest::PushTx::Success TXID %s\n", hashTx.GetHex());
+    // LogPrintf("\nRest::PushTx::Success TXID %s\n", hashTx.GetHex());
 	std::string strJSON = objPush.write() + "\n";
 	req->WriteReply(HTTP_OK, strJSON);
 	return true;
