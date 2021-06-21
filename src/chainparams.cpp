@@ -281,10 +281,10 @@ public:
         strNetworkID = "main";
 		//BiblePay
 
-		consensus.POOM_PHASEOUT_HEIGHT = 199000;  // June 2020
-		consensus.FPOG_CUTOVER_HEIGHT = 100001;   // Feb 7th, 2019 (100,001)
-		consensus.PODC2_CUTOVER_HEIGHT = 166075;  // Go live height for PODC 2.0, DWS (Christmas 2019) (166050=monthly superblock, 166070=daily GSC)
-		consensus.PODC_LAST_BLOCK = 107000; // March 13th, 2019
+		consensus.POOM_PHASEOUT_HEIGHT = 199000;     // June 2020
+		consensus.FPOG_CUTOVER_HEIGHT = 100001;      // Feb 7th, 2019 (100,001)
+		consensus.PODC2_CUTOVER_HEIGHT = 166075;     // Go live height for PODC 2.0, DWS (Christmas 2019) (166050=monthly superblock, 166070=daily GSC)
+		consensus.PODC_LAST_BLOCK = 107000;          // March 13th, 2019
 		consensus.EVOLUTION_CUTOVER_HEIGHT = 123200; // June 2nd, 2019 
 		consensus.F7000_CUTOVER_HEIGHT = 7000;
 		consensus.F8000_CUTOVER_HEIGHT = 21350;
@@ -338,25 +338,20 @@ public:
 		consensus.POOS_HEIGHT = 217000; // Sept 2020 Mandatory Upgrade height
 		consensus.TRIBULATION_HEIGHT = 255000;  // Go Live for BiblePay Mandatory 1.5.4.4 - March 1st, 2021
 	
-		// Harvest - Go Live for BiblePay Mandatory Upgrade (1.6.n.n) - July 1st, 2021
-		// consensus.BIP34Height = 123200;  // Unable to create duplicate coinbases (tx-malleability protection)
+		// Harvest - Go Live for BiblePay Mandatory Upgrade (1.6.2.3) - July 1st, 2021
 		// BiblePay had this activated since 123200, but the BIP34+DIP3 rule (bad-cb-height) stops harvest from syncing in prod @ height 134041
 		consensus.DIP0001Height = 279700;
 		consensus.BIP34Hash = uint256();
-		consensus.BIP34Height = 279700;
+		consensus.BIP34Height = 279700;    // Unable to create duplicate coinbases (tx-malleability protection)
 		consensus.DIP0003Height = 279700;
-		consensus.LLMQHeight = 279700; // The first attempt at llmq quorums that conform to voting out bad quorum members
+		consensus.LLMQHeight = 279700;     // The first attempt at llmq quorums that conform to voting out bad quorum members
 		consensus.DIP0003EnforcementHeight = 279700;
 		consensus.HARVEST_HEIGHT = 279700;  // Go live height for BiblePay-Harvest
 		consensus.HARVEST_HEIGHT2 = 279700; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
 		// Chainlock enforcement:
 		consensus.DIP0008Height = 280700;
-
 		// ToDo : set this to the actual LLMQ go live height
         consensus.DIP0003EnforcementHash = uint256S("0x0");
-
-		// Mission Critical to do: verify each switch in getblockchaininfo (dip activation):
-		// End of Harvest
 
 		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 
 		consensus.QTHeight = 124000;  // Note to future forkers of DACs!  This height must be > (BLOCKS_PER_DAY * 32)!  Thank you for your support!
@@ -377,8 +372,6 @@ public:
 
         consensus.nGovernanceFilterElements = 20000;
         consensus.nMasternodeMinimumConfirmations = 15;
-       
-
         consensus.fPowAllowMinDifficultyBlocks = false;
         
         consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
@@ -420,9 +413,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThresholdStart = 3226; // 80% of 4032
 
-       
-
-		 // Deployment of Block Reward Reallocation
+		// Deployment of Block Reward Reallocation
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].bit = 5;
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 1601510400; // Oct 1st, 2020
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 1633046400; // Oct 1st, 2021
@@ -431,13 +422,11 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdMin = 2420; // 60% of 4032
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nFalloffCoeff = 5; // this corresponds to 10 periods
 
-
 		// The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000806e93acd1bb"); 
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x3b4431310395638c0ed65b40ede4b110d8da70fcc0c2ed4a729fb8e4d78b4452"); 
-
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -456,9 +445,7 @@ public:
         genesis = CreateGenesisBlock(1496347844, 12, 0x207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x3b4431310395638c0ed65b40ede4b110d8da70fcc0c2ed4a729fb8e4d78b4452"));
- 
         assert(genesis.hashMerkleRoot == uint256S("0x02b05f3b8a7168bcf83b888e0092446b248b2641bd9844b5d12a45eaa2765725"));
-
 
         // Note that of those which support the service bits prefix, most only support a subset of
         // possible options.
@@ -492,7 +479,6 @@ public:
         consensus.llmqTypeChainLocks = Consensus::LLMQ_400_60;
         consensus.llmqTypeInstantSend = Consensus::LLMQ_5_60;
 
-		//fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fRequireRoutableExternalIP = true;
@@ -684,8 +670,6 @@ public:
 
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-    
-
 
         // Testnet DAC addresses start with 'y'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
@@ -704,13 +688,10 @@ public:
         // long living quorum params
 	    //consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
         consensus.llmqs[Consensus::LLMQ_TEST] = llmq_test;
-		
 		consensus.llmqTypeChainLocks = Consensus::LLMQ_TEST;
         consensus.llmqTypeInstantSend = Consensus::LLMQ_TEST;
 
-
-        //fMiningRequiresPeers = false;
-        fDefaultConsistencyChecks = false;
+		fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fRequireRoutableExternalIP = true;
         fMineBlocksOnDemand = false;
@@ -873,7 +854,6 @@ public:
         consensus.llmqTypeChainLocks = Consensus::LLMQ_5_60;
         consensus.llmqTypeInstantSend = Consensus::LLMQ_5_60;
 
-        //fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;

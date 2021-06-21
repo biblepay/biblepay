@@ -2595,46 +2595,6 @@ UniValue exec(const JSONRPCRequest& request)
 		LockUTXOStakes();
 		results.push_back(Pair("lock", 1));
 	}
-	else if (sItem == "testmask")
-	{
-		CAmount nAmt = cdbl(request.params[1].get_str(), 8) * COIN;
-		double nMask = cdbl(request.params[2].get_str(), 8);
-		results.push_back(Pair("n1", nAmt));
-		results.push_back(Pair("nMask", nMask));
-		bool fCompare = CompareMask2(nAmt, nMask);
-		results.push_back(Pair("cmask", fCompare));
-	}
-	else if (sItem == "testmem")
-	{
-		std::vector<DACResult> d = GetDataListVector("memorizer", 9999);
-		for (int i = 0; i < d.size(); i++)
-		{
-			results.push_back(Pair("pk", d[i].PrimaryKey));
-			std::string sBook = GetElement(d[i].PrimaryKey, "|", 0);
-			int iChapter = cdbl(GetElement(d[i].PrimaryKey, "|", 1), 0);
-			int iVerse = cdbl(GetElement(d[i].PrimaryKey, "|", 2), 0);
-			int iStart = 0;
-			int iEnd = 0;
-			GetBookStartEnd(sBook, iStart, iEnd);
-			std::string sVerse = GetVerseML("EN", sBook, iChapter, iVerse, iStart - 1, iEnd);
-			results.push_back(Pair("v", sVerse));
-		}
-	}
-	else if (sItem == "testic")
-	{
-		std::string sNN = request.params[1].get_str();
-		bool h = HashExistsInDataFile("h", sNN);
-		results.push_back(Pair(sNN, h));
-		AppendStorageFile("h", sNN);
-		h = HashExistsInDataFile("h", sNN);
-		results.push_back(Pair(sNN, h));
-	}
-	else if (sItem == "testverse1")
-	{
-		std::string sRange = request.params[1].get_str();
-		std::string sOutput = GetPopUpVerses(sRange);
-		results.push_back(Pair("output", sOutput));
-	}
 	else if (sItem == "testrsacreate")
 	{
 		RSAKey r = GetMyRSAKey();
@@ -2673,7 +2633,6 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sEnc = RSA_Encrypt_String_With_Key(rsa2.PublicKey, s, sError);
 		results.push_back(Pair("enc", sEnc));
 		std::string sPrivPath =  GetSANDirectory1() + "privkeytest.priv";
-
 		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
 		results.push_back(Pair("dec", sDec));
 		std::string sDec2 = RSA_Decrypt_String_With_Key(rsa2.PrivateKey, sEnc, sError);
@@ -2689,7 +2648,6 @@ UniValue exec(const JSONRPCRequest& request)
 		}
 		else
 		{
-
 			std::string sName = vD[0];
 			std::string sLine1 = vD[1];
 			std::string sCity = vD[2];
@@ -2716,11 +2674,9 @@ UniValue exec(const JSONRPCRequest& request)
 	{
 		std::string sKey1 = request.params[1].get_str();
 		std::string sKey2 = request.params[2].get_str();
-
 		DACResult d = ReadAccountingEntry(sKey1, sKey2);
 		results.push_back(Pair("Amount", (double)d.nAmount/COIN));
 		results.push_back(Pair("Value", d.Response));
-	
 	}
 	else if (sItem == "testwriteacentry")
 	{
@@ -2730,17 +2686,6 @@ UniValue exec(const JSONRPCRequest& request)
 		CAmount nAmount = 5 * COIN;
 		bool fResponse = WriteAccountingEntry(sKey1, sKey2, sValue, nAmount);
 		results.push_back(Pair("Results", fResponse));	
-	}
-	else if (sItem == "testrsa10")
-	{
-		std::string sError;
-		std::string sSourceData = "this is a test of the emergency broadcasting systemthis is a test of the emergency broadcasting system.this is a test of the emergency broadcasting system.this is a test of the emergency broadcasting system.this is a test of the emergency broadcasting system..";
-		std::string sEnc = RSAEncryptHQURL(sSourceData, sError);
-		results.push_back(Pair("encdata", sEnc));
-		results.push_back(Pair("err0", sError));
-		std::string sDec = RSADecryptHQURL(sEnc, sError);
-		results.push_back(Pair("dec", sDec));
-		results.push_back(Pair("err1", sError));
 	}
 	else if (sItem == "testmail")
 	{
@@ -2797,7 +2742,6 @@ UniValue exec(const JSONRPCRequest& request)
 				results.push_back(Pair("Error", sError));
 			}
 		}
-		
 	}
 	else if (sItem == "multisig1")
 	{
@@ -2843,7 +2787,6 @@ UniValue exec(const JSONRPCRequest& request)
 				break;
 		}
 
-
 		results.push_back(Pair("UTXO-1", sUTXOID));
 		results.push_back(Pair("UTXO-VOUT", sUTXOVOUT));
 		results.push_back(Pair("Amount", sAmt));
@@ -2855,10 +2798,7 @@ UniValue exec(const JSONRPCRequest& request)
 		// Step 4:  Sign the Raw Funding transaction
 
 		std::string sFundHexSigned = MultiSigSignRawTransaction(results, sFundHex, "", "", "");
-
 		results.push_back(Pair("Fund Hex Signed", sFundHexSigned));
-
-
 		std::string sDestCPK = DefaultRecAddress("Christian-Public-Key");
 		// Step 5: Grab the TXID from the sFundHexSigned
 		JSONRPCRequest decodeReq;
@@ -2876,9 +2816,7 @@ UniValue exec(const JSONRPCRequest& request)
 		// Step 7:  Sign the raw SPENDING transaction using the 1st keypair of the MultiSig keychain set
 		
 		std::string sSpentHexSigned = MultiSigSignRawTransaction(results, sSpendHex, sFundHexSigned, myRedeem, sM1);
-
 		results.push_back(Pair("SpentHexSigned", sSpentHexSigned));
-
 
 		// Step 8 : Relay the Funding transaction
 		if (false)
@@ -3100,7 +3038,6 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "bipfs_list")
 	{
-		//BOOST_FOREACH(PAIRTYPE(std::string, IPFSTransaction) item, mapSidechainTransactions)
 		for (auto item : mapSidechainTransactions)
 		{
 			std::string sDesc = "FileName: " + item.second.FileName + ", Fee=" + RoundToString(item.second.nFee/COIN, 4) + ", Size=" + RoundToString(item.second.nSize, 2) 
@@ -3160,7 +3097,6 @@ UniValue exec(const JSONRPCRequest& request)
 			DACResult dDry = BIPFS_UploadFile(sDirPath, sWebPath, sTXID, nTargetDensity, nDurationDays, true, fEncrypted);
 			if (dDry.nFee/COIN < 1)
 				throw std::runtime_error("Unable to calculate fee. ");
-
 			std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 			std::string sHash = RetrieveMd5(sDirPath);
 			std::string sXML = "<bipfs>" + sHash + "</bipfs>";
@@ -3252,29 +3188,18 @@ UniValue exec(const JSONRPCRequest& request)
 		}
 
 		DACResult d = BIPFS_UploadFolder(sDirPath, sWebPath, sTXID, nTargetDensity, nDurationDays, fDryRun, fEncrypted);
-
-
-		//BOOST_FOREACH(PAIRTYPE(std::string, IPFSTransaction) item, d.mapResponses)
 		for (auto item : d.mapResponses)
 		{
 			std::string sDesc = "File: " + item.second.File + ", Response: " + item.second.Response + ", Fee=" + RoundToString(item.second.nFee/COIN, 4) + ", Size=" + RoundToString(d.nSize, 2) + "] [Error=" + d.ErrorCode + "]";
 			results.push_back(Pair(item.second.TXID, sDesc));
-			// For each Density region
 			for (auto region : item.second.mapRegions)
 			{
 				results.push_back(Pair(region.first, region.second));
 			}
 		}
-
 		results.push_back(Pair("Total Size", d.nSize));
 		results.push_back(Pair("Total Fee", (double)(d.nFee / COIN)));
 		results.push_back(Pair("Results", d.Response));
-
-	}
-	else if (sItem == "tgbv")
-	{
-		double nv = GetBlockVersion("v1601-Harvest");
-		results.push_back(Pair("version", nv));
 	}
 	else if (sItem == "testgscvote")
 	{
@@ -3290,7 +3215,6 @@ UniValue exec(const JSONRPCRequest& request)
 		uint256 uGovObjHash = uint256S("0x0");
 		uint256 uPAMHash = GetPAMHashByContract(sContract);
 		results.push_back(Pair("pam_hash", uPAMHash.GetHex()));
-	
 		GetGSCGovObjByHeight(iNextSuperblock, uPAMHash, iVotes, uGovObjHash, sAddresses, sAmounts, out_qtdata);
 		std::string sError;
 		results.push_back(Pair("govobjhash", uGovObjHash.GetHex()));
@@ -3554,7 +3478,6 @@ UniValue exec(const JSONRPCRequest& request)
 	{
 		std::string sType = "XSPORK-EXPENSE";
 		// XSPORK-EXPENSE (TYPE) | (VALUE1) expense-id | (RECORD) (added, charity, bbpamount, usdamount)
-		
 		std::string sDelim = "[-]";
 		std::string sExpenseID = request.params[1].get_str();
 		std::string sAdded = request.params[2].get_str();
@@ -3620,24 +3543,6 @@ UniValue exec(const JSONRPCRequest& request)
 			results.push_back(Pair("Error", sError));
 		results.push_back(Pair("Result", sResult));
 	}
-	else if (sItem == "testaes")
-	{
-		std::string sPass = "abcabcabcabcabcabcabcabcabcabcab";
-		std::string sEnc = EncryptAES256("test", sPass);
-		std::string sDec = DecryptAES256(sEnc, sPass);
-		results.push_back(Pair("Enc", sEnc));
-		results.push_back(Pair("Dec", sDec));
-		std::string sIV = "";
-		sEnc = EncryptAES256WithIV("test", sPass, sIV);
-		sDec = DecryptAES256WithIV(sEnc, sPass, sIV);
-		results.push_back(Pair("EncIV", sEnc));
-		results.push_back(Pair("DecIV", sDec));
-		sIV = "0000000000000000";
-		sEnc = EncryptAES256WithIV("test", sPass, sIV);
-		sDec = DecryptAES256WithIV(sEnc, sPass, sIV);
-		results.push_back(Pair("EncIV00", sEnc));
-		results.push_back(Pair("DecIV00", sDec));
-	}
 	else if (sItem == "health")
 	{
 		// This command pulls the best-superblock (the one with the highest votes for the next height)
@@ -3651,7 +3556,6 @@ UniValue exec(const JSONRPCRequest& request)
 		uint256 uPAMHash = uint256S("0x0");
 		std::string out_qtdata;
 		GetGSCGovObjByHeight(iNextSuperblock, uPAMHash, iVotes, uGovObjHash, sAddresses, sAmounts, out_qtdata);
-
 		uint256 hPam = GetPAMHash(sAddresses, sAmounts, out_qtdata);
 		results.push_back(Pair("pam_hash", hPam.GetHex()));
 		std::string sContract = GetGSCContract(iLastSuperblock, true);
@@ -3769,10 +3673,8 @@ UniValue exec(const JSONRPCRequest& request)
 
 		std::string sError;
 		results.push_back(Pair("Summary", sSummary));
-
 	    JSONRPCRequest newRequest;
 		newRequest.params.setArray();
-
 		newRequest.params.push_back("update_service");
 		newRequest.params.push_back(sProRegTxId);
 		newRequest.params.push_back(sSancIP);
@@ -3781,12 +3683,10 @@ UniValue exec(const JSONRPCRequest& request)
 		newRequest.params.push_back("");
 		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 		newRequest.params.push_back(sCPK);
-		
 		UniValue rProReg = protx(newRequest);
 		results.push_back(rProReg);
 		// If we made it this far and an error was not thrown:
 		results.push_back(Pair("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes."));
-
 	}
 	else if (sItem == "testinvoice")
 	{
@@ -3821,33 +3721,17 @@ UniValue exec(const JSONRPCRequest& request)
 
 		results.push_back(Pair("3", r.TXID));
 		results.push_back(Pair("3e", r.ErrorCode));
-
 	}
 	else if (sItem == "testdsql1")
 	{
-		// Make a 15,000 byte message
-		
 		UniValue oDSQL(UniValue::VOBJ);
 		oDSQL.push_back(Pair("address", "1001 main"));
 		oDSQL.push_back(Pair("city", "sewickly"));
 		oDSQL.push_back(Pair("zip", "15001"));
-		
 		DACResult d = SendDSQL(oDSQL, "Property", "12345");
-
 		results.push_back(Pair("q", d.ErrorCode));
-
 		d = SendDSQL(oDSQL, "Property", "12346");
 		results.push_back(Pair("q", d.ErrorCode));
-
-
-	}
-	else if (sItem == "testreaddsql")
-	{
-		std::vector<CDSQLQuery> d = DSQLQuery("");
-		for (int i = 0; i < d.size(); i++)
-		{
-			results.push_back(Pair("q", d[i].sData));
-		}
 	}
 	else if (sItem == "testreadinvoice")
 	{
@@ -3874,12 +3758,6 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sMyAddress = "ye5Q19NvrCouYhEfFHeVaEG3LqzePrTt9H";
 		std::string sInfo = "getstatement " + sSvcAddress + " " + sMyAddress;
 		results.push_back(Pair("info", sInfo));
-	}
-	else if (sItem == "testhy")
-	{
-		double nAmount = cdbl(request.params[1].get_str(), 2);
-		double nP = GetHighDWURewardPercentage(nAmount);
-		results.push_back(Pair("hy", nP));
 	}
 	else if (sItem == "upgradesanc")
 	{
@@ -3955,13 +3833,15 @@ UniValue exec(const JSONRPCRequest& request)
 		newRequest.params.push_back(sCollateralTXIDOrdinal);
 		newRequest.params.push_back(sSancIP);
 		
-		newRequest.params.push_back(sVotingAddress);  // Home Voting Address
+		newRequest.params.push_back(sVotingAddress);  // [4] = Home Voting Address
 		newRequest.params.push_back(myBLSPublic);     // Remote Sanctuary Public Key (Private and public keypair is stored in deterministicsanctuary.conf on the controller wallet)
 		newRequest.params.push_back(sVotingAddress);  // Delegates Voting address (This is a person that can vote for you if you want) - in our case its the same 
 
 		newRequest.params.push_back("0");             // Pct of rewards to share with Operator (This is the amount of reward we want to share with a Sanc Operator - IE a hosting company)
-		newRequest.params.push_back(sPayAddress);     // Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
-		newRequest.params.push_back(sPayAddress);
+		newRequest.params.push_back(sPayAddress);     // [8] = Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
+		// Fee Source Address (prevents Fee 404)
+		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		newRequest.params.push_back(sCPK);
 
 		// 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
 		UniValue rProReg = protx(newRequest);
@@ -4124,7 +4004,7 @@ UniValue exec(const JSONRPCRequest& request)
 			results.push_back(Pair("Total Age Type " + RoundToString(i, 0), c.mapTotalCoinAge[i]));
 		}
 	}
-	else if (sItem == "apmtest")
+	else if (sItem == "apminfo")
 	{
 		int iNextSuperblock = 0;
 		int nHeight = cdbl(request.params[1].get_str(), 0);
@@ -4132,23 +4012,10 @@ UniValue exec(const JSONRPCRequest& request)
 		double dAPM = CalculateAPM(iLastSuperblock);
 		double dAPM2 = CalculateAPM(iNextSuperblock);
 		double dAPM3 = ExtractAPM(iLastSuperblock);
-
 		results.push_back(Pair("As of Height", iLastSuperblock));
 		results.push_back(Pair("APM", dAPM));
 		results.push_back(Pair("APM_Extract", dAPM3));
 		results.push_back(Pair("APM as of Next Superblock " + RoundToString(iNextSuperblock, 0), dAPM2));
-	}
-	else if (sItem == "sha2561")
-	{
-		std::string s1 = request.params[1].get_str();
-		uint256 h = GetSHA256Hash(s1);
-		results.push_back(Pair("hash", h.GetHex()));
-	}
-	else if (sItem == "poostest")
-	{
-		std::string sBio = request.params[1].get_str();
-		bool f1 = POOSOrphanTest(sBio, 60);
-		results.push_back(Pair("bio", f1));
 	}
 	else if (sItem == "testhttps")
 	{
@@ -4156,15 +4023,6 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sRestfulURL = "BMS/LAST_MANDATORY_VERSION";
 		std::string sResponse = Uplink(false, "", sURL, sRestfulURL, SSL_PORT, 25, 1);
 		results.push_back(Pair(sRestfulURL, sResponse));
-	}
-	else if (sItem == "testutxo1")
-	{
-		std::string sAddress = "DJiaxWByoQASvhGPjnY6rxCqJkJxVvU41c";
-		std::string sXML = "<ticker>DOGE</ticker><amount>777</amount><address>" + sAddress + "</address>";
-		std::string sURL = "https://" + GetSporkValue("bms");
-		std::string sR = "Server?action=QUERY_UTXO";
-		std::string sResponse = Uplink(false, sXML, sURL, sR, SSL_PORT, 25, 1);
-		results.push_back(Pair("q", sResponse));
 	}
 	else if (sItem == "sendmessage")
 	{
@@ -4269,9 +4127,6 @@ UniValue exec(const JSONRPCRequest& request)
 
 	return results;
 }
-
-
-
 
 UniValue savemempool(const JSONRPCRequest& request)
 {

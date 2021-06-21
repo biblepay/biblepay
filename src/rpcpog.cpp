@@ -870,6 +870,15 @@ std::string BlockChairTickerToName(std::string sTicker)
 	  {
 		  return "bitcoin-cash";
 	  }
+      else if (sTicker == "XRP")
+      {
+          return "ripple";
+      }
+      else if (sTicker == "XLM")
+      {
+         return "stellar";
+      }
+
       return "";
 }
 

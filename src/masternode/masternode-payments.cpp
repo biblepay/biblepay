@@ -424,7 +424,7 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
             }
 			else
 			{
-				// POOS (Proof-of-orphan-sponsorship) - 7-18-2020
+				// POOS (Proof-of-orphan-sponsorship)
 				std::string sRecipient1 = PubKeyToAddress(txout.scriptPubKey);
 				std::string sRecipient2 = PubKeyToAddress(txout2.scriptPubKey);
 				// txout2 contains the 'purported' values (from the network); txout contains the sanctuaries calculated values

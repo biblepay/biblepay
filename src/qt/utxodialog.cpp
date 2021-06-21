@@ -60,8 +60,6 @@ void UTXODialog::onAddressChanged()
 {
 	std::string sAddress = GUIUtil::FROMQS(ui->txtAddress->text());
 	double nPin = AddressToPin(sAddress);
-	LogPrintf("\n%f", nPin);
-
 	ui->txtPin->setText(GUIUtil::TOQS(RoundToString(nPin, 0)));
 }
 
@@ -76,7 +74,6 @@ void UTXODialog::ChangeCurrency(int i)
 		// For BBP we use the users staking address for this
 		std::string sStaking = DefaultRecAddress("UTXO-Retirement-Account"); 
 		ui->txtAddress->setText(GUIUtil::TOQS(sStaking));
-
 	}
 	else
 	{

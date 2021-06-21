@@ -490,12 +490,18 @@ void BitcoinApplication::initializeResult(bool success)
     qDebug() << __func__ << ": Initialization result: " << success;
     // Set exit result.
     returnValue = success ? EXIT_SUCCESS : EXIT_FAILURE;
+	
+	bool fPaymentServerEnabled = true;
+
     if(success)
     {
         // Log this only after AppInitMain finishes, as then logging setup is guaranteed complete
         qWarning() << "Platform customization:" << gArgs.GetArg("-uiplatform", BitcoinGUI::DEFAULT_UIPLATFORM).c_str();
 #ifdef ENABLE_WALLET
-        PaymentServer::LoadRootCAs();
+		if (fPaymentServerEnabled)
+		{
+			PaymentServer::LoadRootCAs();
+		}
         paymentServer->setOptionsModel(optionsModel);
 #endif
 

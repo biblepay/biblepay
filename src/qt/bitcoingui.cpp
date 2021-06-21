@@ -513,7 +513,6 @@ void BitcoinGUI::createActions()
 
 	// BBP
 
-
 	webAction = new QToolButton(this);
 	webAction->setIcon(QIcon(":/icons/account32"));
 	webAction->setText(tr("&Web"));
@@ -694,7 +693,6 @@ void BitcoinGUI::createActions()
 	memorizeScriptureMenuAction = new QAction(QIcon(":/icons/address-book"), tr("Memorize Scriptures"), this);
     memorizeScriptureMenuAction->setStatusTip(tr("Memorize Scriptures"));
     memorizeScriptureMenuAction->setEnabled(false);
-
 
 	// End of BBP
 
@@ -943,8 +941,6 @@ void BitcoinGUI::createMenuBar()
 
 		QMenu *menuUniv = appMenuBar->addMenu(tr("&BBP University"));
 		menuUniv->addAction(univAction);
-
-
 
 		QMenu *help = appMenuBar->addMenu(tr("&Help"));
 		help->addAction(showHelpMessageAction);

@@ -766,10 +766,6 @@ std::string AssessBlocks(int nHeight, bool fCreatingContract)
 		}
 		sSporks += "</SPORKS>";
 		// End of Sanctuary Spork Voting
-		// Orphan Voting, and Charity Voting (11-7-2020 R ANDREWS):
-
-		// End of Orphan Voting
-
 	}
 	
 	if (sPayments.length() > 1) 

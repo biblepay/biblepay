@@ -555,9 +555,7 @@ void CNode::CloseSocketDisconnect(CConnman* connman)
             Release();
         }
     }
-
     connman->UnregisterEvents(this);
-
     LogPrint(BCLog::NET, "disconnecting peer=%d\n", id);
     CloseSocket(hSocket);
 }
@@ -2137,14 +2135,6 @@ void CConnman::ThreadDNSAddressSeed()
 
     LogPrintf("%d addresses found from DNS seeds\n", found);
 }
-
-
-
-
-
-
-
-
 
 
 

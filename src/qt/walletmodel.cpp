@@ -489,10 +489,10 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         CReserveKey *keyChange = transaction.getPossibleKeyChange();
 		
         fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, nChangePosRet, strFailReason, coinControl, true, 0, sOptPrayer);
-		// 4-1-2021 - High Yield UTXO Staking
 		CAmount nAmountBurned = 0;
 		double nPenaltyPercentage = 0;
 		nPenalty = GetUTXOPenalty(*newTx->tx, nPenaltyPercentage, nAmountBurned);
+		// This code is not active, because we do not have this feature:
 		if (nPenalty > 0)
 		{
 			CScript spkBA = GetScriptForDestination(DecodeDestination(chainparams.GetConsensus().BurnAddress));
