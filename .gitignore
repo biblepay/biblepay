@@ -157,3 +157,4 @@ contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide
 *.ide-wal
 contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide-shm
 *.cache
+*.ipch
