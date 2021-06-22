@@ -340,16 +340,16 @@ public:
 	
 		// Harvest - Go Live for BiblePay Mandatory Upgrade (1.6.2.3) - July 1st, 2021
 		// BiblePay had this activated since 123200, but the BIP34+DIP3 rule (bad-cb-height) stops harvest from syncing in prod @ height 134041
-		consensus.DIP0001Height = 279700;
+		consensus.DIP0001Height = 278014;  // Harvest Mandatory Cutover Height
 		consensus.BIP34Hash = uint256();
-		consensus.BIP34Height = 279700;    // Unable to create duplicate coinbases (tx-malleability protection)
-		consensus.DIP0003Height = 279700;
-		consensus.LLMQHeight = 279700;     // The first attempt at llmq quorums that conform to voting out bad quorum members
-		consensus.DIP0003EnforcementHeight = 279700;
-		consensus.HARVEST_HEIGHT = 279700;  // Go live height for BiblePay-Harvest
-		consensus.HARVEST_HEIGHT2 = 279700; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
+		consensus.BIP34Height = 278014;    // Unable to create duplicate coinbases (tx-malleability protection)
+		consensus.DIP0003Height = 278014;
+		consensus.LLMQHeight = 278014;     // The first attempt at llmq quorums that conform to voting out bad quorum members
+		consensus.DIP0003EnforcementHeight = 278014;
+		consensus.HARVEST_HEIGHT = 278014;  // Go live height for BiblePay-Harvest
+		consensus.HARVEST_HEIGHT2 = 278014; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
 		// Chainlock enforcement:
-		consensus.DIP0008Height = 280700;
+		consensus.DIP0008Height = 279407;
 		// ToDo : set this to the actual LLMQ go live height
         consensus.DIP0003EnforcementHash = uint256S("0x0");
 
@@ -515,6 +515,7 @@ public:
 					{119000, uint256S("0x527a086d639b315e4eb03cb52d394a809654d072387c5cb73401799cb5998f90")},
 					{145000, uint256S("0xe830a524fc6a71aa0c3171db1ef592893f84de65fdcda57ddff8b378dcbda12f")},
 					{206000, uint256S("0xc5c6dfcc2b84fb48873b1fd45d2a693a183fbaef8c79673d6defb2b073ef09d2")},
+                    {270000, uint256S("0x4cb48793f323d2252cfc9f5b233931e8a727a091532841379a375390d9e31e20")},
 				}
             }
         };

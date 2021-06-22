@@ -151,3 +151,9 @@ contrib/Windows/Burn/.vs/Burn/v16/Server/sqlite3/storage.ide
 *.lock
 *.suo
 contrib/Windows/Burn/Burn.suo
+*.opendb
+contrib/Windows/BiblePay/.vs/BiblePay/v16/Browse.VC.db
+contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide
+*.ide-wal
+contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide-shm
+*.cache
