@@ -1,21 +1,21 @@
-// Copyright (c) 2018-2019 The Dash Core developers
+// Copyright (c) 2018-2019 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_QUORUMS_H
-#define DASH_QUORUMS_H
+#ifndef BIBLEPAY_QUORUMS_H
+#define BIBLEPAY_QUORUMS_H
 
-#include "evo/evodb.h"
-#include "evo/deterministicmns.h"
-#include "llmq/quorums_commitment.h"
+#include <evo/evodb.h>
+#include <evo/deterministicmns.h>
+#include <llmq/quorums_commitment.h>
 
-#include "validationinterface.h"
-#include "consensus/params.h"
-#include "saltedhasher.h"
-#include "unordered_lru_cache.h"
+#include <validationinterface.h>
+#include <consensus/params.h>
+#include <saltedhasher.h>
+#include <unordered_lru_cache.h>
 
-#include "bls/bls.h"
-#include "bls/bls_worker.h"
+#include <bls/bls.h>
+#include <bls/bls_worker.h>
 
 namespace llmq
 {
@@ -98,7 +98,6 @@ public:
 
     // all these methods will lock cs_main for a short period of time
     CQuorumCPtr GetQuorum(Consensus::LLMQType llmqType, const uint256& quorumHash);
-    CQuorumCPtr GetNewestQuorum(Consensus::LLMQType llmqType);
     std::vector<CQuorumCPtr> ScanQuorums(Consensus::LLMQType llmqType, size_t maxCount);
 
     // this one is cs_main-free
@@ -116,6 +115,6 @@ private:
 
 extern CQuorumManager* quorumManager;
 
-}
+} // namespace llmq
 
-#endif //DASH_QUORUMS_H
+#endif //BIBLEPAY_QUORUMS_H

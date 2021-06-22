@@ -10,7 +10,6 @@
 #include "clientversion.h"
 #include "rpcpog.h"
 #include "netmessagemaker.h"
-#include "activemasternode.h"
 
 std::string DACPost(std::string sHost, std::string sService, std::string sPage, std::string sPayload, int iTimeout);
 std::string PrepareHTTPPost(bool bPost, std::string sPage, std::string sHostHeader, const std::string& sMsg, const std::map<std::string,std::string>& mapRequestHeaders);

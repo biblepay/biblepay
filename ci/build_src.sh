@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This  script is executed inside the builder image
+# This script is executed inside the builder image
 
 set -e
 
@@ -12,9 +12,13 @@ unset DISPLAY
 export CCACHE_COMPRESS=${CCACHE_COMPRESS:-1}
 export CCACHE_SIZE=${CCACHE_SIZE:-400M}
 
-#if [ "$CHECK_DOC" = 1 ]; then contrib/devtools/check-doc.py; fi TODO reenable after all Bitcoin PRs have been merged and docs fully fixed
+if [ "$PULL_REQUEST" != "false" ]; then contrib/devtools/commit-script-check.sh $COMMIT_RANGE; fi
 
-depends/$HOST/native/bin/ccache --max-size=$CCACHE_SIZE
+#if [ "$CHECK_DOC" = 1 ]; then contrib/devtools/check-doc.py; fi TODO reenable after all Bitcoin PRs have been merged and docs fully fixed
+if [ "$CHECK_DOC" = 1 ]; then contrib/devtools/check-rpc-mappings.py .; fi
+if [ "$CHECK_DOC" = 1 ]; then contrib/devtools/lint-all.sh; fi
+
+ccache --max-size=$CCACHE_SIZE
 
 if [ -n "$USE_SHELL" ]; then
   export CONFIG_SHELL="$USE_SHELL"

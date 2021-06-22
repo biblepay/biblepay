@@ -154,7 +154,7 @@ class FrameworkInfo(object):
 class ApplicationBundleInfo(object):
     def __init__(self, path):
         self.path = path
-        appName = "Biblepay-Qt"
+        appName = "BiblePay-Qt"
         self.binaryPath = os.path.join(path, "Contents", "MacOS", appName)
         if not os.path.exists(self.binaryPath):
             raise RuntimeError("Could not find bundle binary for " + path)
@@ -301,7 +301,6 @@ def copyFramework(framework, path, verbose):
         if os.path.exists(fromContentsDir):
             toContentsDir = os.path.join(path, framework.destinationVersionContentsDirectory)
             shutil.copytree(fromContentsDir, toContentsDir, symlinks=True)
-            contentslinkfrom = os.path.join(path, framework.destinationContentsDirectory)
             if verbose >= 3:
                 print("Copied Contents:", fromContentsDir)
                 print(" to:", toContentsDir)
@@ -603,7 +602,7 @@ else:
 
 # ------------------------------------------------
 
-target = os.path.join("dist", "Biblepay-Qt.app")
+target = os.path.join("dist", "BiblePay-Qt.app")
 
 if verbose >= 2:
     print("+ Copying source bundle +")
@@ -674,9 +673,8 @@ else:
 if verbose >= 2:
     print("+ Installing qt.conf +")
 
-f = open(os.path.join(applicationBundle.resourcesPath, "qt.conf"), "wb")
-f.write(qt_conf.encode())
-f.close()
+with open(os.path.join(applicationBundle.resourcesPath, "qt.conf"), "wb") as f:
+    f.write(qt_conf.encode())
 
 # ------------------------------------------------
 
@@ -850,7 +848,7 @@ if config.dmg is not None:
             print("Running AppleScript:")
             print(s)
 
-        time.sleep(2) # fixes '112:116: execution error: Finder got an error: Can’t get disk "Biblepay-Core". (-1728)'
+        time.sleep(2) # fixes '112:116: execution error: Finder got an error: Can’t get disk "BiblePay-Core". (-1728)'
         p = subprocess.Popen(['osascript', '-'], stdin=subprocess.PIPE)
         p.communicate(input=s.encode('utf-8'))
         if p.returncode:

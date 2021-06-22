@@ -13,7 +13,7 @@ class NetworkStyle;
 
 /** Class for the splashscreen with information of the running client.
  *
- * @note this is intentionally not a QSplashScreen. Bitcoin Core initialization
+ * @note this is intentionally not a QSplashScreen. BiblePay Core initialization
  * can take a long time, and in that case a progress window that cannot be
  * moved around and minimized has turned out to be frustrating to the user.
  */
@@ -28,6 +28,7 @@ public:
 protected:
     void paintEvent(QPaintEvent *event);
     void closeEvent(QCloseEvent *event);
+	void LegacySplash();
 
 public Q_SLOTS:
     /** Slot to call finish() method as it's not defined as slot */
@@ -36,8 +37,6 @@ public Q_SLOTS:
     /** Show message and progress */
     void showMessage(const QString &message, int alignment, const QColor &color);
 
-    /** Sets the break action */
-    void setBreakAction(const std::function<void(void)> &action);
 protected:
     bool eventFilter(QObject * obj, QEvent * ev);
 
@@ -50,13 +49,12 @@ private:
     void ConnectWallet(CWallet*);
 
     QPixmap pixmap;
+	QPixmap pixmap2;
     QString curMessage;
     QColor curColor;
     int curAlignment;
 
     QList<CWallet*> connectedWallets;
-
-    std::function<void(void)> breakAction;	
 };
 
 #endif // BITCOIN_QT_SPLASHSCREEN_H

@@ -5,7 +5,9 @@
 #ifndef BITCOIN_QT_GUIUTIL_H
 #define BITCOIN_QT_GUIUTIL_H
 
-#include "amount.h"
+#include <amount.h>
+#include <fs.h>
+#include <qt/guiconstants.h>
 
 #include <QEvent>
 #include <QHeaderView>
@@ -20,11 +22,12 @@
 
 
 #include <boost/filesystem.hpp>
-
 class QValidatedLineEdit;
+class OptionsModel;
 class SendCoinsRecipient;
 
 QT_BEGIN_NAMESPACE
+class QAbstractButton;
 class QAbstractItemView;
 class QDateTime;
 class QFont;
@@ -33,10 +36,70 @@ class QUrl;
 class QWidget;
 QT_END_NAMESPACE
 
-/** Utility functions used by the DAC Qt UI.
+/** Utility functions used by the BiblePay Qt UI.
  */
 namespace GUIUtil
 {
+    /* Enumeration of possible "colors" */
+    enum class ThemedColor {
+        /* Transaction list -- TX status decoration - default color */
+        DEFAULT,
+        /* Transaction list -- unconfirmed transaction */
+        UNCONFIRMED,
+        /* Theme related blue color */
+        BLUE,
+        /* Eye-friendly orange color */
+        ORANGE,
+        /* Eye-friendly red color, e.g. Transaction list -- negative amount */
+        RED,
+        /* Eye-friendly green color */
+        GREEN,
+        /* Transaction list -- bare address (without label) */
+        BAREADDRESS,
+        /* Transaction list -- TX status decoration - open until date */
+        TX_STATUS_OPENUNTILDATE,
+        /* Background used for some widgets. Its slightly darker than the wallets frame background. */
+        BACKGROUND_WIDGET,
+        /* Border color used for some widgets. Its slightly brighter than BACKGROUND_WIDGET. */
+        BORDER_WIDGET,
+        /* Border color of network statistics overlay in debug window. */
+        BORDER_NETSTATS,
+        /* Background color of network statistics overlay in debug window. */
+        BACKGROUND_NETSTATS,
+        /* Pixel color of generated QR codes. */
+        QR_PIXEL,
+        /* Alternative color for black/white icons. White part will be filled with this color by default. */
+        ICON_ALTERNATIVE_COLOR,
+    };
+
+    /* Enumeration of possible "styles" */
+    enum class ThemedStyle {
+        /* Invalid field background style */
+        TS_INVALID,
+        /* Failed operation text style */
+        TS_ERROR,
+        /* Failed operation text style */
+        TS_SUCCESS,
+        /* Comand text style */
+        TS_COMMAND,
+        /* General text styles */
+        TS_PRIMARY,
+        TS_SECONDARY,
+    };
+
+    /** Helper to get colors for various themes which can't be applied via css for some reason */
+    QColor getThemedQColor(ThemedColor color);
+
+    /** Helper to get css style strings which are injected into rich text through qt */
+    QString getThemedStyleQString(ThemedStyle style);
+
+    /** Helper to get an icon colorized with the given color (replaces black) and colorAlternative (replaces white)  */
+    QIcon getIcon(const QString& strIcon, ThemedColor color, ThemedColor colorAlternative, const QString& strIconPath = ICONS_PATH);
+    QIcon getIcon(const QString& strIcon, ThemedColor color = ThemedColor::BLUE, const QString& strIconPath = ICONS_PATH);
+
+    /** Helper to set an icon for a button with the given color (replaces black) and colorAlternative (replaces white). */
+    void setIcon(QAbstractButton* button, const QString& strIcon, ThemedColor color, ThemedColor colorAlternative, const QSize& size);
+    void setIcon(QAbstractButton* button, const QString& strIcon, ThemedColor color = ThemedColor::BLUE, const QSize& size = QSize(BUTTON_ICONSIZE, BUTTON_ICONSIZE));
 	QString TOQS(std::string s);
 	std::string FROMQS(QString qs);
 
@@ -44,16 +107,17 @@ namespace GUIUtil
     QString dateTimeStr(const QDateTime &datetime);
     QString dateTimeStr(qint64 nTime);
 
-    // Return a monospace font
-    QFont fixedPitchFont();
-
     // Set up widgets for address and amounts
-    void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent);
+    void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent, bool fAllowURI = false);
     void setupAmountWidget(QLineEdit *widget, QWidget *parent);
 
-    // Parse "dac:" URI into recipient object, return true on successful parsing
+    // Setup appearance settings if not done yet
+    void setupAppearance(QWidget* parent, OptionsModel* model);
+
+    // Parse "biblepay:" URI into recipient object, return true on successful parsing
     bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out);
     bool parseBitcoinURI(QString uri, SendCoinsRecipient *out);
+    bool validateBitcoinURI(const QString& uri);
     QString formatBitcoinURI(const SendCoinsRecipient &info);
 
     // Returns true if given address+amount meets "dust" definition
@@ -117,10 +181,13 @@ namespace GUIUtil
     // Determine whether a widget is hidden behind other windows
     bool isObscured(QWidget *w);
 
+    // Activate, show and raise the widget
+    void bringToFront(QWidget* w);
+
     // Open debug.log
     void openDebugLogfile();
 	
-    // Open .conf
+    // Open biblepay.conf
     void openConfigfile();	
 
     // Browse backup folder
@@ -192,22 +259,127 @@ namespace GUIUtil
     /** Modify Qt network specific settings on migration */
     void migrateQtSettings();
 
-    /** Save window size and position */
-    void saveWindowGeometry(const QString& strSetting, QWidget *parent);
-    /** Restore window size and position */
-    void restoreWindowGeometry(const QString& strSetting, const QSize &defaultSizeIn, QWidget *parent);
+    /** Change the stylesheet directory. This is used by
+        the parameter -custom-css-dir.*/
+    void setStyleSheetDirectory(const QString& path);
 
-    /** Load global CSS theme */
-    QString loadStyleSheet();
+    /** Check if a custom css directory has been set with -custom-css-dir */
+    bool isStyleSheetDirectoryCustom();
 
-    /** Return name of current CSS theme */
-    QString getThemeName();
-    
+    /** Return a list of all required css files */
+    const std::vector<QString> listStyleSheets();
+
+    /** Return a list of all theme css files */
+    const std::vector<QString> listThemes();
+
+    /** Return the name of the default theme `*/
+    const QString getDefaultTheme();
+
+    /** Check if the given theme name is valid or not */
+    const bool isValidTheme(const QString& strTheme);
+
+    /** Updates the widgets stylesheet and adds it to the list of ui debug elements.
+    Beeing on that list means the stylesheet of the widget gets updated if the
+    related css files has been changed if -debug-ui mode is active. */
+    void loadStyleSheet(QWidget* widget = nullptr, bool fForceUpdate = false);
+
+    enum class FontFamily {
+        SystemDefault,
+        Montserrat,
+    };
+
+    FontFamily fontFamilyFromString(const QString& strFamily);
+    QString fontFamilyToString(FontFamily family);
+
+    /** set/get font family: GUIUtil::fontFamily */
+    FontFamily getFontFamilyDefault();
+    FontFamily getFontFamily();
+    void setFontFamily(FontFamily family);
+
+    enum class FontWeight {
+        Normal, // Font weight for normal text
+        Bold,   // Font weight for bold text
+    };
+
+    /** Convert weight value from args (0-8) to QFont::Weight */
+    bool weightFromArg(int nArg, QFont::Weight& weight);
+    /** Convert QFont::Weight to an arg value (0-8) */
+    int weightToArg(const QFont::Weight weight);
+    /** Convert GUIUtil::FontWeight to QFont::Weight */
+    QFont::Weight toQFontWeight(FontWeight weight);
+
+    /** set/get normal font weight: GUIUtil::fontWeightNormal */
+    QFont::Weight getFontWeightNormalDefault();
+    QFont::Weight getFontWeightNormal();
+    void setFontWeightNormal(QFont::Weight weight);
+
+    /** set/get bold font weight: GUIUtil::fontWeightBold */
+    QFont::Weight getFontWeightBoldDefault();
+    QFont::Weight getFontWeightBold();
+    void setFontWeightBold(QFont::Weight weight);
+
+    /** set/get font scale: GUIUtil::fontScale */
+    int getFontScaleDefault();
+    int getFontScale();
+    void setFontScale(int nScale);
+
+    /** get font size with GUIUtil::fontScale applied */
+    double getScaledFontSize(int nSize);
+
+    /** Load biblepay specific appliciation fonts */
+    bool loadFonts();
+
+    /** Set an application wide default font, depends on the selected theme */
+    void setApplicationFont();
+
+    /** Workaround to set correct font styles in all themes since there is a bug in macOS which leads to
+        issues loading variations of montserrat in css it also keeps track of the set fonts to update on
+        theme changes. */
+    void setFont(const std::vector<QWidget*>& vecWidgets, FontWeight weight, int nPointSize = -1, bool fItalic = false);
+
+    /** Update the font of all widgets where a custom font has been set with
+        GUIUtil::setFont */
+    void updateFonts();
+
+    /** Get a properly weighted QFont object with the selected font. */
+    QFont getFont(FontFamily family, QFont::Weight qWeight, bool fItalic = false, int nPointSize = -1);
+    QFont getFont(QFont::Weight qWeight, bool fItalic = false, int nPointSize = -1);
+    QFont getFont(FontWeight weight, bool fItalic = false, int nPointSize = -1);
+
+    /** Get the default normal QFont */
+    QFont getFontNormal();
+
+    /** Get the default bold QFont */
+    QFont getFontBold();
+
+    /** Return supported weights for the current font family */
+    std::vector<QFont::Weight> getSupportedWeights();
+    /** Convert an index to a weight in the supported weights vector */
+    QFont::Weight supportedWeightFromIndex(int nIndex);
+    /** Convert a weight to an index in the supported weights vector */
+    int supportedWeightToIndex(QFont::Weight weight);
+
+    /** Return the name of the currently active theme.*/
+    QString getActiveTheme();
+
+    /** Check if a biblepay specific theme is activated (light/dark).*/
+    bool biblepayThemeActive();
+
+    /** Load the theme and update all UI elements according to the appearance settings. */
+    void loadTheme(QWidget* widget = nullptr, bool fForce = false);
+
+    /** Disable the OS default focus rect for macOS because we have custom focus rects
+     * set in the css files */
+    void disableMacFocusRect(const QWidget* w);
+
+    /** Enable/Disable the macOS focus rects depending on the current theme. */
+    void updateMacFocusRects();
+
     /* Convert QString to OS specific boost path through UTF-8 */
-    boost::filesystem::path qstringToBoostPath(const QString &path);
+    fs::path qstringToBoostPath(const QString &path);
 
     /* Convert OS specific boost path to QString through UTF-8 */
-    QString boostPathToQString(const boost::filesystem::path &path);
+    QString boostPathToQString(const fs::path &path);
 
     /* Convert seconds into a QString with days, hours, mins, secs */
     QString formatDurationStr(int secs);
@@ -223,6 +395,10 @@ namespace GUIUtil
 
     QString formatNiceTimeOffset(qint64 secs);
 
+    QString formatBytes(uint64_t bytes);
+
+    qreal calculateIdealFontSize(int width, const QString& text, QFont font, qreal minPointSize = 4, qreal startPointSize = 14);
+
     class ClickableLabel : public QLabel
     {
         Q_OBJECT
@@ -235,11 +411,11 @@ namespace GUIUtil
     protected:
         void mouseReleaseEvent(QMouseEvent *event);
     };
-    
+
     class ClickableProgressBar : public QProgressBar
     {
         Q_OBJECT
-        
+
     Q_SIGNALS:
         /** Emitted when the progressbar is clicked. The relative mouse coordinates of the click are
          * passed to the signal.
@@ -265,19 +441,8 @@ namespace GUIUtil
 
 } // namespace GUIUtil
 
-// subclass for ordering numeric columns in QTableWidget
-class NumericTableWidgetItem : public QTableWidgetItem {
-    public:
-        NumericTableWidgetItem(const QString &s):QTableWidgetItem(s) {
-        }
-        NumericTableWidgetItem(double d):QTableWidgetItem(d) {
-        }
-
-        bool operator <(const QTableWidgetItem &other) const
-        {
-            return text().toDouble() < other.text().toDouble();
-        }
-};
-
-
 #endif // BITCOIN_QT_GUIUTIL_H
+
+
+//Numeric table widget item??
+

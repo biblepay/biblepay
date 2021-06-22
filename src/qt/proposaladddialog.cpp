@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "proposaladddialog.h"
-#include "ui_proposaladddialog.h"
+#include "forms/ui_proposaladddialog.h"
 #include "addressbookpage.h"
 #include "addresstablemodel.h"
 #include "bitcoinunits.h"
@@ -11,12 +11,9 @@
 #include "util.h"
 #include "optionsmodel.h"
 #include "timedata.h"
-#include "platformstyle.h"
 #include "receiverequestdialog.h"
 #include "recentrequeststablemodel.h"
-#include "governance.h"
-#include "governance-vote.h"
-#include "governance-classes.h"
+#include "governance/governance-object.h"
 
 #include "walletmodel.h"
 #include "validation.h"
@@ -36,14 +33,6 @@ ProposalAddDialog::ProposalAddDialog(const PlatformStyle *platformStyle, QWidget
     platformStyle(platformStyle)
 {
     ui->setupUi(this);
-    QString theme = GUIUtil::getThemeName();
-    
-    if (!platformStyle->getImagesOnButtons()) {
-        ui->btnSubmit->setIcon(QIcon());
-    } else {
-        ui->btnSubmit->setIcon(QIcon(":/icons/" + theme + "/receiving_addresses"));
-    }
-
 	ui->cmbExpenseType->clear();
  	ui->cmbExpenseType->addItem("Charity");
 	ui->cmbExpenseType->addItem("PR");
@@ -154,11 +143,8 @@ void ProposalAddDialog::clear()
 	ui->txtAddress->setText("");
 }
 
-
 void ProposalAddDialog::on_btnSubmit_clicked()
 {
-    if(!model || !model->getOptionsModel())
-        return;
 	std::string sName = GUIUtil::FROMQS(ui->txtName->text());
 	std::string sAddress = GUIUtil::FROMQS(ui->txtAddress->text());
 	std::string sAmount = GUIUtil::FROMQS(ui->txtAmount->text());
@@ -166,8 +152,7 @@ void ProposalAddDialog::on_btnSubmit_clicked()
 	std::string sError;
 	if (sName.length() < 3)
 		sError += "Proposal Name must be populated. ";
-	CBitcoinAddress address(sAddress);
-	if (!address.IsValid()) 
+	if (!ValidateAddress2(sAddress)) 
 		sError += "Proposal Funding Address is invalid. ";
 	if (cdbl(sAmount,0) < 100) 
 		sError += "Proposal Amount is too low. ";
@@ -180,9 +165,6 @@ void ProposalAddDialog::on_btnSubmit_clicked()
 
 	if (nBalance < (2501*COIN)) 
 		sError += "Sorry balance too low to create proposal collateral. ";
-
-	 if (model->getEncryptionStatus() == WalletModel::Locked)
-		 sError += "Sorry, wallet must be unlocked. ";
        
 	std::string sPrepareTxId;
 	std::string sHex;
@@ -252,7 +234,7 @@ void ProposalAddDialog::on_btnSubmit_clicked()
 		int nRevision = 1;
 		// CREATE A NEW COLLATERAL TRANSACTION FOR THIS SPECIFIC OBJECT
 		CGovernanceObject govobj(hashParent, nRevision, unixStartTimestamp, uint256(), sHex);
-		if((govobj.GetObjectType() == GOVERNANCE_OBJECT_TRIGGER) || (govobj.GetObjectType() == GOVERNANCE_OBJECT_WATCHDOG)) 
+		if((govobj.GetObjectType() == GOVERNANCE_OBJECT_TRIGGER)) 
 		{
 			sError += "Trigger and watchdog objects cannot be created from the UI yet.";
 		}

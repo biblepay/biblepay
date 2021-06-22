@@ -1,8 +1,6 @@
 #include "proposals.h"
 #include "bitcoinunits.h"
-#include "ui_proposals.h"
-#include "secdialog.h"
-#include "ui_secdialog.h"
+#include "forms/ui_proposals.h"
 #include "walletmodel.h"
 #include "guiutil.h"
 #include "rpcpog.h"
@@ -10,6 +8,7 @@
 #include <QTableWidget>
 #include <QGridLayout>
 #include <QUrl>
+#include "secdialog.h"
 
 
 QStringList Proposals::GetHeaders()
@@ -39,8 +38,7 @@ Proposals::Proposals(const PlatformStyle *platformStyle, QWidget *parent) :
     ui->setupUi(this);
     
 	/* Reserved - Use when we add buttons to this page
-	QString theme = GUIUtil::getThemeName();
-    
+	
     if (!platformStyle->getImagesOnButtons()) 
 	{
         ui->btnSubmit->setIcon(QIcon());
@@ -216,7 +214,7 @@ void Proposals::VerifyUserReallyWantsToVote(std::string sVotingType, std::string
 			std::string sGobjectID = GUIUtil::FROMQS(ui->tableWidget->item(row,0)->text());
 			std::string TXID_OUT;
 			std::string ERROR_OUT;
-			bool fVoted = VoteWithCoinAge(sGobjectID, sVotingAction, TXID_OUT, ERROR_OUT);
+			bool fVoted = VoteWithCoinAge(sGobjectID, sVotingAction, ERROR_OUT);
 			std::string sNarr;
 			QMessageBox msgOutcome;
 			msgOutcome.setWindowTitle(tr("Voting Outcome"));
@@ -314,7 +312,7 @@ void Proposals::slotViewProposal()
     int row = ui->tableWidget->selectionModel()->currentIndex().row();
     if(row >= 0)
     {
-        QString Url = ui->tableWidget->item(row,8)->text();
+        QString Url = ui->tableWidget->item(row, 14)->text();
         QUrl pUrl(Url);
         QDesktopServices::openUrl(pUrl);
     }

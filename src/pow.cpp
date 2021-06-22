@@ -3,15 +3,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "pow.h"
-#include "kjv.h"
-#include "validation.h"
-#include "arith_uint256.h"
-#include "chain.h"
+#include <pow.h>
+
+#include <arith_uint256.h>
+#include <chain.h>
+#include <chainparams.h>
+#include <primitives/block.h>
+#include <uint256.h>
 #include "rpcpog.h"
-#include "chainparams.h"
-#include "primitives/block.h"
-#include "uint256.h"
+#include "kjv.h"
+
 #include <math.h>
 
 unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const Consensus::Params& params) {
@@ -32,7 +33,7 @@ unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const Conse
     uint64_t PastBlocksMin = pastSecondsMin / params.nPowTargetSpacing;
     uint64_t PastBlocksMax = pastSecondsMax / params.nPowTargetSpacing;
 
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || (uint64_t)BlockLastSolved->nHeight < PastBlocksMin) { return UintToArith256(params.powLimit).GetCompact(); }
+    if (BlockLastSolved == nullptr || BlockLastSolved->nHeight == 0 || (uint64_t)BlockLastSolved->nHeight < PastBlocksMin) { return UintToArith256(params.powLimit).GetCompact(); }
 
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
         if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
@@ -63,7 +64,7 @@ unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const Conse
                 if ((PastRateAdjustmentRatio <= EventHorizonDeviationSlow) || (PastRateAdjustmentRatio >= EventHorizonDeviationFast))
                 { assert(BlockReading); break; }
         }
-        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
+        if (BlockReading->pprev == nullptr) { assert(BlockReading); break; }
         BlockReading = BlockReading->pprev;
     }
 
@@ -96,9 +97,8 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 	bool fProdChain = Params().NetworkIDString() == "main" ? true : false;
 	int64_t nTotalBlockSize = 0;
 	int64_t nAvgBlockSize = 0;
-	// Mandatory Upgrade at block f7000 (As of 08-15-2017 we are @3265 in prod & @1349 in testnet)
-	// This change should prevents blocks from being solved in clumps
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) 
+
+	if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) 
 	{
         return UintToArith256(params.powLimit).GetCompact();
     }
@@ -135,16 +135,13 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 		nAvgBlockSize = nTotalBlockSize / CountBlocks;
 	}
 
-	// LogPrintf("\nBPL tbs %f, abs %f ", nTotalBlockSize, nAvgBlockSize);
 	// BPL
 	// Rule 1. When the average block size over the last 4 blocks exceeds 500K (50% of 1meg), we target 20 second blocks.  Since we have chainlocks, this is safe.
 	// End of BPL
     arith_uint256 bnNew(PastDifficultyAverage);
     int64_t _nTargetTimespan = CountBlocks * params.nPowTargetSpacing; 
 	// Note that BBP has 7 minute block spacing.
-	// We recently added the 'exec masterclock' command (in 2020).  This allows us to target 7 minute blocks very accurately.
-	// The chain was slow from 2017 to 2019 (slow by 11%, as we emitted 192K blocks while we should have emitted 219K blocks), however now with RandomX, we are 2.2% fast.  So the difference should correct itself over the next 30 months through convergence.  We will continue to monitor exec masterclock to ensure we are on the right trajectory for a square emission over the long term.
-
+	
 	if (pindexLast->nHeight >= params.F11000_CUTOVER_HEIGHT && pindexLast->nHeight < params.F12000_CUTOVER_HEIGHT)
 	{
 		_nTargetTimespan = CountBlocks * 390;
@@ -153,10 +150,13 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 	{
 		_nTargetTimespan = CountBlocks * 310;
 	}
-	else if (pindexLast->nHeight >= params.F13000_CUTOVER_HEIGHT)
+	else if (pindexLast->nHeight >= params.F13000_CUTOVER_HEIGHT && pindexLast->nHeight < params.HARVEST_HEIGHT)
 	{
-		// 5-31-2018; For June mandatory upgrade: Tighten block solve time down to 7 mins (we are running 4.5% slow)
 		_nTargetTimespan = CountBlocks * 296;
+	}
+	else if (pindexLast->nHeight >= params.HARVEST_HEIGHT)
+	{
+		_nTargetTimespan = CountBlocks * 370;
 	}
 	
 	if (!fProdChain)
@@ -169,18 +169,25 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 		{
 			_nTargetTimespan = 30; // 30 second blocks 
 		}
-		else if (pindexLast->nHeight >= 5000)
+		else if (pindexLast->nHeight >= 5000 && pindexLast->nHeight < (params.HARVEST_HEIGHT + 200))
 		{
 			_nTargetTimespan = CountBlocks * 300;  // 7 minute blocks in testnet
 		}
+		else if (pindexLast->nHeight >= (params.HARVEST_HEIGHT + 65))
+		{
+			// We had to do this because we found that LLMQ actually requires a relatively accurate clock, due to the signing process (and the sleep estimator and the timeouts).
+			_nTargetTimespan = CountBlocks * (3 * 60);  // 3 minute blocks in testnet
+		}
 	}
 	// BPL
-
+	/*
 	if (pindexLast->nHeight > params.POOM_PHASEOUT_HEIGHT)
 	{
 		if (nAvgBlockSize > BPL_TRIGGER_SIZE)
 			_nTargetTimespan = CountBlocks * 20;
 	}
+	*/
+	
 
     if (nActualTimespan < _nTargetTimespan / 2)
         nActualTimespan = _nTargetTimespan / 2;
@@ -202,7 +209,7 @@ unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockH
 
 unsigned int GetNextWorkRequiredBTC(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
-    assert(pindexLast != NULL);
+    assert(pindexLast != nullptr);
     unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
 
     // Only change once per interval
@@ -238,25 +245,48 @@ unsigned int GetNextWorkRequiredBTC(const CBlockIndex* pindexLast, const CBlockH
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
-	// DAC only uses DGW
+    assert(pindexLast != nullptr);
+    assert(pblock != nullptr);
+
+	// BiblePay only uses DGW
 	return DarkGravityWave(pindexLast, pblock, params);
-   
+
+	/*
+    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
+
     // this is only active on devnets
     if (pindexLast->nHeight < params.nMinimumDifficultyBlocks) {
-        unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
-        return nProofOfWorkLimit;
+        return bnPowLimit.GetCompact();
     }
 
-    // Most recent algo first
-    if (pindexLast->nHeight + 1 >= params.nPowDGWHeight) {
-        return DarkGravityWave(pindexLast, pblock, params);
-    }
-    else if (pindexLast->nHeight + 1 >= params.nPowKGWHeight) {
-        return KimotoGravityWell(pindexLast, params);
-    }
-    else {
+    if (pindexLast->nHeight + 1 < params.nPowKGWHeight) {
         return GetNextWorkRequiredBTC(pindexLast, pblock, params);
     }
+
+    // Note: GetNextWorkRequiredBTC has it's own special difficulty rule,
+    // so we only apply this to post-BTC algos.
+    if (params.fPowAllowMinDifficultyBlocks) {
+        // recent block is more than 2 hours old
+        if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + 2 * 60 * 60) {
+            return bnPowLimit.GetCompact();
+        }
+        // recent block is more than 10 minutes old
+        if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + params.nPowTargetSpacing * 4) {
+            arith_uint256 bnNew = arith_uint256().SetCompact(pindexLast->nBits) * 10;
+            if (bnNew > bnPowLimit) {
+                return bnPowLimit.GetCompact();
+            }
+            return bnNew.GetCompact();
+        }
+    }
+
+    if (pindexLast->nHeight + 1 < params.nPowDGWHeight) {
+        return KimotoGravityWell(pindexLast, params);
+    }
+
+    return DarkGravityWave(pindexLast, params);
+	*/
+
 }
 
 // for DIFF_BTC only!
@@ -286,8 +316,8 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
 }
 
 bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, 
-	int64_t nBlockTime, int64_t nPrevBlockTime, int nPrevHeight, unsigned int nNonce, const CBlockIndex* pindexPrev, std::string sHeaderHex,
-	uint256 uRXKey, int iThreadID, bool bLoadingBlockIndex)
+	int64_t nBlockTime, int64_t nPrevBlockTime, int nPrevHeight, unsigned int nNonce, 
+	const CBlockIndex* pindexPrev, std::string sHeaderHex, uint256 uRXKey, int iThreadID, bool bLoadingBlockIndex)
 {
     bool fNegative;
     bool fOverflow;
@@ -301,7 +331,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 	if ((nElapsed > (60 * 60 * 8) && bLoadingBlockIndex) || (nElapsed > (60 * 60 * 24)))
 		return true;
 
-	if (nPrevHeight < params.EVOLUTION_CUTOVER_HEIGHT)
+    if (nPrevHeight < params.EVOLUTION_CUTOVER_HEIGHT)
 	{
 		bool f_7000;
 		bool f_8000;
@@ -312,7 +342,6 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 		if (UintToArith256(uBibleHashClassic) > bnTarget && nPrevBlockTime > 0) 
 		{
 			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[0] height %f, nonce %f", nPrevHeight, nNonce);
-  
 			return false;
 		}
 	}
@@ -360,3 +389,4 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 	
     return true;
 }
+

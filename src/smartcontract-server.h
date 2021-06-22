@@ -9,8 +9,8 @@
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
-#include "rpcpog.h"
 #include <univalue.h>
+#include "rpcpog.h"
 
 class CWallet;
 
@@ -26,20 +26,12 @@ std::string ExecuteGenericSmartContractQuorumProcess();
 UniValue GetProminenceLevels(int nHeight, std::string sFilterName);
 bool NickNameExists(std::string sProjectName, std::string sNickName, bool& fIsMine);
 int GetRequiredQuorumLevel(int nHeight);
-void GetTransactionPoints(CBlockIndex* pindex, CTransactionRef tx, double& nCoinAge, CAmount& nDonation);
 bool ChainSynced(CBlockIndex* pindex);
 std::string WatchmanOnTheWall(bool fForce, std::string& sContract);
 void GetGovObjDataByPamHash(int nHeight, uint256 hPamHash, std::string& out_Data);
 DACProposal GetProposalByHash(uint256 govObj, int nLastSuperblock);
 std::string DescribeProposal(DACProposal dacProposal);
-std::string GetTxCPK(CTransactionRef tx, std::string& sCampaignName);
-double CalculatePoints(std::string sCampaign, std::string sDiary, double nCoinAge, CAmount nDonation, std::string sCPK);
-double GetProminenceCap(std::string sCampaignName, double nPoints, double nProminence);
-std::string GetCPIDByCPK(std::string sCPK);
-std::string GetCPIDElementByData(std::string sData, int iElement);
-double GetRequiredCoinAgeForPODC(double nRAC, double nTeamID);
-double GetCoinPrice();
-bool VerifyChild(std::string childID, std::string sCharity);
+double GetBBPUSDPrice();
 bool IsOverBudget(int nHeight, int64_t nTime, std::string sAmounts);
 double CalculateAPM(int nHeight);
 double ExtractAPM(int nHeight);

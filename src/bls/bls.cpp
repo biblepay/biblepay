@@ -1,15 +1,15 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bls.h"
+#include <bls/bls.h>
 
-#include "hash.h"
-#include "random.h"
-#include "tinyformat.h"
+#include <hash.h>
+#include <random.h>
+#include <tinyformat.h>
 
 #ifndef BUILD_BITCOIN_INTERNAL
-#include "support/allocators/mt_pooled_secure.h"
+#include <support/allocators/mt_pooled_secure.h>
 #endif
 
 #include <assert.h>

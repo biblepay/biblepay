@@ -5,7 +5,6 @@
 
 #include "alert.h"
 
-#include "base58.h"
 #include "clientversion.h"
 #include "net.h"
 #include "netmessagemaker.h"
@@ -150,7 +149,7 @@ bool CAlert::Sign()
     sMsg << *(CUnsignedAlert*)this;
     vchMsg = std::vector<unsigned char>(sMsg.begin(), sMsg.end());
     CBitcoinSecret vchSecret;
-    if (!vchSecret.SetString(GetArg("-alertkey", "")))
+    if (!vchSecret.SetString(gArgs.GetArg("-alertkey", "")))
     {
         printf("CAlert::SignAlert() : vchSecret.SetString failed\n");
         return false;
@@ -168,7 +167,7 @@ bool CAlert::Sign()
 
 bool CAlert::CheckSignature() const
 {
-
+	/*
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	CBitcoinAddress addrAlertPubAddress(consensusParams.FoundationAddress);
 
@@ -197,6 +196,8 @@ bool CAlert::CheckSignature() const
 		return false;
 	}
 	return (pubkey2.GetID() == keyID2);
+	*/
+	return false;
 }
 
 CAlert CAlert::getAlertByHash(const uint256 &hash)
@@ -213,6 +214,7 @@ CAlert CAlert::getAlertByHash(const uint256 &hash)
 
 bool CAlert::ProcessAlert(const std::vector<unsigned char>& alertKey, bool fThread) const
 {
+	/*
     if (!CheckSignature())
         return false;
     if (!IsInEffect())
@@ -248,13 +250,13 @@ bool CAlert::ProcessAlert(const std::vector<unsigned char>& alertKey, bool fThre
             const CAlert& alert = (*mi).second;
             if (Cancels(alert))
             {
-                LogPrint("alert", "cancelling alert %d\n", alert.nID);
+                LogPrint(BCLog::NET, "cancelling alert %d\n", alert.nID);
                 uiInterface.NotifyAlertChanged((*mi).first, CT_DELETED);
                 mapAlerts.erase(mi++);
             }
             else if (!alert.IsInEffect())
             {
-                LogPrint("alert", "expiring alert %d\n", alert.nID);
+                LogPrint(BCLog::NET, "expiring alert %d\n", alert.nID);
                 uiInterface.NotifyAlertChanged((*mi).first, CT_DELETED);
                 mapAlerts.erase(mi++);
             }
@@ -268,7 +270,7 @@ bool CAlert::ProcessAlert(const std::vector<unsigned char>& alertKey, bool fThre
             const CAlert& alert = item.second;
             if (alert.Cancels(*this))
             {
-                LogPrint("alert", "alert already cancelled by %d\n", alert.nID);
+                LogPrint(BCLog::NET, "alert already cancelled by %d\n", alert.nID);
                 return false;
             }
         }
@@ -283,14 +285,16 @@ bool CAlert::ProcessAlert(const std::vector<unsigned char>& alertKey, bool fThre
         }
     }
 
-    LogPrint("alert", "accepted alert %d, AppliesToMe()=%d\n", nID, AppliesToMe());
+    LogPrint(BCLog::NET, "accepted alert %d, AppliesToMe()=%d\n", nID, AppliesToMe());
     return true;
+	*/
+	return false;
 }
 
 void
 CAlert::Notify(const std::string& strMessage, bool fThread)
 {
-    std::string strCmd = GetArg("-alertnotify", "");
+    std::string strCmd = gArgs.GetArg("-alertnotify", "");
     if (strCmd.empty()) return;
 
     // Alert text should be plain ascii coming from a trusted source, but to

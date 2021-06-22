@@ -1,33 +1,30 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2018 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_HASH_H
 #define BITCOIN_HASH_H
 
-#include "crypto/ripemd160.h"
-#include "crypto/sha256.h"
-#include "prevector.h"
-#include "serialize.h"
-#include "uint256.h"
-#include "version.h"
+#include <crypto/ripemd160.h>
+#include <crypto/sha256.h>
+#include <prevector.h>
+#include <serialize.h>
+#include <uint256.h>
+#include <version.h>
 
-#include "crypto/sph_blake.h"
-#include "crypto/sph_bmw.h"
-#include "crypto/sph_groestl.h"
-#include "crypto/sph_legacy.h"
-
-#include "crypto/sph_jh.h"
-#include "crypto/sph_keccak.h"
-#include "crypto/sph_skein.h"
-#include "crypto/sph_luffa.h"
-#include "crypto/sph_cubehash.h"
-#include "crypto/sph_shavite.h"
-#include "crypto/sph_simd.h"
-#include "crypto/sph_echo.h"
+#include <crypto/sph_blake.h>
+#include <crypto/sph_bmw.h>
+#include <crypto/sph_groestl.h>
+#include <crypto/sph_jh.h>
+#include <crypto/sph_keccak.h>
+#include <crypto/sph_skein.h>
+#include <crypto/sph_luffa.h>
+#include <crypto/sph_cubehash.h>
+#include <crypto/sph_shavite.h>
+#include <crypto/sph_simd.h>
+#include <crypto/sph_echo.h>
 
 #include <vector>
 
@@ -101,20 +98,6 @@ inline uint256 Hash(const T1 p1begin, const T1 p1end,
     uint256 result;
     CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
               .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
-              .Finalize((unsigned char*)&result);
-    return result;
-}
-
-/** Compute the 256-bit hash of the concatenation of three objects. */
-template<typename T1, typename T2, typename T3>
-inline uint256 Hash(const T1 p1begin, const T1 p1end,
-                    const T2 p2begin, const T2 p2end,
-                    const T3 p3begin, const T3 p3end) {
-    static const unsigned char pblank[1] = {};
-    uint256 result;
-    CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
-              .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
-              .Write(p3begin == p3end ? pblank : (const unsigned char*)&p3begin[0], (p3end - p3begin) * sizeof(p3begin[0]))
               .Finalize((unsigned char*)&result);
     return result;
 }
@@ -239,7 +222,7 @@ private:
     Source* source;
 
 public:
-    CHashVerifier(Source* source_) : CHashWriter(source_->GetType(), source_->GetVersion()), source(source_) {}
+    explicit CHashVerifier(Source* source_) : CHashWriter(source_->GetType(), source_->GetVersion()), source(source_) {}
 
     void read(char* pch, size_t nSize)
     {
@@ -314,19 +297,6 @@ public:
 uint64_t SipHashUint256(uint64_t k0, uint64_t k1, const uint256& val);
 uint64_t SipHashUint256Extra(uint64_t k0, uint64_t k1, const uint256& val, uint32_t extra);
 
-/* ------------ Groestl Hash --------------------- */
-template<typename T1>
-inline uint256 HashGroestl(const T1 pbegin, const T1 pend)
-{
-    sph_groestl512_context   ctx_groestl;
-    static unsigned char pblank[1];
-    uint512 hash[1];
-    sph_groestl512_init(&ctx_groestl);
-    sph_groestl512 (&ctx_groestl, (pbegin == pend ? pblank : static_cast<const void*>(&pbegin[0])), (pend - pbegin) * sizeof(pbegin[0]));
-    sph_groestl512_close(&ctx_groestl, static_cast<void*>(&hash[0]));
-    return hash[0].trim256();
-}
-
 /* ------------- Blake Hash -------------------- */
 template<typename T1>
 inline uint256 HashBlake(const T1 pbegin, const T1 pend)
@@ -340,7 +310,7 @@ inline uint256 HashBlake(const T1 pbegin, const T1 pend)
 	return hash[0];
 }
 
-/* ----------- X11 Hash ------------------------------------------------ */
+/* ----------- BiblePay Hash ------------------------------------------------ */
 template<typename T1>
 inline uint256 HashX11(const T1 pbegin, const T1 pend)
 
@@ -405,60 +375,6 @@ inline uint256 HashX11(const T1 pbegin, const T1 pend)
     sph_echo512_close(&ctx_echo, static_cast<void*>(&hash[10]));
 
     return hash[10].trim256();
-}
-
-template<typename T1>
-inline uint256 HashLegacy(const T1 pbegin, const T1 pend)
-{
-	sph_blake512_context     ctx_blake;
-    sph_bmw512_context       ctx_bmw;
-    sph_groestl512_context   ctx_groestl;
-    sph_skein512_context     ctx_skein;
- 
-    sph_jh512_context        ctx_jh;
-    sph_keccak512_context    ctx_keccak;
-    sph_legacy512_context  ctx_biblepay;
-
-    static unsigned char pblank[1];
-    uint512 hash[7];
-
-    sph_blake512_init(&ctx_blake);
-    sph_blake512 (&ctx_blake, (pbegin == pend ? pblank : static_cast<const void*>(&pbegin[0])), (pend - pbegin) * sizeof(pbegin[0]));
-    sph_blake512_close(&ctx_blake, static_cast<void*>(&hash[0]));
-
-    sph_bmw512_init(&ctx_bmw);
-    sph_bmw512 (&ctx_bmw, static_cast<const void*>(&hash[0]), 64);
-    sph_bmw512_close(&ctx_bmw, static_cast<void*>(&hash[1]));
-
-    sph_groestl512_init(&ctx_groestl);
-    sph_groestl512 (&ctx_groestl, static_cast<const void*>(&hash[1]), 64);
-    sph_groestl512_close(&ctx_groestl, static_cast<void*>(&hash[2]));
-
-    sph_skein512_init(&ctx_skein);
-    sph_skein512 (&ctx_skein, static_cast<const void*>(&hash[2]), 64);
-    sph_skein512_close(&ctx_skein, static_cast<void*>(&hash[3]));
-
-    sph_jh512_init(&ctx_jh);
-    sph_jh512 (&ctx_jh, static_cast<const void*>(&hash[3]), 64);
-    sph_jh512_close(&ctx_jh, static_cast<void*>(&hash[4]));
- 
-	sph_keccak512_init(&ctx_keccak);
-    sph_keccak512 (&ctx_keccak, static_cast<const void*>(&hash[4]), 64);
-    sph_keccak512_close(&ctx_keccak, static_cast<void*>(&hash[5]));
-
-	sph_legacy512_init(&ctx_biblepay);
-    sph_legacy512 (&ctx_biblepay, static_cast<const void*>(&hash[5]), 64);
-    sph_legacy512_close(&ctx_biblepay, static_cast<void*>(&hash[6]));
-	
-	// Genesis 2:2
-	// And on the seventh day God ended His work which He had done, and He rested on the seventh day from all His work which He had done. 
-	
-	// Genesis 2:3
-	// Then God blessed the seventh day and sanctified it, because in it He rested from all His work which God had created and made.
-
-	// All Glory goes to the God of Abraham, Isaac & Jacob.  The one that Was, Is, and Is to Come.
-
-    return hash[6].trim256();
 }
 
 #endif // BITCOIN_HASH_H

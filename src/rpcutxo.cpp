@@ -5,11 +5,6 @@
 #include "rpcutxo.h"
 #include "spork.h"
 #include "utilmoneystr.h"
-#include "masternode-payments.h"
-#include "masternodeconfig.h"
-#include "activemasternode.h"
-#include "governance-classes.h"
-#include "masternode-sync.h"
 #include "smartcontract-server.h"
 #include "rpcpog.h"
 #include <boost/lexical_cast.hpp>
@@ -25,8 +20,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
-extern CWallet* pwalletMain;
-
 
 std::string GetGithubVersion()
 {
@@ -35,4 +28,5 @@ std::string GetGithubVersion()
 	std::string sV = ExtractXML(Uplink(false, "", sURL, sRestfulURL, SSL_PORT, 25, 1), "<VERSION>", "</VERSION>");
 	return sV;
 }
+
 

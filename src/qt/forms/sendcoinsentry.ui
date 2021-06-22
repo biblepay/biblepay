@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>907</width>
-    <height>358</height>
+    <width>767</width>
+    <height>348</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -57,7 +57,7 @@
       <item>
        <widget class="QValidatedLineEdit" name="payTo">
         <property name="toolTip">
-         <string>The address to send the payment to</string>
+         <string>The BiblePay address to send the payment to</string>
         </property>
        </widget>
       </item>
@@ -151,16 +151,9 @@
      </widget>
     </item>
     <item row="2" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayoutAmount" stretch="0,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayoutAmount" stretch="0,1,0,0,0">
       <item>
-       <widget class="BitcoinAmountField" name="payAmount">
-        <property name="minimumSize">
-         <size>
-          <width>234</width>
-          <height>0</height>
-         </size>
-        </property>
-       </widget>
+       <widget class="BitcoinAmountField" name="payAmount"/>
       </item>
       <item>
        <spacer name="horizontalSpacer">
@@ -179,16 +172,6 @@
        </spacer>
       </item>
       <item>
-       <widget class="QCheckBox" name="chkDWS">
-        <property name="toolTip">
-         <string>Send UTXO Stake.  If you win the block you receive the block reward.  You also receive perpetual returns in the UTXO leaderboard.</string>
-        </property>
-        <property name="text">
-         <string>Send UTXO Stake?</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <spacer name="horizontalSpacer_77">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -204,10 +187,17 @@
       <item>
        <widget class="QCheckBox" name="checkboxSubtractFeeFromAmount">
         <property name="toolTip">
-         <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
+         <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
         </property>
         <property name="text">
-         <string>S&amp;ubtract fee from amount?</string>
+         <string>S&amp;ubtract fee from amount</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="useAvailableBalanceButton">
+        <property name="text">
+         <string>Use available balance</string>
         </property>
        </widget>
       </item>
@@ -367,7 +357,7 @@
     <item row="61" column="0">
      <widget class="QLabel" name="messageLabel">
       <property name="text">
-       <string>Internal Message:</string>
+       <string>Message:</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -377,7 +367,7 @@
     <item row="61" column="1">
      <widget class="QLabel" name="messageTextLabel">
       <property name="toolTip">
-       <string>A message that was attached to the payment: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the network.</string>
+       <string>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</string>
       </property>
       <property name="textFormat">
        <enum>Qt::PlainText</enum>
@@ -431,10 +421,9 @@
       </item>
       <item>
        <widget class="QCheckBox" name="chkDiary">
-       <property name="toolTip">
-                <string>Add a Diary Entry (Healing Campaign)</string>
-       </property>
-        
+        <property name="toolTip">
+         <string>Add a Diary Entry (Healing Campaign)</string>
+        </property>
         <property name="text">
          <string>Add Diary Entry?</string>
         </property>
@@ -1476,12 +1465,12 @@
   <customwidget>
    <class>QValidatedLineEdit</class>
    <extends>QLineEdit</extends>
-   <header>qvalidatedlineedit.h</header>
+   <header>qt/qvalidatedlineedit.h</header>
   </customwidget>
   <customwidget>
    <class>BitcoinAmountField</class>
    <extends>QLineEdit</extends>
-   <header>bitcoinamountfield.h</header>
+   <header>qt/bitcoinamountfield.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -1490,6 +1479,7 @@
   <tabstop>pasteButton</tabstop>
   <tabstop>deleteButton</tabstop>
   <tabstop>addAsLabel</tabstop>
+  <tabstop>payAmount</tabstop>
   <tabstop>payAmount_is</tabstop>
   <tabstop>deleteButton_is</tabstop>
   <tabstop>payAmount_s</tabstop>

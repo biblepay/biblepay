@@ -1,9 +1,9 @@
-// Copyright (c) 2014-2018 The Dash Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_STACKTRACES_H
-#define DASH_STACKTRACES_H
+#ifndef BIBLEPAY_STACKTRACES_H
+#define BIBLEPAY_STACKTRACES_H
 
 #include <string>
 #include <sstream>
@@ -11,14 +11,12 @@
 
 #include <cxxabi.h>
 
-#include "tinyformat.h"
+#include <tinyformat.h>
 
 std::string DemangleSymbol(const std::string& name);
 
-std::string GetCurrentStacktraceStr(size_t skip = 0, size_t max_depth = 16);
-
-std::string GetExceptionStacktraceStr(const std::exception_ptr& e);
 std::string GetPrettyExceptionStr(const std::exception_ptr& e);
+std::string GetCrashInfoStrFromSerializedStr(const std::string& ciStr);
 
 template<typename T>
 std::string GetExceptionWhat(const T& e);
@@ -41,4 +39,4 @@ inline std::string GetExceptionWhat(const T& e)
 void RegisterPrettyTerminateHander();
 void RegisterPrettySignalHandlers();
 
-#endif//DASH_STACKTRACES_H
+#endif//BIBLEPAY_STACKTRACES_H

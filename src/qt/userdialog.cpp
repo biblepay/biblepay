@@ -3,12 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "userdialog.h"
-#include "ui_userdialog.h"
+#include "forms/ui_userdialog.h"
 #include "guiutil.h"
 #include "util.h"
 #include "optionsmodel.h"
 #include "timedata.h"
-#include "platformstyle.h"
+//#include "platformstyle.h"
 
 #include "walletmodel.h"
 #include "validation.h"
@@ -28,9 +28,7 @@ UserDialog::UserDialog(const PlatformStyle *platformStyle, QWidget *parent) :
     platformStyle(platformStyle)
 {
     ui->setupUi(this);
-    QString theme = GUIUtil::getThemeName();
- }
-
+}
 
 void UserDialog::UpdateDisplay()
 {

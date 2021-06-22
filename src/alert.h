@@ -13,6 +13,8 @@
 #include <set>
 #include <stdint.h>
 #include <string>
+#include <netmessagemaker.h>
+#include <base58.h>
 
 class CAlert;
 class CNode;

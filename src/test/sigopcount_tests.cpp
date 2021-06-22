@@ -2,16 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "pubkey.h"
-#include "key.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "uint256.h"
-#include "test/test_coin.h"
+#include <consensus/tx_verify.h>
+#include <pubkey.h>
+#include <key.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <uint256.h>
+#include <test/test_biblepay.h>
 
 #include <vector>
 
-#include <boost/foreach.hpp>
 #include <boost/test/unit_test.hpp>
 
 // Helpers:

@@ -5,12 +5,12 @@
 #ifndef BITCOIN_CORE_MEMUSAGE_H
 #define BITCOIN_CORE_MEMUSAGE_H
 
-#include "primitives/transaction.h"
-#include "primitives/block.h"
-#include "memusage.h"
+#include <primitives/transaction.h>
+#include <primitives/block.h>
+#include <memusage.h>
 
 static inline size_t RecursiveDynamicUsage(const CScript& script) {
-    return memusage::DynamicUsage(*static_cast<const CScriptBase*>(&script));
+    return memusage::DynamicUsage(script);
 }
 
 static inline size_t RecursiveDynamicUsage(const COutPoint& out) {
@@ -57,6 +57,11 @@ static inline size_t RecursiveDynamicUsage(const CBlock& block) {
 
 static inline size_t RecursiveDynamicUsage(const CBlockLocator& locator) {
     return memusage::DynamicUsage(locator.vHave);
+}
+
+template<typename X>
+static inline size_t RecursiveDynamicUsage(const std::shared_ptr<X>& p) {
+    return p ? memusage::DynamicUsage(p) + RecursiveDynamicUsage(*p) : 0;
 }
 
 #endif // BITCOIN_CORE_MEMUSAGE_H

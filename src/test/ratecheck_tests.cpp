@@ -1,9 +1,8 @@
-// Copyright (c) 2014-2018 The Dash Core developers
-// Copyright (c) 2017-2019 The DAC Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 
-#include "governance.h"
+#include <governance/governance.h>
 
-#include "test/test_coin.h"
+#include <test/test_biblepay.h>
 
 #include <boost/test/unit_test.hpp>
 

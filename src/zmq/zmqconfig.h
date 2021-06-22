@@ -6,7 +6,7 @@
 #define BITCOIN_ZMQ_ZMQCONFIG_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/coin-config.h"
+#include <config/biblepay-config.h>
 #endif
 
 #include <stdarg.h>
@@ -16,13 +16,14 @@
 #include <zmq.h>
 #endif
 
-#include "primitives/block.h"
-#include "primitives/transaction.h"
+#include <primitives/block.h>
+#include <primitives/transaction.h>
 
-#include "governance-object.h"
-#include "governance-vote.h"
+#include <governance/governance-object.h>
+#include <governance/governance-vote.h>
 
-#include "instantx.h"
+#include <llmq/quorums_chainlocks.h>
+#include <llmq/quorums_instantsend.h>
 
 void zmqError(const char *str);
 

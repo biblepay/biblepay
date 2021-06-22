@@ -1,14 +1,14 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Dash Core developers
+// Copyright (c) 2014-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#if defined(HAVE_CONFIG_H)
-#include "config/coin-config.h"
-#endif
+//#if defined(HAVE_CONFIG_H)
+//#include "config/coin-config.h"
+//#/endif
 
 #include "menudialog.h"
-#include "ui_menudialog.h"
+#include "forms/ui_menudialog.h"
 #include "finalexamdialog.h"
 #include "rpcpog.h"
 #include "bitcoingui.h"
@@ -22,12 +22,19 @@
 #include <stdio.h>
 
 #include <QCloseEvent>
+#include <QDesktopServices>
 #include <QLabel>
 #include <QRegExp>
 #include <QTextTable>
 #include <QTextCursor>
 #include <QVBoxLayout>
 
+
+std::string GetLink(std::string sID, std::string sDescription)
+{
+	std::string sLink = "<a href='" + sID + "' style='text-decoration:none;color:pink;'><u>" + sDescription + "</u></a>";
+	return sLink;
+}
 /** "BiblePay University" menu page */
 MenuDialog::MenuDialog(QWidget *parent) :
     QDialog(parent),
@@ -50,39 +57,43 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	sFlow += "BiblePay will store your final exam score by your wallet CPK so that you can print out your grades.  ";
 	
 	std::string s1 = "\n\n<hr>\n\nCourse Materials - Module 1 - Introduction to Biblical Studies - 18 Credits";
-	s1 += "\n\n1.  <a href='FOF'>Foundations of Faith</a> stresses the importance of proper spiritual foundations for life and ministry, by focusing on foundations of Christian Faith, identified by Hebrews 6:1 : Repentance, Faith, baptism, laying on of hands, resurrection, and eternal judgement.  ";
-	s1 += "\n      <a href='FOF_FE'>Final Exam</a>";
+	s1 += "\n\n1.  " + GetLink("FOF", "Foundations of Faith") + " stresses the importance of proper spiritual foundations for life and ministry, by focusing on foundations of Christian Faith, identified by Hebrews 6:1 : Repentance, Faith, baptism, laying on of hands, resurrection, and eternal judgement.  ";
+	s1 += "\n      " + GetLink("FOF_FE", "Final Exam");
+	
+	s1 += "\n\n2.  " + GetLink("CBSM", "Creative Bible Study Methods") + " equips students for personal study of the word of God.  Students learn how to study the Bible by book, chapter, paragraph, verse and word.  Other methods taught include biographical, devotional, theological, typological and topical.  Special guidelines for studying Bible Poetry and prophecy are presented and students are taught methods of charting and outlining.  ";
+	s1 += "\n      " + GetLink("CBSM_FE", "Final Exam");
+	
+	s1 += "\n\n3.  " + GetLink("OTS", "Old Testament Survey") + " provides an overview of the Old Testament and outlines each book.";
+	s1 += "\n      " + GetLink("OTS_FE", "Final Exam");
 
-	s1 += "\n\n2.  <a href='CBSM'>Creative Bible Study Methods</a> equips students for personal study of the word of God.  Students learn how to study the Bible by book, chapter, paragraph, verse and word.  Other methods taught include biographical, devotional, theological, typological and topical.  Special guidelines for studying Bible Poetry and prophecy are presented and students are taught methods of charting and outlining.  ";
-	s1 += "\n      <a href='CBSM_FE'>Final Exam</a>";
-
-	s1 += "\n\n3.  <a href='OTS'>Old Testament Survey</a> provides an overview of the Old Testament and outlines each book.";
-	s1 += "\n      <a href='OTS_FE'>Final Exam</a>";
-
-	s1 += "\n\n4.  <a href='NTS'>New Testament Survey</a> provides an overview of the New Testament, and outlines each book.  ";
-	s1 += "\n      <a href='NTS_FE'>Final Exam</a>";
+	s1 += "\n\n4.  " + GetLink("NTS", "New Testament Survey") + " provides an overview of the New Testament, and outlines each book.  ";
+	s1 += "\n      " + GetLink("NTS_FE", "Final Exam");
 	
 	s1 += "\n\n<hr>\n\nCourse Materials - Module 2 - Applying Biblical Studies Personally - 21 Credits";
-	s1 += "\n\n5.  <a href='DBWV'>Developing a Biblical World View</a> examines the Biblical world view from Genesis through Revelation.  ";
-	s1 += "  God's plan for the nations of the world from the beginning of time is detailed.  Current worldwide spiritual need is also presented. ";
-	s1 += "\n      <a href='DBWV_FE'>Final Exam</a>";
+	s1 += "\n\n5.  " + GetLink("DBWV", "Developing a Biblical World View") + " examines the Biblical world view from Genesis through Revelation.  ";
 
-	s1 += "\n\n6.  <a href='KL'>Kingdom Living</a> is a course focusing on the Kingdom of God.  The \"Gospel of the Kingdom\" shall be preached in all the world before the return of the Lord Jesus Christ ";
+	s1 += "  God's plan for the nations of the world from the beginning of time is detailed.  Current worldwide spiritual need is also presented. ";
+	s1 += "\n      " + GetLink("DBWV_FE", "Final Exam");
+
+
+	s1 += "\n\n6.  " + GetLink("KL", "Kingdom Living") + " is a course focusing on the Kingdom of God.  The \"Gospel of the Kingdom\" shall be preached in all the world before the return of the Lord Jesus Christ ";
 	s1 += " (Matthew 24:14). Understanding of Kingdom principles is necessary if one is to spread the Gospel of the Kingdom.  ";
 	s1 += "This course focuses on patterns and principles of Kingdom living applicable to life and ministry.";
-	s1 += "\n      <a href='KL_FE'>Final Exam</a>";
+	s1 += "\n      " + GetLink("KL_FE", "Final Exam");
 
-	s1 += "\n\n7.  <a href='KGV'>Knowing God's Voice</a> explains how God speaks to men today and how to find His general and specific plans for life.  A Christian model for decision making is presented, along with guidelines for overcoming wrong decisions, steps to take if you have missed the will of God, and methods for dealing with questionable practices. ";
-	s1 += "\n      <a href='KGV_FE'>Final Exam</a>";
 
-	s1 += "\n\n8.  <a href='HSM'>Ministry of the Holy Spirit</a> focuses on the ministry of the Holy Spirit, spiritual fruit, and spiritual gifts.  Students are guided in discovery of their own spiritual gifts and position of ministry in the Body of Christ.";
-	s1 += "\n      <a href='HSM_FE'>Final Exam</a>";
+	s1 += "\n\n7.  " + GetLink("KGV", "Knowing God's Voice") + " explains how God speaks to men today and how to find His general and specific plans for life.  A Christian model for decision making is presented, along with guidelines for overcoming wrong decisions, steps to take if you have missed the will of God, and methods for dealing with questionable practices. ";
+	s1 += "\n      " + GetLink("KGV_FE", "Final Exam");
 
-	s1 += "\n\n9.  <a href='SW'>Spiritual Strategies</a> is a Manual of Spiritual Warfare.  This course moves participants beyond the natural world into the realm of the spirit.  Tactics of the enemy are analyzed and strategies of spiritual warfare assuring victory over the principalities and powers of the spirit world are explained.";
-	s1 += "\n      <a href='SW_FE'>Final Exam</a>";
 
-	s1 += "\n\n10. <a href='PP'>Power Principles</a> explains how the early church was born in a demonstration of the power of God.  Power principles taught in this course equip students for spiritual harvest and moves them from being spectators to demonstrators of the power of God.";
-	s1 += "\n      <a href='PP_FE'>Final Exam</a>";
+	s1 += "\n\n8.  " + GetLink("HSM", "Ministry of the Holy Spirit") + " focuses on the ministry of the Holy Spirit, spiritual fruit, and spiritual gifts.  Students are guided in discovery of their own spiritual gifts and position of ministry in the Body of Christ.";
+	s1 += "\n      " + GetLink("HSM_FE", "Final Exam");
+
+	s1 += "\n\n9.  " + GetLink("SW", "Spiritual Strategies") + " is a Manual of Spiritual Warfare.  This course moves participants beyond the natural world into the realm of the spirit.  Tactics of the enemy are analyzed and strategies of spiritual warfare assuring victory over the principalities and powers of the spirit world are explained.";
+	s1 += "\n      " + GetLink("SW_FE", "Final Exam");
+
+	s1 += "\n\n10. " + GetLink("PP", "Power Principles") + " explains how the early church was born in a demonstration of the power of God.  Power principles taught in this course equip students for spiritual harvest and moves them from being spectators to demonstrators of the power of God.";
+	s1 += "\n      " + GetLink("PP_FE", "Final Exam");
 
 	s1 += "\n\n\n\nNOTE:  Modules 3-4 are coming soon.  ";
 
@@ -104,7 +115,7 @@ MenuDialog::MenuDialog(QWidget *parent) :
 	 {
 		ui->aboutLogo->setVisible(true);
 		// Theme dependent Gfx in About popup
-		QString helpMessageGfx = ":/images/" + GUIUtil::getThemeName() + "/about";
+		QString helpMessageGfx = ":/images/about";
 		QPixmap pixmap = QPixmap(helpMessageGfx);
 		ui->aboutLogo->setPixmap(pixmap);
 	 }

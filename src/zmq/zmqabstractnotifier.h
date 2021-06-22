@@ -5,19 +5,24 @@
 #ifndef BITCOIN_ZMQ_ZMQABSTRACTNOTIFIER_H
 #define BITCOIN_ZMQ_ZMQABSTRACTNOTIFIER_H
 
-#include "zmqconfig.h"
+#include <zmq/zmqconfig.h>
 
 class CBlockIndex;
 class CGovernanceObject;
 class CGovernanceVote;
 class CZMQAbstractNotifier;
 
+namespace llmq {
+    class CChainLockSig;
+    class CInstantSendLock;
+} // namespace llmq
+
 typedef CZMQAbstractNotifier* (*CZMQNotifierFactory)();
 
 class CZMQAbstractNotifier
 {
 public:
-    CZMQAbstractNotifier() : psocket(0) { }
+    CZMQAbstractNotifier() : psocket(nullptr) { }
     virtual ~CZMQAbstractNotifier();
 
     template <typename T>
@@ -35,9 +40,9 @@ public:
     virtual void Shutdown() = 0;
 
     virtual bool NotifyBlock(const CBlockIndex *pindex);
-    virtual bool NotifyChainLock(const CBlockIndex *pindex);
+    virtual bool NotifyChainLock(const CBlockIndex *pindex, const llmq::CChainLockSig& clsig);
     virtual bool NotifyTransaction(const CTransaction &transaction);
-    virtual bool NotifyTransactionLock(const CTransaction &transaction);
+    virtual bool NotifyTransactionLock(const CTransaction &transaction, const llmq::CInstantSendLock& islock);
     virtual bool NotifyGovernanceVote(const CGovernanceVote &vote);
     virtual bool NotifyGovernanceObject(const CGovernanceObject &object);
     virtual bool NotifyInstantSendDoubleSpendAttempt(const CTransaction &currentTx, const CTransaction &previousTx);

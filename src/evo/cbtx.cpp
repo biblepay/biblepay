@@ -1,23 +1,26 @@
-// Copyright (c) 2017-2018 The DAC Core developers
+// Copyright (c) 2017-2019 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "cbtx.h"
-#include "deterministicmns.h"
-#include "llmq/quorums.h"
-#include "llmq/quorums_blockprocessor.h"
-#include "llmq/quorums_commitment.h"
-#include "simplifiedmns.h"
-#include "specialtx.h"
-#include "spork.h"
+#include <evo/cbtx.h>
+#include <evo/deterministicmns.h>
+#include <llmq/quorums.h>
+#include <llmq/quorums_blockprocessor.h>
+#include <llmq/quorums_commitment.h>
+#include <evo/simplifiedmns.h>
+#include <evo/specialtx.h>
 
-#include "chainparams.h"
-#include "consensus/merkle.h"
-#include "univalue.h"
-#include "validation.h"
+#include <chainparams.h>
+#include <consensus/merkle.h>
+#include <univalue.h>
+#include <validation.h>
 
 bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
+	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
+	if (!fLLMQActive2)
+		return true;
+
     if (tx.nType != TRANSACTION_COINBASE) {
         return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-type");
     }
@@ -39,9 +42,9 @@ bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidatio
         return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-height");
     }
 
-    if (pindexPrev) {
-        const Consensus::Params& consensusParams = Params().GetConsensus();
-		bool fDIP0008Active = pindexPrev->nHeight > consensusParams.DIP0008Height;
+    if (pindexPrev) 
+	{
+		bool fDIP0008Active = pindexPrev->nHeight > Params().GetConsensus().DIP0008Height;
 	
         if (fDIP0008Active && cbTx.nVersion < 2) {
             return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-version");
@@ -54,16 +57,11 @@ bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidatio
 // This can only be done after the block has been fully processed, as otherwise we won't have the finished MN list
 bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValidationState& state)
 {
-    if (block.vtx[0]->nType != TRANSACTION_COINBASE) {
+	bool fLLMQActive2 = pindex->nHeight >= Params().GetConsensus().LLMQHeight;
+
+    if (block.vtx[0]->nType != TRANSACTION_COINBASE || !fLLMQActive2) {
         return true;
     }
-
-	bool fChainLocksActive = sporkManager.IsSporkActive(SPORK_19_CHAINLOCKS_ENABLED);
-	bool fLLMQActive = pindex->nHeight >= Params().GetConsensus().LLMQHeight;
-	bool fDMEnabled = pindex->nHeight >= sporkManager.GetSporkValue(SPORK_15_DETERMINISTIC_MNS_ENABLED);
-
-	if (!fLLMQActive || !fChainLocksActive || !fDMEnabled) 
-		return true;
 
     static int64_t nTimePayload = 0;
     static int64_t nTimeMerkleMNL = 0;
@@ -77,37 +75,34 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValid
     }
 
     int64_t nTime2 = GetTimeMicros(); nTimePayload += nTime2 - nTime1;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "          - GetTxPayload: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimePayload * 0.000001);
+    LogPrint(BCLog::BENCHMARK, "          - GetTxPayload: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimePayload * 0.000001);
 
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool fActive = pindex && pindex->nHeight >= consensusParams.DIP0003HeightPhase2;
 
-    if (pindex && fActive) {
+    if (pindex) {
         uint256 calculatedMerkleRoot;
         if (!CalcCbTxMerkleRootMNList(block, pindex->pprev, calculatedMerkleRoot, state)) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
+            // pass the state returned by the function above
+            return false;
         }
         if (calculatedMerkleRoot != cbTx.merkleRootMNList) {
             return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
         }
 
         int64_t nTime3 = GetTimeMicros(); nTimeMerkleMNL += nTime3 - nTime2;
-		if (fDebugSpam && fDebugBench)
-			LogPrint("bench", "          - CalcCbTxMerkleRootMNList: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeMerkleMNL * 0.000001);
+        LogPrint(BCLog::BENCHMARK, "          - CalcCbTxMerkleRootMNList: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeMerkleMNL * 0.000001);
 
         if (cbTx.nVersion >= 2) {
             if (!CalcCbTxMerkleRootQuorums(block, pindex->pprev, calculatedMerkleRoot, state)) {
-                return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-quorummerkleroot");
+                // pass the state returned by the function above
+                return false;
             }
             if (calculatedMerkleRoot != cbTx.merkleRootQuorums) {
-                return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-quorummerkleroot-2");
+                return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-quorummerkleroot");
             }
         }
 
         int64_t nTime4 = GetTimeMicros(); nTimeMerkleQuorum += nTime4 - nTime3;
-		if (fDebugSpam && fDebugBench)
-			LogPrint("bench", "          - CalcCbTxMerkleRootQuorums: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeMerkleQuorum * 0.000001);
+        LogPrint(BCLog::BENCHMARK, "          - CalcCbTxMerkleRootQuorums: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeMerkleQuorum * 0.000001);
 
     }
 
@@ -124,42 +119,52 @@ bool CalcCbTxMerkleRootMNList(const CBlock& block, const CBlockIndex* pindexPrev
 
     int64_t nTime1 = GetTimeMicros();
 
-    CDeterministicMNList tmpMNList;
-    if (!deterministicMNManager->BuildNewListFromBlock(block, pindexPrev, state, tmpMNList, false)) {
-        return false;
+    try {
+        CDeterministicMNList tmpMNList;
+        if (!deterministicMNManager->BuildNewListFromBlock(block, pindexPrev, state, tmpMNList, false)) {
+            // pass the state returned by the function above
+            return false;
+        }
+
+        int64_t nTime2 = GetTimeMicros(); nTimeDMN += nTime2 - nTime1;
+        LogPrint(BCLog::BENCHMARK, "            - BuildNewListFromBlock: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimeDMN * 0.000001);
+
+        CSimplifiedMNList sml(tmpMNList);
+
+        int64_t nTime3 = GetTimeMicros(); nTimeSMNL += nTime3 - nTime2;
+        LogPrint(BCLog::BENCHMARK, "            - CSimplifiedMNList: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeSMNL * 0.000001);
+
+        static CSimplifiedMNList smlCached;
+        static uint256 merkleRootCached;
+        static bool mutatedCached{false};
+
+        if (sml.mnList == smlCached.mnList) {
+            merkleRootRet = merkleRootCached;
+            if (mutatedCached) {
+                return state.DoS(100, false, REJECT_INVALID, "mutated-cached-calc-cb-mnmerkleroot");
+            }
+            return true;
+        }
+
+        bool mutated = false;
+        merkleRootRet = sml.CalcMerkleRoot(&mutated);
+
+        int64_t nTime4 = GetTimeMicros(); nTimeMerkle += nTime4 - nTime3;
+        LogPrint(BCLog::BENCHMARK, "            - CalcMerkleRoot: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeMerkle * 0.000001);
+
+        smlCached = std::move(sml);
+        merkleRootCached = merkleRootRet;
+        mutatedCached = mutated;
+
+        if (mutated) {
+            return state.DoS(100, false, REJECT_INVALID, "mutated-calc-cb-mnmerkleroot");
+        }
+
+        return true;
+    } catch (const std::exception& e) {
+        LogPrintf("%s -- failed: %s\n", __func__, e.what());
+        return state.DoS(100, false, REJECT_INVALID, "failed-calc-cb-mnmerkleroot");
     }
-
-    int64_t nTime2 = GetTimeMicros(); nTimeDMN += nTime2 - nTime1;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "            - BuildNewListFromBlock: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimeDMN * 0.000001);
-
-    CSimplifiedMNList sml(tmpMNList);
-
-    int64_t nTime3 = GetTimeMicros(); nTimeSMNL += nTime3 - nTime2;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "            - CSimplifiedMNList: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeSMNL * 0.000001);
-
-    static CSimplifiedMNList smlCached;
-    static uint256 merkleRootCached;
-    static bool mutatedCached{false};
-
-    if (sml.mnList == smlCached.mnList) {
-        merkleRootRet = merkleRootCached;
-        return !mutatedCached;
-    }
-
-    bool mutated = false;
-    merkleRootRet = sml.CalcMerkleRoot(&mutated);
-
-    int64_t nTime4 = GetTimeMicros(); nTimeMerkle += nTime4 - nTime3;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "            - CalcMerkleRoot: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeMerkle * 0.000001);
-
-    smlCached = std::move(sml);
-    merkleRootCached = merkleRootRet;
-    mutatedCached = mutated;
-
-    return !mutated;
 }
 
 bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPrev, uint256& merkleRootRet, CValidationState& state)
@@ -174,13 +179,13 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
     static std::map<Consensus::LLMQType, std::vector<const CBlockIndex*>> quorumsCached;
     static std::map<Consensus::LLMQType, std::vector<uint256>> qcHashesCached;
 
+    // The returned quorums are in reversed order, so the most recent one is at index 0
     auto quorums = llmq::quorumBlockProcessor->GetMinedAndActiveCommitmentsUntilBlock(pindexPrev);
     std::map<Consensus::LLMQType, std::vector<uint256>> qcHashes;
     size_t hashCount = 0;
 
     int64_t nTime2 = GetTimeMicros(); nTimeMinedAndActive += nTime2 - nTime1;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "            - GetMinedAndActiveCommitmentsUntilBlock: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimeMinedAndActive * 0.000001);
+    LogPrint(BCLog::BENCHMARK, "            - GetMinedAndActiveCommitmentsUntilBlock: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimeMinedAndActive * 0.000001);
 
     if (quorums == quorumsCached) {
         qcHashes = qcHashesCached;
@@ -192,7 +197,7 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
                 llmq::CFinalCommitment qc;
                 uint256 minedBlockHash;
                 bool found = llmq::quorumBlockProcessor->GetMinedCommitment(p.first, p2->GetBlockHash(), qc, minedBlockHash);
-                assert(found);
+                if (!found) return state.DoS(100, false, REJECT_INVALID, "commitment-not-found");
                 v.emplace_back(::SerializeHash(qc));
                 hashCount++;
             }
@@ -202,8 +207,7 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
     }
 
     int64_t nTime3 = GetTimeMicros(); nTimeMined += nTime3 - nTime2;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "            - GetMinedCommitment: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeMined * 0.000001);
+    LogPrint(BCLog::BENCHMARK, "            - GetMinedCommitment: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeMined * 0.000001);
 
     // now add the commitments from the current block, which are not returned by GetMinedAndActiveCommitmentsUntilBlock
     // due to the use of pindexPrev (we don't have the tip index here)
@@ -213,7 +217,7 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
         if (tx->nVersion == 3 && tx->nType == TRANSACTION_QUORUM_COMMITMENT) {
             llmq::CFinalCommitmentTxPayload qc;
             if (!GetTxPayload(*tx, qc)) {
-                assert(false);
+                return state.DoS(100, false, REJECT_INVALID, "bad-qc-payload-calc-cbtx-quorummerkleroot");
             }
             if (qc.commitment.IsNull()) {
                 continue;
@@ -222,11 +226,16 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
             const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)qc.commitment.llmqType);
             auto& v = qcHashes[params.type];
             if (v.size() == params.signingActiveQuorumCount) {
+                // we pop the last entry, which is actually the oldest quorum as GetMinedAndActiveCommitmentsUntilBlock
+                // returned quorums in reversed order. This pop and later push can only work ONCE, but we rely on the
+                // fact that a block can only contain a single commitment for one LLMQ type
                 v.pop_back();
             }
             v.emplace_back(qcHash);
             hashCount++;
-            assert(v.size() <= params.signingActiveQuorumCount);
+            if (v.size() > params.signingActiveQuorumCount) {
+                return state.DoS(100, false, REJECT_INVALID, "excess-quorums-calc-cbtx-quorummerkleroot");
+            }
         }
     }
 
@@ -241,33 +250,23 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
     std::sort(qcHashesVec.begin(), qcHashesVec.end());
 
     int64_t nTime4 = GetTimeMicros(); nTimeLoop += nTime4 - nTime3;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "            - Loop: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeLoop * 0.000001);
+    LogPrint(BCLog::BENCHMARK, "            - Loop: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeLoop * 0.000001);
 
     bool mutated = false;
     merkleRootRet = ComputeMerkleRoot(qcHashesVec, &mutated);
 
     int64_t nTime5 = GetTimeMicros(); nTimeMerkle += nTime5 - nTime4;
-	if (fDebugSpam && fDebugBench)
-		LogPrint("bench", "            - ComputeMerkleRoot: %.2fms [%.2fs]\n", 0.001 * (nTime5 - nTime4), nTimeMerkle * 0.000001);
+    LogPrint(BCLog::BENCHMARK, "            - ComputeMerkleRoot: %.2fms [%.2fs]\n", 0.001 * (nTime5 - nTime4), nTimeMerkle * 0.000001);
 
-    return !mutated;
+    if (mutated) {
+        return state.DoS(100, false, REJECT_INVALID, "mutated-calc-cbtx-quorummerkleroot");
+    }
+
+    return true;
 }
 
 std::string CCbTx::ToString() const
 {
     return strprintf("CCbTx(nHeight=%d, nVersion=%d, merkleRootMNList=%s, merkleRootQuorums=%s)",
         nVersion, nHeight, merkleRootMNList.ToString(), merkleRootQuorums.ToString());
-}
-
-void CCbTx::ToJson(UniValue& obj) const
-{
-    obj.clear();
-    obj.setObject();
-    obj.push_back(Pair("version", (int)nVersion));
-    obj.push_back(Pair("height", (int)nHeight));
-    obj.push_back(Pair("merkleRootMNList", merkleRootMNList.ToString()));
-    if (nVersion >= 2) {
-        obj.push_back(Pair("merkleRootQuorums", merkleRootQuorums.ToString()));
-    }
 }

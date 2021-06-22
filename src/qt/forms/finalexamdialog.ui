@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1001</width>
-    <height>682</height>
+    <width>1122</width>
+    <height>754</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,1">
@@ -169,7 +169,7 @@
         <item row="2" column="2">
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>BiblePay - Final Exam Certification Testing Area     &lt;small&gt;  v1.0&lt;/small&gt;</string>
+           <string>BiblePay - Final Exam Certification Testing Area     &lt;small&gt;  v1.1&lt;/small&gt;</string>
           </property>
          </widget>
         </item>
@@ -250,7 +250,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>20</y>
+             <y>30</y>
              <width>777</width>
              <height>20</height>
             </rect>
@@ -269,7 +269,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>40</y>
+             <y>50</y>
              <width>777</width>
              <height>20</height>
             </rect>
@@ -288,7 +288,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>60</y>
+             <y>70</y>
              <width>777</width>
              <height>20</height>
             </rect>
@@ -307,7 +307,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>80</y>
+             <y>90</y>
              <width>777</width>
              <height>20</height>
             </rect>
@@ -332,7 +332,7 @@
             </rect>
            </property>
            <property name="text">
-            <string> </string>
+            <string/>
            </property>
           </widget>
          </widget>
@@ -379,6 +379,18 @@
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <widget class="QLabel" name="label_6">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>777</width>
+          <height>100</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <family>Arial</family>

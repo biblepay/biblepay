@@ -2,28 +2,27 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bloom.h"
+#include <bloom.h>
 
-#include "primitives/transaction.h"
-#include "evo/specialtx.h"
-#include "evo/providertx.h"
-#include "evo/cbtx.h"
-#include "llmq/quorums_commitment.h"
-#include "hash.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "random.h"
-#include "streams.h"
+#include <primitives/transaction.h>
+#include <evo/specialtx.h>
+#include <evo/providertx.h>
+#include <evo/cbtx.h>
+#include <llmq/quorums_commitment.h>
+#include <hash.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <random.h>
+#include <streams.h>
 
 #include <math.h>
 #include <stdlib.h>
 
-#include <boost/foreach.hpp>
 
 #define LN2SQUARED 0.4804530139182014246671025263266649717305529515945455
 #define LN2 0.6931471805599453094172321214581765680755001343602552
 
-CBloomFilter::CBloomFilter(unsigned int nElements, double nFPRate, unsigned int nTweakIn, unsigned char nFlagsIn) :
+CBloomFilter::CBloomFilter(const unsigned int nElements, const double nFPRate, const unsigned int nTweakIn, unsigned char nFlagsIn) :
     /**
      * The ideal size for a bloom filter with a given number of elements and false positive rate is:
      * - nElements * log(fp rate) / ln(2)^2
@@ -44,7 +43,7 @@ CBloomFilter::CBloomFilter(unsigned int nElements, double nFPRate, unsigned int 
 }
 
 // Private constructor used by CRollingBloomFilter
-CBloomFilter::CBloomFilter(unsigned int nElements, double nFPRate, unsigned int nTweakIn) :
+CBloomFilter::CBloomFilter(const unsigned int nElements, const double nFPRate, const unsigned int nTweakIn) :
     vData((unsigned int)(-1  / LN2SQUARED * nElements * log(nFPRate)) / 8),
     isFull(false),
     isEmpty(true),
@@ -130,7 +129,7 @@ void CBloomFilter::clear()
     isEmpty = true;
 }
 
-void CBloomFilter::reset(unsigned int nNewTweak)
+void CBloomFilter::reset(const unsigned int nNewTweak)
 {
     clear();
     nTweak = nNewTweak;
@@ -183,7 +182,7 @@ bool CBloomFilter::CheckSpecialTransactionMatchesAndUpdate(const CTransaction &t
                 return true;
             }
         }
-        return false;
+        return false; 
     }
     case(TRANSACTION_PROVIDER_UPDATE_SERVICE): {
         CProUpServTx proTx;
@@ -221,20 +220,13 @@ bool CBloomFilter::CheckSpecialTransactionMatchesAndUpdate(const CTransaction &t
         }
         return false;
     }
-	case(TRANSACTION_NON_FINANCIAL): {
-        CNonFinancialTx nonfinTx;
-        if (GetTxPayload(tx, nonfinTx)) {
-                return true;
-        }
-        return false;
-	}
     case(TRANSACTION_COINBASE):
     case(TRANSACTION_QUORUM_COMMITMENT):
         // No aditional checks for this transaction types
         return false;
     }
 
-    LogPrintf("Unknown special transaction type in Bloom filter check.");
+    LogPrintf("Unknown special transaction type in Bloom filter check.\n");
     return false;
 }
 
@@ -279,7 +271,7 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
     if (fFound)
         return true;
 
-    BOOST_FOREACH(const CTxIn& txin, tx.vin)
+    for (const CTxIn& txin : tx.vin)
     {
         // Match if the filter contains an outpoint tx spends
         if (contains(txin.prevout))
@@ -306,7 +298,7 @@ void CBloomFilter::UpdateEmptyFull()
     isEmpty = empty;
 }
 
-CRollingBloomFilter::CRollingBloomFilter(unsigned int nElements, double fpRate)
+CRollingBloomFilter::CRollingBloomFilter(const unsigned int nElements, const double fpRate)
 {
     double logFpRate = log(fpRate);
     /* The optimal number of hash functions is log(fpRate) / log(0.5), but

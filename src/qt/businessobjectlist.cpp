@@ -1,9 +1,9 @@
 #include "businessobjectlist.h"
 #include "bitcoinunits.h"
-#include "ui_businessobjectlist.h"
-#include "masternode-sync.h"
+#include "forms/ui_businessobjectlist.h"
 #include "secdialog.h"
-#include "ui_secdialog.h"
+#include <masternode/masternode-sync.h>
+#include "forms/ui_secdialog.h"
 #include "walletmodel.h"
 #include "guiutil.h"
 #include "rpcpog.h"
@@ -16,15 +16,11 @@
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 
 bool bSlotsCreated = false;
-std::string sMode;
 
 QStringList BusinessObjectList::GetHeaders(std::string sFields)
 {
 	QStringList pHeaders;
-
-	sFields = "campaign,nickname,cpk,points,owed,prominence";
 	sHeaderFields = sFields;
-
 	std::vector<std::string> vFields = Split(sFields.c_str(), ",");
 	for (int i = 0; i < (int)vFields.size(); i++)
 	{
@@ -36,10 +32,13 @@ QStringList BusinessObjectList::GetHeaders(std::string sFields)
 
 BusinessObjectList::BusinessObjectList(const PlatformStyle *platformStyle, QWidget *parent) : ui(new Ui::BusinessObjectList)
 {
-	sMode = "pog";
     ui->setupUi(this);
+	connect(ui->tableWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotCustomMenuRequested(QPoint)));
+    connect(ui->btnSummary, SIGNAL(clicked()), this, SLOT(showSummary()));
+	connect(ui->btnDetails, SIGNAL(clicked()), this, SLOT(showDetails()));
+	connect(ui->tableWidget->horizontalHeader(), SIGNAL(sectionPressed(int)),this, SLOT(HandleIndicatorChanged(int)));
+	connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, &BusinessObjectList::cellDoubleClicked);
 }
-
 
 BusinessObjectList::~BusinessObjectList()
 {
@@ -51,30 +50,17 @@ void BusinessObjectList::setModel(WalletModel *model)
     this->model = model;
 }
 
-void BusinessObjectList::RefreshPogLeaderboard()
+void BusinessObjectList::UpdateObject(int nType)
 {
-	UpdateObject("leaderboard");
-}
+	if (!fWarmBootFinished)
+		return;
+	std::string sMyType = nType == 0 ? "pog" : "pog_leaderboard";
 
-void BusinessObjectList::UpdateObject(std::string objType)
-{
-	ObjectType = objType;
-	std::string sFields;
-    QString pString;
-	static bool bRefreshed = false;
-	if (masternodeSync.IsBlockchainSynced())
-	{
-		sFields = "campaign,nickname,cpk,points,owed,prominence";
-		pString = GUIUtil::TOQS(GetPOGBusinessObjectList(sMode, sFields));
-        // Avoid refreshing the UI (avoid UI-lags).  User can manually click on leaderboard to refresh it.
-		if (!bRefreshed)
-		{
-			bRefreshed = true;
-			RefreshPogLeaderboard();
-		}
-	}
+	std::string sFields = "campaign,nickname,cpk,cur. addr,amount,points,owed,prominence";
     QStringList pHeaders = GetHeaders(sFields);
-    this->createUI(pHeaders, pString);
+    QString pString = GUIUtil::TOQS(GetPOGBusinessObjectList(sMyType, sFields));
+	//QTimer::singleShot(700000, this, SLOT(()));
+	createUI(pHeaders, pString);
 }
 
 void BusinessObjectList::addFooterRow(int& rows, int& iFooterRow, std::string sCaption, std::string sValue)
@@ -82,6 +68,11 @@ void BusinessObjectList::addFooterRow(int& rows, int& iFooterRow, std::string sC
 	rows++;
     ui->tableWidget->setItem(rows, 0, new QTableWidgetItem(GUIUtil::TOQS(sCaption)));
 	ui->tableWidget->setItem(rows, 1, new QTableWidgetItem(GUIUtil::TOQS(sValue)));
+}
+
+void BusinessObjectList::initSummOnly()
+{
+	UpdateObject(0);
 }
 
 void BusinessObjectList::createUI(const QStringList &headers, const QString &pStr)
@@ -95,26 +86,46 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
 
     QVector<QVector<QString> > pMatrix;
-	if (pStr == "") return;
+	if (pStr == "") 
+		return;
 
     pMatrix = SplitData(pStr);
 	int rows = pMatrix.size();
 	int iFooterRow = 0;
-	int iAmountCol = 3;
+	int iAmountCol = 5;
 	int iNameCol = 1;
 	iFooterRow += 6;
 	std::string sXML = GUIUtil::FROMQS(pStr);
 	std::string msNickName = ExtractXML(sXML, "<my_nickname>","</my_nickname>");
     ui->tableWidget->setRowCount(rows + iFooterRow);
+	
+	if (pMatrix.size() < 1)
+		return;
+
     int cols = pMatrix[0].size();
     ui->tableWidget->setColumnCount(cols);
     ui->tableWidget->setHorizontalHeaderLabels(headers);
+	
     QString s;
 	double dGrandTotal = 0;
 	int iHighlighted = 0;
-	//	Leaderboard fields = "nickname,cpk,points,owed,prominence";
+	// Leaderboard fields = "nickname,cpk,points,owed,prominence";
+    // Sort by ShareWeight descending (unless there is already a different one)
+    int default_sort_column = 5;
+    int iSortColumn = ui->tableWidget->horizontalHeader()->sortIndicatorSection();
+    Qt::SortOrder soDefaultOrder = Qt::DescendingOrder;
+    Qt::SortOrder soCurrentOrder = ui->tableWidget->horizontalHeader()->sortIndicatorOrder();
 	ui->tableWidget->setSortingEnabled(false);
-
+	
+    if (soDefaultOrder == soCurrentOrder && iSortColumn == default_sort_column && iSortColumn > 1)   
+	{
+		ui->tableWidget->sortByColumn(iSortColumn, soCurrentOrder);
+	}
+	else
+	{
+		ui->tableWidget->sortByColumn(default_sort_column, soDefaultOrder);
+	}
+	
     for (int i = 0; i < rows; i++)
 	{
 		bool bHighlighted = (pMatrix[i][iNameCol] == GUIUtil::TOQS(msNickName));
@@ -122,15 +133,29 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 
         for(int j = 0; j < cols; j++)
 		{
-            QTableWidgetItem* q;
-			bool bNumeric = (j == 3 || j == 4 || j == 5);
+			QTableWidgetItem* q = new QTableWidgetItem();
+			bool bNumeric = (j == 6 || j == 4 || j == 5 || j == 7);
             if (bNumeric) 
 			{
-                q = new NumericTableWidgetItem(pMatrix[i][j]);
+				double theValue = cdbl(GUIUtil::FROMQS(pMatrix[i][j]), 8);
+				q->setData(Qt::DisplayRole, theValue);
+				// For column 4, this value can get really high and shows in scientific notation
+				if (j == 4 && theValue > 1000000)
+				{
+					std::string sMMValue = RoundToString(theValue/1000000, 4) + "MM";
+					q->setData(Qt::DisplayRole, GUIUtil::TOQS(sMMValue));
+				}
+				/*
+				else if (j==4)
+				{
+					std::string sMMValue = RoundToString(theValue, 8);
+					q->setData(Qt::DisplayRole, GUIUtil::TOQS(sMMValue));
+				}
+				*/
             }
             else 
 			{
-                q = new QTableWidgetItem(pMatrix[i][j]);
+				q->setData(Qt::EditRole, pMatrix[i][j]); 
             }
 			ui->tableWidget->setItem(i, j, q);
 		}
@@ -143,25 +168,14 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 
 		if (iAmountCol > -1)
 		{
-			dGrandTotal += cdbl(GUIUtil::FROMQS(pMatrix[i][iAmountCol]), 2);
+			dGrandTotal += cdbl(GUIUtil::FROMQS(pMatrix[i][iAmountCol]), 5);
 		}
 	}
 	
-	bool fLeaderboard = true;
-
-	if (fLeaderboard)
+	if (true)
 	{
-        // Sort by ShareWeight descending (unless there is already a different one)
-        int default_sort_column = 5;
-        int iSortColumn = ui->tableWidget->horizontalHeader()->sortIndicatorSection();
-        Qt::SortOrder soDefaultOrder = Qt::DescendingOrder;
-        Qt::SortOrder soCurrentOrder = ui->tableWidget->horizontalHeader()->sortIndicatorOrder();
-        if (soDefaultOrder == soCurrentOrder && iSortColumn == default_sort_column && iSortColumn > 1)   
-		{
-            ui->tableWidget->sortByColumn(default_sort_column, soDefaultOrder);
-        }
 		ui->tableWidget->setSortingEnabled(false);
-
+	
 		addFooterRow(rows, iFooterRow, "Difficulty:", ExtractXML(sXML, "<difficulty>","</difficulty>"));
 		addFooterRow(rows, iFooterRow, "My Points:", ExtractXML(sXML, "<my_points>","</my_points>"));
 		addFooterRow(rows, iFooterRow, "My Nick Name:", ExtractXML(sXML, "<my_nickname>","</my_nickname>"));
@@ -174,7 +188,7 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 		}
 		std::string sLowBlock = ExtractXML(sXML, "<lowblock>", "</lowblock>");
 		std::string sHighBlock = ExtractXML(sXML, "<highblock>", "</highblock>");
-		std::string sHeading = "Leaderboard v1.0 - Range " + sLowBlock + " to " + sHighBlock;
+		std::string sHeading = "Leaderboard v1.2 - Range " + sLowBlock + " to " + sHighBlock;
 		// Label Heading
 		ui->lblLeaderboard->setText(GUIUtil::TOQS(sHeading));
 	}
@@ -190,15 +204,6 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 		ui->tableWidget->setColumnWidth(j, 128);
 	}
 
-	if (!bSlotsCreated)
-	{
-		connect(ui->tableWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slotCustomMenuRequested(QPoint)));
-	    connect(ui->btnSummary, SIGNAL(clicked()), this, SLOT(showSummary()));
-		connect(ui->btnDetails, SIGNAL(clicked()), this, SLOT(showDetails()));
-		connect(ui->tableWidget->horizontalHeader(), SIGNAL(sectionPressed(int)),this, SLOT(HandleIndicatorChanged(int)));
-		connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, &BusinessObjectList::cellDoubleClicked);
-		bSlotsCreated = true;
-	}
 }
 
 void BusinessObjectList::cellDoubleClicked(int Y, int X)
@@ -207,13 +212,21 @@ void BusinessObjectList::cellDoubleClicked(int Y, int X)
 	if (item1)
 	{
 		std::string sCPK = GUIUtil::FROMQS(item1->text()); // CPK
-		
-		std::string sSumm = GetUTXOSummary(sCPK);
+		CAmount nBBPQty = 0;
+		std::string sSumm = GetUTXOSummary(sCPK, nBBPQty);
 		
 		if (!sSumm.empty())
 		{
 			std::string sTitle = "My Portfolio - " + sCPK;
-			QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Ok, QMessageBox::Ok);
+			QMessageBox::information(this, GUIUtil::TOQS(sTitle), GUIUtil::TOQS(sSumm), QMessageBox::Information, QMessageBox::Information);
+			/*
+			QMessageBox msgBox;
+			msgBox.setWindowTitle(GUIUtil::TOQS(sTitle));
+			msgBox.setText(GUIUtil::TOQS(sSumm));
+			msgBox.setStandardButtons(QMessageBox::Ok);
+			msgBox.setStyleSheet("QLabel{xmin-height: 800px;background-color:black;color:silver;}");
+			int r = msgBox.exec();
+			*/
 		}
 	}
 }
@@ -261,27 +274,25 @@ void BusinessObjectList::slotList()
     if(row >= 0)
     {
 		// Navigate to the List of the Object
-        std::string sID = GUIUtil::FROMQS(ui->tableWidget->item(row, 0)->text()); // PK-2PK-IPFS Hash
+        std::string sID = GUIUtil::FROMQS(ui->tableWidget->item(row, 0)->text()); 
 		int iCol = GetUrlColumn("object_name");
 		if (iCol > -1)
 		{
 			std::string sTarget = GUIUtil::FROMQS(ui->tableWidget->item(row, iCol)->text());
 			// Close existing menu
-			UpdateObject(sTarget);
+			//UpdateObject(0);
 		}
     }
 }
 
 void BusinessObjectList::showSummary()
 {
-	sMode = "pog";
-	UpdateObject("leaderboard");
+	UpdateObject(0);
 }
 
 void BusinessObjectList::showDetails()
 {
-	sMode = "pogdetails";
-	UpdateObject("leaderboard");
+	UpdateObject(1);
 }
 
 void BusinessObjectList::slotNavigateTo()

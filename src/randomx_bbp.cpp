@@ -12,8 +12,22 @@ static std::map<int, bool> fInitialized;
 static std::map<int, bool> fBusy;
 static std::map<int, uint256> msGlobalKey;
 
+// Statement from Rob Andrews about RandomX in regards to MAC-OS support
+// May 13th, 2021
+// RandomX works on Linux compiles and Windows compiles, but we are unable to compile the randomx hash algorithm on the MAC.  
+// To my knowledge, since RandomX uses a virtual machine, we may need to reach out to tevador to find out if he can accomodate us with a special slow clang build, then we can link to that library.
+// In the mean time, since Mac is only 1% of our user base, we are providing a conditional compilation solution that blocks the RandomX hash functions on mac.
+// This effectively turns the MAC nodes into SPV clients.
+// An additional problem is that when MIP compiles RandomX on an older mac using some type of ingenious method to get past the errors, gatekeeper throws an error because the instructions are 
+// being executed in a VM, so I feel the best course of action temporarily is to disable RandomX on the MAC.
+
+
 void init(uint256 uKey, int iThreadID)
 {
+#if defined(MAC_OSX)
+	return;
+#endif
+
 	std::vector<unsigned char> hashKey = std::vector<unsigned char>(uKey.begin(), uKey.end());
 	randomx_flags flags = randomx_get_flags();
 	rxcache[iThreadID] = randomx_alloc_cache(flags);
@@ -25,6 +39,10 @@ void init(uint256 uKey, int iThreadID)
 
 void destroy(int iThreadID)
 {
+#if defined(MAC_OSX)
+	return;
+#endif
+
 	randomx_destroy_vm(myvm[iThreadID]);
 	randomx_release_cache(rxcache[iThreadID]);
 	fInitialized[iThreadID] = false;
@@ -33,6 +51,11 @@ void destroy(int iThreadID)
 
 uint256 RandomX_Hash(uint256 hash, uint256 uKey, int iThreadID)
 {
+#if defined(MAC_OSX)
+	uint256 u = uint256S("0x0");
+	return u;
+#endif
+
 		if (fInitialized[iThreadID] && msGlobalKey[iThreadID] != uKey)
 		{
 			destroy(iThreadID);
@@ -54,6 +77,11 @@ uint256 RandomX_Hash(uint256 hash, uint256 uKey, int iThreadID)
 
 uint256 RandomX_Hash(std::vector<unsigned char> data0, uint256 uKey, int iThreadID)
 {
+#if defined(MAC_OSX)
+	uint256 u = uint256S("0x0");
+	return u;
+#endif
+
 		if (fInitialized[iThreadID] && msGlobalKey[iThreadID] != uKey)
 		{
 			destroy(iThreadID);
@@ -75,6 +103,11 @@ uint256 RandomX_Hash(std::vector<unsigned char> data0, uint256 uKey, int iThread
 
 uint256 RandomX_Hash(std::vector<unsigned char> data0, std::vector<unsigned char> datakey)
 {
+#if defined(MAC_OSX)
+	uint256 u = uint256S("0x0");
+	return u;
+#endif
+
 	int iThreadID = 101;
 	randomx_flags flags = randomx_get_flags();
 	rxcache[iThreadID] = randomx_alloc_cache(flags);
@@ -92,6 +125,11 @@ uint256 RandomX_Hash(std::vector<unsigned char> data0, std::vector<unsigned char
 
 uint256 RandomX_SlowHash(std::vector<unsigned char> data0, uint256 uKey)
 {
+#if defined(MAC_OSX)
+	uint256 u = uint256S("0x0");
+	return u;
+#endif
+
 	randomx_cache* rxc;
 	randomx_vm* vm1;
 	std::vector<unsigned char> hashKey = std::vector<unsigned char>(uKey.begin(), uKey.end());

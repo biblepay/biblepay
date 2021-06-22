@@ -306,13 +306,11 @@ void pop3_RETR(std::string sNo)
 	else
 	{
 		std::string sID = "Message-Id: <" + e.GetHash().GetHex() + ">";
-		if (fDebuggingEmail)
-			LogPrintf("\r\nFound Email %s", Mid(e.Body, 0, 100));
-
+		
 		// Check for decryption if this is Encrypted
 		if (e.nVersion == 3)
 		{
-			std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+			std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 			std::string sError;
 			std::string sDec = RSA_Decrypt_String(sPrivPath, e.Body, sError);
 			if (!sError.empty())
@@ -601,7 +599,7 @@ void smtp_SENDMAIL(std::string sData)
 		fPaid = PayEmailFees(e);
 	}
 	
-	LogPrintf("\nSMTP::Send::EMAIL HASH %s Length %f Paid %f ", eHash.GetHex(), e.Body.length(), fPaid);
+	//LogPrintf("\nSMTP::Send::EMAIL HASH %s Length %f Paid %f ", eHash.GetHex(), (int)e.Body.length(), fPaid);
 	
 
 	if (fPaid && e.Body.length() < MAX_EMAIL_SIZE)
@@ -813,10 +811,10 @@ void ThreadPOP3(CConnman& connman)
 {
 	// This is BiblePay's Decentralized version of the Pop3 protocol.
 	// This allows BiblePay Core to deliver encrypted e-mails into your favorite E-mail client's inbox.
-	// The message is encrypted up to the point when your e-mail Client asks for it, and, at that very point we decrypt it with your RSA key (in the local biblepaycore wallet).
+	// The message is encrypted up to the point when your e-mail Client asks for it, and, at that very point we decrypt it with your RSA key (in the local biblepay wallet).
 	// As long as you have your PST file set up locally on your drive, and, you trust your e-mail client program, theoretically the message will be entirely secure end-to-end.
 	// If you want even more security you can use the biblepay core wallet inbox.  You can also look into opensource e-mail clients like firebird if you do not trust outlook.
-	int nPOP3Port = (int)cdbl(GetArg("-smtpport", "30110"), 0);
+	int nPOP3Port = (int)cdbl(gArgs.GetArg("-smtpport", "30110"), 0);
 
 	tcp::endpoint pop3_endpoint{tcp::v4(), (unsigned short)nPOP3Port};
 	tcp::acceptor pop3_acceptor{ioservice, pop3_endpoint};
@@ -863,14 +861,14 @@ void ThreadSMTP(CConnman& connman)
 	// Then we send the message over the biblepay network (encrypted).
 	// Later, our decentralized POP3 protocol will handle the decryption and delivery.
 	// You may also forward other non-biblepay e-mails into our SMTP server for non-encrypted delivery (as long as the fees are paid). 
-	int nSMTPPort = (int)cdbl(GetArg("-smtpport", "30025"), 0);
+	int nSMTPPort = (int)cdbl(gArgs.GetArg("-smtpport", "30025"), 0);
 	std::cout << "POP3-Listening " << RoundToString(nSMTPPort, 0) << std::endl;
 
 	tcp::endpoint smtp_endpoint{tcp::v4(), (unsigned short)nSMTPPort};
 	tcp::acceptor smtp_acceptor{ioservice, smtp_endpoint};
 
 	int64_t nTimer = 0;
-	fDebuggingEmail = cdbl(GetArg("-debuggingemail", "0"), 0) == 1;
+	fDebuggingEmail = cdbl(gArgs.GetArg("-debuggingemail", "0"), 0) == 1;
 	LogPrintf("\nSMTPServer::DebuggingMode %f ", fDebuggingEmail);
 	
 	while (1==1)

@@ -5,7 +5,7 @@
 #ifndef BITCOIN_QT_CHATDIALOG_H
 #define BITCOIN_QT_CHATDIALOG_H
 
-#include "ui_chatdialog.h"
+#include "forms/ui_chatdialog.h"
 #include "clientmodel.h"
 
 class ChatDialog : public QDialog, private Ui::ChatDialog

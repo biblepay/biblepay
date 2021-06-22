@@ -2,10 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bench.h"
-#include "wallet/wallet.h"
+#include <bench/bench.h>
+#include <wallet/wallet.h>
 
-#include <boost/foreach.hpp>
 #include <set>
 
 static void addCoin(const CAmount& nValue, const CWallet& wallet, std::vector<COutput>& vCoins)
@@ -33,22 +32,22 @@ static void addCoin(const CAmount& nValue, const CWallet& wallet, std::vector<CO
 // (https://github.com/bitcoin/bitcoin/issues/7883#issuecomment-224807484)
 static void CoinSelection(benchmark::State& state)
 {
-    const CWallet wallet;
+    const CWallet wallet("dummy", WalletDatabase::CreateDummy());
     std::vector<COutput> vCoins;
     LOCK(wallet.cs_wallet);
 
     while (state.KeepRunning()) {
         // Empty wallet.
-        BOOST_FOREACH (COutput output, vCoins)
+        for (COutput output : vCoins)
             delete output.tx;
         vCoins.clear();
 
         // Add coins.
         for (int i = 0; i < 1000; i++)
-            addCoin(1000 * COIN, wallet, vCoins);
+            addCoin(4500001 * COIN, wallet, vCoins);
         addCoin(3 * COIN, wallet, vCoins);
 
-        std::set<std::pair<const CWalletTx*, unsigned int> > setCoinsRet;
+        std::set<CInputCoin> setCoinsRet;
         CAmount nValueRet;
         bool success = wallet.SelectCoinsMinConf(1003 * COIN, 1, 6, 0, vCoins, setCoinsRet, nValueRet);
         assert(success);

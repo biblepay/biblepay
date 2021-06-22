@@ -3,7 +3,7 @@ Shared Libraries
 
 ## biblepayconsensus
 
-The purpose of this library is to make the verification functionality that is critical to Biblepay's consensus available to other applications, e.g. to language bindings.
+The purpose of this library is to make the verification functionality that is critical to BiblePay's consensus available to other applications, e.g. to language bindings.
 
 ### API
 

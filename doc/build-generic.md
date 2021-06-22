@@ -4,7 +4,7 @@ Some notes on how to build BiblePay Core based on the [depends](../depends/READM
 
 Note on old build instructions
 ------------------------------
-In the past, the build documentation contained instructions on how to build Biblepay with system-wide installed dependencies
+In the past, the build documentation contained instructions on how to build BiblePay with system-wide installed dependencies
 like BerkeleyDB 4.8, boost and Qt. Building this way is considered deprecated and only building with the `depends` prefix
 is supported today.
 
@@ -15,8 +15,8 @@ Building the dependencies and BiblePay Core requires some essential build tools 
 
 Building dependencies
 ---------------------
-Biblepay inherited the `depends` folder from Bitcoin, which contains all dependencies required to build Biblepay. These
-dependencies must be built before Biblepay can actually be built. To do so, perform the following:
+BiblePay inherited the `depends` folder from Bitcoin, which contains all dependencies required to build BiblePay. These
+dependencies must be built before BiblePay can actually be built. To do so, perform the following:
 
 ```bash
 $ cd depends
@@ -28,15 +28,11 @@ This will download and build all dependencies required to build BiblePay Core. C
 the packages are rebuilt which have changed since the last depends build.
 
 It is required to re-run the above commands from time to time when dependencies have been updated or added. If this is
-not done, build failures might occur when building Biblepay.
+not done, build failures might occur when building BiblePay.
 
 Please read the [depends](../depends/README.md) documentation for more details on supported hosts and configuration
 options. If no host is specified (as in the above example) when calling `make`, the depends system will default to your
 local host system. 
-
-Building RandomX library
----------------------
-Before you can build Biblepay core, be sure to complile the RandomX library found at src/crypto/RandomX. Instructions can be found [here](https://github.com/biblepay/biblepay/tree/master/src/crypto/RandomX)
 
 Building BiblePay Core
 ---------------------
@@ -65,15 +61,15 @@ If you want to build for the same host but different distro, add `--enable-glibc
 
 ccache
 ------
-The depends system also contains [ccache](https://ccache.samba.org/), which caches build results on source->object
-level. `./configure` of BiblePay Core will autodetect the presence of ccache and enable use of it. To disable ccache, use
-`./configure --prefix=<prefix> --disable-ccache`.
+`./configure` of BiblePay Core will autodetect the presence of ccache and enable use of it. To disable ccache, use
+`./configure --prefix=<prefix> --disable-ccache`. When installed and enabled, [ccache](https://ccache.samba.org/) will
+cache build results on source->object level.
 
 The default maximum cache size is 5G, which might not be enough to cache multiple builds when switching Git branches
 very often. It is advised to increase the maximum cache size:
 
 ```bash
-$ ./depends/<host>/native/bin/ccache -M20G
+$ ccache -M20G
 ```
 
 Additional Configure Flags

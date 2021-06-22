@@ -8,7 +8,7 @@ Release Process
 Before every minor and major release:
 
 * Update [bips.md](bips.md) to account for changes since the last release.
-* Update version in sources (see below)
+* Update version in `configure.ac` (don't forget to set `CLIENT_VERSION_IS_RELEASE` to `true`)
 * Write release notes (see below)
 * Update `src/chainparams.cpp` nMinimumChainWork with information from the getblockchaininfo rpc.
 * Update `src/chainparams.cpp` defaultAssumeValid  with information from the getblockhash rpc.
@@ -19,8 +19,10 @@ Before every minor and major release:
 
 Before every major release:
 
-* Update hardcoded [seeds](/contrib/seeds/README.md). TODO: Give example PR for Biblepay
+* Update hardcoded [seeds](/contrib/seeds/README.md). TODO: Give example PR for BiblePay
 * Update [`BLOCK_CHAIN_SIZE`](/src/qt/intro.cpp) to the current size plus some overhead.
+* Update `src/chainparams.cpp` chainTxData with statistics about the transaction count and rate.
+* Update version of `contrib/gitian-descriptors/*.yml`: usually one'd want to do this on master after branching off the release - but be sure to at least do it before a new major release
 
 ### First time / New builders
 
@@ -34,21 +36,7 @@ Check out the source code in the following directory hierarchy.
 	git clone https://github.com/devrandom/gitian-builder.git
 	git clone https://github.com/biblepay/biblepay.git
 
-### BiblePay Core maintainers/release engineers, update (commit) version in sources
-
-- `configure.ac`:
-    - `_CLIENT_VERSION_MAJOR`
-    - `_CLIENT_VERSION_MINOR`
-    - `_CLIENT_VERSION_REVISION`
-    - Don't forget to set `_CLIENT_VERSION_IS_RELEASE` to `true`
-- `src/clientversion.h`: (this mirrors `configure.ac` - see issue #3539)
-    - `CLIENT_VERSION_MAJOR`
-    - `CLIENT_VERSION_MINOR`
-    - `CLIENT_VERSION_REVISION`
-    - Don't forget to set `CLIENT_VERSION_IS_RELEASE` to `true`
-- `doc/README.md` and `doc/README_windows.txt`
-- `doc/Doxyfile`: `PROJECT_NUMBER` contains the full version
-- `contrib/gitian-descriptors/*.yml`: usually one'd want to do this on master after branching off the release - but be sure to at least do it before a new major release
+### BiblePay Core maintainers/release engineers, suggestion for writing release notes
 
 Write release notes. git shortlog helps a lot, for example:
 
@@ -92,8 +80,8 @@ Ensure gitian-builder is up-to-date:
 
     pushd ./gitian-builder
     mkdir -p inputs
-    wget -P inputs https://bitcoincore.org/cfields/osslsigncode-Backports-to-1.7.1.patch
-    wget -P inputs http://downloads.sourceforge.net/project/osslsigncode/osslsigncode/osslsigncode-1.7.1.tar.gz
+    wget -O inputs/osslsigncode-2.0.tar.gz https://github.com/mtrojnar/osslsigncode/archive/2.0.tar.gz
+    echo '5a60e0a4b3e0b4d655317b2f12a810211c50242138322b16e7e01c6fbb89d92f inputs/osslsigncode-2.0.tar.gz' | sha256sum -c
     popd
 
 Create the OS X SDK tarball, see the [OS X readme](README_osx.md) for details, and copy it into the inputs directory.
@@ -119,16 +107,16 @@ The gbuild invocations below <b>DO NOT DO THIS</b> by default.
 ### Build and sign BiblePay Core for Linux, Windows, and OS X:
 
     pushd ./gitian-builder
-    ./bin/gbuild --memory 3000 --commit biblepay=v${VERSION} ../biblepay/contrib/gitian-descriptors/gitian-linux.yml
+    ./bin/gbuild --num-make 2 --memory 3000 --commit biblepay=v${VERSION} ../biblepay/contrib/gitian-descriptors/gitian-linux.yml
     ./bin/gsign --signer $SIGNER --release ${VERSION}-linux --destination ../gitian.sigs/ ../biblepay/contrib/gitian-descriptors/gitian-linux.yml
     mv build/out/biblepay-*.tar.gz build/out/src/biblepay-*.tar.gz ../
 
-    ./bin/gbuild --memory 3000 --commit biblepay=v${VERSION} ../biblepay/contrib/gitian-descriptors/gitian-win.yml
+    ./bin/gbuild --num-make 2 --memory 3000 --commit biblepay=v${VERSION} ../biblepay/contrib/gitian-descriptors/gitian-win.yml
     ./bin/gsign --signer $SIGNER --release ${VERSION}-win-unsigned --destination ../gitian.sigs/ ../biblepay/contrib/gitian-descriptors/gitian-win.yml
     mv build/out/biblepay-*-win-unsigned.tar.gz inputs/biblepay-win-unsigned.tar.gz
     mv build/out/biblepay-*.zip build/out/biblepay-*.exe ../
 
-    ./bin/gbuild --memory 3000 --commit biblepay=v${VERSION} ../biblepay/contrib/gitian-descriptors/gitian-osx.yml
+    ./bin/gbuild --num-make 2 --memory 3000 --commit biblepay=v${VERSION} ../biblepay/contrib/gitian-descriptors/gitian-osx.yml
     ./bin/gsign --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../biblepay/contrib/gitian-descriptors/gitian-osx.yml
     mv build/out/biblepay-*-osx-unsigned.tar.gz inputs/biblepay-osx-unsigned.tar.gz
     mv build/out/biblepay-*.tar.gz build/out/biblepay-*.dmg ../
@@ -175,22 +163,22 @@ Codesigner only: Create Windows/OS X detached signatures:
 
 Codesigner only: Sign the osx binary:
 
-    transfer dashcore-osx-unsigned.tar.gz to osx for signing
-    tar xf dashcore-osx-unsigned.tar.gz
-    ./detached-sig-create.sh -s "Key ID"
+    transfer biblepaycore-osx-unsigned.tar.gz to osx for signing
+    tar xf biblepaycore-osx-unsigned.tar.gz
+    ./detached-sig-create.sh -s "Key ID" -o runtime
     Enter the keychain password and authorize the signature
     Move signature-osx.tar.gz back to the gitian host
 
 Codesigner only: Sign the windows binaries:
 
-    tar xf dashcore-win-unsigned.tar.gz
+    tar xf biblepaycore-win-unsigned.tar.gz
     ./detached-sig-create.sh -key /path/to/codesign.key
     Enter the passphrase for the key when prompted
     signature-win.tar.gz will be created
 
 Codesigner only: Commit the detached codesign payloads:
 
-    cd ~/dashcore-detached-sigs
+    cd ~/biblepaycore-detached-sigs
     checkout the appropriate branch for this release series
     rm -rf *
     tar xf signature-osx.tar.gz
@@ -255,9 +243,9 @@ biblepay-${VERSION}-win32.zip
 biblepay-${VERSION}-win64-setup.exe
 biblepay-${VERSION}-win64.zip
 ```
-The `*-debug*` files generated by the gitian build contain debug symbols
+The `*-debug*` files generated by the Gitian build contain debug symbols
 for troubleshooting by developers. It is assumed that anyone that is interested
-in debugging can run gitian to generate the files for themselves. To avoid
+in debugging can run Gitian to generate the files for themselves. To avoid
 end-user confusion about which file to pick, as well as save storage
 space *do not upload these to the biblepay.org server*.
 
@@ -275,9 +263,9 @@ Note: check that SHA256SUMS itself doesn't end up in SHA256SUMS, which is a spur
 
 - Announce the release:
 
-  - Release on Biblepay forum: https://www.biblepay.org/forum/topic/official-announcements.54/
+  - Release on BiblePay forum: https://www.biblepay.org/forum/topic/official-announcements.54/
 
-  - Optionally Discord, twitter, reddit /r/Biblepay, ... but this will usually sort out itself
+  - Optionally Discord, twitter, reddit /r/BiblePaypay, ... but this will usually sort out itself
 
   - Notify flare so that he can start building [the PPAs](https://launchpad.net/~biblepay.org/+archive/ubuntu/biblepay)
 

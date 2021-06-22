@@ -3,14 +3,13 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "finalexamdialog.h"
-#include "ui_finalexamdialog.h"
+#include "forms/ui_finalexamdialog.h"
 #include "kjv.h"
 
 #include "guiutil.h"
 #include "util.h"
 #include "optionsmodel.h"
 #include "timedata.h"
-#include "platformstyle.h"
 
 #include "walletmodel.h"
 #include "validation.h"
@@ -33,7 +32,6 @@ FinalExamDialog::FinalExamDialog(QWidget *parent, std::string sFinalExam) :
     ui->setupUi(this);
 	if (sFinalExam.empty())
 		return;
-    QString theme = GUIUtil::getThemeName();
 	// Pull in the final exam
 	DACResult b = DSQL_ReadOnlyQuery("Univ/" + sFinalExam);
 	

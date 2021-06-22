@@ -9,11 +9,13 @@
 #include "serialize.h"
 #include "sync.h"
 #include "rpcpog.h"
+#include "util.h"
 
 #include <map>
 #include <set>
 #include <stdint.h>
 #include <string>
+#include <netmessagemaker.h>
 
 class CEmail;
 class CNode;

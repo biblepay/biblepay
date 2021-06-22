@@ -3,54 +3,29 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "primitives/block.h"
+#include <primitives/block.h>
 
-#include "hash.h"
-#include "streams.h"
-#include "tinyformat.h"
-#include "utilstrencodings.h"
-#include "crypto/common.h"
+#include <hash.h>
+#include <streams.h>
+#include <tinyformat.h>
+#include <utilstrencodings.h>
+#include <crypto/common.h>
 #include "randomx_bbp.h"
 #include <pthread.h>
 
-/*
-//#include <mutex>
-//#include <thread>
-
-std::string ExtractXML2(std::string XMLdata, std::string key, std::string key_end)
-{
-	std::string extraction = "";
-	std::string::size_type loc = XMLdata.find( key, 0 );
-	if( loc != std::string::npos )
-	{
-		std::string::size_type loc_end = XMLdata.find( key_end, loc+3);
-		if (loc_end != std::string::npos )
-		{
-			extraction = XMLdata.substr(loc+(key.length()),loc_end-loc-(key.length()));
-		}
-	}
-	return extraction;
-}
-*/
-
-//static std::mutex cs_rxhasher;
 uint256 CBlockHeader::GetHash() const
 {
-		// Legacy Hashes (Before consensusParams.RANDOMX_HEIGHT):
-		std::vector<unsigned char> vch(80);
-		CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
-		ss << nVersion << hashPrevBlock << hashMerkleRoot << nTime << nBits << nNonce;
-		return HashX11((const char *)vch.data(), (const char *)vch.data() + vch.size());
+	/*
+    std::vector<unsigned char> vch(80);
+    CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
+    ss << *this;
+    return HashX11((const char *)vch.data(), (const char *)vch.data() + vch.size());
+	*/
+	std::vector<unsigned char> vch(80);
+	CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
+	ss << nVersion << hashPrevBlock << hashMerkleRoot << nTime << nBits << nNonce;
+	return HashX11((const char *)vch.data(), (const char *)vch.data() + vch.size());
 }
-
-/*
-uint256 CBlockHeader::GetHashBible() const
-{
-	return HashLegacy(BEGIN(nVersion),END(nNonce));
-}
-*/
-
-
 
 std::string CBlock::ToString() const
 {
@@ -62,9 +37,8 @@ std::string CBlock::ToString() const
         hashMerkleRoot.ToString(),
         nTime, nBits, nNonce,
         vtx.size());
-    for (unsigned int i = 0; i < vtx.size(); i++)
-    {
-        s << "  " << vtx[i]->ToString() << "\n";
+    for (const auto& tx : vtx) {
+        s << "  " << tx->ToString() << "\n";
     }
     return s.str();
 }

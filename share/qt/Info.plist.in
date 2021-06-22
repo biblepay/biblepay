@@ -26,16 +26,16 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>Biblepay-Qt</string>
+  <string>BiblePay-Qt</string>
 
   <key>CFBundleName</key>
-  <string>Biblepay-Qt</string>
+  <string>BiblePay-Qt</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.biblepay.Biblepay-Qt</string>
+  <string>org.biblepay-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -43,7 +43,7 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>org.biblepay.BiblePayment</string>
+      <string>org.biblepay.BiblepayPayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
         <string>biblepay</string>
@@ -68,7 +68,7 @@
         <string>application/x-biblepay-payment-request</string>
         <key>public.filename-extension</key>
         <array>
-          <string>biblepaymentrequest</string>
+          <string>biblepaypaymentrequest</string>
         </array>
       </dict>
     </dict>
@@ -81,7 +81,7 @@
       <string>Editor</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>org.biblepay.paymentrequest</string>
+        <string>org.biblepaypaymentrequest</string>
       </array>
       <key>LSHandlerRank</key>
       <string>Owner</string>

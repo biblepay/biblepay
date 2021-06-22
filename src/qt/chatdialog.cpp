@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2017 The Däsh Core developers
+// Copyright (c) 2014-2017 The Dï¿½sh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -91,7 +91,7 @@ std::string ChatDialog::Decrypt(std::string sEnc)
 	if (fEncryptedChat)
 	{
 		std::string sError;
-		std::string sPrivPath = GetSANDirectory4() + "privkey.priv";
+		std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
 		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
 		sMessage = "(Encrypted) " + sDec;
 		if (!sError.empty())

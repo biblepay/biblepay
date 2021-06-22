@@ -5,13 +5,13 @@
 #ifndef BITCOIN_QT_WALLETMODEL_H
 #define BITCOIN_QT_WALLETMODEL_H
 
-#include "paymentrequestplus.h"
-#include "walletmodeltransaction.h"
+#include <qt/paymentrequestplus.h>
+#include <qt/walletmodeltransaction.h>
 
 #ifdef ENABLE_WALLET
-#include "wallet/wallet.h"
+#include <wallet/wallet.h>
 #endif // ENABLE_WALLET
-#include "support/allocators/secure.h"
+#include <support/allocators/secure.h>
 
 #include <map>
 #include <vector>
@@ -20,7 +20,6 @@
 
 class AddressTableModel;
 class OptionsModel;
-class PlatformStyle;
 class RecentRequestsTableModel;
 class TransactionTableModel;
 class WalletModelTransaction;
@@ -51,21 +50,18 @@ public:
     // Todo: This is a hack, should be replaced with a cleaner solution!
     QString address;
     QString label;
-#ifdef ENABLE_WALLET
-    AvailableCoinsType inputType;
-#endif // ENABLE_WALLET
-    bool fUseInstantSend;
     CAmount amount;
     // If from a payment request, this is used for storing the memo
     QString message;
-	// DAC message or prayer
+	// BBP message or prayer
 	QString txtMessage;
 	bool fDonate;
 	bool fDWS;
 	bool fPrayer;
 	bool fTithe;
 	bool fDiary;
-	// End of DAC
+	// End of BBP
+
     // If from a payment request, paymentRequest.IsInitialized() will be true
     PaymentRequestPlus paymentRequest;
     // Empty if no authentication or invalid signature/cert/etc.
@@ -114,7 +110,7 @@ class WalletModel : public QObject
     Q_OBJECT
 
 public:
-    explicit WalletModel(const PlatformStyle *platformStyle, CWallet *wallet, OptionsModel *optionsModel, QObject *parent = 0);
+    explicit WalletModel(CWallet* wallet, OptionsModel* optionsModel, QObject* parent = 0);
     ~WalletModel();
 
     enum StatusCode // Returned by sendCoins
@@ -144,10 +140,14 @@ public:
     TransactionTableModel *getTransactionTableModel();
     RecentRequestsTableModel *getRecentRequestsTableModel();
 
-    CAmount getBalance(const CCoinControl *coinControl = NULL) const;
+    CAmount getBalance(const CCoinControl *coinControl = nullptr) const;
     CAmount getUnconfirmedBalance() const;
     CAmount getImmatureBalance() const;
-    CAmount getAnonymizedBalance() const;
+    CAmount getAnonymizableBalance(bool fSkipDenominated, bool fSkipUnconfirmed) const;
+    CAmount getAnonymizedBalance(const CCoinControl* coinControl = nullptr) const;
+    CAmount getDenominatedBalance(bool unconfirmed) const;
+    CAmount getNormalizedAnonymizedBalance() const;
+    CAmount getAverageAnonymizedRounds() const;
     bool haveWatchOnly() const;
     CAmount getWatchBalance() const;
     CAmount getWatchUnconfirmedBalance() const;
@@ -170,7 +170,7 @@ public:
     };
 
     // prepare transaction for getting txfee before sending coins
-    SendCoinsReturn prepareTransaction(WalletModelTransaction &transaction, const CCoinControl *coinControl = NULL);
+    SendCoinsReturn prepareTransaction(WalletModelTransaction &transaction, const CCoinControl& coinControl, CAmount& caPenalty);
 
     // Send coins to a list of recipients
     SendCoinsReturn sendCoins(WalletModelTransaction &transaction);
@@ -183,6 +183,8 @@ public:
 
     // Wallet backup
     bool backupWallet(const QString &filename);
+    bool autoBackupWallet(QString& strBackupWarningRet, QString& strBackupErrorRet);
+    int64_t getKeysLeftSinceAutoBackup() const;
 
     // RAI object for unlocking wallet, returned by requestUnlock()
     class UnlockContext
@@ -208,8 +210,8 @@ public:
     UnlockContext requestUnlock(bool fForMixingOnly=false);
 
     bool getPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
-    bool havePrivKey(const CKeyID &address) const;
-    bool havePrivKey(const CScript& script) const;
+    bool IsSpendable(const CTxDestination& dest) const;
+    bool IsSpendable(const CScript& script) const;
     bool getPrivKey(const CKeyID &address, CKey& vchPrivKeyOut) const;
     void getOutputs(const std::vector<COutPoint>& vOutpoints, std::vector<COutput>& vOutputs);
     bool isSpent(const COutPoint& outpoint) const;
@@ -235,7 +237,8 @@ public:
     int getDefaultConfirmTarget() const;
     int getNumISLocks() const;
 
-    bool IsOldInstantSendEnabled() const;
+    int getRealOutpointPrivateSendRounds(const COutPoint& outpoint) const;
+    bool isFullyMixed(const COutPoint& outpoint) const;
 
 private:
     CWallet *wallet;

@@ -1,10 +1,10 @@
-// Copyright (c) 2018 The DAC Core developers
+// Copyright (c) 2018 The Däsh Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bench.h"
-#include "tinyformat.h"
-#include "utilstrencodings.h"
+#include <bench/bench.h>
+#include <tinyformat.h>
+#include <utilstrencodings.h>
 
 #include <boost/lexical_cast.hpp>
 #include <string>

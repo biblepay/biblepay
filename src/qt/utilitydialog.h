@@ -10,7 +10,6 @@
 #include "wallet/crypter.h"
 
 class BitcoinGUI;
-class ClientModel;
 
 namespace Ui {
     class HelpMessageDialog;
@@ -22,16 +21,15 @@ class HelpMessageDialog : public QDialog
     Q_OBJECT
 
 public:
-    enum HelpMode 
-	{
-		about,
-		cmdline,
-		pshelp,
+    enum HelpMode {
+        about,
+        cmdline,
+        pshelp,
 		prayer,
 		readbible
     };
 
-    explicit HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPrayer, uint256 txid, std::string sPreview);
+	explicit HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPrayer, uint256 txid, std::string sPreview);
     ~HelpMessageDialog();
 
     void printToConsole();
@@ -55,7 +53,7 @@ class ShutdownWindow : public QWidget
     Q_OBJECT
 
 public:
-    ShutdownWindow(QWidget *parent=0, Qt::WindowFlags f=0);
+    explicit ShutdownWindow(QWidget *parent=0, Qt::WindowFlags f=0);
     static QWidget *showShutdownWindow(BitcoinGUI *window);
 
 protected:

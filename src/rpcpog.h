@@ -8,16 +8,38 @@
 #include "wallet/wallet.h"
 #include "chat.h"
 #include "email.h"
+#include "governance/governance-classes.h"
 #include "hash.h"
 #include "net.h"
 #include "utilstrencodings.h"
 #include "validation.h"
 #include <univalue.h>
+#include "base58.h"
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
+#include <boost/algorithm/string/trim.hpp>
 
 class CWallet;
-
+struct SimpleUTXO;
 
 std::string RetrieveMd5(std::string s1);
+uint256 CoordToUint256(int row, int col);
+std::string RoundToString(double d, int place);
+std::string AmountToString(const CAmount& amount);
+double CalculateUTXOReward();
+std::vector<SimpleUTXO> GetUTXOStatus(std::string sAddress);
+bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle);
+CAmount GetBBPValueUSD(double nUSD, double nMask);
+std::string RSADecryptHQURL(std::string sEncData, std::string& sError);
+std::string RSAEncryptHQURL(std::string sSourceData, std::string& sError);
+std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
+std::string GenerateXMLSignature(std::string sPrimaryKey, std::string sSigningPublicKey);
+std::vector<std::string> Split(std::string s, std::string delim);
+double cdbl(std::string s, int place);
+std::string AmountToString(const CAmount& amount);
+double AmountToDouble(const CAmount& amount);
+CTransactionRef GetTxRef(uint256 hash);
+CAmount GetTxTotalFromAddress(CTransactionRef ctx, std::string sAddress);
+std::string TimestampToHRDate(double dtm);
 
 struct UserVote
 {
@@ -27,6 +49,427 @@ struct UserVote
 	int nTotalYesWeight = 0;
 	int nTotalNoWeight = 0;
 	int nTotalAbstainWeight = 0;
+};
+
+struct NFT
+{
+	std::string sCPK;
+	std::string sName;
+	std::string sDescription;
+	std::string sLoQualityURL;
+	std::string sHiQualityURL;
+	std::string sType;
+	std::string sXML;
+	CAmount nMinimumBidAmount = 0;
+	CAmount nReserveAmount = 0;
+	CAmount nBuyItNowAmount = 0;
+	int nIteration = 0;
+	bool fMarketable = false;
+	bool fDeleted = false;
+	bool found = false;
+	uint64_t nTime = 0;
+	uint256 TXID;
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sURL1(sLoQualityURL.c_str());
+		boost::to_lower(sURL1);
+		boost::algorithm::trim(sURL1);
+	    std::vector<unsigned char> vchURL = std::vector<unsigned char>(sURL1.begin(), sURL1.end());
+		sha256.Write(&vchURL[0], vchURL.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+	
+	CAmount LowestAcceptableAmount()
+	{
+		CAmount nAcceptable = 100000000 * COIN;
+		if (nReserveAmount > 0 && nBuyItNowAmount > 0)
+		{
+			// This is an Auction AND a buy-it-now NFT, so accept the lower of the two
+			nAcceptable = std::min(nReserveAmount, nBuyItNowAmount);
+		}
+		else if (nReserveAmount > 0 && nBuyItNowAmount == 0)
+		{
+			// This is an auction (but not a buy it now)
+			nAcceptable = nReserveAmount;
+		}
+		else if (nBuyItNowAmount > 0 && nReserveAmount == 0)
+		{
+			nAcceptable = nBuyItNowAmount;
+		}
+		return nAcceptable;		
+	}
+
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("Type", sType));
+		obj.push_back(Pair("CPK", sCPK));
+		obj.push_back(Pair("Name", sName));
+		obj.push_back(Pair("Description", sDescription));
+	    obj.push_back(Pair("Lo Quality URL", sLoQualityURL));
+		std::string sError;
+		std::string sHiQ = RSADecryptHQURL(sHiQualityURL, sError);
+		bool fOrphan = findStringCaseInsensitive(sType, "orphan");
+		
+		if (!fOrphan)
+			obj.push_back(Pair("Hi Quality URL", sHiQ));
+		obj.push_back(Pair("TXID", TXID.GetHex()));
+		obj.push_back(Pair("Hash", GetHash().GetHex()));
+		obj.push_back(Pair("Iteration", nIteration));
+		if (!fOrphan)
+		{
+			obj.push_back(Pair("MinimumBidAmount", AmountToDouble(nMinimumBidAmount)));
+			obj.push_back(Pair("ReserveAmount", AmountToDouble(nReserveAmount)));
+			obj.push_back(Pair("BuyItNowAmount", AmountToDouble(nBuyItNowAmount)));
+			obj.push_back(Pair("LowestAcceptableAmount", AmountToDouble(LowestAcceptableAmount())));
+			obj.push_back(Pair("Marketable", fMarketable));
+		}
+		else
+		{
+			obj.push_back(Pair("Sponsorable", fMarketable));
+			obj.push_back(Pair("SponsorshipAmount", (double)nBuyItNowAmount/COIN));
+			obj.push_back(Pair("LowestAcceptableAmount", (double)LowestAcceptableAmount()/COIN));
+		}
+
+		obj.push_back(Pair("Deleted", fDeleted));
+		obj.push_back(Pair("Time", nTime));
+		if (fOrphan && nIteration == 2)
+		{
+			// Remaining Sponsorship days
+			CAmount nAmountPerDay = GetBBPValueUSD(40, 1538);
+			double nElapsed = (GetAdjustedTime() - nTime) / 86400;
+			obj.push_back(Pair("Sponsor Date", TimestampToHRDate(nTime)));
+			obj.push_back(Pair("Elapsed (Days)", nElapsed));
+		}
+    }
+};
+
+struct LineItem
+{
+	std::string Description;
+	CAmount nLineAmount = 0;
+	int nLineNumber = 0;
+};
+
+struct Invoice
+{
+	std::string sFromAddress;
+	std::string sToAddress;
+	std::string sName;
+	std::string sDescription;
+	std::vector<LineItem> vLineItems;
+	CAmount nAmount;
+	bool found = false;
+	uint64_t nTime = 0;
+	std::string GetKey()
+	{
+		std::string sKey = sFromAddress + "-" + sToAddress + "-" + RoundToString(nTime, 0);
+		return sKey;
+	}
+
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sKey = GetKey();
+	    std::vector<unsigned char> vchD = std::vector<unsigned char>(sKey.begin(), sKey.end());
+		sha256.Write(&vchD[0], vchD.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+	
+	void AddLineItem(int LineNumber, CAmount nLineAmount, std::string sDesc)
+	{
+		LineItem l;
+		l.nLineNumber = LineNumber;
+		l.nLineAmount = nLineAmount;
+		l.Description = sDesc;
+		vLineItems.push_back(l);
+	}
+
+	void clear()
+	{
+		sFromAddress = "";
+		sToAddress = "";
+		sName = "";
+		sDescription = "";
+		nAmount = 0;
+		found = false;
+		nTime = 0;
+		vLineItems.clear();
+	}
+
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("FromAddress", sFromAddress));
+		obj.push_back(Pair("ToAddress", sToAddress));
+		obj.push_back(Pair("Name", sName));
+		obj.push_back(Pair("Description", sDescription));
+		obj.push_back(Pair("Time", nTime));
+		UniValue li(UniValue::VOBJ);
+		for (int i = 0; i < vLineItems.size(); i++)
+		{
+			li.push_back(Pair(RoundToString(vLineItems[i].nLineNumber, 0) + ": " + AmountToString(vLineItems[i].nLineAmount), vLineItems[i].Description));
+		}
+		obj.push_back(Pair("LineItems", li));
+		obj.push_back(Pair("Amount", AmountToDouble(nAmount)));
+    }
+	std::string ToXML()
+	{
+		std::string XML;
+		std::string sFrom1(sFromAddress.c_str());
+		std::string sMyKey  = GetKey();
+		uint256 hash = GetHash();
+		std::string sSig = GenerateXMLSignature(sMyKey, sFrom1);
+		XML = "<MT>INVOICE</MT><MK>"+ GetKey() + "</MK><MV><invoice><FromAddress>" + sFromAddress + "</FromAddress><ToAddress>"+ sToAddress + "</ToAddress><Name>" 
+			+ sName + "</Name><Description>" + sDescription + "</Description><Time>"
+			+ RoundToString(nTime, 0) + "</Time><Amount>" + AmountToString(nAmount) + "</Amount>";
+		std::string sLI = "<lineitems>";
+		for (int i = 0; i < vLineItems.size(); i++)
+		{
+			sLI += "<lineitem><linenumber>"+ RoundToString(vLineItems[i].nLineNumber, 0) + "</linenumber><lineamount>" + AmountToString(vLineItems[i].nLineAmount) 
+				+ "</lineamount><description>"+ vLineItems[i].Description + "</description></lineitem>";
+		}
+		XML += sLI + "</lineitems>" + sSig + "</invoice></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		sFromAddress = ExtractXML(XML, "<FromAddress>", "</FromAddress>");
+		sToAddress = ExtractXML(XML, "<ToAddress>", "</ToAddress>");
+		sName = ExtractXML(XML, "<Name>", "</Name>");
+		sDescription = ExtractXML(XML, "<Description>", "</Description>");
+		nTime = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		nAmount = cdbl(ExtractXML(XML, "<Amount>", "</Amount>"), 2) * COIN;
+		std::string lineItems = ExtractXML(XML, "<lineitems>", "</lineitems>");
+		std::vector<std::string> vLI = Split(lineItems.c_str(), "<lineitem>");
+		for (int i = 0; i < vLI.size(); i++)
+		{
+			LineItem l;
+			l.nLineAmount = cdbl(ExtractXML(vLI[i], "<lineamount>", "</lineamount>"), 2) * COIN;
+			l.nLineNumber = cdbl(ExtractXML(vLI[i], "</linenumber>", "</linenumber>"), 0);
+			l.Description = ExtractXML(vLI[i], "<description>", "</description>");
+			if (l.nLineNumber > 0)
+			{
+				vLineItems.push_back(l);
+			}
+		}
+		if (nTime > 0)
+			found = true;
+	}
+};
+
+struct Payment
+{
+	std::string sFromAddress;
+	std::string sToAddress;
+	int64_t nTime = 0;
+	bool found = false;
+	
+	CAmount nAmount;
+	std::string sNotes;
+	std::string sInvoiceNumber;
+	uint256 TXID;
+	std::string GetKey()
+	{
+		std::string sKey = sFromAddress + "-" + sToAddress + "-" + RoundToString(nTime, 0);
+		return sKey;
+	}
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sKey = GetKey();
+	    std::vector<unsigned char> vchD = std::vector<unsigned char>(sKey.begin(), sKey.end());
+		sha256.Write(&vchD[0], vchD.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+
+	void clear()
+	{
+		nTime = 0;
+		sFromAddress = "";
+		sToAddress = "";
+		nAmount = 0;
+		sNotes = "";
+		sInvoiceNumber = "";
+		TXID = uint256S("0x0");
+	}
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("FromAddress", sFromAddress));
+		obj.push_back(Pair("ToAddress", sToAddress));
+		obj.push_back(Pair("Notes", sNotes));
+		obj.push_back(Pair("InvoiceNumber", sInvoiceNumber));
+		obj.push_back(Pair("Time", nTime));
+		obj.push_back(Pair("Amount", AmountToDouble(nAmount)));
+		obj.push_back(Pair("TXID", TXID.GetHex()));
+    }
+	std::string ToXML()
+	{
+		std::string XML;
+		
+		std::string sSig = GenerateXMLSignature(GetKey(), sFromAddress);
+		XML = "<MT>PAYMENT</MT><MK>" + GetKey() + "</MK><MV><payment><FromAddress>" + sFromAddress + "</FromAddress><ToAddress>" 
+			+ sToAddress + "</ToAddress><Notes>" + sNotes 
+			+ "</Notes><InvoiceNumber>"+ sInvoiceNumber + "</InvoiceNumber><Time>"
+			+ RoundToString(nTime, 0) + "</Time><Amount>" + AmountToString(nAmount) + "</Amount>"
+			+ sSig + "</payment></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		sFromAddress = ExtractXML(XML, "<FromAddress>", "</FromAddress>");
+		sToAddress = ExtractXML(XML, "<ToAddress>", "</ToAddress>");
+		sNotes = ExtractXML(XML, "<Notes>", "</Notes>");
+		sInvoiceNumber = ExtractXML(XML, "<InvoiceNumber>", "</InvoiceNumber>");
+		nTime = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		// nAmount = cdbl(ExtractXML(XML, "<Amount>", "</Amount>"), 2) * COIN;
+		TXID = uint256S("0x" + ExtractXML(XML, "<txid>", "</txid>"));
+		CTransactionRef tx1 = GetTxRef(TXID);
+		nAmount = GetTxTotalFromAddress(tx1, sToAddress);
+		if (nTime > 0)
+			found = true;
+	}
+};
+
+struct CDSQLQuery
+{
+	int64_t nTime = 0;
+	bool found = false;
+	
+	std::string sData;
+	std::string sOwnerAddress;
+	std::string sTable;
+	std::string sID;
+	uint256 TXID;
+	std::string GetKey()
+	{
+		std::string sKey = sTable + "-" + sOwnerAddress + "-" + sID;
+		return sKey;
+	}
+	uint256 GetHash()
+	{
+		uint256 h;
+        CSHA256 sha256;
+		std::string sKey = GetKey();
+	    std::vector<unsigned char> vchD = std::vector<unsigned char>(sKey.begin(), sKey.end());
+		sha256.Write(&vchD[0], vchD.size());
+        sha256.Finalize(h.begin());
+		return h;
+	}
+
+	void clear()
+	{
+		nTime = 0;
+		sOwnerAddress = "";
+		sTable = "";
+		sID = "";
+		sData = "";
+		TXID = uint256S("0x0");
+	}
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("Data", sData));
+		obj.push_back(Pair("OwnerAddress", sOwnerAddress));
+		obj.push_back(Pair("Table", sTable));
+		obj.push_back(Pair("ID", sID));
+		obj.push_back(Pair("Time", nTime));
+		obj.push_back(Pair("TXID", TXID.GetHex()));
+    }
+	std::string ToXML()
+	{
+		std::string XML;
+		
+		std::string sSig = GenerateXMLSignature(GetKey(), sOwnerAddress);
+		XML = "<MT>DSQL</MT><MK>" + GetKey() + "</MK><MV><dsql><OwnerAddress>" + sOwnerAddress + "</OwnerAddress>" 
+			+ "<ID>"+ sID + "</ID><Time>"
+			+ RoundToString(nTime, 0) + "</Time><data>" + sData + "</data><table>" + sTable + "</table>"
+			+ sSig + "</dsql></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		sOwnerAddress = ExtractXML(XML, "<OwnerAddress>", "</OwnerAddress>");
+		sID = ExtractXML(XML, "<ID>", "</ID>");
+		sData = ExtractXML(XML, "<data>", "</data>");
+		sTable = ExtractXML(XML, "<table>", "</table>");
+		nTime = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		TXID = uint256S("0x" + ExtractXML(XML, "<txid>", "</txid>"));
+		CTransactionRef tx1 = GetTxRef(TXID);
+		if (nTime > 0)
+			found = true;
+		//LogPrintf("\nDSQL::From %s to Q %s", XML, sData);
+
+	}
+};
+
+struct ReferralCode
+{
+	std::string CPK;
+	std::string OriginatorCPK;
+	std::string Code;
+	CAmount Size = 0;
+	CAmount TotalClaimed = 0;
+	CAmount TotalEarned = 0;
+	CAmount TotalReferralReward = 0;
+	CAmount GiftAmount = 0; // Used by referral codes
+	double dGiftAmount = 0; // Used by block assessor
+	std::string GiftDetails;
+	double ReferralEffectivity = 0;
+	double PercentageAffected = 0;
+	double ReferralRewards = 0;
+	int64_t Expiration = 0;
+	int64_t Time = 0;
+	bool found;
+};
+
+struct DMAddress
+{
+	std::string Name;
+	std::string AddressLine1;
+	std::string AddressLine2;
+	std::string Template;
+	std::string City;
+	std::string State;
+	std::string Zip;
+	std::string Paragraph1;
+	std::string Paragraph2;
+	std::string OpeningSalutation;
+	std::string ClosingSalutation;
+	CAmount Amount;
+};
+
+struct DataTable
+{
+	int Rows = 0;
+	int Cols = 0;
+	std::string TableName;
+	std::string TableDescription;
+	std::map<uint256, std::string> Values;
+	void Set(int nRow, int nCol, std::string sData)
+	{
+		Values[CoordToUint256(nRow, nCol)] = sData;
+	}
+	std::string Get(int nRow, int nCol)
+	{
+		std::string sKey = RoundToString(nRow,0) + "-" + RoundToString(nCol,0);
+		return Values[CoordToUint256(nRow,nCol)];
+	}
 };
 
 struct CPK
@@ -40,7 +483,8 @@ struct CPK
   std::string sError;
   std::string sChildId;
   std::string sOptData;
-  std::string cpid;
+  std::string sCurrencyAddress;
+  CAmount nCurrencyAmount = 0;
   double nProminence = 0;
   double nPoints = 0;
   bool fValid = false;
@@ -102,16 +546,6 @@ struct IPFSTransaction
 	std::map<std::string, std::string> mapRegions;
 };
 
-struct DashUTXO
-{
-	std::string TXID = std::string();
-	CAmount Amount = 0;
-	std::string Address = std::string();
-	std::string Network = std::string();
-	bool Spent = false;
-	bool Found = false;
-};
-
 struct DACResult
 {
 	std::string Response;
@@ -121,7 +555,11 @@ struct DACResult
 	std::string TXID;
 	std::string ErrorCode;
 	std::string PrimaryKey;
+	std::string PublicKey;
+	std::string Address;
+	std::string SecretKey;
 	int64_t nTime = 0;
+	CAmount nAmount = 0;
 	std::map<std::string, IPFSTransaction> mapResponses;
 	std::map<std::string, std::string> mapRegions;
 };
@@ -136,23 +574,6 @@ struct QueuedProposal
 	uint256 TXID = uint256S("0x0");
 	uint256 GovObj = uint256S("0x0");
 	int SubmissionCount = 0;
-};
-
-struct Researcher
-{
-	std::string nickname;
-	int teamid = 0;
-	std::string country;
-	int64_t creationtime = 0;
-	double totalcredit = 0;
-	double wcgpoints = 0;
-	double rac = 0;
-	int id = 0;
-	std::string cpid;
-	bool found = false;
-	bool unbanked = false;
-	double CoinAge = 0;
-	std::string CPK;
 };
 
 struct CoinAgeVotingDataStruct
@@ -173,26 +594,6 @@ struct CoinVin
 	std::string Destination = std::string();
 	bool Found = false;
 	CTransactionRef TxRef;
-};
-
-struct WhaleStake
-{
-	double Amount = 0;
-	double RewardAmount = 0;
-	double TotalOwed = 0;
-	int64_t BurnTime = 0;
-	int BurnHeight = 0;
-	int Duration = 0;
-	double DWU = 0;
-	double ActualDWU = 0;
-	int64_t MaturityTime = 0;
-	int MaturityHeight = 0;
-	std::string CPK = std::string();
-	uint256 TXID = uint256S("0x0");
-	std::string XML = std::string();
-	std::string ReturnAddress = std::string();
-	bool found = false;
-	bool paid = false;
 };
 
 struct Orphan
@@ -218,104 +619,110 @@ struct SimpleUTXO
 {
 	std::string TXID;
 	int nOrdinal = 0;
+	int TxCount = 0;
+	std::string AssetType;
 	CAmount nAmount = 0;
+	int Height = 0;
+	int Trace = 0;
 	double ValueUSD = 0;
+	CAmount nTotalBalance = 0;
+	int64_t AssimilationTime = 0;
+	
+	std::string Address;
+	std::string Ticker;
+	std::string Error;
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("Txid", TXID));
+		obj.push_back(Pair("Address", Address));
+		obj.push_back(Pair("Amount", AmountToString(nAmount)));
+		obj.push_back(Pair("Ticker", Ticker));
+	}
 };
 
 struct UTXOStake
 {
+	std::string Address = std::string();
 	std::string XML = std::string();
-	CAmount nBBPAmount = 0;
-	CAmount nForeignAmount = 0;
 	int64_t Time = 0;
 	int Height = 0;
-	int nType = 0;
 	std::string CPK = std::string();
-	std::string SignatureNarr = std::string();
 	bool found = false;
-	std::string ForeignTicker = std::string();
-	std::string ReportTicker = std::string();
-	std::string BBPUTXO = std::string();
-	std::string ForeignUTXO = std::string();
-	std::string BBPAddress = std::string();
-	std::string ForeignAddress = std::string();
-	std::string BBPSignature = std::string();
-	std::string ForeignSignature = std::string();
-	double nBBPPrice = 0;
-	double nForeignPrice = 0;
-	double nBTCPrice = 0;
-	double nBBPValueUSD = 0;
-	double nForeignValueUSD = 0;
-	double nValue = 0;
-	bool BBPSignatureValid = false;
-	bool ForeignSignatureValid = false;
-	bool SignatureValid = false;
+	std::string Ticker = std::string();
+	int nStatus = 0;
 	uint256 TXID = uint256S("0x0");
+	// Memory Only
+	double nValueUSD = 0;
+	CAmount nNativeTotal = 0;
+	CAmount nForeignTotal = 0;
+	double nCoverage = 0;
+	double nNativeTotalUSD = 0;
+	double nForeignTotalUSD = 0;
+	double nNativeUSDGrandTotal = 0;
+	double nForeignUSDGrandTotal = 0;
+
+	void clear()
+	{
+		Height = 0;
+		nValueUSD = 0;
+		Time = 0;
+		nNativeTotal = 0;
+		nForeignTotal = 0;
+		nValueUSD = 0;
+		CPK = "";
+		Ticker = "";
+		found = false;
+		nStatus = 0;
+		TXID = uint256S("0x0");
+	}
+
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("CPK", CPK));
+		obj.push_back(Pair("Ticker", Ticker));
+		obj.push_back(Pair("Address", Address));	
+		obj.push_back(Pair("Value", nValueUSD));	
+		obj.push_back(Pair("NativeAmount", AmountToDouble(nNativeTotal)));
+		obj.push_back(Pair("ForeignAmount", AmountToDouble(nForeignTotal)));
+		obj.push_back(Pair("Coverage", nCoverage));
+		obj.push_back(Pair("Time", Time));
+    }
+
+	std::string GetKey()
+	{
+		std::string sKey = Address;
+		return sKey;
+	}
+
+	std::string ToXML()
+	{
+		std::string XML;
+		std::string sSig = GenerateXMLSignature(GetKey(), CPK);
+		XML = "<MT>UTXOSTAKE3</MT><MK>" + GetKey() + "</MK><MV><utxostake3><Address>" + Address + "</Address>"
+			+ "<Time>" + RoundToString(Time, 0) + "</Time><CPK>" + CPK + "</CPK><ticker>" + Ticker + "</ticker>" + sSig + "</utxostake3></MV>";
+		return XML;
+	}
+	void FromXML(std::string XML)
+	{
+		clear();
+		Address = ExtractXML(XML, "<Address>", "</Address>");
+		Time = cdbl(ExtractXML(XML, "<Time>", "</Time>"), 0);
+		CPK = ExtractXML(XML, "<CPK>", "</CPK>");
+		Ticker = ExtractXML(XML, "<ticker>", "</ticker>");
+		TXID = uint256S("0x" + ExtractXML(XML, "<txid>", "</txid>"));
+		if (Time > 0)
+			found = true;
+	}
+
+
 };
 
-struct DashStake
-{
-	std::string XML = std::string();
-	CAmount nBBPAmount = 0;
-	CAmount nDashAmount = 0;
-	double MonthlyEarnings = 0;
-	int64_t Time = 0;
-	int64_t MaturityTime = 0;
-	int MaturityHeight = 0;
-	int Height = 0;
-	int Duration = 0;
-	std::string CPK = std::string();
-	std::string ReturnAddress = std::string();
-	bool found = false;
-	bool expired = false;
-	bool spent = false;
-	double DWU = 0;
-	double ActualDWU = 0;
-	std::string BBPUTXO = std::string();
-	std::string DashUTXO = std::string();
-	std::string BBPAddress = std::string();
-	std::string DashAddress = std::string();
-	std::string BBPSignature = std::string();
-	std::string DashSignature = std::string();
-	double nBBPPrice = 0;
-	double nDashPrice = 0;
-	double nBTCPrice = 0;
-	double nBBPValueUSD = 0;
-	double nDashValueUSD = 0;
-	double nBBPQty = 0;
-	bool BBPSignatureValid = false;
-	bool DashSignatureValid = false;
-	bool SignatureValid = false;
-	uint256 TXID = uint256S("0x0");
-};
 
-static double MAX_DAILY_WHALE_COMMITMENTS = 10000000;
-static double MAX_WHALE_DWU = 2.0;
-static double MAX_DASH_DWU = 1.0;
-static double MAX_DAILY_DASH_STAKE_COMMITMENTS = 5000000;
 static double MAX_DAILY_DAC_DONATIONS = 40000000;
-
-struct WhaleMetric
-{
-	double nTotalFutureCommitments = 0;
-	double nTotalGrossFutureCommitments = 0;
-	
-	double nTotalCommitmentsDueToday = 0;
-	double nTotalGrossCommitmentsDueToday = 0;
-
-	double nTotalBurnsToday = 0;
-	double nTotalGrossBurnsToday = 0;
-
-	double nTotalMonthlyCommitments = 0;
-	double nTotalGrossMonthlyCommitments = 0;
-
-	double nTotalAnnualReward = 0;
-
-	double nSaturationPercentAnnual = 0;
-	double nSaturationPercentMonthly = 0;
-	double DWU = 0;
-};
-
 struct DACProposal
 {
 	std::string sName;
@@ -338,22 +745,7 @@ struct DACProposal
 	std::string sProposalHRTime;
 };
 
-/** Comparison function for sorting the getchaintips heads.  */
-struct CompareBlocksByHeight
-{
-    bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
-    {
-        /* Make sure that unequal blocks with the same height do not compare
-           equal. Use the pointers themselves to make a distinction. */
 
-        if (a->nHeight != b->nHeight)
-          return (a->nHeight > b->nHeight);
-
-        return a < b;
-    }
-};
-
-std::string RoundToString(double d, int place);
 std::string QueryBibleHashVerses(uint256 hash, uint64_t nBlockTime, uint64_t nPrevBlockTime, int nPrevHeight, CBlockIndex* pindexPrev);
 CAmount GetDailyMinerEmissions(int nHeight);
 std::string CreateBankrollDenominations(double nQuantity, CAmount denominationAmount, std::string& sError);
@@ -372,10 +764,8 @@ std::string ReadCacheWithMaxAge(std::string sSection, std::string sKey, int64_t 
 void ClearCache(std::string sSection);
 void WriteCache(std::string sSection, std::string sKey, std::string sValue, int64_t locktime, bool IgnoreCase=true);
 std::string GetSporkValue(std::string sKey);
-std::string TimestampToHRDate(double dtm);
 std::string GetArrayElement(std::string s, std::string delim, int iPos);
 void GetMiningParams(int nPrevHeight, bool& f7000, bool& f8000, bool& f9000, bool& fTitheBlocksActive);
-bool findStringCaseInsensitive(const std::string & strHaystack, const std::string & strNeedle);
 bool SubmitProposalToNetwork(uint256 txidFee, int64_t nStartTime, std::string sHex, std::string& sError, std::string& out_sGovObj);
 UniValue GetDataList(std::string sType, int iMaxAgeInDays, int& iSpecificEntry, std::string sSearch, std::string& outEntry);
 double GetDifficulty(const CBlockIndex* blockindex);
@@ -383,27 +773,19 @@ std::string PubKeyToAddress(const CScript& scriptPubKey);
 int DeserializePrayersFromFile();
 double Round(double d, int place);
 void SerializePrayersToFile(int nHeight);
-std::string AmountToString(const CAmount& amount);
 CBlockIndex* FindBlockByHeight(int nHeight);
 std::string rPad(std::string data, int minWidth);
-double cdbl(std::string s, int place);
-std::string AmountToString(const CAmount& amount);
-std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
 bool Contains(std::string data, std::string instring);
 bool CheckNonce(bool f9000, unsigned int nNonce, int nPrevHeight, int64_t nPrevBlockTime, int64_t nBlockTime, const Consensus::Params& params);
 bool RPCSendMoney(std::string& sError, const CTxDestination &address, CAmount nValue, bool fSubtractFeeFromAmount, CWalletTx& wtxNew, bool fUseInstantSend=false, std::string sOptionalData = "", double nCoinAge = 0);
-bool FundWithExternalPurse(std::string& sError, const CTxDestination &address, CAmount nValue, bool fSubtractFeeFromAmount, CWalletTx& wtxNew, bool fUseInstantSend, CAmount nExactAmount, std::string sOptionalData, double dMinCoinAge, std::string sPursePubKey);
-std::vector<char> ReadBytesAll(char const* filename);
 CAmount StringToAmount(std::string sValue);
 bool CompareMask(CAmount nValue, CAmount nMask);
 bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout);
 std::string GetElement(std::string sIn, std::string sDelimiter, int iPos);
 bool CopyFile(std::string sSrc, std::string sDest);
 std::string Caption(std::string sDefault, int iMaxLen);
-std::vector<std::string> Split(std::string s, std::string delim);
 void MemorizeBlockChainPrayers(bool fDuringConnectBlock, bool fSubThread, bool fColdBoot, bool fDuringSanctuaryQuorum);
 double GetBlockVersion(std::string sXML);
-bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, std::string strMessage, std::string& strError);
 std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, int iTimeoutSecs, int iBOE, 
 	std::map<std::string, std::string> mapRequestHeaders = std::map<std::string, std::string>(), std::string TargetFileName = "", bool fJson = false);
 std::string FormatHTML(std::string sInput, int iInsertCount, std::string sStringToInsert);
@@ -411,16 +793,12 @@ std::string GJE(std::string sKey, std::string sValue, bool bIncludeDelimiter, bo
 bool InstantiateOneClickMiningEntries();
 bool WriteKey(std::string sKey, std::string sValue);
 std::string GetTransactionMessage(CTransactionRef tx);
-std::map<std::string, CPK> GetChildMap(std::string sGSCObjType);
 bool AdvertiseChristianPublicKeypair(std::string sProjectId, std::string sNickName, std::string sEmail, std::string sVendorType, bool fUnJoin, bool fForce, CAmount nFee, std::string sOptData, std::string &sError);
-double GetAntiBotNetWeight(int64_t nBlockTime, CTransactionRef tx, bool fDebug, std::string sSolver);
 std::map<std::string, std::string> GetSporkMap(std::string sPrimaryKey, std::string sSecondaryKey);
 std::map<std::string, CPK> GetGSCMap(std::string sGSCObjType, std::string sSearch, bool fRequireSig);
 void WriteCacheDouble(std::string sKey, double dValue);
 double ReadCacheDouble(std::string sKey);
-bool CheckAntiBotNetSignature(CTransactionRef tx, std::string sType, std::string sSolver);
 double GetVINCoinAge(int64_t nBlockTime, CTransactionRef tx, bool fDebug);
-CAmount GetTitheAmount(CTransactionRef ctx);
 CPK GetCPK(std::string sData);
 std::string GetCPKData(std::string sProjectId, std::string sPK);
 CAmount GetRPCBalance();
@@ -437,31 +815,11 @@ std::vector<std::string> GetVectorOfFilesInDirectory(const std::string &dirPath,
 std::string GetAttachmentData(std::string sPath, bool fEncrypted);
 std::string Path_Combine(std::string sPath, std::string sFileName);
 void ProcessBLSCommand(CTransactionRef tx);
-DACResult GetDecentralizedURL();
-std::string BIPFS_Payment(CAmount nAmount, std::string sTXID, std::string sXML);
 DACResult DSQL_ReadOnlyQuery(std::string sXMLSource);
 DACResult DSQL_ReadOnlyQuery(std::string sEndpoint, std::string sXML);
-int LoadResearchers();
 std::string TeamToName(int iTeamID);
-std::string GetResearcherCPID(std::string sSearch);
-bool CreateExternalPurse(std::string& sError);
-bool VerifyMemoryPoolCPID(CTransaction tx);
-std::string GetEPArg(bool fPublic);
-std::vector<WhaleStake> GetDWS(bool fIncludeMemoryPool);
-WhaleMetric GetWhaleMetrics(int nHeight, bool fIncludeMemoryPool);
-bool VerifyDynamicWhaleStake(CTransactionRef tx, std::string& sError);
-double GetDWUBasedOnMaturity(double nDuration, double dDWU);
-double GetOwedBasedOnMaturity(double nDuration, double dDWU, double dAmount);
-std::vector<WhaleStake> GetPayableWhaleStakes(int nHeight, double& nOwed);
 CoinVin GetCoinVIN(COutPoint o, int64_t nTxTime);
 bool GetTxDAC(uint256 txid, CTransactionRef& tx1);
-double GetWhaleStakesInMemoryPool(std::string sCPK);
-std::string GetCPKByCPID(std::string sCPID);
-int GetNextPODCTransmissionHeight(int height);
-int GetWhaleStakeSuperblockHeight(int nHeight);
-std::string SearchChain(int nBlocks, std::string sDest);
-std::string GetResDataBySearch(std::string sSearch);
-int GetWCGIdByCPID(std::string sSearch);
 uint256 ComputeRandomXTarget(uint256 hash, int64_t nPrevBlockTime, int64_t nBlockTime);
 std::string ReverseHex(std::string const & src);
 uint256 GetRandomXHash(std::string sHeaderHex, uint256 key, uint256 hashPrevBlock, int iThreadID);
@@ -470,7 +828,7 @@ std::string GenerateFaucetCode();
 void WriteBinaryToFile(char const* filename, std::vector<char> data);
 std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey);
 bool ApproveSanctuaryRevivalTransaction(CTransaction tx);
-bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& TXID_OUT, std::string& ERROR_OUT);
+bool VoteWithCoinAge(std::string sGobjectID, std::string sOutcome, std::string& ERROR_OUT);
 double GetCoinAge(std::string txid);
 CoinAgeVotingDataStruct GetCoinAgeVotingData(std::string sGobjectID);
 std::string GetAPMNarrative();
@@ -486,45 +844,26 @@ bool DecryptFile(std::string sPath, std::string sTargetPath);
 std::string FormatURL(std::string URL, int iPart);
 void SyncSideChain(int nHeight);
 std::string GetUTXO(std::string sHash, int nOrdinal, CAmount& nValue, std::string& sError);
-WhaleMetric GetDashStakeMetrics(int nHeight, bool fIncludeMemoryPool);
-std::vector<DashStake> GetDashStakes(bool fIncludeMemoryPool);
-bool SendDashStake(std::string sReturnAddress, std::string& sTXID, std::string& sError, std::string sBBPUTXO, std::string sDashUTXO, std::string sBBPSig, std::string sDashSig, double nDuration, std::string sCPK, bool fDryRun, DashStake& out_ds);
-bool VerifyDashStakeSignature(std::string sAddress, std::string sUTXO, std::string sSig, int nKeyType);
-void ProcessInnerUTXOData(std::string sInnerData);
-std::string SignBBPUTXO(std::string sUTXO, std::string& sError);
-void ProcessDashUTXOData();
 bool IsDuplicateUTXO(std::string UTXO);
-bool IsDuplicateUTXO(std::vector<UTXOStake>& utxoStakes, std::string UTXO);
-std::vector<DashStake> GetPayableDashStakes(int nHeight, double& nOwed);
-void LockUTXOStakes();
-DashStake GetDashStakeByUTXO(std::string sDashStake);
 void SendChat(CChat chat);
 UserRecord GetUserRecord(std::string sSourceCPK);
 RSAKey GetMyRSAKey();
 RSAKey GetTestRSAKey();
 std::string Mid(std::string data, int nStart, int nLength);
-std::string GetSANDirectory4();
 void WriteUnsignedBytesToFile(char const* filename, std::vector<unsigned char> outchar);
 bool PayEmailFees(CEmail email);
 void SendEmail(CEmail email);
-bool VerifyNonstandardSignature(std::string sAddress, std::string sTargMsg, std::string sSig, int nKeyType);
 double GetDACDonationsByRange(int nStartHeight, int nRange);
 UserRecord GetMyUserRecord();
-bool VerifyDACDonation(CTransactionRef tx, std::string& sError);
 bool WriteDataToFile(std::string sPath, std::string data);
 std::vector<char> ReadAllBytesFromFile(char const* filename);
-SimpleUTXO QueryUTXO(int64_t nTargetLockTime, double nTargetAmount, std::string sTicker, std::string sAddress, std::string sUTXO, int xnOut, std::string& sError, bool fReturnFirst = false);
-bool SendUTXOStake(double nTargetAmount, std::string sForeignTicker, std::string& sTXID, std::string& sError, std::string sBBPAddress, std::string sBBPUTXO, std::string sForeignAddress, std::string sForeignUTXO, 
-	std::string sBBPSig, std::string sForeignSig, std::string sCPK, bool fDryRun, UTXOStake& out_utxostake);
-std::vector<UTXOStake> GetUTXOStakes(bool fIncludeMemoryPool);
-int AssimilateUTXO(UTXOStake d);
+std::vector<UTXOStake> GetUTXOStakes(bool fWithPrices = false);
+int AssimilateUTXO(UTXOStake d, int nConfiguration);
 UTXOStake GetUTXOStakeByUTXO(std::string sUTXOStake);
-int GetUTXOStatus(uint256 txid);
-std::string GetUTXOSummary(std::string sCPK);
+std::string GetUTXOSummary(std::string sCPK, CAmount& nBBPQty);
 std::string ScanBlockForNewUTXO(const CBlock& block);
 double GetVINAge2(int64_t nBlockTime, CTransactionRef tx, CAmount nMinAmount, bool fDebug);
-double CalculateUTXOReward(int nStakeCount);
-std::string strReplace(std::string& str, const std::string& oldStr, const std::string& newStr);
+std::string strReplace(std::string str_input, std::string str_to_find, std::string str_to_replace_with);
 double AddressToPin(std::string sAddress);
 bool CompareMask2(CAmount nAmount, double nMask);
 std::vector<DACResult> GetDataListVector(std::string sType, int nDaysLimit);
@@ -537,17 +876,65 @@ bool SignStake(std::string sBitcoinAddress, std::string strMessage, std::string&
 double GetCryptoPrice(std::string sURL);
 bool VerifySigner(std::string sXML);
 double GetPBase(double& out_BTC, double& out_BBP);
-std::string GetCPID();
 bool GetTransactionTimeAndAmount(uint256 txhash, int nVout, int64_t& nTime, CAmount& nAmount);
 std::string SendBlockchainMessage(std::string sType, std::string sPrimaryKey, std::string sValue, double dStorageFee, int nSign, std::string sExtraPayload, std::string& sError);
 std::string ToYesNo(bool bValue);
 bool VoteForGobject(uint256 govobj, std::string sVoteOutcome, std::string& sError);
-int64_t GetDCCFileAge();
-std::string GetSANDirectory2();
-int GetWCGMemberID(std::string sMemberName, std::string sAuthCode, double& nPoints);
-Researcher GetResearcherByID(int nID);
-std::map<std::string, Researcher> GetPayableResearchers();
+int64_t GetFileAge(std::string sPath);
+bool CreateLegacyGSCTransmission(CAmount nAmount, std::string sAddress, std::string sCampaign, std::string sGobjectID, std::string sOutcome, std::string sDiary, std::string& sError);
+bool ValidateAddress2(std::string sAddress);
+boost::filesystem::path GetDeterministicConfigFile();
+boost::filesystem::path GetMasternodeConfigFile();
 CAmount ARM64();
-std::string AmtToString(CAmount nAmount);
+std::vector<NFT> GetNFTs(bool fIncludeMemoryPool);
+bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nBuyPrice, bool fDryRun, std::string& sError);
+NFT GetNFT(CTransactionRef tx1);
+NFT GetSpecificNFT(uint256 txid);
+bool IsDuplicateNFT(NFT& nft);
+CAmount GetAmountPaidToRecipient(CTransactionRef tx1, std::string sRecipient);
+bool ApproveUTXOSpendTransaction(CTransaction tx);
+double GetHighDWURewardPercentage(double dCommitment);
+CAmount GetUTXOPenalty(CTransaction tx, double& nPenaltyPercentage, CAmount& nAmountBurned);
+void LockUTXOStakes();
+int64_t GetTxTime1(uint256 hash, int ordinal);
+std::string RPCSendMessage(CAmount nAmount, std::string sToAddress, bool fDryRun, std::string& sError, std::string sPayload, std::string sOptFundAddress = "", CAmount nOptFundAmount = 0);
+std::string SendReferralCode(std::string& sError, double nGiftAmount);
+CAmount CheckReferralCode(std::string sCode);
+std::string ClaimReferralCode(std::string sCode, std::string& sError);
+double GetReferralCodeEffectivity(int nPortfolioTime);
+uint64_t GetPortfolioTimeAndSize(std::vector<UTXOStake>& uStakes, std::string sCPK, CAmount& nBBPSize);
+CAmount GetBBPSizeFromPortfolio(std::string sCPK);
+DACResult MailLetter(DMAddress dmFrom, DMAddress dmTo, bool fDryRun);
+DACResult MakeDerivedKey(std::string sPhrase);
+DACResult ReadAccountingEntry(std::string sKey, std::string sKey2);
+bool WriteAccountingEntry(std::string sKey, std::string sKey2, std::string sValue, CAmount nAmount);
+DMAddress DeserializeFrom();
+std::vector<DMAddress> ImportGreetingCardCSVFile(std::string sFullPath);
+DACResult SendInvoice(Invoice i);
+DACResult SendPayment(Payment p);
+std::vector<Invoice> GetInvoices();
+std::vector<Payment> GetPayments();
+DACResult SendDSQL(UniValue& oDSQLObject, std::string sTable, std::string ID);
+std::vector<CDSQLQuery> DSQLQuery(std::string sFilter);
+void ProcessDSQLInstantSendTransaction(CTransaction tx);
+std::map<std::string, std::string> SearchForDataList(std::string sType, std::string sSearch);
+uint256 GetSHA256Hash(std::string sData);
+double GetUSDValueBBP(CAmount nBBP);
+std::vector<SimpleUTXO> GetAddressUTXOs_BBP(std::string sAddress);
+void AddUTXOStake(UTXOStake& u, bool fDryRun, std::string& sError, std::string sOptFundAddress, CAmount nOptFundAmount);
+UTXOStake GetUTXOStakeByAddress(std::string Address);
+std::vector<SimpleUTXO> QueryUTXOList(std::string sTicker, std::string sAddress, int64_t nTimestamp, int nConfiguration);
+std::vector<SimpleUTXO> QueryUTXOListA(std::string sTicker, std::string sAddress, int64_t nTimestamp);
+std::vector<SimpleUTXO> QueryUTXOListB(std::string sTicker, std::string sAddress, int64_t nTimestamp);
+std::map<std::string, double> GetImpactFromReferralCodeGifts(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU);
+ReferralCode GetTotalPortfolioImpactFromReferralCodes(std::vector<ReferralCode>& vGRC, std::vector<ReferralCode>& vCRC, std::vector<UTXOStake>& vU, std::string sCPK, UniValue& details);
+
+std::vector<ReferralCode> GetGeneratedReferralCodes();
+std::vector<ReferralCode> GetClaimedReferralCodes();
+ReferralCode DeserializeReferralCode(std::string sCode);
+
+bool ValidateAddress3(std::string sTicker, std::string sAddress);
+bool ValidateTicker(std::string sTicker);
+std::string GetSANDirectory1();
 
 #endif
