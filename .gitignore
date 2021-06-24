@@ -158,3 +158,8 @@ contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide
 contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide-shm
 *.cache
 *.ipch
+contrib/Windows/BiblePay/bin/Debug/BiblePay.exe.config
+contrib/Windows/BiblePay/bin/Debug/BiblePay.pdb
+contrib/Windows/BiblePay/obj/Debug/BiblePay.csproj.FileListAbsolute.txt
+contrib/Windows/BiblePay/obj/Debug/BiblePay.pdb
+contrib/Windows/BiblePay/obj/Debug/BiblePay.Properties.Resources.resources

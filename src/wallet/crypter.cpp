@@ -640,9 +640,12 @@ unsigned char *RSA_DECRYPT_CHAR(std::string sPriKeyPath, unsigned char *cipherte
 		return plaintext;
 	}
 	total_len += bytes_processed;
-	if (!EVP_OpenFinal(ctx, plaintext + total_len, &bytes_processed))
-	{
-		fprintf(stderr, "RSA::Decrypt::EVP_OpenFinal warning: failed.\n");
+    if (!EVP_OpenFinal(ctx, plaintext + total_len, &bytes_processed)) 
+    {
+            if (false) 
+            {
+                fprintf(stderr, "RSA::Decrypt::EVP_OpenFinal warning: failed.\n");
+            }
 	}
 	total_len += bytes_processed;
 

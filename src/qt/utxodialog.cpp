@@ -151,7 +151,7 @@ void UTXODialog::on_btnQuery_clicked()
 
 	u.Ticker = sTicker;
 	u.Time = 1;
-	AssimilateUTXO(u, 1);
+	AssimilateUTXO(u, 0); // Harvest Todo: Make this configurable
 	std::vector<SimpleUTXO> l = GetUTXOStatus(u.Address);
 	std::string sHTML = "<table style='background-color:maroon;color:gold;border=1px'><tr><th>TXID<th>Amount</tr>";
 	for (auto s : l)
