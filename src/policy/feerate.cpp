@@ -25,6 +25,7 @@ CAmount CFeeRate::GetFee(size_t nBytes_) const
     assert(nBytes_ <= uint64_t(std::numeric_limits<int64_t>::max()));
     int64_t nSize = int64_t(nBytes_);
 	// BiblePay fees must be more significant:
+	// Note: Users may need to delete feerate.dat to allow recalculation to occur
 
     CAmount nFee = 25 * nSatoshisPerK * nSize / 1000;
 

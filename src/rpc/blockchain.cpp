@@ -1263,7 +1263,6 @@ static void ApplyStats(CCoinsStats &stats, CHashWriter& ss, const uint256& hash,
         ss << output.second.out.scriptPubKey;
         ss << VARINT(output.second.out.nValue);
         stats.nTransactionOutputs++;
-        stats.nTotalAmount += output.second.out.nValue;
         stats.nBogoSize += 32 /* txid */ + 4 /* vout index */ + 4 /* height + coinbase */ + 8 /* amount */ +
                            2 /* scriptPubKey len */ + output.second.out.scriptPubKey.size() /* scriptPubKey */;
 
@@ -1286,7 +1285,6 @@ static void ApplyStats(CCoinsStats &stats, CHashWriter& ss, const uint256& hash,
 		{
 		    stats.nTotalAmount += output.second.out.nValue;
 		}
-
 
     }
     ss << VARINT(0);
@@ -1418,6 +1416,8 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
 
 		// Circulating = Emitted minus burned
 		ret.push_back(Pair("total_circulating_money_supply", ValueFromAmount(stats.nTotalAmount)));
+		ret.push_back(Pair("total_burned", ValueFromAmount(stats.nTotalBurned)));
+	
 		double nPct = ((stats.nTotalAmount/COIN) + .01) / 5200000000;
 		ret.push_back(Pair("percent_emitted", nPct));
 

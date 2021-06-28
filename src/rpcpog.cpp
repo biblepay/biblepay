@@ -4714,7 +4714,14 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
 
     nft.nIteration++;
 
-    std::string sPayload = "<MT>NFT</MT><MK>" + sPK + "</MK><MV><nft><cpk>" + sBuyerCPK + "</cpk><name>" + nft.sName + "</name><description>" + nft.sDescription + "</description><loqualityurl>" + nft.sLoQualityURL + "</loqualityurl><hiqualityurl>" + nft.sHiQualityURL + "</hiqualityurl><deleted>" + (nft.fDeleted ? "1" : "0") + "</deleted><marketable>" + (nft.fMarketable ? "1" : "0") + "</marketable><time>" + RoundToString(GetAdjustedTime(), 0) + "</time><type>" + nft.sType + "</type><iteration>" + RoundToString(nft.nIteration, 0) + "</iteration><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount / COIN, 2) + "</minbidamount>" + "<reserveamount>" + RoundToString((double)nft.nReserveAmount / COIN, 2) + "</reserveamount><buyitnowamount>" + RoundToString((double)nft.nBuyItNowAmount / COIN, 2) + "</buyitnowamount>" + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" + sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
+    std::string sPayload = "<MT>NFT</MT><MK>" + sPK + "</MK><MV><nft><cpk>" + sBuyerCPK + "</cpk><name>" + nft.sName + "</name><description>" 
+        + nft.sDescription + "</description><loqualityurl>" + nft.sLoQualityURL + "</loqualityurl><hiqualityurl>" + nft.sHiQualityURL 
+        + "</hiqualityurl><deleted>" + (nft.fDeleted ? "1" : "0") + "</deleted><marketable>" + (nft.fMarketable ? "1" : "0") 
+        + "</marketable><time>" + RoundToString(GetAdjustedTime(), 0) + "</time><type>" 
+        + nft.sType + "</type><iteration>" + RoundToString(nft.nIteration, 0) + "</iteration><minbidamount>" + RoundToString((double)nft.nMinimumBidAmount / COIN, 2) + "</minbidamount>" 
+        + "<reserveamount>" + RoundToString((double)nft.nReserveAmount / COIN, 2) + "</reserveamount><buyitnowamount>" + RoundToString((double)nft.nBuyItNowAmount / COIN, 2) 
+        + "</buyitnowamount>" + "</nft><BOACTION>" + sAction + "</BOACTION><BOSIGNER>" + sBuyerCPK + "</BOSIGNER><BOSIG>" 
+        + sSignature + "</BOSIG><BOMSG>" + nft.GetHash().GetHex() + "</BOMSG></MV>";
 
     std::string sTXID = RPCSendMessage(nSend, sToAddress, false, sError, sPayload);
     if (!sTXID.empty() && sError.empty()) {
