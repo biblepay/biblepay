@@ -431,23 +431,29 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 				CAmount nAmount1 = txout.nValue;
 				CAmount nAmount2 = txout2.nValue;
 				// So for POOS, to prevent forking, we handle the situation that could occur when the supermajority set a payment of 1 (network values) and (lets say due to an internet outage, or a change of POOS status) we internally try to pay the full amount, let us catch that here:
-				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (nAmount1 == (1 * COIN) || nAmount2 == (1 * COIN) || nAmount1 == (APM3_REWARD * COIN) || nAmount2 == (APM3_REWARD * COIN)))
+				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (ARM64Matches(nAmount1, 1 * COIN) || ARM64Matches(nAmount2, 1 * COIN) || 
+					ARM64Matches(nAmount1, APM3_REWARD * COIN) || ARM64Matches(nAmount2, APM3_REWARD * COIN)))
 				{
 					found = true;
 					break;
 				}
 				// Automatic Price Mooning
-				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (blockReward == APM_REWARD * COIN || blockReward == APM2_REWARD * COIN || blockReward == APM3_REWARD))
+				if (!sRecipient1.empty() && (sRecipient1 == sRecipient2) && (ARM64Matches(blockReward, APM_REWARD * COIN)
+					|| ARM64Matches(blockReward, APM2_REWARD * COIN) || ARM64Matches(blockReward, APM3_REWARD * COIN)))
 				{
 					found = true;
 					break;
 				}
+				LogPrintf("\nCMasternodePayments::IsTransactionValid Recipient1 %s, Recipient2 %s, Amount1 %s, Amount2 %s", 
+					sRecipient1, sRecipient2, AmountToString(nAmount1), AmountToString(nAmount2));
 			}
 		}
         if (!found) {
             CTxDestination dest;
             if (!ExtractDestination(txout.scriptPubKey, dest))
                 assert(false);
+
+
             LogPrintf("CMasternodePayments::%s -- ERROR failed to find expected payee %s in block at height %s\n", __func__, EncodeDestination(dest), nBlockHeight);
             return false;
         }

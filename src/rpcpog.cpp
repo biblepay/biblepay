@@ -4141,13 +4141,14 @@ double CalculateUTXOReward()
     int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
     CAmount nPaymentsLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, false);
     CAmount nNativeTotal = 0;
-    double nTotal = SumUTXO(nNativeTotal);
     double nBTCPrice = GetCryptoPrice("btc");
     double nBBPPrice = GetCryptoPrice("bbp");
     double nUSDBBP = nBTCPrice * nBBPPrice;
     double nAnnualReward = (nPaymentsLimit / COIN) * 365 * nUSDBBP;
-    double nDWU = nAnnualReward / (nTotal + .01);
-     LogPrintf("\nReward %f, Total %f, DWU %f, USDBBP %f ", nAnnualReward, nTotal, nDWU, nUSDBBP);
+    double nTotal = SumUTXO(nNativeTotal);
+    double nGlobalBBPPortfolio = AmountToDouble(nNativeTotal) * nUSDBBP;
+    double nDWU = nAnnualReward / (nGlobalBBPPortfolio + .01);
+    LogPrintf("\nReward %f, Total %f, DWU %f, USDBBP %f ", nAnnualReward, (double)nNativeTotal/COIN, nDWU, nUSDBBP);
     if (nDWU > 2.0)
         nDWU = 2.0;
 
@@ -4633,6 +4634,23 @@ CAmount ARM64()
     double dARM = cdbl(gArgs.GetArg("-arm64", "0"), 0);
     CAmount nARM = (dARM == 1) ? 1 * COIN : 0;
     return nARM;
+}
+
+bool ARM64Matches(CAmount n1, CAmount n2)
+{
+	double dARM = cdbl(gArgs.GetArg("-arm64", "0"), 0);
+    if (dARM == 0)
+	{
+		return n1 == n2;
+	}
+	// Arm section
+	if (n1 == n2)
+		return true;
+	double d1 = AmountToDouble(n1);
+	double d2 = AmountToDouble(n2);
+ 	double d3 = std::abs(d1-d2);
+	bool fPass = (d3 < .50);
+	return fPass;
 }
 
 bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nBuyPrice, bool fDryRun, std::string& sError)

@@ -440,7 +440,7 @@ bool IsTxOutEqualToScale(CTxOut tx1, CTxOut tx2, int nScale)
 	return true;   
 }
 
-
+/*
 bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward) const
 {
     if (!deterministicMNManager->IsDIP3Enforced(nBlockHeight)) {
@@ -512,3 +512,5 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
     }
     return true;
 }
+*/
+

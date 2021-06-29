@@ -97,7 +97,7 @@ void UTXODialog::UpdateDisplay()
 	QPixmap img(qsLoc);
 	QLabel *label = new QLabel(this);
 	ui->lblIndex->setPixmap(img);
-	std::string sDWU = "DWU: " + RoundToString(CalculateUTXOReward() * 100, 2) + "%";
+	std::string sDWU = "<font color='gold'><span style='font-size:140%'>DWU: " + RoundToString(CalculateUTXOReward() * 100, 2) + "%</font>";
 	ui->lblInfo->setText(GUIUtil::TOQS(sDWU));
 }
 

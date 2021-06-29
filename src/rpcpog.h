@@ -886,6 +886,7 @@ bool ValidateAddress2(std::string sAddress);
 boost::filesystem::path GetDeterministicConfigFile();
 boost::filesystem::path GetMasternodeConfigFile();
 CAmount ARM64();
+bool ARM64Matches(CAmount n1, CAmount n2);
 std::vector<NFT> GetNFTs(bool fIncludeMemoryPool);
 bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nBuyPrice, bool fDryRun, std::string& sError);
 NFT GetNFT(CTransactionRef tx1);

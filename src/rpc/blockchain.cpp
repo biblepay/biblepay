@@ -3457,6 +3457,15 @@ UniValue exec(const JSONRPCRequest& request)
 		if (!fAdv)
 			results.push_back(Pair("Error", sError));
 	}
+	else if (sItem == "arm64test")
+	{
+		double n1 = cdbl(request.params[1].get_str(), 0);
+		double n2 = cdbl(request.params[2].get_str(), 0);
+		bool f = ARM64Matches(n1 * COIN, n2 * COIN);
+		results.push_back(Pair("bool", f));
+		results.push_back(Pair("n1", n1));
+		results.push_back(Pair("n2", n2));
+	}
 	else if (sItem == "blscommand")
 	{
 		if (request.params.size() != 2)	

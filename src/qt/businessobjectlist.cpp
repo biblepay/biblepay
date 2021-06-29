@@ -188,7 +188,8 @@ void BusinessObjectList::createUI(const QStringList &headers, const QString &pSt
 		}
 		std::string sLowBlock = ExtractXML(sXML, "<lowblock>", "</lowblock>");
 		std::string sHighBlock = ExtractXML(sXML, "<highblock>", "</highblock>");
-		std::string sHeading = "Leaderboard v1.2 - Range " + sLowBlock + " to " + sHighBlock;
+		std::string sHeading = "Leaderboard v1.3 - Range " + sLowBlock + " to " + sHighBlock + " - DWU " + RoundToString(CalculateUTXOReward() * 100, 2) + "%";
+
 		// Label Heading
 		ui->lblLeaderboard->setText(GUIUtil::TOQS(sHeading));
 	}
