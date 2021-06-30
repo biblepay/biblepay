@@ -444,6 +444,12 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 					found = true;
 					break;
 				}
+                // With APM, during a 'down day' (exchange price decreased), sanctuary address matches, and amount paid to sanctuary was significantly less
+                if (sRecipient1 == sRecipient2) 
+                {
+                    found = true;
+                    break;
+                }
 				LogPrintf("\nCMasternodePayments::IsTransactionValid Recipient1 %s, Recipient2 %s, Amount1 %s, Amount2 %s", 
 					sRecipient1, sRecipient2, AmountToString(nAmount1), AmountToString(nAmount2));
 			}
