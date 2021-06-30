@@ -4529,6 +4529,8 @@ bool ValidateAddress3(std::string sTicker, std::string sAddress)
 
     if (sTicker == "DASH" || sTicker == "BTC" || sTicker == "DOGE") 
     {
+        if (ValidateAddressLength(sAddress, 42))
+            return true;
         return ValidateAddressLength(sAddress, 34);
     } 
     else if (sTicker == "LTC") 
