@@ -4714,11 +4714,13 @@ bool ProcessNFT(NFT& nft, std::string sAction, std::string sBuyerCPK, CAmount nB
         }
         nft.fMarketable = false;
         nft.fDeleted = false;
-        /*
-			nft.nMinimumBidAmount = 0;
-			nft.nReserveAmount = 0;
-			nft.nBuyItNowAmount = 0;
-		*/
+        
+        // Clear Flags:
+        nft.nMinimumBidAmount = 0;
+        nft.nReserveAmount = 0;
+        nft.nBuyItNowAmount = 0;
+        // End of Flags
+
         if (!ValidateAddress2(sSellerCPK)) {
             sError = "Invalid seller Address " + sSellerCPK;
             return false;
