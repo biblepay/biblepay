@@ -1513,6 +1513,8 @@ void BitcoinGUI::showConsole()
 {
     rpcConsole->setTabFocus(RPCConsole::TAB_CONSOLE);
     showDebugWindow();
+	// BBP:
+	rpcConsole->setWindowModality(Qt::NonModal);
 }
 
 void BitcoinGUI::showGraph()

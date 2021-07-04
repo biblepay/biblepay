@@ -1180,8 +1180,11 @@ std::map<std::string, std::string> SearchForDataList(std::string sType, std::str
 void SerializePrayersToFile(int nHeight)
 {
     if (nHeight < 100) return;
+
     std::string sSuffix = fProd ? "_prod" : "_testnet";
-    std::string sTarget = GetSANDirectory1() + "prayers3" + sSuffix;
+    std::string sPort = gArgs.GetArg("-port", "0");
+    std::string sTarget = GetSANDirectory1() + "prayers_" + sPort + sSuffix;
+
     FILE* outFile = fopen(sTarget.c_str(), "w");
     LogPrintf("Serializing Prayers... %f ", GetAdjustedTime());
     for (auto ii : mvApplicationCache) {
@@ -1207,7 +1210,9 @@ int DeserializePrayersFromFile()
 {
     LogPrintf("\nDeserializing prayers from file %f", GetAdjustedTime());
     std::string sSuffix = fProd ? "_prod" : "_testnet";
-    std::string sSource = GetSANDirectory1() + "prayers3" + sSuffix;
+    std::string sPort = gArgs.GetArg("-port", "0");
+    
+    std::string sSource = GetSANDirectory1() + "prayers_" + sPort + sSuffix;
 
     boost::filesystem::path pathIn(sSource);
     std::ifstream streamIn;
