@@ -1186,7 +1186,7 @@ void SerializePrayersToFile(int nHeight)
     std::string sTarget = GetSANDirectory1() + "prayers_" + sPort + sSuffix;
 
     FILE* outFile = fopen(sTarget.c_str(), "w");
-    LogPrintf("Serializing Prayers... %f ", GetAdjustedTime());
+    LogPrintf("Serializing Prayers... %s at %f ", sTarget, GetAdjustedTime());
     for (auto ii : mvApplicationCache) {
         std::pair<std::string, int64_t> v = mvApplicationCache[ii.first];
         int64_t nTimestamp = v.second;
@@ -1208,11 +1208,11 @@ void SerializePrayersToFile(int nHeight)
 
 int DeserializePrayersFromFile()
 {
-    LogPrintf("\nDeserializing prayers from file %f", GetAdjustedTime());
     std::string sSuffix = fProd ? "_prod" : "_testnet";
     std::string sPort = gArgs.GetArg("-port", "0");
     
     std::string sSource = GetSANDirectory1() + "prayers_" + sPort + sSuffix;
+    LogPrintf("\nDeserializing prayers from file %s at %f", sSource, GetAdjustedTime());
 
     boost::filesystem::path pathIn(sSource);
     std::ifstream streamIn;
