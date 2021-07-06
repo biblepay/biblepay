@@ -178,6 +178,24 @@ margin-right:5px;
 padding-right:5px;
 }
 
+
+QWidget .QFrame#frame .QLabel#labelBalanceUSDText { /* USD Balance Label */
+qproperty-alignment: 'AlignVCenter | AlignRight';
+color:#971B20;
+min-width:160px;
+font-weight:bold;
+background-color:#F8F6F6;
+margin-right:5px;
+padding-right:5px;
+}
+
+
+QWidget .QFrame#frame .QLabel#lblBalanceUSD { /* USD Balance */
+qproperty-alignment: 'AlignVCenter | AlignLeft';
+color:silver;
+margin-left:0px;
+}
+
 QWidget .QFrame#frame .QLabel#labelUnconfirmed { /* Pending Balance */
 qproperty-alignment: 'AlignVCenter | AlignLeft';
 color:silver;

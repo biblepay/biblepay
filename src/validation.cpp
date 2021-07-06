@@ -3797,12 +3797,13 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 		double nVersion = GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage);
 		if (nHeight > consensusParams.HARVEST_HEIGHT && nVersion > 1000 && nVersion < 1623 && fProd)
 		{
-			LogPrintf("\r\nContextualCheckBlock::ERROR - Block Rejected - Node spamming new blocks after mandatory upgrade %f", nVersion);
+			LogPrintf("\r\nContextualCheckBlock::ERROR - Block Rejected - Node spamming new blocks after mandatory upgrade ver=%f,height=%f", nVersion, nHeight);
 			return false;
 		}
 
+        if (nHeight > consensusParams.HARVEST_HEIGHT && nVersion > 1000 && nVersion < 1603 && !fProd)
         {
-            LogPrintf("\r\nContextualCheckBlock::ERROR - Block Rejected - Node spamming new blocks after mandatory upgrade %f", nVersion);
+            LogPrintf("\r\nContextualCheckBlock::ERROR::TestNet - Block Rejected - Node spamming new blocks after mandatory upgrade %f,height=%f", nVersion, nHeight);
             return false;
         }
 
