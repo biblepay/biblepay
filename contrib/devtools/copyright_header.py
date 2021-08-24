@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # Copyright (c) 2016 The Bitcoin Core developers
-# Copyright (c) 2019 The Däsh Core developers
+# Copyright (c) 2019 The DÃSH Core Developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -108,7 +108,7 @@ EXPECTED_HOLDER_NAMES = [
     "Jan-Klaas Kollhof\n",
     "Sam Rushing\n",
     "ArtForz -- public domain half-a-node\n",
-    "The Däsh Core developers\n",
+    "The DÃSH Core Developers\n",
 ]
 
 DOMINANT_STYLE_COMPILED = {}
@@ -148,7 +148,7 @@ def file_has_without_c_style_copyright_for_holder(contents, holder_name):
 ################################################################################
 
 def read_file(filename):
-    return open(os.path.abspath(filename), 'r').read()
+    return open(os.path.abspath(filename), 'r', encoding="utf8").read()
 
 def gather_file_info(filename):
     info = {}
@@ -281,14 +281,14 @@ Usage:
     $ ./copyright_header.py report <base_directory> [verbose]
 
 Arguments:
-    <base_directory> - The base directory of a BiblePay Core source code repository.
+    <base_directory> - The base directory of a Biblepay Core source code repository.
     [verbose] - Includes a list of every file of each subcategory in the report.
 """
 
 def report_cmd(argv):
     if len(argv) == 2:
         sys.exit(REPORT_USAGE)
-        
+
     base_directory = argv[2]
     if not os.path.exists(base_directory):
         sys.exit("*** bad <base_directory>: %s" % base_directory)
@@ -327,13 +327,13 @@ def get_most_recent_git_change_year(filename):
 ################################################################################
 
 def read_file_lines(filename):
-    f = open(os.path.abspath(filename), 'r')
+    f = open(os.path.abspath(filename), 'r', encoding="utf8")
     file_lines = f.readlines()
     f.close()
     return file_lines
 
 def write_file_lines(filename, file_lines):
-    f = open(os.path.abspath(filename), 'w')
+    f = open(os.path.abspath(filename), 'w', encoding="utf8")
     f.write(''.join(file_lines))
     f.close()
 
@@ -344,7 +344,7 @@ def write_file_lines(filename, file_lines):
 COPYRIGHT = 'Copyright \(c\)'
 YEAR = "20[0-9][0-9]"
 YEAR_RANGE = '(%s)(-%s)?' % (YEAR, YEAR)
-HOLDER = 'The Däsh Core developers'
+HOLDER = 'The DÃSH Core Developers'
 UPDATEABLE_LINE_COMPILED = re.compile(' '.join([COPYRIGHT, YEAR_RANGE, HOLDER]))
 
 def get_updatable_copyright_line(file_lines):
@@ -412,24 +412,24 @@ def exec_update_header_year(base_directory):
 ################################################################################
 
 UPDATE_USAGE = """
-Updates all the copyright headers of "The Däsh Core developers" which were
+Updates all the copyright headers of "The DÃSH Core Developers" which were
 changed in a year more recent than is listed. For example:
 
-// Copyright (c) <firstYear>-<lastYear> The Däsh Core developers
+// Copyright (c) <firstYear>-<lastYear> The DÃSH Core Developers
 
 will be updated to:
 
-// Copyright (c) <firstYear>-<lastModifiedYear> The Däsh Core developers
+// Copyright (c) <firstYear>-<lastModifiedYear> The DÃSH Core Developers
 
 where <lastModifiedYear> is obtained from the 'git log' history.
 
 This subcommand also handles copyright headers that have only a single year. In those cases:
 
-// Copyright (c) <year> The Däsh Core developers
+// Copyright (c) <year> The DÃSH Core Developers
 
 will be updated to:
 
-// Copyright (c) <year>-<lastModifiedYear> The Däsh Core developers
+// Copyright (c) <year>-<lastModifiedYear> The DÃSH Core Developers
 
 where the update is appropriate.
 
@@ -437,7 +437,7 @@ Usage:
     $ ./copyright_header.py update <base_directory>
 
 Arguments:
-    <base_directory> - The base directory of BiblePay Core source code repository.
+    <base_directory> - The base directory of Biblepay Core source code repository.
 """
 
 def print_file_action_message(filename, action):
@@ -446,7 +446,7 @@ def print_file_action_message(filename, action):
 def update_cmd(argv):
     if len(argv) != 3:
         sys.exit(UPDATE_USAGE)
-    
+
     base_directory = argv[2]
     if not os.path.exists(base_directory):
         sys.exit("*** bad base_directory: %s" % base_directory)
@@ -462,7 +462,7 @@ def get_header_lines(header, start_year, end_year):
     return [line + '\n' for line in lines]
 
 CPP_HEADER = '''
-// Copyright (c) %s The Däsh Core developers
+// Copyright (c) %s The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 '''
@@ -471,7 +471,7 @@ def get_cpp_header_lines_to_insert(start_year, end_year):
     return reversed(get_header_lines(CPP_HEADER, start_year, end_year))
 
 PYTHON_HEADER = '''
-# Copyright (c) %s The Däsh Core developers
+# Copyright (c) %s The DÃSH Core Developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 '''
@@ -508,7 +508,7 @@ def file_has_hashbang(file_lines):
 
 def insert_python_header(filename, file_lines, start_year, end_year):
     if file_has_hashbang(file_lines):
-        insert_idx = 1 
+        insert_idx = 1
     else:
         insert_idx = 0
     header_lines = get_python_header_lines_to_insert(start_year, end_year)
@@ -525,7 +525,7 @@ def insert_cpp_header(filename, file_lines, start_year, end_year):
 def exec_insert_header(filename, style):
     file_lines = read_file_lines(filename)
     if file_already_has_core_copyright(file_lines):
-        sys.exit('*** %s already has a copyright by The Däsh Core developers'
+        sys.exit('*** %s already has a copyright by The DÃSH Core Developers'
                  % (filename))
     start_year, end_year = get_git_change_year_range(filename)
     if style == 'python':
@@ -538,7 +538,7 @@ def exec_insert_header(filename, style):
 ################################################################################
 
 INSERT_USAGE = """
-Inserts a copyright header for "The Däsh Core developers" at the top of the
+Inserts a copyright header for "The DÃSH Core Developers" at the top of the
 file in either Python or C++ style as determined by the file extension. If the
 file is a Python file and it has a '#!' starting the first line, the header is
 inserted in the line below it.
@@ -552,14 +552,14 @@ where <year_introduced> is according to the 'git log' history. If
 
 "<current_year>"
 
-If the file already has a copyright for "The Däsh Core developers", the
+If the file already has a copyright for "The DÃSH Core Developers", the
 script will exit.
 
 Usage:
     $ ./copyright_header.py insert <file>
 
 Arguments:
-    <file> - A source file in the BiblePay Core repository.
+    <file> - A source file in the Biblepay Core repository.
 """
 
 def insert_cmd(argv):
@@ -572,13 +572,13 @@ def insert_cmd(argv):
     _, extension = os.path.splitext(filename)
     if extension not in ['.h', '.cpp', '.cc', '.c', '.py']:
         sys.exit("*** cannot insert for file extension %s" % extension)
-   
-    if extension == '.py': 
+
+    if extension == '.py':
         style = 'python'
     else:
         style = 'cpp'
     exec_insert_header(filename, style)
-         
+
 ################################################################################
 # UI
 ################################################################################

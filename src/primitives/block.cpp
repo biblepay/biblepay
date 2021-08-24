@@ -10,12 +10,10 @@
 #include <tinyformat.h>
 #include <utilstrencodings.h>
 #include <crypto/common.h>
-#include "randomx_bbp.h"
-#include <pthread.h>
 
 uint256 CBlockHeader::GetHash() const
 {
-	/*
+    /* BIBLEPAY:
     std::vector<unsigned char> vch(80);
     CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
     ss << *this;

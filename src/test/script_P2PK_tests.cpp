@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Däsh Core developers
+﻿// Copyright (c) 2018-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,7 +7,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(script_P2PK_tests, BasicTestingSetup)
+BOOST_FIXTURE_TEST_SUITE(script_p2pk_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(IsPayToPublicKey)
 {

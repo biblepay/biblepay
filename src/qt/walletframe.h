@@ -7,14 +7,13 @@
 
 #include <QFrame>
 #include <QMap>
-#include "guiutil.h"
-#include "uint256.h"
 
 class BitcoinGUI;
 class ClientModel;
 class SendCoinsRecipient;
 class WalletModel;
 class WalletView;
+
 QT_BEGIN_NAMESPACE
 class QStackedWidget;
 QT_END_NAMESPACE
@@ -36,7 +35,7 @@ public:
 
     void setClientModel(ClientModel *clientModel);
 
-    bool addWallet(const QString& name, WalletModel *walletModel);
+    bool addWallet(WalletModel *walletModel);
     bool setCurrentWallet(const QString& name);
     bool removeWallet(const QString &name);
     void removeAllWallets();
@@ -70,23 +69,9 @@ public Q_SLOTS:
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
-
-	/** Switch to Business Object List page */
-	void gotoBusinessObjectListPage();
-	
-	/** Switch to Proposal Add Page */
-	void gotoProposalAddPage();
-	void gotoNFTAddPage(std::string sAction, uint256 h);
-	void gotoUTXOAddPage();
-	void gotoMailSendPage(std::string sAction);
-	void gotoNFTListPage();
-	void gotoUserEditPage();
-	void gotoMemorizeScripturePage();
-	void gotoProposalListPage();
-
     void gotoSendCoinsPage(QString addr = "");
-    /** Switch to PrivateSend coins page */
-    void gotoPrivateSendCoinsPage(QString addr = "");
+    /** Switch to CoinJoin coins page */
+    void gotoCoinJoinCoinsPage(QString addr = "");
 
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");

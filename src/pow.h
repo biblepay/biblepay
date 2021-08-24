@@ -19,8 +19,7 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
 
 
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits */
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, 
-	int64_t nBlockTime, int64_t nPrevBlockTime, int nPrevHeight, unsigned int nNonce, 
-	const CBlockIndex* pindexPrev, std::string sHeaderHex, uint256 uRXKey, int iThreadID, bool bLoadingBlockIndex);
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&, int nHeight, std::string sHeaderHex, uint256 uRXKey, int iThreadID);
+	
 
 #endif // BITCOIN_POW_H

@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -72,13 +72,11 @@ const char *QGETSIGSHARES="qgetsigs";
 const char *QBSIGSHARES="qbsigs";
 const char *QSIGREC="qsigrec";
 const char *QSIGSHARE="qsigshare";
+const char* QGETDATA = "qgetdata";
+const char* QDATA = "qdata";
 const char *CLSIG="clsig";
 const char *ISLOCK="islock";
 const char *MNAUTH="mnauth";
-const char *CHAT="chat";
-const char *EMAIL="email";
-const char *EMAILREQUEST="emailrequest";
-const char *ALERT="alert";
 }; // namespace NetMsgType
 
 /** All known message types. Keep this in the same order as the list of
@@ -143,13 +141,11 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::QBSIGSHARES,
     NetMsgType::QSIGREC,
     NetMsgType::QSIGSHARE,
+    NetMsgType::QGETDATA,
+    NetMsgType::QDATA,
     NetMsgType::CLSIG,
     NetMsgType::ISLOCK,
     NetMsgType::MNAUTH,
-	NetMsgType::CHAT,
-	NetMsgType::EMAIL,
-	NetMsgType::EMAILREQUEST,
-	NetMsgType::ALERT,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
 

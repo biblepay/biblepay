@@ -42,21 +42,18 @@ class CoinControlDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit CoinControlDialog(QWidget* parent = 0);
+    explicit CoinControlDialog(CCoinControl& coin_control, WalletModel* model, QWidget *parent = nullptr);
     ~CoinControlDialog();
 
-    void setModel(WalletModel *model);
-
     // static because also called from sendcoinsdialog
-    static void updateLabels(WalletModel*, QDialog*);
+    static void updateLabels(CCoinControl& m_coin_control, WalletModel*, QDialog*);
 
     static QList<CAmount> payAmounts;
-    static CCoinControl *coinControl();
     static bool fSubtractFeeFromAmount;
-    static void usePrivateSend(bool fUsePrivateSend);
 
 private:
     Ui::CoinControlDialog *ui;
+    CCoinControl& m_coin_control;
     WalletModel *model;
     int sortColumn;
     Qt::SortOrder sortOrder;
@@ -64,7 +61,6 @@ private:
     QMenu *contextMenu;
     QTreeWidgetItem *contextMenuItem;
     QAction *copyTransactionHashAction;
-	QAction *copyUTXOAction;
     QAction *lockAction;
     QAction *unlockAction;
 
@@ -79,11 +75,9 @@ private:
         COLUMN_AMOUNT,
         COLUMN_LABEL,
         COLUMN_ADDRESS,
-        COLUMN_PRIVATESEND_ROUNDS,
+        COLUMN_COINJOIN_ROUNDS,
         COLUMN_DATE,
         COLUMN_CONFIRMATIONS,
-		COLUMN_TXHASH,
-        COLUMN_VOUT_INDEX,
     };
 
     enum
@@ -94,20 +88,12 @@ private:
 
     friend class CCoinControlWidgetItem;
 
-    enum class Mode {
-        NORMAL,
-        PRIVATESEND,
-    };
-
-    static CoinControlDialog::Mode mode;
-
 private Q_SLOTS:
     void showMenu(const QPoint &);
     void copyAmount();
     void copyLabel();
     void copyAddress();
     void copyTransactionHash();
-	void copyUTXO();
     void lockCoin();
     void unlockCoin();
     void clipboardQuantity();
@@ -123,7 +109,6 @@ private Q_SLOTS:
     void headerSectionClicked(int);
     void buttonBoxClicked(QAbstractButton*);
     void buttonSelectAllClicked();
-	void buttonSelectSomeClicked();
     void buttonToggleLockClicked();
     void updateLabelLocked();
     void on_hideButton_clicked();

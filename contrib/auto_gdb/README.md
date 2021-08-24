@@ -1,4 +1,4 @@
-# Contents
+﻿# Contents
 This directory contains tools to automatically get data about the memory consumption by some objects in biblepayd process with the help of GDB debugger.
 
 ## biblepay_dbg.sh

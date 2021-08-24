@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -21,6 +21,7 @@ enum DeploymentPos
     DEPLOYMENT_DIP0003, // Deployment of DIP0002 and DIP0003 (txv3 and deterministic MN lists)
     DEPLOYMENT_DIP0008, // Deployment of ChainLock enforcement
     DEPLOYMENT_REALLOC, // Deployment of Block Reward Reallocation
+    DEPLOYMENT_DIP0020, // Deployment of DIP0020, DIP0021 and LMQ_100_67 quorums
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
@@ -49,15 +50,19 @@ enum LLMQType : uint8_t
 {
     LLMQ_NONE = 0xff,
 
-    LLMQ_5_60 = 1, // 5 members, 3 (60%) threshold, one per hour
+    LLMQ_5_60 = 1, // 50 members, 30 (60%) threshold, one per hour
     LLMQ_400_60 = 2, // 400 members, 240 (60%) threshold, one every 12 hours
     LLMQ_400_85 = 3, // 400 members, 340 (85%) threshold, one every 24 hours
+    LLMQ_100_67 = 4, // 100 members, 67 (67%) threshold, one per hour
 
     // for testing only
     LLMQ_TEST = 100, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
 
     // for devnets only
     LLMQ_DEVNET = 101, // 10 members, 6 (60%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
+
+    // for testing activation of new quorums only
+    LLMQ_TEST_V17 = 102, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
 };
 
 // Configures a LLMQ and its DKG
@@ -116,7 +121,7 @@ struct LLMQParams {
     // Number of quorums to consider "active" for signing sessions
     int signingActiveQuorumCount;
 
-    // Used for inter-quorum communication. This is the number of quorums for which we should keep old connections. This
+    // Used for intra-quorum communication. This is the number of quorums for which we should keep old connections. This
     // should be at least one more then the active quorums set.
     int keepOldConnections;
 
@@ -130,6 +135,13 @@ struct LLMQParams {
 struct Params {
     uint256 hashGenesisBlock;
     uint256 hashDevnetGenesisBlock;
+	int BARLEY_HARVEST_HEIGHT;
+	int RANDOMX_HEIGHT;
+	int LLMQHeight;
+
+	std::string FoundationAddress;
+	std::string BurnAddress;
+
     int nSubsidyHalvingInterval;
     int nMasternodePaymentsStartBlock;
     int nMasternodePaymentsIncreaseBlock;
@@ -145,44 +157,6 @@ struct Params {
     int nGovernanceMinQuorum; // Min absolute vote count to trigger an action
     int nGovernanceFilterElements;
     int nMasternodeMinimumConfirmations;
-
-	// Bible Pay Settings
-	std::string FoundationAddress;
-	std::string FoundationPODSAddress;
-	std::string FoundationQTAddress;
-	std::string BurnAddress;
-	std::string BurnAddressOrphanDonations;
-	std::string BurnAddressWhaleMatches;
-	int nDCCSuperblockStartBlock;
-	int nDCCSuperblockCycle;
-	int QTHeight;
-	int F7000_CUTOVER_HEIGHT;
-	int F8000_CUTOVER_HEIGHT;
-	int F9000_CUTOVER_HEIGHT;
-	int ANTI_GPU_HEIGHT;
-	int RANDOMX_HEIGHT;
-	int F11000_CUTOVER_HEIGHT;
-	int F12000_CUTOVER_HEIGHT;
-	int F13000_CUTOVER_HEIGHT;
-	int F14000_CUTOVER_HEIGHT;
-	int EVOLUTION_CUTOVER_HEIGHT;
-	int ABNHeight;
-	int FPOG_CUTOVER_HEIGHT;
-	int PODC2_CUTOVER_HEIGHT;
-	int LAST_TITHE_BLOCK;
-	int PODC_LAST_BLOCK;
-	int POOM_PHASEOUT_HEIGHT;
-	int POOS_HEIGHT;
-	int TRIBULATION_HEIGHT;
-	int HARVEST_HEIGHT;
-	int HARVEST_HEIGHT2;
-	int nSanctuaryPaymentsPhaseIIHeight;
-
-	int LLMQHeight;
-	
-	// End of Bible Pay Settings
-
-
     /** Block height and hash at which BIP34 becomes active */
     int BIP34Height;
     uint256 BIP34Hash;
@@ -194,10 +168,11 @@ struct Params {
     int DIP0001Height;
     /** Block height at which DIP0003 becomes active */
     int DIP0003Height;
-	int DIP0008Height;
     /** Block height at which DIP0003 becomes enforced */
     int DIP0003EnforcementHeight;
     uint256 DIP0003EnforcementHash;
+    /** Block height at which DIP0008 becomes active */
+    int DIP0008Height;
     /**
      * Minimum blocks including miner confirmation of the total of nMinerConfirmationWindow blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -228,6 +203,7 @@ struct Params {
     std::map<LLMQType, LLMQParams> llmqs;
     LLMQType llmqTypeChainLocks;
     LLMQType llmqTypeInstantSend{LLMQ_NONE};
+    LLMQType llmqTypePlatform{LLMQ_NONE};
 };
 } // namespace Consensus
 

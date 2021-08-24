@@ -1,4 +1,4 @@
-# Seeds
+﻿# Seeds
 
 Utility to generate the seeds.txt list that is compiled into the client
 (see [src/chainparamsseeds.h](/src/chainparamsseeds.h) and other utilities in [contrib/seeds](/contrib/seeds)).
@@ -17,4 +17,5 @@ that the list is as expected.
 
 Ubuntu:
 
-    sudo apt-get install python3-dnspython
+    sudo apt-get install python3-pip
+    pip3 install dnspython

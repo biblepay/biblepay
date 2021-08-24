@@ -1,9 +1,9 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef GOVERNANCE_VOTE_H
-#define GOVERNANCE_VOTE_H
+#ifndef BITCOIN_GOVERNANCE_GOVERNANCE_VOTE_H
+#define BITCOIN_GOVERNANCE_GOVERNANCE_VOTE_H
 
 #include <key.h>
 #include <primitives/transaction.h>
@@ -66,7 +66,6 @@ private:
     int nVoteOutcome; // see VOTE_OUTCOMES above
     int64_t nTime;
     std::vector<unsigned char> vchSig;
-	std::string sMultipleChoiceData;
 
     /** Memory only. */
     const uint256 hash;
@@ -115,7 +114,6 @@ public:
     uint256 GetSignatureHash() const;
 
     std::string ToString() const;
-	std::string GetMultipleChoiceData() const;
 
     ADD_SERIALIZE_METHODS;
 
@@ -127,17 +125,12 @@ public:
         READWRITE(nVoteOutcome);
         READWRITE(nVoteSignal);
         READWRITE(nTime);
-            if (!(s.GetType() & SER_GETHASH)) {
+        if (!(s.GetType() & SER_GETHASH)) {
             READWRITE(vchSig);
         }
-		if (nTime > 1598918400)
-		{
-			READWRITE(sMultipleChoiceData);
-		}
-
         if (ser_action.ForRead())
             UpdateHash();
-	}
+    }
 };
 
-#endif
+#endif // BITCOIN_GOVERNANCE_GOVERNANCE_VOTE_H

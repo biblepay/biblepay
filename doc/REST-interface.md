@@ -1,4 +1,4 @@
-Unauthenticated REST Interface
+﻿Unauthenticated REST Interface
 ==============================
 
 The REST API can be enabled with the `-rest` option.
@@ -44,7 +44,7 @@ Only supports JSON as output format.
 * verificationprogress : (numeric) estimate of verification progress [0..1]
 * chainwork : (string) total amount of work in active chain, in hexadecimal
 * pruned : (boolean) if the blocks are subject to pruning
-* pruneheight : (numeric) heighest block available
+* pruneheight : (numeric) highest block available
 * softforks : (array) status of softforks in progress
 * bip9_softforks : (object) status of BIP9 softforks in progress
 

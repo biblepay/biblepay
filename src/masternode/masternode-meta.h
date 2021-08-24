@@ -1,9 +1,9 @@
-// Copyright (c) 2014-2020 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef MASTERNODE_META_H
-#define MASTERNODE_META_H
+#ifndef BITCOIN_MASTERNODE_MASTERNODE_META_H
+#define BITCOIN_MASTERNODE_MASTERNODE_META_H
 
 #include <serialize.h>
 
@@ -39,7 +39,7 @@ private:
     int64_t lastOutboundSuccess = 0;
 
 public:
-    CMasternodeMetaInfo() {}
+    CMasternodeMetaInfo() = default;
     explicit CMasternodeMetaInfo(const uint256& _proTxHash) : proTxHash(_proTxHash) {}
     CMasternodeMetaInfo(const CMasternodeMetaInfo& ref) :
         proTxHash(ref.proTxHash),
@@ -73,7 +73,7 @@ public:
 
     bool IsValidForMixingTxes() const { return GetMixingTxCount() <= MASTERNODE_MAX_MIXING_TXES; }
 
-    // KEEP TRACK OF EACH GOVERNANCE ITEM INCASE THIS NODE GOES OFFLINE, SO WE CAN RECALC THEIR STATUS
+    // KEEP TRACK OF EACH GOVERNANCE ITEM IN CASE THIS NODE GOES OFFLINE, SO WE CAN RECALCULATE THEIR STATUS
     void AddGovernanceVote(const uint256& nGovernanceObjectHash);
 
     void RemoveGovernanceObject(const uint256& nGovernanceObjectHash);
@@ -95,7 +95,7 @@ private:
     std::map<uint256, CMasternodeMetaInfoPtr> metaInfos;
     std::vector<uint256> vecDirtyGovernanceObjectHashes;
 
-    // keep track of dsq count to prevent masternodes from gaming privatesend queue
+    // keep track of dsq count to prevent masternodes from gaming coinjoin queue
     int64_t nDsqCount = 0;
 
 public:
@@ -158,4 +158,4 @@ public:
 
 extern CMasternodeMetaMan mmetaman;
 
-#endif//MASTERNODE_META_H
+#endif // BITCOIN_MASTERNODE_MASTERNODE_META_H

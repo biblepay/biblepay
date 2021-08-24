@@ -1,4 +1,4 @@
-*.sublime-project
+﻿*.sublime-project
 *.sublime-workspace
 todo.txt
 reset-files.bash
@@ -63,8 +63,6 @@ libconftest.dylib*
 *.pyc
 *.o
 *.o-*
-*.patch
-!depends/patches/*/*.patch
 *.a
 *.pb.cc
 *.pb.h
@@ -76,6 +74,10 @@ libconftest.dylib*
 *.json.h
 *.raw.h
 
+# Only ignore unexpected patches
+*.patch
+!depends/patches/**/*.patch
+
 #libtool object files
 *.lo
 *.la
@@ -84,7 +86,7 @@ libconftest.dylib*
 *.qm
 Makefile
 biblepay-qt
-biblepay-Qt.app
+BiblePay-Qt.app
 background.tiff*
 !/depends/Makefile
 
@@ -98,6 +100,7 @@ qrc_*.cpp
 # Mac specific
 .DS_Store
 build
+*.dSYM
 
 #lcov
 *.gcno

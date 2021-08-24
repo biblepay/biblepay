@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020 The Däsh Core developers
+﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -122,7 +122,7 @@ void CKeePassIntegrator::init()
 
 void CKeePassIntegrator::CKeePassRequest::addStrParameter(const std::string& strName, const std::string& strValue)
 {
-    requestObj.push_back(Pair(strName, strValue));
+    requestObj.pushKV(strName, strValue);
 }
 
 void CKeePassIntegrator::CKeePassRequest::addStrParameter(const std::string& strName, const SecureString& sValue)

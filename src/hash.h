@@ -1,6 +1,6 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -241,7 +241,7 @@ public:
     }
 
     template<typename T>
-    CHashVerifier<Source>& operator>>(T& obj)
+    CHashVerifier<Source>& operator>>(T&& obj)
     {
         // Unserialize from this stream
         ::Unserialize(*this, obj);
@@ -296,19 +296,6 @@ public:
  */
 uint64_t SipHashUint256(uint64_t k0, uint64_t k1, const uint256& val);
 uint64_t SipHashUint256Extra(uint64_t k0, uint64_t k1, const uint256& val, uint32_t extra);
-
-/* ------------- Blake Hash -------------------- */
-template<typename T1>
-inline uint256 HashBlake(const T1 pbegin, const T1 pend)
-{
-    sph_blake256_context     ctx_blake;
-    static unsigned char pblank[1];
-    uint256 hash[1];
-    sph_blake256_init(&ctx_blake);
-    sph_blake256 (&ctx_blake, (pbegin == pend ? pblank : static_cast<const void*>(&pbegin[0])), (pend - pbegin) * sizeof(pbegin[0]));
-    sph_blake256_close(&ctx_blake, static_cast<void*>(&hash[0]));
-	return hash[0];
-}
 
 /* ----------- BiblePay Hash ------------------------------------------------ */
 template<typename T1>

@@ -10,8 +10,6 @@
 #include <script/script.h>
 #include <serialize.h>
 #include <uint256.h>
-#include <vector>
-#include <cmath>
 
 /** Transaction types */
 enum {
@@ -148,21 +146,21 @@ class CTxOut
 public:
     CAmount nValue;
     CScript scriptPubKey;
-    int nRounds;
 	std::string sTxOutMessage;
+    
     CTxOut()
     {
         SetNull();
     }
 
-    CTxOut(const CAmount& nValueIn, CScript scriptPubKeyIn, int nRoundsIn = -10);
+    CTxOut(const CAmount& nValueIn, CScript scriptPubKeyIn);
 
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(nValue);
-        READWRITE(*(CScriptBase*)(&scriptPubKey));
+        READWRITE(scriptPubKey);
 		// BiblePay Data
 		READWRITE(LIMITED_STRING(sTxOutMessage, 3000));
     }
@@ -171,7 +169,6 @@ public:
     {
         nValue = -1;
         scriptPubKey.clear();
-        nRounds = -10; // an initial value, should be no way to get this by calculations
     }
 
     bool IsNull() const
@@ -182,8 +179,7 @@ public:
     friend bool operator==(const CTxOut& a, const CTxOut& b)
     {
         return (a.nValue       == b.nValue &&
-                a.scriptPubKey == b.scriptPubKey &&
-                a.nRounds      == b.nRounds);
+                a.scriptPubKey == b.scriptPubKey);
     }
 
     friend bool operator!=(const CTxOut& a, const CTxOut& b)
@@ -204,8 +200,6 @@ class CTransaction
 public:
     // Default transaction version.
     static const int32_t CURRENT_VERSION=2;
-	static const int SUPERBLOCK_PAYMENT_THRESHHOLD = 2000000;
-	static const int SUPERBLOCK_VOUT_MIN = 3;
 
     // Changing the default transaction version requires a two step process: first
     // adapting relay policy by bumping MAX_STANDARD_VERSION, and then later date
@@ -280,88 +274,6 @@ public:
         return (vin.size() == 1 && vin[0].prevout.IsNull());
     }
 
-	bool IsGSCPayment() const
-	{
-		// Determine if this is a GSC payment
-		bool IsSuperblock = (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() > SUPERBLOCK_VOUT_MIN);
-		if (IsSuperblock)
-		{
-			CAmount nValueOut = GetValueOut();
-			bool bGSCPayment = nValueOut < (SUPERBLOCK_PAYMENT_THRESHHOLD * COIN);
-			return bGSCPayment;
-		}
-		return false;
-    }
-
-	bool IsUTXOReward() const
-	{
-		double nWhaleReward = (double)GetValueOut()/COIN;
-		double nWholePart = floor(nWhaleReward);
-		double nDecPart = nWhaleReward - nWholePart;
-		return (nDecPart == 1527);
-	}
-
-	bool IsMaskedTx(int nMaskType) const
-	{
-		double nWhaleReward = (double)GetValueOut()/COIN;
-		double nWholePart = floor(nWhaleReward);
-		double nDecPart = nWhaleReward - nWholePart;
-		return (nDecPart == nMaskType);
-	}
-
-	bool IsSuperblockPayment() const
-	{
-		// Determine if this is a monthly governance superblock payment
-		bool IsSuperblock = (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() > SUPERBLOCK_VOUT_MIN);
-		if (IsSuperblock)
-		{
-			CAmount nValueOut = GetValueOut();
-			bool bSuperblockPayment = nValueOut > (SUPERBLOCK_PAYMENT_THRESHHOLD * COIN);
-			return bSuperblockPayment;
-		}
-		return false;
-    }
-
-	std::string GetTxMessage() const
-	{
-		std::string sMsg;
-		for (unsigned int i = 0; i < vout.size(); i++) 
-		{
-			sMsg += vout[i].sTxOutMessage;
-		}
-		return sMsg;
-	}
-
-	bool IsGSCTransmission() const
-	{
-		// Is this a GSC-Stake-Transmission?
-		std::string sMyData = GetTxMessage();
-		return (sMyData.find("<MT>GSCTransmission") != std::string::npos);
-	}
-
-	std::string GetCampaignName86() const
-	{
-		std::string sData = GetTxMessage();
-		std::string sCampaign = "";
-		//ExtractXMLValue(sData, "<gsccampaign>", "</gsccampaign>");
-		if (sCampaign.empty()) 
-			sCampaign = "Unknown";
-		return sCampaign;
-	}
-
-	bool IsCPKAssociation() const
-	{
-		// Is this a Christian Public Keypair association tx?
-		std::string sMyData = GetTxMessage();
-		return (sMyData.find("<MT>CPK") != std::string::npos);
-	}
-
-	bool IsUTXOStake() const
-	{
-		std::string sMyData = GetTxMessage();
-		return (sMyData.find("<MT>UTXO") != std::string::npos);
-	}
-
     friend bool operator==(const CTransaction& a, const CTransaction& b)
     {
         return a.hash == b.hash;
@@ -383,7 +295,6 @@ struct CMutableTransaction
     int16_t nVersion;
     int16_t nType;
     uint32_t nLockTime;
-	std::string sTxMessage;
     std::vector<uint8_t> vExtraPayload; // only available for special transaction types
 
     CMutableTransaction();

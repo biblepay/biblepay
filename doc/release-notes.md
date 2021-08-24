@@ -1,4 +1,4 @@
-BiblePay Core version 0.16.1.1
+﻿Biblepay Core version 0.17.0.3
 ==========================
 
 Release is now available from:
@@ -27,7 +27,7 @@ or -reindex) to make sure your wallet has all the new data synced. Upgrading
 from version 0.13 should not require any additional actions.
 
 When upgrading from a version prior to 0.14.0.3, the
-first startup of BiblePay Core will run a migration process which can take a few
+first startup of Biblepay Core will run a migration process which can take a few
 minutes to finish. After the migration, a downgrade to an older version is only
 possible with a reindex (or reindex-chainstate).
 
@@ -40,31 +40,40 @@ Downgrading to a version older than 0.14.0.3 is no longer supported due to
 changes in the "evodb" database format. If you need to use an older version,
 you must either reindex or re-sync the whole chain.
 
-### Downgrade of masternodes to < 0.16
+### Downgrade of masternodes to < 0.17.0.2
 
-Starting with this release, masternodes will verify the protocol version of other
-masternodes. This will result in PoSe punishment/banning for outdated masternodes,
-so downgrading is not recommended.
+Starting with the 0.16 release, masternodes verify the protocol version of other
+masternodes. This results in PoSe punishment/banning for outdated masternodes,
+so downgrading even prior to the activation of the introduced hard-fork changes
+is not recommended.
 
 Notable changes
 ===============
 
-There was an unexpected behaviour of the "Encrypt wallet" menu item for unencrypted wallets
-which was showing users the "Decrypt wallet" dialog instead. This was a GUI only issue,
-internal encryption logic and RPC behaviour were not affected.
+This release adds some missing translations and help strings. It also fixes
+a couple of build issues and a rare crash on some linux systems.
 
-0.16.1.1 Change log
+0.17.0.3 Change log
 ===================
 
-See detailed [set of changes](https://github.com/biblepay/biblepay/compare/v0.16.1.0...biblepay:v0.16.1.1).
+See detailed [set of changes](https://github.com/biblepay/biblepay/compare/v0.17.0.2...biblepay:v0.17.0.3).
 
-- [`ccef3b4836`](https://github.com/biblepay/biblepay/commit/ccef3b48363d8bff4b919d9119355182e3902ef3) qt: Fix wallet encryption dialog (#3816)
+- [`6a54af0df7`](https://github.com/biblepay/biblepay/commit/6a54af0df7) Bump to v0.17.0.3
+- [`97e8461234`](https://github.com/biblepay/biblepay/commit/97e8461234) doc: Archive v0.17.0.2 release notes
+- [`96c041896b`](https://github.com/biblepay/biblepay/commit/96c041896b) feat: add tor entrypoint script for use in biblepaymate (#4182)
+- [`3661f36bbd`](https://github.com/biblepay/biblepay/commit/3661f36bbd) Merge #14416: Fix OSX dmg issue (10.12 to 10.14) (#4177)
+- [`4f4bda0557`](https://github.com/biblepay/biblepay/commit/4f4bda0557) depends: Undefine `BLSALLOC_SODIUM` in `bls-dash.mk` (#4176)
+- [`575e0a3070`](https://github.com/biblepay/biblepay/commit/575e0a3070) qt: Add `QFont::Normal` as a supported font weight when no other font weights were found (#4175)
+- [`ce4a73b790`](https://github.com/biblepay/biblepay/commit/ce4a73b790) rpc: Fix `upgradetohd` help text (#4170)
+- [`2fa8ddf160`](https://github.com/biblepay/biblepay/commit/2fa8ddf160) Translations 202105 (add missing) (#4169)
 
 Credits
 =======
 
 Thanks to everyone who directly contributed to this release:
 
+- dustinface (xdustinface)
+- strophy
 - UdjinM6
 
 As well as everyone that submitted issues and reviewed pull requests.
@@ -83,15 +92,17 @@ the 0.8.x tree and was first released on Mar/13/2014.
 Darkcoin tree 0.10.x used to be the closed source implementation of Darksend
 which was released open source on Sep/25/2014.
 
-BiblePay Core tree 0.11.x was a fork of Bitcoin Core tree 0.9,
+Biblepay Core tree 0.11.x was a fork of Bitcoin Core tree 0.9,
 Darkcoin was rebranded to BiblePay.
 
-BiblePay Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
+Biblepay Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
 
-BiblePay Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
+Biblepay Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
 
 These release are considered obsolete. Old release notes can be found here:
 
+- [v0.17.0.2](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.17.0.2.md) released May/19/2021
+- [v0.16.1.1](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.16.1.1.md) released November/17/2020
 - [v0.16.1.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.16.1.0.md) released November/14/2020
 - [v0.16.0.1](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.16.0.1.md) released September/30/2020
 - [v0.15.0.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.15.0.0.md) released Febrary/18/2020

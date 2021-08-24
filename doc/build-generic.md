@@ -1,6 +1,6 @@
-GENERIC BUILD NOTES
+﻿GENERIC BUILD NOTES
 ====================
-Some notes on how to build BiblePay Core based on the [depends](../depends/README.md) build system.
+Some notes on how to build Biblepay Core based on the [depends](../depends/README.md) build system.
 
 Note on old build instructions
 ------------------------------
@@ -10,7 +10,7 @@ is supported today.
 
 Required build tools and environment
 ------------------------------------
-Building the dependencies and BiblePay Core requires some essential build tools to be installed before. Please see
+Building the dependencies and Biblepay Core requires some essential build tools to be installed before. Please see
 [build-unix](build-unix.md), [build-osx](build-osx.md) and [build-windows](build-windows.md) for details.
 
 Building dependencies
@@ -24,7 +24,7 @@ $ make -j4 # Choose a good -j value, depending on the number of CPU cores availa
 $ cd ..
 ```
 
-This will download and build all dependencies required to build BiblePay Core. Caching of build results will ensure that only
+This will download and build all dependencies required to build Biblepay Core. Caching of build results will ensure that only
 the packages are rebuilt which have changed since the last depends build.
 
 It is required to re-run the above commands from time to time when dependencies have been updated or added. If this is
@@ -34,7 +34,7 @@ Please read the [depends](../depends/README.md) documentation for more details o
 options. If no host is specified (as in the above example) when calling `make`, the depends system will default to your
 local host system. 
 
-Building BiblePay Core
+Building Biblepay Core
 ---------------------
 
 ```bash
@@ -49,7 +49,7 @@ Please replace `<host>` with your local system's `host-platform-triplet`. The fo
 - `x86_64-pc-linux-gnu` for Linux64
 - `i686-w64-mingw32` for Win32
 - `x86_64-w64-mingw32` for Win64
-- `x86_64-apple-darwin11` for MacOSX
+- `x86_64-apple-darwin14` for MacOSX
 - `arm-linux-gnueabihf` for Linux ARM 32 bit
 - `aarch64-linux-gnu` for Linux ARM 64 bit
 
@@ -61,7 +61,7 @@ If you want to build for the same host but different distro, add `--enable-glibc
 
 ccache
 ------
-`./configure` of BiblePay Core will autodetect the presence of ccache and enable use of it. To disable ccache, use
+`./configure` of Biblepay Core will autodetect the presence of ccache and enable use of it. To disable ccache, use
 `./configure --prefix=<prefix> --disable-ccache`. When installed and enabled, [ccache](https://ccache.samba.org/) will
 cache build results on source->object level.
 

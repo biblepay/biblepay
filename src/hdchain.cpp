@@ -1,10 +1,10 @@
-// Copyright (c) 2014-2020 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 
-#include <base58.h>
 #include <bip39.h>
 #include <chainparams.h>
 #include <hdchain.h>
+#include <key_io.h>
 #include <tinyformat.h>
 #include <util.h>
 #include <utilstrencodings.h>
@@ -55,16 +55,12 @@ void CHDChain::Debug(const std::string& strName) const
             CExtKey extkey;
             extkey.SetMaster(vchSeed.data(), vchSeed.size());
 
-            CBitcoinExtKey b58extkey;
-            b58extkey.SetKey(extkey);
-            std::cout << "extended private masterkey: " << b58extkey.ToString().c_str() << std::endl;
+            std::cout << "extended private masterkey: " << EncodeExtKey(extkey).c_str() << std::endl;
 
             CExtPubKey extpubkey;
             extpubkey = extkey.Neuter();
 
-            CBitcoinExtPubKey b58extpubkey;
-            b58extpubkey.SetKey(extpubkey);
-            std::cout << "extended public masterkey: " << b58extpubkey.ToString().c_str() << std::endl;
+            std::cout << "extended public masterkey: " << EncodeExtPubKey(extpubkey).c_str() << std::endl;
         }
     );
 }
@@ -82,6 +78,10 @@ bool CHDChain::SetMnemonic(const SecureString& ssMnemonic, const SecureString& s
         // can't (re)set mnemonic if seed was already set
         if (!IsNull())
             return false;
+
+        if (ssMnemonicPassphrase.size() > 256) {
+            throw std::runtime_error(std::string(__func__) + ": Mnemonic passphrase is too long, must be at most 256 characters");
+        }
 
         // empty mnemonic i.e. "generate a new one"
         if (ssMnemonic.empty()) {

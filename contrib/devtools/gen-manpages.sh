@@ -1,13 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
+export LC_ALL=C
 TOPDIR=${TOPDIR:-$(git rev-parse --show-toplevel)}
-SRCDIR=${SRCDIR:-$TOPDIR/src}
+BUILDDIR=${BUILDDIR:-$TOPDIR}
+
+BINDIR=${BINDIR:-$BUILDDIR/src}
 MANDIR=${MANDIR:-$TOPDIR/doc/man}
 
-BITCOIND=${BITCOIND:-$SRCDIR/biblepayd}
-BITCOINCLI=${BITCOINCLI:-$SRCDIR/biblepay-cli}
-BITCOINTX=${BITCOINTX:-$SRCDIR/biblepay-tx}
-BITCOINQT=${BITCOINQT:-$SRCDIR/qt/biblepay-qt}
+BITCOIND=${BITCOIND:-$BINDIR/biblepayd}
+BITCOINCLI=${BITCOINCLI:-$BINDIR/biblepay-cli}
+BITCOINTX=${BITCOINTX:-$BINDIR/biblepay-tx}
+BITCOINQT=${BITCOINQT:-$BINDIR/qt/biblepay-qt}
 
 [ ! -x $BITCOIND ] && echo "$BITCOIND not found or not executable." && exit 1
 

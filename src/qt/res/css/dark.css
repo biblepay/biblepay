@@ -52,14 +52,13 @@ WalletFrame {
 
 QMessageBox 
 {
-     xbackground-color:#F8F6F6;
      background-color:#323233;
 }
 
 
 QWidget { /* override text selection background color for all text widgets */
     selection-color: #363637;
-    selection-background-color: #c7c7c7;
+    selection-background-color: maroon;
 }
 
 
@@ -70,6 +69,8 @@ WalletFrame {
 border-image: url(':/images/rg') 0 0 0 0 stretch stretch;
 border-top:0px solid #000;
 /*max-width:1280;*/
+min-height:743px;
+height:743px;
 margin:0;
 }
 
@@ -77,9 +78,10 @@ margin:0;
 QToolBar {
 background-color:#971B20;
 border:0px solid #000;
-height:700px;
+height:650px;
+min-height:650px;
 /* overflow:hidden; */
-/*min-height:840px;*/
+/* min-height:840px; */
 width:190px;
 max-width:190px;
 text-align:left;
@@ -90,7 +92,7 @@ padding-bottom:90px;
 
 
 QWidget#header {
-xbackground-image: url(':/images/biblepay_logo');
+/*background-image: url(':/images/biblepay_logo');*/
 min-height:35px;
 /*max-width:1000px;*/
 margin:0;
@@ -102,7 +104,7 @@ padding:0;
 background-color:transparent;
 border:0px solid #fff;
 /*max-width:1600px; (0317)*/
-width:1200px;
+width:900px;
 /*height:750px;*/
 margin:0;
 padding:0;
@@ -240,14 +242,11 @@ margin-left:16px;
 
 /* RECENT TRANSACTIONS */
 
-QWidget .QFrame#frame_2 { /* Transactions Widget */
+QWidget .QFrame#frame_2 { /* Transactions Widget (This is the entire right side of the overview page, but not the transaction list itself) */
 min-width:300px;
 margin-right:5px;
 margin-left:0;
 margin-top:0;
-/*xbackground-image: url(':/images/biblepay_logo_horizontal');
-background-repeat:none;
-*/
 }
 
 QWidget .QFrame#frame_2 .QLabel#label_4 { /* Recent Transactions Label */
@@ -278,6 +277,7 @@ font-weight:normal;
 max-width:369px;
 margin-top:12px;
 margin-left:0px; /* CSS - set to -66px to hide default transaction icons */
+background-image: url(':/images/rg') 0 0 0 0 stretch stretch;
 }
 
 
@@ -531,18 +531,16 @@ background-color:#971B20;
 }
 
 QComboBox::item:alternate {
-background:#black;
+background:#010101;
 }
 
 QComboBox::item:selected {
 border:0px solid transparent;
-/*background:#2d2d2e;*/
 background-color:#971B20;
 }
 
 QComboBox QListView {
-/*background:#fff;*/
-/*background:black;*/
+background:#605959;
 background-color:#2d2d2e;
 border:1px solid #971B20;
 padding-right:1px;
@@ -677,7 +675,7 @@ QProgressBar
 
 QProgressBar {
     background-color: #c7c7c7;
-    color: #00000000;
+    color: #000000;
     /*max-width:1500px;*/
 }
 
@@ -911,98 +909,6 @@ QScrollArea
 
 /***** No dark.css specific coloring here yet *****/
 
-/******************************************************
-QScrollBar
-******************************************************/
-
-/* Do NOT apply any styles to QScrollBar here,
-* it's OS dependent and should be handled via platform specific code at the
-* end of the file.
-*/
-
-
-/*
-QScrollBar:vertical { 
-border:0;
-background:transparent;
-width:18px;
-margin: 18px 0px 18px 0px;
-}
-
-QScrollBar:horizontal { 
-border:0;
-background:transparent;
-height:18px;
-margin: 0px 18px 0px 18px;
-}
-
-
-QScrollBar::handle:vertical { 
-background:#605959;
-min-height:10px;
-}
-
-QScrollBar::handle:horizontal { 
-background:#605959;
-min-width:10px;
-}
-
-QScrollBar::add-page, QScrollBar::sub-page { 
-background:#F8F6F6;
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical, QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { 
-background-color:#F8F6F6;
-border: 1px solid #f2f0f0;
-width:16px;
-height:16px;
-}
-
-QScrollBar::add-line:vertical:pressed, QScrollBar::sub-line:vertical:pressed, QScrollBar::add-line:horizontal:pressed, QScrollBar::sub-line:horizontal:pressed {
-background-color:#3B3434;
-}
-
-QScrollBar::sub-line:vertical { 
-subcontrol-position:top;
-subcontrol-origin: margin;
-}
-
-QScrollBar::add-line:vertical { 
-subcontrol-position:bottom;
-subcontrol-origin: margin;
-}
-
-QScrollBar::sub-line:horizontal { 
-subcontrol-position:left;
-subcontrol-origin: margin;
-}
-
-QScrollBar::add-line:horizontal { 
-subcontrol-position:right;
-subcontrol-origin: margin;
-}
-
-QScrollBar:up-arrow, QScrollBar:down-arrow, QScrollBar:left-arrow, QScrollBar:right-arrow { 
-width:10px;
-height:10px;
-}
-
-QScrollBar:up-arrow {
-background-image: url(':/images/bezaleel_upArrow_small');
-}
-
-QScrollBar:down-arrow {
-background-image: url(':/images/bezaleel_downArrow_small');
-}
-
-QScrollBar:left-arrow {
-background-image: url(':/images/bezaleel_leftArrow_small');
-}
-
-QScrollBar:right-arrow {
-background-image: url(':/images/bezaleel_rightArrow_small');
-}
-*/
 
 
 
@@ -1251,7 +1157,8 @@ border-right: 1px solid #81171B;
 }
 
 QDialog .QTabWidget QTabBar::tab:selected {
-background-color:#FAFBFC;
+/*background-color:#010101;*/
+background:#4a4a4b;
 color:#971B20;
 }
 
@@ -1352,7 +1259,7 @@ ModalOverlay
 ******************************************************/
 
 QWidget#bgWidget { /* The frame overlaying the overview-page */
-    background-color: #cc323232;
+    background-color:transparent;
     color: #585858;
 }
 
@@ -1432,16 +1339,51 @@ RPCConsole QTableView {
 SendCoinsDialog
 ******************************************************/
 
+QDialog#SendCoinsDialog .QScrollArea#scrollArea .QWidget#scrollAreaWidgetContents { /* Send To Widget */
+background-color:transparent;
+}
+
+QDialog#SendCoinsDialog { /* Send coins background */
+    background-color: #323233;
+}
+
+
 QDialog#SendCoinsDialog .QFrame#frameCoinControl,
 QDialog#SendCoinsDialog #scrollArea {
     border-color: #39393b;
+    background-color: transparent;
 }
+
+
+
+
 
 /******************************************************
 SendCoinsEntry
 ******************************************************/
 
-/***** No dark.css specific coloring here yet *****/
+QStackedWidget#SendCoinsEntry .QFrame#SendCoins > .QLabel { /* Send Coin Entry Labels */
+background-color:#971B20;
+xmin-width:102px;
+xfont-weight:bold;
+xfont-size:13px;
+color:#FAFBFC;
+xmin-height:25px;
+margin-right:5px;
+padding-right:5px;
+}
+
+QStackedWidget#SendCoinsEntry .QToolButton { /* General Settings for Pay To Icons */
+    background:transparent;
+    margin-left: 5px;
+    margin-right: 5px;
+    border: 0;
+}
+
+QStackedWidget#SendCoinsEntry .QFrame#SendCoins { 
+/* Send Coin Entry background */
+background-color:#262323;
+}
 
 /******************************************************
 SignVerifyMessageDialog

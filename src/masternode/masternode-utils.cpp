@@ -1,36 +1,30 @@
-// Copyright (c) 2014-2020 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <masternode/masternode-utils.h>
 
+#ifdef ENABLE_WALLET
+#include <coinjoin/coinjoin-client.h>
+#endif
 #include <init.h>
 #include <masternode/masternode-sync.h>
-#ifdef ENABLE_WALLET
-#include <privatesend/privatesend-client.h>
-#endif
 #include <validation.h>
 
-struct CompareScoreMN
-{
-    bool operator()(const std::pair<arith_uint256, const CDeterministicMNCPtr&>& t1,
-                    const std::pair<arith_uint256, const CDeterministicMNCPtr&>& t2) const
-    {
-        return (t1.first != t2.first) ? (t1.first < t2.first) : (t1.second->collateralOutpoint < t2.second->collateralOutpoint);
-    }
-};
 
 void CMasternodeUtils::ProcessMasternodeConnections(CConnman& connman)
 {
     std::vector<CDeterministicMNCPtr> vecDmns; // will be empty when no wallet
 #ifdef ENABLE_WALLET
-    privateSendClient.GetMixingMasternodesInfo(vecDmns);
+    for (const auto& pair : coinJoinClientManagers) {
+        pair.second->GetMixingMasternodesInfo(vecDmns);
+    }
 #endif // ENABLE_WALLET
 
     // Don't disconnect masternode connections when we have less then the desired amount of outbound nodes
     int nonMasternodeCount = 0;
     connman.ForEachNode(CConnman::AllNodes, [&](CNode* pnode) {
-        if (!pnode->fInbound && !pnode->fFeeler && !pnode->m_manual_connection && !pnode->fMasternode && !pnode->fMasternodeProbe) {
+        if (!pnode->fInbound && !pnode->fFeeler && !pnode->m_manual_connection && !pnode->m_masternode_connection && !pnode->m_masternode_probe_connection) {
             nonMasternodeCount++;
         }
     });
@@ -39,14 +33,14 @@ void CMasternodeUtils::ProcessMasternodeConnections(CConnman& connman)
     }
 
     connman.ForEachNode(CConnman::AllNodes, [&](CNode* pnode) {
-        // we're only disconnecting fMasternode connections
-        if (!pnode->fMasternode) return;
+        // we're only disconnecting m_masternode_connection connections
+        if (!pnode->m_masternode_connection) return;
         // we're only disconnecting outbound connections
         if (pnode->fInbound) return;
         // we're not disconnecting LLMQ connections
         if (connman.IsMasternodeQuorumNode(pnode)) return;
         // we're not disconnecting masternode probes for at least a few seconds
-        if (pnode->fMasternodeProbe && GetSystemTimeInSeconds() - pnode->nTimeConnected < 5) return;
+        if (pnode->m_masternode_probe_connection && GetSystemTimeInSeconds() - pnode->nTimeConnected < 5) return;
 
 #ifdef ENABLE_WALLET
         bool fFound = false;

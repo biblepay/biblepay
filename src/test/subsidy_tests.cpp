@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 The Däsh Core developers
+﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 

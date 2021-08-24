@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Däsh Core developers
+﻿// Copyright (c) 2018-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -72,6 +72,6 @@ static void ECDSAVerify_LargeBlock(benchmark::State& state)
     }
 }
 
-BENCHMARK(ECDSASign)
-BENCHMARK(ECDSAVerify)
-BENCHMARK(ECDSAVerify_LargeBlock)
+BENCHMARK(ECDSASign, 22 * 1000)
+BENCHMARK(ECDSAVerify, 15 * 1000)
+BENCHMARK(ECDSAVerify_LargeBlock, 15)

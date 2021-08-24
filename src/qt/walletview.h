@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,8 +9,6 @@
 #include <qt/masternodelist.h>
 
 #include <QStackedWidget>
-#include "rpcpog.h"
-#include "walletframe.h"
 
 class BitcoinGUI;
 class ClientModel;
@@ -21,16 +19,6 @@ class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
 class AddressBookPage;
-class PlatformStyle;
-class BusinessObjectList;
-class ProposalAddDialog;
-class NFTAddDialog;
-class UTXODialog;
-class MailSendDialog;
-class GenericTableDialog;
-class Proposals;
-class UserDialog;
-class MemorizeScriptureDialog;
 
 QT_BEGIN_NAMESPACE
 class QLabel;
@@ -51,8 +39,7 @@ class WalletView : public QStackedWidget
 public:
     explicit WalletView(QWidget* parent);
     ~WalletView();
-	WalletFrame *myWalletFrame;
-    
+
     void setBitcoinGUI(BitcoinGUI *gui);
     /** Set the client model.
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
@@ -72,28 +59,21 @@ public:
 private:
     ClientModel *clientModel;
     WalletModel *walletModel;
-	OverviewPage *overviewPage;
+
+    OverviewPage *overviewPage;
     QWidget *transactionsPage;
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;
-    SendCoinsDialog* privateSendCoinsPage;
+    SendCoinsDialog* coinJoinCoinsPage;
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
     MasternodeList *masternodeListPage;
 
     TransactionView *transactionView;
-	ProposalAddDialog *proposalAddPage;
-	NFTAddDialog *nftAddPage;
-	UTXODialog *utxoAddPage;
-	MailSendDialog *mailSendPage;
-	UserDialog *userEditPage;
-	MemorizeScriptureDialog *memorizeScripturePage;
-	Proposals *proposalListPage;
-	BusinessObjectList *businessObjectListPage;
-	GenericTableDialog *nftListPage;
+
     QProgressDialog *progressDialog;
     QLabel *transactionSum;
-	const PlatformStyle *platformStyle;
+
 public Q_SLOTS:
     /** Switch to overview (home) page */
     void gotoOverviewPage();
@@ -105,21 +85,8 @@ public Q_SLOTS:
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
     void gotoSendCoinsPage(QString addr = "");
-
-	/** Switch to Proposal Add Page */
-	void gotoProposalAddPage();
-	void gotoNFTAddPage(std::string sAction, uint256 hash);
-	void gotoUTXOAddPage();
-	void gotoNFTListPage();
-	void gotoMailSendPage(std::string sAction);
-	void gotoUserEditPage();
-	void gotoMemorizeScripturePage();
-	void gotoProposalListPage();
-	/** Switch to Business Object List Page */
-	void gotoBusinessObjectListPage();
-
-    /** Switch to PrivateSend coins page */
-    void gotoPrivateSendCoinsPage(QString addr = "");
+    /** Switch to CoinJoin coins page */
+    void gotoCoinJoinCoinsPage(QString addr = "");
 
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
@@ -165,11 +132,11 @@ Q_SIGNALS:
     /**  Fired when a message should be reported to the user */
     void message(const QString &title, const QString &message, unsigned int style);
     /** Encryption status of wallet changed */
-    void encryptionStatusChanged(int status);
+    void encryptionStatusChanged();
     /** HD-Enabled status of wallet changed (only possible during startup) */
-    void hdEnabledStatusChanged(int hdEnabled);
+    void hdEnabledStatusChanged();
     /** Notify that a new transaction appeared */
-    void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label);
+    void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label, const QString& walletName);
     /** Notify that the out of sync warning icon has been pressed */
     void outOfSyncWarningClicked();
 };

@@ -1,9 +1,9 @@
-// Copyright (c) 2018-2019 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BIBLEPAY_SPECIALTX_H
-#define BIBLEPAY_SPECIALTX_H
+#ifndef BITCOIN_EVO_SPECIALTX_H
+#define BITCOIN_EVO_SPECIALTX_H
 
 #include <primitives/transaction.h>
 #include <streams.h>
@@ -11,10 +11,11 @@
 
 class CBlock;
 class CBlockIndex;
+class CCoinsViewCache;
 class CValidationState;
 
-bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state);
-bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state, bool fJustCheck, bool fCheckCbTxMerleRoots);
+bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view);
+bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state, const CCoinsViewCache& view, bool fJustCheck, bool fCheckCbTxMerleRoots);
 bool UndoSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex);
 
 template <typename T>
@@ -49,4 +50,4 @@ void SetTxPayload(CMutableTransaction& tx, const T& payload)
 
 uint256 CalcTxInputsHash(const CTransaction& tx);
 
-#endif //BIBLEPAY_SPECIALTX_H
+#endif // BITCOIN_EVO_SPECIALTX_H

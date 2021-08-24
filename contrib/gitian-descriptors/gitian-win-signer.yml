@@ -1,4 +1,4 @@
----
+﻿---
 name: "biblepay-win-signer"
 suites:
 - "bionic"

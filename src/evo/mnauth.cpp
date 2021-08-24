@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 The Däsh Core developers
+﻿// Copyright (c) 2019-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -133,7 +133,7 @@ void CMNAuth::ProcessMessage(CNode* pnode, const std::string& strCommand, CDataS
 
         if (!pnode->fInbound) {
             mmetaman.GetMetaInfo(mnauth.proRegTxHash)->SetLastOutboundSuccess(GetAdjustedTime());
-            if (pnode->fMasternodeProbe) {
+            if (pnode->m_masternode_probe_connection) {
                 LogPrint(BCLog::NET_NETCONN, "CMNAuth::ProcessMessage -- Masternode probe successful for %s, disconnecting. peer=%d\n",
                          mnauth.proRegTxHash.ToString(), pnode->GetId());
                 pnode->fDisconnect = true;
@@ -185,6 +185,16 @@ void CMNAuth::ProcessMessage(CNode* pnode, const std::string& strCommand, CDataS
             LOCK(pnode->cs_mnauth);
             pnode->verifiedProRegTxHash = mnauth.proRegTxHash;
             pnode->verifiedPubKeyHash = dmn->pdmnState->pubKeyOperator.GetHash();
+        }
+
+        if (!pnode->m_masternode_iqr_connection && connman.IsMasternodeQuorumRelayMember(pnode->verifiedProRegTxHash)) {
+            // Tell our peer that we're interested in plain LLMQ recovered signatures.
+            // Otherwise the peer would only announce/send messages resulting from QRECSIG,
+            // e.g. InstantSend locks or ChainLocks. SPV and regular full nodes should not send
+            // this message as they are usually only interested in the higher level messages.
+            const CNetMsgMaker msgMaker(pnode->GetSendVersion());
+            connman.PushMessage(pnode, msgMaker.Make(NetMsgType::QSENDRECSIGS, true));
+            pnode->m_masternode_iqr_connection = true;
         }
 
         LogPrint(BCLog::NET_NETCONN, "CMNAuth::%s -- Valid MNAUTH for %s, peer=%d\n", __func__, mnauth.proRegTxHash.ToString(), pnode->GetId());

@@ -1,13 +1,11 @@
-// Copyright (c) 2018-2019 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <chainparams.h>
-#include <clientversion.h>
 #include <consensus/validation.h>
 #include <hash.h>
 #include <primitives/block.h>
-#include <primitives/transaction.h>
 #include <validation.h>
 
 #include <evo/cbtx.h>
@@ -17,30 +15,24 @@
 #include <llmq/quorums_commitment.h>
 #include <llmq/quorums_blockprocessor.h>
 
-bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
+bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view)
 {
     if (tx.nVersion != 3 || tx.nType == TRANSACTION_NORMAL)
         return true;
-
-	// We have some of these BBP
-	if (pindexPrev->nHeight < Params().GetConsensus().LLMQHeight)
-	{
+	// BiblePay has some of these false DM starts before dip3/ skip this check.
+    if (pindexPrev && pindexPrev->nHeight + 1 < Params().GetConsensus().DIP0003Height) {
 		return true;
-	}
-	if (pindexPrev && pindexPrev->nHeight + 1 < Params().GetConsensus().DIP0003Height) 
-	{
-		LogPrintf("\nBadTxType %f ", pindexPrev->nHeight + 1);
-		return state.DoS(1, false, REJECT_INVALID, "bad-tx-type");		
-	}
+        /* return state.DoS(10, false, REJECT_INVALID, "bad-tx-type"); */
+    }
 
     try {
         switch (tx.nType) {
         case TRANSACTION_PROVIDER_REGISTER:
-            return CheckProRegTx(tx, pindexPrev, state);
+            return CheckProRegTx(tx, pindexPrev, state, view);
         case TRANSACTION_PROVIDER_UPDATE_SERVICE:
             return CheckProUpServTx(tx, pindexPrev, state);
         case TRANSACTION_PROVIDER_UPDATE_REGISTRAR:
-            return CheckProUpRegTx(tx, pindexPrev, state);
+            return CheckProUpRegTx(tx, pindexPrev, state, view);
         case TRANSACTION_PROVIDER_UPDATE_REVOKE:
             return CheckProUpRevTx(tx, pindexPrev, state);
         case TRANSACTION_COINBASE:
@@ -53,8 +45,7 @@ bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVali
         return state.DoS(100, false, REJECT_INVALID, "failed-check-special-tx");
     }
 
-	LogPrintf("\nBad-tx-Type-Check %f", pindexPrev->nHeight);
-    return state.DoS(11, false, REJECT_INVALID, "bad-tx-type-check");
+    return state.DoS(10, false, REJECT_INVALID, "bad-tx-type-check");
 }
 
 bool ProcessSpecialTx(const CTransaction& tx, const CBlockIndex* pindex, CValidationState& state)
@@ -80,9 +71,8 @@ bool ProcessSpecialTx(const CTransaction& tx, const CBlockIndex* pindex, CValida
 
 bool UndoSpecialTx(const CTransaction& tx, const CBlockIndex* pindex)
 {
-
 	// BBP:
-	if (pindex->nHeight < Params().GetConsensus().LLMQHeight)
+	if (pindex->nHeight < Params().GetConsensus().DIP0003EnforcementHeight)
 		return true;
 
     if (tx.nVersion != 3 || tx.nType == TRANSACTION_NORMAL) {
@@ -104,7 +94,7 @@ bool UndoSpecialTx(const CTransaction& tx, const CBlockIndex* pindex)
     return false;
 }
 
-bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state, bool fJustCheck, bool fCheckCbTxMerleRoots)
+bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state, const CCoinsViewCache& view, bool fJustCheck, bool fCheckCbTxMerleRoots)
 {
     static int64_t nTimeLoop = 0;
     static int64_t nTimeQuorum = 0;
@@ -116,7 +106,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CV
 
         for (int i = 0; i < (int)block.vtx.size(); i++) {
             const CTransaction& tx = *block.vtx[i];
-            if (!CheckSpecialTx(tx, pindex->pprev, state)) {
+            if (!CheckSpecialTx(tx, pindex->pprev, state, view)) {
                 // pass the state returned by the function above
                 return false;
             }
@@ -129,7 +119,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CV
         int64_t nTime2 = GetTimeMicros(); nTimeLoop += nTime2 - nTime1;
         LogPrint(BCLog::BENCHMARK, "        - Loop: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimeLoop * 0.000001);
 
-        if (!llmq::quorumBlockProcessor->ProcessBlock(block, pindex, state)) {
+        if (!llmq::quorumBlockProcessor->ProcessBlock(block, pindex, state, fJustCheck)) {
             // pass the state returned by the function above
             return false;
         }
@@ -137,7 +127,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CV
         int64_t nTime3 = GetTimeMicros(); nTimeQuorum += nTime3 - nTime2;
         LogPrint(BCLog::BENCHMARK, "        - quorumBlockProcessor: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeQuorum * 0.000001);
 
-        if (!deterministicMNManager->ProcessBlock(block, pindex, state, fJustCheck)) {
+        if (!deterministicMNManager->ProcessBlock(block, pindex, state, view, fJustCheck)) {
             // pass the state returned by the function above
             return false;
         }
@@ -145,7 +135,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CV
         int64_t nTime4 = GetTimeMicros(); nTimeDMN += nTime4 - nTime3;
         LogPrint(BCLog::BENCHMARK, "        - deterministicMNManager: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeDMN * 0.000001);
 
-        if (fCheckCbTxMerleRoots && !CheckCbTxMerkleRoots(block, pindex, state)) {
+        if (fCheckCbTxMerleRoots && !CheckCbTxMerkleRoots(block, pindex, state, view)) {
             // pass the state returned by the function above
             return false;
         }
@@ -154,8 +144,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CV
         LogPrint(BCLog::BENCHMARK, "        - CheckCbTxMerkleRoots: %.2fms [%.2fs]\n", 0.001 * (nTime5 - nTime4), nTimeMerkle * 0.000001);
     } catch (const std::exception& e) {
         LogPrintf("%s -- failed: %s\n", __func__, e.what());
-		// This occurs when the map is empty; dont see a reason to ddos here
-        return state.DoS(0, false, REJECT_INVALID, "failed-procspectxsinblock");
+        return state.DoS(100, false, REJECT_INVALID, "failed-procspectxsinblock");
     }
 
     return true;
@@ -163,6 +152,10 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CV
 
 bool UndoSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex)
 {
+    
+	if (pindex->nHeight < Params().GetConsensus().DIP0003Height)
+		return true;
+
     try {
         for (int i = (int)block.vtx.size() - 1; i >= 0; --i) {
             const CTransaction& tx = *block.vtx[i];

@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+﻿FROM ubuntu:bionic
 
 # Build and base stuff
 # (zlib1g-dev and libssl-dev are needed for the Qt host binary builds, but should not be used by target binaries)
@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install $APT_ARGS python3-pip python3-setuptools &
 # Python stuff
 RUN pip3 install pyzmq # really needed?
 RUN pip3 install jinja2
+RUN pip3 install flake8
 
 # biblepay_hash
 RUN git clone https://github.com/biblepay/biblepay_hash
@@ -37,6 +38,7 @@ RUN apt-get update && apt-get install $APT_ARGS g++-mingw-w64-i686 && rm -rf /va
 RUN apt-get update && apt-get install $APT_ARGS g++-mingw-w64-x86-64 && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install $APT_ARGS wine-stable wine32 wine64 bc nsis && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install $APT_ARGS python3-zmq && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install $APT_ARGS shellcheck && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install $APT_ARGS imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools && rm -rf /var/lib/apt/lists/*
 
 # This is a hack. It is needed because gcc-multilib and g++-multilib are conflicting with g++-arm-linux-gnueabihf. This is

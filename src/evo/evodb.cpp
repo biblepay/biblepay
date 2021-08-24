@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -53,6 +53,7 @@ void CEvoDB::RollbackCurTransaction()
 
 bool CEvoDB::CommitRootTransaction()
 {
+    LOCK(cs);
     assert(curDBTransaction.IsClean());
     rootDBTransaction.Commit();
     bool ret = db.WriteBatch(rootBatch);
@@ -65,11 +66,10 @@ bool CEvoDB::VerifyBestBlock(const uint256& hash)
     // Make sure evodb is consistent.
     // If we already have best block hash saved, the previous block should match it.
     uint256 hashBestBlock;
-    bool fHasBestBlock = Read(EVODB_BEST_BLOCK, hashBestBlock);
-    uint256 hashBlockIndex = fHasBestBlock ? hash : uint256();
-    assert(hashBestBlock == hashBlockIndex);
-
-    return fHasBestBlock;
+    if (!Read(EVODB_BEST_BLOCK, hashBestBlock)) {
+        return false;
+    }
+    return hashBestBlock == hash;
 }
 
 void CEvoDB::WriteBestBlock(const uint256& hash)

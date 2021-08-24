@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -24,9 +24,8 @@ CAmount CFeeRate::GetFee(size_t nBytes_) const
 {
     assert(nBytes_ <= uint64_t(std::numeric_limits<int64_t>::max()));
     int64_t nSize = int64_t(nBytes_);
-	// BiblePay fees must be more significant:
 
-    CAmount nFee = 25 * nSatoshisPerK * nSize / 1000;
+    CAmount nFee = nSatoshisPerK * nSize / 1000;
 
     if (nFee == 0 && nSize != 0) {
         if (nSatoshisPerK > 0)

@@ -19,10 +19,9 @@ struct CCheckpointData;
 namespace Checkpoints
 {
 
-//! Returns last CBlockIndex* in mapBlockIndex that is a checkpoint
+//! Returns last CBlockIndex* that is a checkpoint
 CBlockIndex* GetLastCheckpoint(const CCheckpointData& data);
-int GetTotalBlocksEstimate(const CCheckpointData& data);
-   
+
 } //namespace Checkpoints
 
 #endif // BITCOIN_CHECKPOINTS_H

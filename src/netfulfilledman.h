@@ -1,9 +1,9 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef NETFULFILLEDMAN_H
-#define NETFULFILLEDMAN_H
+#ifndef BITCOIN_NETFULFILLEDMAN_H
+#define BITCOIN_NETFULFILLEDMAN_H
 
 #include <netaddress.h>
 #include <serialize.h>
@@ -50,4 +50,4 @@ public:
     void DoMaintenance();
 };
 
-#endif
+#endif // BITCOIN_NETFULFILLEDMAN_H

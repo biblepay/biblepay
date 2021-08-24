@@ -1,10 +1,11 @@
-// Copyright (c) 2018-2019 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <llmq/quorums_debug.h>
 
 #include <chainparams.h>
+#include <timedata.h>
 #include <validation.h>
 
 #include <evo/deterministicmns.h>
@@ -27,26 +28,23 @@ UniValue CDKGDebugSessionStatus::ToJson(int detailLevel) const
         const CBlockIndex* pindex = nullptr;
         {
             LOCK(cs_main);
-            auto it = mapBlockIndex.find(quorumHash);
-            if (it != mapBlockIndex.end()) {
-                pindex = it->second;
-            }
+            pindex = LookupBlockIndex(quorumHash);
         }
         if (pindex != nullptr) {
             dmnMembers = CLLMQUtils::GetAllQuorumMembers((Consensus::LLMQType) llmqType, pindex);
         }
     }
 
-    ret.push_back(Pair("llmqType", llmqType));
-    ret.push_back(Pair("quorumHash", quorumHash.ToString()));
-    ret.push_back(Pair("quorumHeight", (int)quorumHeight));
-    ret.push_back(Pair("phase", (int)phase));
+    ret.pushKV("llmqType", llmqType);
+    ret.pushKV("quorumHash", quorumHash.ToString());
+    ret.pushKV("quorumHeight", (int)quorumHeight);
+    ret.pushKV("phase", (int)phase);
 
-    ret.push_back(Pair("sentContributions", sentContributions));
-    ret.push_back(Pair("sentComplaint", sentComplaint));
-    ret.push_back(Pair("sentJustification", sentJustification));
-    ret.push_back(Pair("sentPrematureCommitment", sentPrematureCommitment));
-    ret.push_back(Pair("aborted", aborted));
+    ret.pushKV("sentContributions", sentContributions);
+    ret.pushKV("sentComplaint", sentComplaint);
+    ret.pushKV("sentJustification", sentJustification);
+    ret.pushKV("sentPrematureCommitment", sentPrematureCommitment);
+    ret.pushKV("aborted", aborted);
 
     struct ArrOrCount {
         int count{0};
@@ -69,9 +67,9 @@ UniValue CDKGDebugSessionStatus::ToJson(int detailLevel) const
                 v.arr.push_back((int)idx);
             } else if (detailLevel == 2) {
                 UniValue a(UniValue::VOBJ);
-                a.push_back(Pair("memberIndex", (int)idx));
+                a.pushKV("memberIndex", (int)idx);
                 if (idx < dmnMembers.size()) {
-                    a.push_back(Pair("proTxHash", dmnMembers[idx]->proTxHash.ToString()));
+                    a.pushKV("proTxHash", dmnMembers[idx]->proTxHash.ToString());
                 }
                 v.arr.push_back(a);
             }
@@ -79,9 +77,9 @@ UniValue CDKGDebugSessionStatus::ToJson(int detailLevel) const
     };
     auto push = [&](ArrOrCount& v, const std::string& name) {
         if (detailLevel == 0) {
-            ret.push_back(Pair(name, v.count));
+            ret.pushKV(name, v.count);
         } else {
-            ret.push_back(Pair(name, v.arr));
+            ret.pushKV(name, v.arr);
         }
     };
 
@@ -106,22 +104,20 @@ UniValue CDKGDebugSessionStatus::ToJson(int detailLevel) const
         for (const auto& dmn : dmnMembers) {
             arr.push_back(dmn->proTxHash.ToString());
         }
-        ret.push_back(Pair("allMembers", arr));
+        ret.pushKV("allMembers", arr);
     }
 
     return ret;
 }
 
-CDKGDebugManager::CDKGDebugManager()
-{
-}
+CDKGDebugManager::CDKGDebugManager() = default;
 
 UniValue CDKGDebugStatus::ToJson(int detailLevel) const
 {
     UniValue ret(UniValue::VOBJ);
 
-    ret.push_back(Pair("time", nTime));
-    ret.push_back(Pair("timeStr", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTime)));
+    ret.pushKV("time", nTime);
+    ret.pushKV("timeStr", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTime));
 
     UniValue sessionsJson(UniValue::VOBJ);
     for (const auto& p : sessions) {
@@ -129,10 +125,10 @@ UniValue CDKGDebugStatus::ToJson(int detailLevel) const
             continue;
         }
         const auto& params = Params().GetConsensus().llmqs.at((Consensus::LLMQType)p.first);
-        sessionsJson.push_back(Pair(params.name, p.second.ToJson(detailLevel)));
+        sessionsJson.pushKV(params.name, p.second.ToJson(detailLevel));
     }
 
-    ret.push_back(Pair("session", sessionsJson));
+    ret.pushKV("session", sessionsJson);
 
     return ret;
 }

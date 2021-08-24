@@ -1,9 +1,9 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BIBLEPAY_STACKTRACES_H
-#define BIBLEPAY_STACKTRACES_H
+#ifndef BITCOIN_STACKTRACES_H
+#define BITCOIN_STACKTRACES_H
 
 #include <string>
 #include <sstream>
@@ -39,4 +39,4 @@ inline std::string GetExceptionWhat(const T& e)
 void RegisterPrettyTerminateHander();
 void RegisterPrettySignalHandlers();
 
-#endif//BIBLEPAY_STACKTRACES_H
+#endif//BITCOIN_STACKTRACES_H

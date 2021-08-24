@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,30 +15,21 @@
 #include <chainparams.h>
 #include <clientversion.h>
 #include <init.h>
+#include <interfaces/handler.h>
+#include <interfaces/node.h>
+#include <interfaces/wallet.h>
 #include <util.h>
 #include <ui_interface.h>
 #include <version.h>
-#ifdef ENABLE_WALLET
-#include <wallet/wallet.h>
-#endif
-#include <QTimer>
 
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDesktopWidget>
 #include <QPainter>
 
-
-
-SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) :
-    QWidget(0, f), curAlignment(0)
+SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const NetworkStyle *networkStyle) :
+    QWidget(0, f), curAlignment(0), m_node(node)
 {
-
-	bool fProd = true;
-	if ((gArgs.GetBoolArg("-regtest", false)) || (gArgs.GetBoolArg("-testnet", false)) || (gArgs.IsArgSet("-devnet")))
-	{
-		fProd = false;
-	}
 
     // transparent background
     setAttribute(Qt::WA_TranslucentBackground);
@@ -47,15 +38,15 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     // no window decorations
     setWindowFlags(Qt::FramelessWindowHint);
 
-    // Geometries of splashscreen (originally 380,460,270,270)
-    int width = 580;
-    int height = 640;
-    int logoWidth = 480;
-    int logoHeight = 540;
+    // Geometries of splashscreen
+    int width = 500;
+    int height = 500;
+    int logoWidth = 270;
+    int logoHeight = 270;
 
     // set reference point, paddings
-    int paddingTop = logoHeight - 20;  // BiblePay Core
-    int titleVersionVSpace = - 20;  // Version
+    int paddingTop = 10;
+    int titleVersionVSpace = 25;
 
     float fontFactor            = 1.0;
     float scale = qApp->devicePixelRatio();
@@ -64,48 +55,39 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     QString titleText       = tr(PACKAGE_NAME);
     QString versionText = QString::fromStdString(FormatFullVersion()).remove(0, 1);
     QString titleAddText    = networkStyle->getTitleAddText();
-	titleAddText = "Empowering the Tribulation Saints";
+
     QFont fontNormal = GUIUtil::getFontNormal();
     QFont fontBold = GUIUtil::getFontBold();
 
-	QString splashScreenPath = ":/images/bitcoin";
- 
-	QPixmap pixmap7 = QPixmap(splashScreenPath);
-
-	QPixmap pixmapLogo = networkStyle->getSplashImage();
+    QPixmap pixmapLogo = networkStyle->getSplashImage();
     pixmapLogo.setDevicePixelRatio(scale);
 
     // Adjust logo color based on the current theme
-	if (false)
-	{
-		QImage imgLogo = pixmapLogo.toImage().convertToFormat(QImage::Format_ARGB32);
-		QColor logoColor = GUIUtil::getThemedQColor(GUIUtil::ThemedColor::BLUE);
-		for (int x = 0; x < imgLogo.width(); ++x) {
-			for (int y = 0; y < imgLogo.height(); ++y) {
-				const QRgb rgb = imgLogo.pixel(x, y);
-				imgLogo.setPixel(x, y, qRgba(logoColor.red(), logoColor.green(), logoColor.blue(), qAlpha(rgb)));
-			}
-		}
-		pixmapLogo.convertFromImage(imgLogo);
-	}
+    QImage imgLogo = pixmapLogo.toImage().convertToFormat(QImage::Format_ARGB32);
+    QColor logoColor = GUIUtil::getThemedQColor(GUIUtil::ThemedColor::RED);
+    for (int x = 0; x < imgLogo.width(); ++x) {
+        for (int y = 0; y < imgLogo.height(); ++y) {
+            const QRgb rgb = imgLogo.pixel(x, y);
+            imgLogo.setPixel(x, y, qRgba(logoColor.red(), logoColor.green(), logoColor.blue(), qAlpha(rgb)));
+        }
+    }
+    pixmapLogo.convertFromImage(imgLogo);
 
-	pixmap = QPixmap(width * scale, height * scale);
+    pixmap = QPixmap(width * scale, height * scale);
     pixmap.setDevicePixelRatio(scale);
-	pixmap.fill(GUIUtil::getThemedQColor(GUIUtil::ThemedColor::BORDER_WIDGET));
-	
-	
+    pixmap.fill(GUIUtil::getThemedQColor(GUIUtil::ThemedColor::BORDER_WIDGET));
+
     QPainter pixPaint(&pixmap);
 
     QRect rect = QRect(1, 1, width - 2, height - 2);
     pixPaint.fillRect(rect, GUIUtil::getThemedQColor(GUIUtil::ThemedColor::BACKGROUND_WIDGET));
 
     pixPaint.drawPixmap((width / 2) - (logoWidth / 2), (height / 2) - (logoHeight / 2) + 20, pixmapLogo.scaled(logoWidth * scale, logoHeight * scale, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-	pixPaint.drawPixmap((width / 2) - (logoWidth / 2), (height / 2) - (logoHeight / 2) + 20, pixmap7);
+	//QString splashScreenPath = ":/images/splash";
+	//QPixmap pixmap7 = QPixmap(splashScreenPath);
+	//	pixPaint.drawPixmap((width / 2) - (logoWidth / 2), (height / 2) - (logoHeight / 2) + 20, pixmap7);
 
     pixPaint.setPen(GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT));
-	pixPaint.setPen(QColor(100,100,100));
-	pixPaint.setPen(QColor(255,0,0)); // Red (Version)
-	pixPaint.setPen(QColor(192,192,192)); // Silver
 
     // check font size and drawing with
     fontBold.setPointSize(50 * fontFactor);
@@ -121,17 +103,13 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     fm = pixPaint.fontMetrics();
     titleTextWidth  = fm.width(titleText);
     int titleTextHeight = fm.height();
-	// BiblePay Core:
     pixPaint.drawText((width / 2) - (titleTextWidth / 2), titleTextHeight + paddingTop, titleText);
 
-	// Version:
     fontNormal.setPointSize(16 * fontFactor);
     pixPaint.setFont(fontNormal);
     fm = pixPaint.fontMetrics();
     int versionTextWidth = fm.width(versionText);
-	int nLeftPadding = 55;
-	// Version+Release:
-    pixPaint.drawText(nLeftPadding, titleTextHeight + paddingTop + titleVersionVSpace - 60, versionText);
+    pixPaint.drawText((width / 2) - (versionTextWidth / 2), titleTextHeight + paddingTop + titleVersionVSpace, versionText);
 
     // draw additional text if special network
     if(!titleAddText.isEmpty()) {
@@ -141,29 +119,21 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
         int titleAddTextWidth = fm.width(titleAddText);
         // Draw the badge backround with the network-specific color
         QRect badgeRect = QRect(width - titleAddTextWidth - 20, 5, width, fm.height() + 10);
-
         QColor badgeColor = networkStyle->getBadgeColor();
         pixPaint.fillRect(badgeRect, badgeColor);
-		// Network name:
-		pixPaint.setPen(QColor(255, 255, 255));
-		QString networkName = fProd ? "MainNet" : "TestNet";
-		pixPaint.drawText(width - (titleAddTextWidth/2) - nLeftPadding, 20, networkName);
-   	
-		// Draw the text itself using white color, regardless of the current theme
+        // Draw the text itself using white color, regardless of the current theme
         pixPaint.setPen(QColor(255, 255, 255));
-		// Our Slogan:
-        pixPaint.drawText(width - titleAddTextWidth - nLeftPadding, paddingTop + 20, titleAddText);
+        pixPaint.drawText(width - titleAddTextWidth - 10, paddingTop + 10, titleAddText);
     }
 
     pixPaint.end();
 
     // Resize window and move to center of desktop, disallow resizing
-
     QRect r(QPoint(), QSize(width, height));
     resize(r.size());
     setFixedSize(r.size());
     move(QApplication::desktop()->screenGeometry().center() - r.center());
-	
+
     subscribeToCoreSignals();
     installEventFilter(this);
 }
@@ -177,7 +147,7 @@ bool SplashScreen::eventFilter(QObject * obj, QEvent * ev) {
     if (ev->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(ev);
         if(keyEvent->text()[0] == 'q') {
-            StartShutdown();
+            m_node.startShutdown();
         }
     }
     return QObject::eventFilter(obj, ev);
@@ -201,8 +171,7 @@ static void InitMessage(SplashScreen *splash, const std::string &message)
         Qt::QueuedConnection,
         Q_ARG(QString, QString::fromStdString(message)),
         Q_ARG(int, Qt::AlignBottom | Qt::AlignHCenter),
-        Q_ARG(QColor, QColor(255,215,0))); 
-	    // BBP - Gold / Bezaleel
+        Q_ARG(QColor, GUIUtil::getThemedQColor(GUIUtil::ThemedColor::DEFAULT)));
 }
 
 static void ShowProgress(SplashScreen *splash, const std::string &title, int nProgress, bool resume_possible)
@@ -212,36 +181,37 @@ static void ShowProgress(SplashScreen *splash, const std::string &title, int nPr
                                 : _("press q to shutdown")) +
             strprintf("\n%d", nProgress) + "%");
 }
-
 #ifdef ENABLE_WALLET
-void SplashScreen::ConnectWallet(CWallet* wallet)
+void SplashScreen::ConnectWallet(std::unique_ptr<interfaces::Wallet> wallet)
 {
-    wallet->ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2, false));
-    connectedWallets.push_back(wallet);
+    m_connected_wallet_handlers.emplace_back(wallet->handleShowProgress(boost::bind(ShowProgress, this, _1, _2, false)));
+    m_connected_wallets.emplace_back(std::move(wallet));
 }
 #endif
 
 void SplashScreen::subscribeToCoreSignals()
 {
     // Connect signals to client
-    uiInterface.InitMessage.connect(boost::bind(InitMessage, this, _1));
-    uiInterface.ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2, _3));
+    m_handler_init_message = m_node.handleInitMessage(boost::bind(InitMessage, this, _1));
+    m_handler_show_progress = m_node.handleShowProgress(boost::bind(ShowProgress, this, _1, _2, _3));
 #ifdef ENABLE_WALLET
-    uiInterface.LoadWallet.connect(boost::bind(&SplashScreen::ConnectWallet, this, _1));
+    m_handler_load_wallet = m_node.handleLoadWallet([this](std::unique_ptr<interfaces::Wallet> wallet) { ConnectWallet(std::move(wallet)); });
 #endif
 }
 
 void SplashScreen::unsubscribeFromCoreSignals()
 {
     // Disconnect signals from client
-    uiInterface.InitMessage.disconnect(boost::bind(InitMessage, this, _1));
-    uiInterface.ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2, _3));
+    m_handler_init_message->disconnect();
+    m_handler_show_progress->disconnect();
 #ifdef ENABLE_WALLET
-    uiInterface.LoadWallet.disconnect(boost::bind(&SplashScreen::ConnectWallet, this, _1));
-    for (CWallet* const & pwallet : connectedWallets) {
-        pwallet->ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2, false));
+    m_handler_load_wallet->disconnect();
+#endif // ENABLE_WALLET
+    for (auto& handler : m_connected_wallet_handlers) {
+        handler->disconnect();
     }
-#endif
+    m_connected_wallet_handlers.clear();
+    m_connected_wallets.clear();
 }
 
 void SplashScreen::showMessage(const QString &message, int alignment, const QColor &color)
@@ -266,6 +236,6 @@ void SplashScreen::paintEvent(QPaintEvent *event)
 
 void SplashScreen::closeEvent(QCloseEvent *event)
 {
-    StartShutdown(); // allows an "emergency" shutdown during startup
+    m_node.startShutdown(); // allows an "emergency" shutdown during startup
     event->ignore();
 }

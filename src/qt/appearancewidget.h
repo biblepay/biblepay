@@ -1,4 +1,4 @@
-// Copyright (c) 2020 The Däsh Core developers
+﻿// Copyright (c) 2020 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -53,7 +53,7 @@ private:
     QFont::Weight prevWeightNormal;
     QFont::Weight prevWeightBold;
 
-    void updateWeightSlider();
+    void updateWeightSlider(bool fForce = false);
 };
 
 #endif // BITCOIN_QT_APPEARANCEWIDGET_H

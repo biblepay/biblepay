@@ -7,9 +7,12 @@
 
 #include <QDialog>
 #include <QObject>
-#include "wallet/crypter.h"
 
 class BitcoinGUI;
+
+namespace interfaces {
+    class Node;
+}
 
 namespace Ui {
     class HelpMessageDialog;
@@ -24,12 +27,10 @@ public:
     enum HelpMode {
         about,
         cmdline,
-        pshelp,
-		prayer,
-		readbible
+        pshelp
     };
 
-	explicit HelpMessageDialog(QWidget *parent, HelpMode helpMode, int iPrayer, uint256 txid, std::string sPreview);
+    explicit HelpMessageDialog(interfaces::Node& node, QWidget *parent, HelpMode helpMode);
     ~HelpMessageDialog();
 
     void printToConsole();
@@ -41,9 +42,6 @@ private:
 
 private Q_SLOTS:
     void on_okButton_accepted();
-	void on_comboBookClicked(int iClick);
-	void on_comboChapterClicked(int iClick);
-	void on_comboLanguagesClicked(int iClick);
 };
 
 
@@ -53,8 +51,8 @@ class ShutdownWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit ShutdownWindow(QWidget *parent=0, Qt::WindowFlags f=0);
-    static QWidget *showShutdownWindow(BitcoinGUI *window);
+    explicit ShutdownWindow(interfaces::Node& node, QWidget *parent=0, Qt::WindowFlags f=0);
+    static QWidget *showShutdownWindow(interfaces::Node& node, BitcoinGUI *window);
 
 protected:
     void closeEvent(QCloseEvent *event);

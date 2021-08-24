@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2017 The Bitcoin Core developers
+﻿// Copyright (c) 2012-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -406,11 +406,11 @@ BOOST_AUTO_TEST_CASE(test_CheckQueueControl_Locks)
         boost::thread_group tg;
         std::mutex m;
         std::condition_variable cv;
+        bool has_lock{false};
+        bool has_tried{false};
+        bool done{false};
+        bool done_ack{false};
         {
-            bool has_lock {false};
-            bool has_tried {false};
-            bool done {false};
-            bool done_ack {false};
             std::unique_lock<std::mutex> l(m);
             tg.create_thread([&]{
                     CCheckQueueControl<FakeCheck> control(queue.get());

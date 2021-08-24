@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # Copyright (c) 2012-2016 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -63,7 +63,7 @@ child = Popen([XGETTEXT,'--output=-','-n','--keyword=_'] + files, stdout=PIPE)
 
 messages = parse_po(out.decode('utf-8'))
 
-f = open(OUT_CPP, 'w')
+f = open(OUT_CPP, 'w', encoding="utf8")
 f.write("""
 
 #include <QtGlobal>

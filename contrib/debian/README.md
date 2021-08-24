@@ -1,4 +1,4 @@
-
+﻿
 Debian
 ====================
 This directory contains files used to package biblepayd/biblepay-qt

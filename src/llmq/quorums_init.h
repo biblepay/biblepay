@@ -1,18 +1,15 @@
-// Copyright (c) 2018-2019 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BIBLEPAY_QUORUMS_INIT_H
-#define BIBLEPAY_QUORUMS_INIT_H
+#ifndef BITCOIN_LLMQ_QUORUMS_INIT_H
+#define BITCOIN_LLMQ_QUORUMS_INIT_H
 
 class CDBWrapper;
 class CEvoDB;
 
 namespace llmq
 {
-
-// If true, we will connect to all new quorums and watch their communication
-static const bool DEFAULT_WATCH_QUORUMS = false;
 
 // Init/destroy LLMQ globals
 void InitLLMQSystem(CEvoDB& evoDb, bool unitTests, bool fWipe = false);
@@ -24,4 +21,4 @@ void StopLLMQSystem();
 void InterruptLLMQSystem();
 } // namespace llmq
 
-#endif //BIBLEPAY_QUORUMS_INIT_H
+#endif // BITCOIN_LLMQ_QUORUMS_INIT_H

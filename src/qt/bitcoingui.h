@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,8 +18,8 @@
 #include <QPoint>
 #include <QPushButton>
 #include <QSystemTrayIcon>
-#include "menudialog.h"
-#include "generictabledialog.h"
+
+#include <memory>
 
 #ifdef Q_OS_MAC
 #include <qt/macos_appnap.h>
@@ -29,7 +29,6 @@ class ClientModel;
 class NetworkStyle;
 class Notificator;
 class OptionsModel;
-class PlatformStyle;
 class RPCConsole;
 class SendCoinsRecipient;
 class UnitDisplayStatusBarControl;
@@ -38,8 +37,15 @@ class WalletModel;
 class HelpMessageDialog;
 class ModalOverlay;
 
+namespace interfaces {
+class Handler;
+class Node;
+}
+
 QT_BEGIN_NAMESPACE
 class QAction;
+class QButtonGroup;
+class QComboBox;
 class QProgressBar;
 class QProgressDialog;
 class QToolButton;
@@ -54,12 +60,9 @@ class BitcoinGUI : public QMainWindow
     Q_OBJECT
 
 public:
-    static const QString DEFAULT_WALLET;
     static const std::string DEFAULT_UIPLATFORM;
 
-	//explicit BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *networkStyle, QWidget *parent = 0);
-
-    explicit BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent = 0);
+    explicit BitcoinGUI(interfaces::Node& node, const NetworkStyle* networkStyle, QWidget* parent = 0);
     ~BitcoinGUI();
 
     /** Set the client model.
@@ -72,11 +75,8 @@ public:
         The wallet model represents a bitcoin wallet, and offers access to the list of transactions, address book and sending
         functionality.
     */
-    bool addWallet(const QString& name, WalletModel *walletModel);
-    bool setCurrentWallet(const QString& name);
-    /** Set the UI status indicators based on the currently selected wallet.
-    */
-    void updateWalletStatus();
+    bool addWallet(WalletModel *walletModel);
+    bool removeWallet(WalletModel* walletModel);
     void removeAllWallets();
 #endif // ENABLE_WALLET
     bool enableWallet;
@@ -90,6 +90,9 @@ protected:
     bool eventFilter(QObject *object, QEvent *event);
 
 private:
+    interfaces::Node& m_node;
+    std::unique_ptr<interfaces::Handler> m_handler_message_box;
+    std::unique_ptr<interfaces::Handler> m_handler_question;
     ClientModel *clientModel;
     WalletFrame *walletFrame;
 
@@ -103,47 +106,23 @@ private:
     QProgressDialog *progressDialog;
 
     QMenuBar *appMenuBar;
-    QToolButton *overviewAction;
-    QToolButton *historyAction;
-    QToolButton *masternodeAction;
+    QToolBar *appToolBar;
+    QToolButton *overviewButton;
+	QToolButton *unchainedAction;
+    QToolButton *sendCoinsButton;
+    QToolButton *coinJoinCoinsButton;
+    QToolButton *receiveCoinsButton;
+    QToolButton *historyButton;
+    QToolButton *masternodeButton;
+    QAction* appToolBarLogoAction;
     QAction *quitAction;
-    QToolButton *sendCoinsAction;
     QAction *sendCoinsMenuAction;
-    QToolButton *privateSendCoinsAction;
-    QAction *privateSendCoinsMenuAction;
+    QAction *coinJoinCoinsMenuAction;
     QAction *usedSendingAddressesAction;
     QAction *usedReceivingAddressesAction;
     QAction *signMessageAction;
     QAction *verifyMessageAction;
     QAction *aboutAction;
-	// BBP - Add Actions
-	QToolButton *orphanAction;
-	QToolButton *exchangeAction;
-	QToolButton *webAction;
-	QAction *OneClickMiningAction;
-	QAction *sinnerAction;
-	QAction *univAction;
-	QAction *TheLordsPrayerAction;
-	QAction *TheApostlesCreedAction;
-	QAction *TheNiceneCreedAction;
-	QAction *ReadBibleAction;
-	QAction *TheTenCommandmentsAction;
-	QAction *JesusConciseCommandmentsAction;
-	QAction *openChatGeneralAction;
-	QAction *openChatPMAction;
-	QAction *openChatPMEncryptedAction;
-	QAction *proposalAddMenuAction;
-	QAction *nftAddMenuAction;
-	QAction *utxoAddMenuAction;
-	QAction *mailSendMenuAction;
-	QAction *listNFTMenuAction;
-	QAction *userEditMenuAction;
-	QAction *memorizeScriptureMenuAction;
-	QToolButton *proposalListAction;
-	QToolButton *leaderboardAction;
-	// Note: Any orphaned Action results in a crash (pun intended)
-	// END OF BBP
-    QToolButton *receiveCoinsAction;
     QAction *receiveCoinsMenuAction;
     QAction *optionsAction;
     QAction *toggleHideAction;
@@ -162,7 +141,10 @@ private:
     QAction *showBackupsAction;
     QAction *openAction;
     QAction *showHelpMessageAction;
-    QAction *showPrivateSendHelpAction;
+    QAction *showCoinJoinHelpAction;
+    QAction *m_wallet_selector_action = nullptr;
+
+    QComboBox *m_wallet_selector;
 
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
@@ -170,9 +152,6 @@ private:
     Notificator *notificator;
     RPCConsole *rpcConsole;
     HelpMessageDialog *helpMessageDialog;
-	MenuDialog *menuDialog;
-	GenericTableDialog *genericTableDialog;
-
     ModalOverlay *modalOverlay;
     QButtonGroup *tabGroup;
 
@@ -201,9 +180,13 @@ private:
         QString type;
         QString address;
         QString label;
+        QString walletName;
     };
     std::list<IncomingTransactionMessage> incomingTransactions;
     QTimer* incomingTransactionsTimer;
+
+    /** Timer to update custom css styling in -debug-ui mode periodically */
+    QTimer* timerCustomCss;
 
     /** Create the main UI actions. */
     void createActions();
@@ -230,8 +213,6 @@ private:
     void updateHeadersSyncProgressLabel();
 
     void updateProgressBarVisibility();
-
-    void updateToolBarShortcuts();
 
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
@@ -261,27 +242,37 @@ public Q_SLOTS:
     void message(const QString &title, const QString &message, unsigned int style, bool *ret = nullptr);
 
 #ifdef ENABLE_WALLET
-    /** Set the hd-enabled status as shown in the UI.
-     @param[in] status            current hd enabled status
-     @see WalletModel::EncryptionStatus
-     */
-    void setHDStatus(int hdEnabled);
+    bool setCurrentWallet(const QString& name);
+    bool setCurrentWalletBySelectorIndex(int index);
+    /** Set the UI status indicators based on the currently selected wallet.
+    */
+    void updateWalletStatus();
 
+private:
     /** Set the encryption status as shown in the UI.
        @param[in] status            current encryption status
        @see WalletModel::EncryptionStatus
     */
     void setEncryptionStatus(int status);
 
+    /** Set the hd-enabled status as shown in the UI.
+     @param[in] status            current hd enabled status
+     @see WalletModel::EncryptionStatus
+     */
+    void setHDStatus(int hdEnabled);
+
+public Q_SLOTS:
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
 
     /** Show incoming transaction notification for new transactions. */
-    void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label);
+    void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label, const QString& walletName);
     void showIncomingTransactions();
 #endif // ENABLE_WALLET
 
 private Q_SLOTS:
 #ifdef ENABLE_WALLET
+	// BiblePay Unchained:
+	void showUnchained();
     /** Switch to overview (home) page */
     void gotoOverviewPage();
     /** Switch to history (transactions) page */
@@ -292,8 +283,8 @@ private Q_SLOTS:
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
     void gotoSendCoinsPage(QString addr = "");
-    /** Switch to PrivateSend coins page */
-    void gotoPrivateSendCoinsPage(QString addr = "");
+    /** Switch to CoinJoin coins page */
+    void gotoCoinJoinCoinsPage(QString addr = "");
 
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
@@ -303,18 +294,6 @@ private Q_SLOTS:
     /** Show open dialog */
     void openClicked();
 
-	/** Switch to Proposal Add page */
-	void gotoProposalAddPage();
-	void gotoNFTAddPage();
-	void gotoUTXOAddPage();
-	void gotoMailSendPage();
-	void gotoNFTListPage();
-	void gotoUserEditPage();
-	void gotoMemorizeScripturePage();
-	void gotoProposalListPage();
-	void OneClickMiningClicked();
-	void gotoBusinessObjectListPage();
-
     /** Highlight checked tab button */
     void highlightTabButton(QAbstractButton *button, bool checked);
 #endif // ENABLE_WALLET
@@ -322,28 +301,9 @@ private Q_SLOTS:
     void optionsClicked();
     /** Show about dialog */
     void aboutClicked();
-
-	/** BBP - Show built-in prayers or commandments **/
-	void sinnerClicked();
-	void univClicked();
-	void TheLordsPrayerClicked();
-	void TheApostlesCreedClicked();
-	void TheNiceneCreedClicked();
-	void ReadBibleClicked();
-	void TheTenCommandmentsClicked();
-	void JesusConciseCommandmentsClicked();
-	
-	void showAccountability();
-	void showExchange();
-	void openChatGeneralClicked();
-	void openChatPMClicked();
-	void openChatPMEncryptedClicked();
-	
-	// End of BBP
-
     /** Show debug window */
     void showDebugWindow();
-	
+
     /** Show debug window and set focus to the appropriate tab */
     void showInfo();
     void showConsole();
@@ -351,15 +311,15 @@ private Q_SLOTS:
     void showPeers();
     void showRepair();
 
-    /** Open external (default) editor with biblepay.conf */
+    /** Open external (default) editor with biblepay.conf*/
     void showConfEditor();
     /** Show folder with wallet backups in default file browser */
     void showBackups();
 
     /** Show help message dialog */
     void showHelpMessageClicked();
-    /** Show PrivateSend help message dialog */
-    void showPrivateSendHelpClicked();
+    /** Show CoinJoin help message dialog */
+    void showCoinJoinHelpClicked();
 #ifndef Q_OS_MAC
     /** Handle tray icon clicked */
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
@@ -378,7 +338,7 @@ private Q_SLOTS:
 
     /** Show progress dialog e.g. for verifychain */
     void showProgress(const QString &title, int nProgress);
-    
+
     /** When hideTrayIcon setting is changed in OptionsModel hide or show the icon accordingly. */
     void setTrayIconVisible(bool);
 
@@ -387,7 +347,7 @@ private Q_SLOTS:
 
     void showModalOverlay();
 
-    void updatePrivateSendVisibility();
+    void updateCoinJoinVisibility();
 
     void updateWidth();
 };

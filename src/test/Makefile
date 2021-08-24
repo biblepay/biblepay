@@ -1,4 +1,4 @@
-all:
+﻿all:
 	$(MAKE) -C .. biblepay_test
 clean:
 	$(MAKE) -C .. biblepay_test_clean
