@@ -46,13 +46,20 @@ BITCOIN_INCLUDES=-I$(builddir) $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFL
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
 BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
 
+
+
+
 BLS_LIBS=-lbls-dash -lgmp
 if TARGET_WINDOWS
-$(info 'building on windows')
+$(info 'building on windows ')
 BLS_LIBS += -L$(srcdir)/crypto/RandomX/buildwin64 -lrandomx
+else
+if TARGET_DARWIN
+$(info 'building on darwin')
 else
 $(info 'building on linux')
 BLS_LIBS += -L$(srcdir)/crypto/RandomX/build -lrandomx
+endif
 endif
 
 
