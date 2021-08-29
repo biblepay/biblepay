@@ -77,13 +77,18 @@ find . -name \*.sh|xargs dos2unix
 **** DEVELOPER SECTION - FOR DEV USE ****
 
 Devs; Building Windows using Cross-Compile 64-bit version:
+One Time:
+$ sudo update-alternatives --config i686-w64-mingw32-gcc
+(select i686-w64-mingw32-gcc-posix)
+$ sudo update-alternatives --config i686-w64-mingw32-g++
+(select i686-w64-mingw32-g++-posix)
 
 https://github.com/bitcoin/bitcoin/blob/master/doc/build-windows.md
 cd depends
-make HOST=i686-w64-mingw32 -j4
+make HOST=x86_64-w64-mingw32 -j4
 cd ..
 ./autogen.sh
-./configure --prefix /biblepay/depends/i686-w64-mingw32
+./configure --prefix /biblepay/depends/x86_64-w64-mingw32
 cd src
 sudo make
 make deploy
@@ -91,12 +96,15 @@ make deploy
 
 
 
-#How to cross compile MAC on Ubuntu 18:
+#How to cross compile MAC on Ubuntu 20.04 for Darwin14:
 sudo apt-get install python3-setuptools
 sudo apt install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git libdb4.8-dev libdb4.8++-dev curl
 sudo apt install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev libzmq3-dev
 sudo apt install ca-certificates curl g++ git-core pkg-config autoconf librsvg2-bin libtiff-tools libtool automake faketime bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python python-dev python-setuptools fonts-tuffy p7zip-full sleuthkit
 sudo apt install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+sudo apt-get install python3-setuptools libcap-dev zlib1g-dev libbz2-dev
+
+#old way: Saving in case the new way breaks; skip this section and go to the new way first (10.14):
 First, extract the MAC SDK.
 Log in to your apple developer account: (https://docs.dash.org/en/0.12.3/developers/compiling.html)
 A copy of the macOS SDK is required during the build process. To download this, use a Google Chrome in a desktop environment to go to https://appleid.apple.com and create or sign in to your Apple account. Then go to https://developer.apple.com and open the Chrome Developer Tools from the Menu -> More tools -> Developer tools. Click on the Network tab, then go back to your main browser window and copy in the following URL:
@@ -107,10 +115,17 @@ contrib/macdeploy/extract-osx-sdk.sh
 rm -rf 5.hfs MacOSX10.11.sdk
 mkdir depends/SDKs
 mv MacOSX10.11.sdk/ depends/SDKs/
+
+#new way:
+ mkdir -p depends/sdk-sources
+ mkdir -p depends/SDKs
+ curl https://bitcoincore.org/depends-sources/sdks/MacOSX10.14.sdk.tar.gz -o depends/sdk-sources/MacOSX10.14.sdk.tar.gz
+ tar -C depends/SDKs -xf depends/sdk-sources/MacOSX10.14.sdk.tar.gz
+
 Build the Apple dependencies:
-make -C depends HOST=x86_64-apple-darwin11
+make -C depends HOST=x86_64-apple-darwin14
 ./autogen.sh
-./configure --prefix=`pwd`/depends/x86_64-apple-darwin11
+./configure --prefix=`pwd`/depends/x86_64-apple-darwin14
 make
 
 

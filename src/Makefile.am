@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
-# Copyright (c) 2014-2018 The D√ÉSH Core Developers
+# Copyright (c) 2014-2018 The D√SH Core Developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -24,16 +24,11 @@ endif
 endif
 endif
 
-BLS_LIBS=-lbls-dash -lgmp
 
 if TARGET_WINDOWS
 BACKTRACE_LIB = -ldbghelp -lbacktrace
-$(info 'building on windows')
-BLS_LIBS += -L$(srcdir)/crypto/RandomX/buildwin64 -lrandomx
 else
 BACKTRACE_LIB = -lbacktrace
-$(info 'building on linux')
-BLS_LIBS += -L$(srcdir)/crypto/RandomX/build -lrandomx
 endif
 endif #ENABLE_STACKTRACES
 
@@ -50,6 +45,15 @@ BITCOIN_INCLUDES=-I$(builddir) $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFL
 
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
 BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
+
+BLS_LIBS=-lbls-dash -lgmp
+if TARGET_WINDOWS
+$(info 'building on windows')
+BLS_LIBS += -L$(srcdir)/crypto/RandomX/buildwin64 -lrandomx
+else
+$(info 'building on linux')
+BLS_LIBS += -L$(srcdir)/crypto/RandomX/build -lrandomx
+endif
 
 
 LIBBITCOIN_SERVER=libbiblepay_server.a

@@ -1,0 +1,3 @@
+/usr/bin/cmake -E remove -f CMakeFiles/randomx-codegen.dir/objects.a
+/usr/bin/ar cr CMakeFiles/randomx-codegen.dir/objects.a @CMakeFiles/randomx-codegen.dir/objects1.rsp
+/usr/bin/x86_64-w64-mingw32-g++-posix  -maes -O3 -DNDEBUG   -Wl,--whole-archive CMakeFiles/randomx-codegen.dir/objects.a -Wl,--no-whole-archive  -o randomx-codegen.exe -Wl,--out-implib,librandomx-codegen.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles/randomx-codegen.dir/linklibs.rsp
