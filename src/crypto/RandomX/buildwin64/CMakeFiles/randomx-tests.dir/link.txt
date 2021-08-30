@@ -1,3 +1,0 @@
-/usr/bin/cmake -E remove -f CMakeFiles/randomx-tests.dir/objects.a
-/usr/bin/ar cr CMakeFiles/randomx-tests.dir/objects.a @CMakeFiles/randomx-tests.dir/objects1.rsp
-/usr/bin/x86_64-w64-mingw32-g++-posix  -maes -O3 -DNDEBUG   -Wl,--whole-archive CMakeFiles/randomx-tests.dir/objects.a -Wl,--no-whole-archive  -o randomx-tests.exe -Wl,--out-implib,librandomx-tests.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles/randomx-tests.dir/linklibs.rsp

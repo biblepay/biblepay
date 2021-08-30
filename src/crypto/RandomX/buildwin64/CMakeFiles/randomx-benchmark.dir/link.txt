@@ -1,3 +1,0 @@
-/usr/bin/cmake -E remove -f CMakeFiles/randomx-benchmark.dir/objects.a
-/usr/bin/ar cr CMakeFiles/randomx-benchmark.dir/objects.a @CMakeFiles/randomx-benchmark.dir/objects1.rsp
-/usr/bin/x86_64-w64-mingw32-g++-posix  -maes -O3 -DNDEBUG   -Wl,--whole-archive CMakeFiles/randomx-benchmark.dir/objects.a -Wl,--no-whole-archive  -o randomx-benchmark.exe -Wl,--out-implib,librandomx-benchmark.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles/randomx-benchmark.dir/linklibs.rsp
