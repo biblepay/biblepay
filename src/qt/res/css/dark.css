@@ -47,7 +47,7 @@ QDialog,
 QMainWindow,
 WalletFrame {
     background-color: #323233; /*grey*/
-    max-width:3500px;
+    max-width:1500px;
 }
 
 QMessageBox 
@@ -71,6 +71,9 @@ border-top:0px solid #000;
 /*max-width:1280;*/
 min-height:743px;
 height:743px;
+max-width:1444px;
+min-width:925px;
+width:925px;
 margin:0;
 }
 
@@ -94,7 +97,6 @@ padding-bottom:90px;
 QWidget#header {
 /*background-image: url(':/images/biblepay_logo');*/
 min-height:35px;
-/*max-width:1000px;*/
 margin:0;
 padding:0;
 }

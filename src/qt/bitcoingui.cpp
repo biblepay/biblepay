@@ -1266,8 +1266,12 @@ void BitcoinGUI::updateWidth()
     }
     // Add 30 per button as padding and use minimum 980 which is the minimum required to show all tab's contents
     // Use nButtonsVisible + 1 <- for the biblepay logo
-    int nWidth = std::max<int>(980, (nWidthWidestButton + 30) * (nButtonsVisible + 1));
+    int nWidth = std::max<int>(1140, (nWidthWidestButton + 25) * (nButtonsVisible + 1));
+	nWidth = 1140;
+
     setMinimumWidth(nWidth);
+	LogPrintf("\nSetting window dimensions to %f, %f", nWidth, height());
+
     resize(nWidth, height());
 }
 
