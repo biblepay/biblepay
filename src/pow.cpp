@@ -236,7 +236,19 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, int nHeight, std::string sHeaderHex, uint256 uRXKey, int iThreadID)
+bool CheckTimeForSyncImpact(int64_t nTime)
+{
+	if (nTime == 0)
+		return false;
+
+	// Old RX blocks older than 1 month may cause significant performance impact when syncing:
+	int64_t nElapsed = GetAdjustedTime() - nTime;
+	if (nElapsed > (60 * 60 * 24 * 30))
+		return true;
+	return false;
+}
+
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, int nHeight, std::string sHeaderHex, uint256 uRXKey, int iThreadID, int64_t nTime)
 {
     bool fNegative;
     bool fOverflow;
@@ -248,8 +260,10 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
         return false;
 
-	// RandomX - After Barley Harvest Height
+	if (CheckTimeForSyncImpact(nTime))
+		return true;
 
+	// RandomX - After Barley Harvest Height
 	if (nHeight > Params().GetConsensus().BARLEY_HARVEST_HEIGHT)
 	{
 		uint256 rxhash = GetRandomXHash3(sHeaderHex, uRXKey, iThreadID);
@@ -257,7 +271,6 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 		{
 			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[4] height %f hash %s ", nHeight, rxhash.GetHex());
 			return false;
-			//return error("CheckProofOfWork Failed:ERROR: RandomX high-hash, Height %f ", (double)nHeight);
 		}
 	}
 	

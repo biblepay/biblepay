@@ -226,7 +226,7 @@ CBlock TestChainSetup::CreateBlock(const std::vector<CMutableTransaction>& txns,
         IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
     }
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus(), chainActive.Tip()->nHeight, block.GetHash().GetHex(), uint256S("0x0"), 2)) ++block.nNonce;
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus(), chainActive.Tip()->nHeight, block.GetHash().GetHex(), uint256S("0x0"), 2, block.nTime)) ++block.nNonce;
 
     CBlock result = block;
     return result;

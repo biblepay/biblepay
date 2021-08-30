@@ -445,7 +445,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 				pindexNew->RandomXData    = diskindex.RandomXData;
 				
 
-                if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams, pindexNew->nHeight, pindexNew->RandomXData, pindexNew->RandomXKey, 0))
+                if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams, pindexNew->nHeight, pindexNew->RandomXData, pindexNew->RandomXKey, 0, pindexNew->nTime))
                     return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
 
                 pcursor->Next();

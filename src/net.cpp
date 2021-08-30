@@ -1341,10 +1341,10 @@ void CConnman::DisconnectNodes()
                 }
 
                 if (fLogIPs) {
-                    LogPrintf("ThreadSocketHandler -- removing node: peer=%d addr=%s nRefCount=%d fInbound=%d m_masternode_connection=%d m_masternode_iqr_connection=%d\n",
+                    LogPrint(BCLog::NET,"ThreadSocketHandler -- removing node: peer=%d addr=%s nRefCount=%d fInbound=%d m_masternode_connection=%d m_masternode_iqr_connection=%d\n",
                           pnode->GetId(), pnode->addr.ToString(), pnode->GetRefCount(), pnode->fInbound, pnode->m_masternode_connection, pnode->m_masternode_iqr_connection);
                 } else {
-                    LogPrintf("ThreadSocketHandler -- removing node: peer=%d nRefCount=%d fInbound=%d m_masternode_connection=%d m_masternode_iqr_connection=%d\n",
+                    LogPrint(BCLog::NET,"ThreadSocketHandler -- removing node: peer=%d nRefCount=%d fInbound=%d m_masternode_connection=%d m_masternode_iqr_connection=%d\n",
                           pnode->GetId(), pnode->GetRefCount(), pnode->fInbound, pnode->m_masternode_connection, pnode->m_masternode_iqr_connection);
                 }
 
@@ -2004,7 +2004,7 @@ size_t CConnman::SocketRecvData(CNode *pnode)
         if (nErr != WSAEWOULDBLOCK && nErr != WSAEMSGSIZE && nErr != WSAEINTR && nErr != WSAEINPROGRESS)
         {
             if (!pnode->fDisconnect)
-                LogPrintf("socket recv error %s\n", NetworkErrorString(nErr));
+                LogPrint(BCLog::NET,"socket recv glitch %s\n", NetworkErrorString(nErr));
             LOCK(cs_vNodes);
             pnode->fOtherSideDisconnected = true; // avoid lingering
             pnode->CloseSocketDisconnect(this);
@@ -2340,16 +2340,20 @@ int CConnman::GetExtraOutboundCount()
 void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
 {
 	// Extra Seed Nodes
-	AddNode("node.biblepay.org"); // Volunteers welcome to run external nodes
-	AddNode("dns1.biblepay.org");  // Rob
-	AddNode("dns2.biblepay.org");  // Rob
-	AddNode("dns3.biblepay.org");  // Rob
-	AddNode("dns4.biblepay.org");  // Rob
-	AddNode("dns5.biblepay.org");  // Rob
-	AddNode("149.28.254.165:10001");  // Sanc 1
-	AddNode("149.28.254.165:10002");  // Sanc 2
-	AddNode("144.202.66.211:10001");  // Sanc 3
-	AddNode("testnet.biblepay.org");
+    const CChainParams& chainparams = Params();
+	if (chainparams.NetworkIDString() == "main")
+	{
+		AddNode("node.biblepay.org"); // Volunteers welcome to run external nodes
+		AddNode("dns1.biblepay.org");  // Rob
+		AddNode("dns2.biblepay.org");  // Rob
+		AddNode("dns3.biblepay.org");  // Rob
+		AddNode("dns4.biblepay.org");  // Rob
+		AddNode("dns5.biblepay.org");  // Rob
+	}
+	else
+	{
+		AddNode("testnet.biblepay.org");
+	}
 
     // Connect to specific addresses
     if (!connect.empty())

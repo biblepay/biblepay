@@ -143,7 +143,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         }
 
         while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus(), 
-			chainActive.Tip()->nHeight, pblock->GetHash().GetHex(), uint256S("0x0"), 2)) {
+			chainActive.Tip()->nHeight, pblock->GetHash().GetHex(), uint256S("0x0"), 2, pblock->nTime)) {
             ++pblock->nNonce;
             --nMaxTries;
         }
