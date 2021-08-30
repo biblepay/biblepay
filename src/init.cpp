@@ -1055,7 +1055,7 @@ void InitParameterInteraction()
         LogPrintf("%s: parameter interaction: additional indexes -> setting -checklevel=4\n", __func__);
     }
 
-    if (gArgs.IsArgSet("-masternodeblsprivkey") && gArgs.SoftSetBoolArg("-disablewallet", true)) 
+    if (gArgs.IsArgSet("-masternodeblsprivkey")) 
 	{
 		if (false)
 			LogPrintf("%s: parameter interaction: -masternodeblsprivkey set -> setting -disablewallet=1\n", __func__);
