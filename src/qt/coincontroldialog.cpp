@@ -182,6 +182,8 @@ void CoinControlDialog::buttonBoxClicked(QAbstractButton* button)
 // (un)select all
 void CoinControlDialog::buttonSelectAllClicked()
 {
+	int nMax = 600;
+	int nSelected = 0;
     Qt::CheckState state = Qt::Checked;
     for (int i = 0; i < ui->treeWidget->topLevelItemCount(); i++)
     {
@@ -193,8 +195,13 @@ void CoinControlDialog::buttonSelectAllClicked()
     }
     ui->treeWidget->setEnabled(false);
     for (int i = 0; i < ui->treeWidget->topLevelItemCount(); i++)
+	{
             if (ui->treeWidget->topLevelItem(i)->checkState(COLUMN_CHECKBOX) != state)
                 ui->treeWidget->topLevelItem(i)->setCheckState(COLUMN_CHECKBOX, state);
+			nSelected++;
+			if (nSelected > nMax)
+				break;
+	}
     ui->treeWidget->setEnabled(true);
     if (state == Qt::Unchecked)
         m_coin_control.UnSelectAll(); // just to be sure

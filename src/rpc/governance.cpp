@@ -18,6 +18,7 @@
 #include <util.h>
 #include <utilmoneystr.h>
 #include <wallet/rpcwallet.h>
+#include "rpcpog.h"
 #ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
 #endif // ENABLE_WALLET
@@ -1119,6 +1120,10 @@ UniValue getgovernanceinfo(const JSONRPCRequest& request)
     obj.pushKV("superblockcycle", Params().GetConsensus().nSuperblockCycle);
     obj.pushKV("lastsuperblock", nLastSuperblock);
     obj.pushKV("nextsuperblock", nNextSuperblock);
+	obj.pushKV("nextdailysuperblock", nNextSuperblock+20);
+	CAmount nNextDailyLimit = GetDailyPaymentsLimit(nNextSuperblock+20);
+	obj.pushKV("nextdailylimit", nNextDailyLimit/COIN);
+    obj.pushKV("nextmonthlylimit", CSuperblock::GetPaymentsLimit(nNextSuperblock)/COIN);
 
     return obj;
 }

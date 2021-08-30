@@ -1180,10 +1180,11 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 
 	int iSubsidyDecreaseInterval = BLOCKS_PER_DAY * 30;
 	double iDeflationRate = .0216;
-
+	CAmount nTotalDeflation = 0;
+	
     for (int i = iSubsidyDecreaseInterval; i <= nPrevHeight; i += iSubsidyDecreaseInterval) 
 	{
-        nSubsidy -= (nSubsidy * iDeflationRate);
+        nTotalDeflation += (nSubsidy * iDeflationRate);
 		/*
 		// Starting at height 166000, we increased our deflation rate to 20.04% (from 19.5%) to free extra Coins to pay for DWS Rewards (Dynamic-Whale-Staking):
 		if (i > 0 && consensusParams.PODC2_CUTOVER_HEIGHT && i < consensusParams.ANTI_GPU_HEIGHT)
@@ -1202,33 +1203,14 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 		}
 		*/
     }
+	nSubsidy -= nTotalDeflation;
 
     // Monthly Budget: 
-	// 10% to Charity budget, 5% for the IT budget, 2.5% PR, 2.5% P2P (this is 20% for Governance).  An additional 28.5% is held back for the generic superblock contract.  This equals 48.5% being escrowed.
+	// 10% to Charity budget, 5% for the IT budget, 2.5% PR, 2.5% P2P (this is 20% for Governance).  An additional 30% is held back for the generic superblock contract.  This equals 50% being escrowed.
 	// The remaining 50% is split between the miner and the sanctuary.
 	// https://wiki.bible[pay].org/Economics
 
 	double dGovernancePercent = .50;
-	/*
-
-	if (nPrevHeight > 0 && nPrevHeight <= consensusParams.nSanctuaryPaymentsPhaseIIHeight)
-	{
-		dGovernancePercent = .485;
-	}
-	else if (nPrevHeight > consensusParams.nSanctuaryPaymentsPhaseIIHeight && nPrevHeight <= consensusParams.POOS_HEIGHT)
-	{
-		dGovernancePercent = .45;
-	}
-	else if (nPrevHeight > consensusParams.POOS_HEIGHT && nPrevHeight <= consensusParams.HARVEST_HEIGHT2)
-	{
-		dGovernancePercent = .3625;
-	}
-	else if (nPrevHeight > consensusParams.HARVEST_HEIGHT2)
-	{
-		dGovernancePercent = .50;
-	}
-	*/
-	
 	CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy * dGovernancePercent : 0;
 	CAmount nNetSubsidy = nSubsidy - nSuperblockPart;
 	//double nAPM = ExtractAPM(nPrevHeight);
@@ -1239,6 +1221,7 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 		// With Automatic Price Mooning, we decrease the block subsidy down to 7 if our Price has decreased over the last 24 hours.  (Otherwise, normal emissions occur).
 	//	nNetSubsidy = APM2_REWARD * COIN;
 	//}
+	LogPrintf("\r\nGetBlockSubsidy::Total Deflation %f, Base Subsidy %f, Superblock Part %f, NetSubsidy %f ", nTotalDeflation/COIN, nSubsidyBase, nSuperblockPart/COIN, nNetSubsidy/COIN);
 
 	return fSuperblockPartOnly ? nSuperblockPart : nNetSubsidy;
 }
@@ -1249,8 +1232,6 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
 	// http://forum.bible[pay].org/index.php?topic=33.0
 	// Sanctuaries receive 20% of the reward, while they sponsor an orphan out of their own finances.
 	
-//	const Consensus::Params& consensusParams = Params().GetConsensus();
-//	CAmount ret = 0;
 	/*
 	if (nHeight > 0 && nHeight < consensusParams.BarleyHarvestHeight)
 	{
@@ -1262,10 +1243,8 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
 		ret = .20 * blockValue;
 	}
 	*/
-//	ret = .20 * blockValue;
 
 	return static_cast<CAmount>(blockValue * .20);
-    //return static_cast<CAmount>(blockValue * vecPeriods[nCurrentPeriod] / 1000);
 }
 
 bool IsInitialBlockDownload()
@@ -3836,9 +3815,6 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-type", false, "coinbase is not a CbTx");
         }
     }
-
-	// BIBLEPAY - Must not accept daily superblock unless it is complete, or over 8 hours old.
-
 
     return true;
 }

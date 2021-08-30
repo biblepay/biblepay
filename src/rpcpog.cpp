@@ -692,11 +692,15 @@ bool IsDailySuperblock(int nHeight)
 	return fDaily;
 }
 
-static double UTXO_BLOCK_PERCENTAGE = .25;
+static double UTXO_BLOCK_PERCENTAGE = .30;
 CAmount GetDailyPaymentsLimit(int nHeight)
 {
 	const CChainParams& chainparams = Params();
-    CAmount nPaymentsLimit = GetBlockSubsidy(0, nHeight, chainparams.GetConsensus()) * UTXO_BLOCK_PERCENTAGE * BLOCKS_PER_DAY;
+	int nDiff = 500000000;
+	double nSubsidy = (double)GetBlockSubsidy(nDiff, nHeight, chainparams.GetConsensus())/COIN;
+	double nLimit = nSubsidy * UTXO_BLOCK_PERCENTAGE * BLOCKS_PER_DAY;
+	LogPrintf("\nGetDailyPaymentsLimit Subsidy %f limit %f", nSubsidy, nLimit);
+	CAmount nPaymentsLimit = nLimit * COIN;
 	return nPaymentsLimit;
 }
 
@@ -707,8 +711,8 @@ std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
 	CAmount nPaymentsLimit = GetDailyPaymentsLimit(nHeight);
 	// The chain is either 'main' or 'test'
 	std::string sChain = chainparams.NetworkIDString();
-    LogPrintf("Payments Limits %f %f ", nHeight, nPaymentsLimit/COIN);
-	std::string sDate = DateTimeStrFormat("%m/%d/%y", nTime);
+    LogPrintf("GetDailySuperblock::Payments Limits %f %f ", nHeight, nPaymentsLimit/COIN);
+	std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
 	std::string sFile = "utxointegration_" + sChain + "_" + sDate + ".dat";
 	std::vector<Portfolio> vPortfolio;
 	BBPResult b = SidechainQuery("", sFile);

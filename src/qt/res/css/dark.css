@@ -68,12 +68,10 @@ QWidget { /* override text selection background color for all text widgets */
 WalletFrame {
 border-image: url(':/images/rg') 0 0 0 0 stretch stretch;
 border-top:0px solid #000;
-/*max-width:1280;*/
 min-height:743px;
 height:743px;
 max-width:1444px;
 min-width:925px;
-width:925px;
 margin:0;
 }
 
@@ -105,7 +103,6 @@ padding:0;
 .QFrame {
 background-color:transparent;
 border:0px solid #fff;
-/*max-width:1600px; (0317)*/
 width:900px;
 /*height:750px;*/
 margin:0;
