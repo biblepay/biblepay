@@ -2527,8 +2527,8 @@ UniValue exec(const JSONRPCRequest& request)
 		newRequest.params.push_back("0");             // Pct of rewards to share with Operator (This is the amount of reward we want to share with a Sanc Operator - IE a hosting company)
 		newRequest.params.push_back(sPayAddress);     // [8] = Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
 		// Fee Source Address (prevents Fee 404)
-		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-		newRequest.params.push_back(sCPK);
+		// 		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		newRequest.params.push_back(sPayAddress);
 
 		// 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
 		UniValue rProReg = protx(newRequest);

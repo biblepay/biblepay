@@ -214,31 +214,58 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
 	return true;
 }
 
-std::string DefaultRecAddress(std::string sType)
+
+
+std::string DefaultRecAddress(std::string sNamedEntry)
 {
 	JSONRPCRequest r;
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
     CWallet* const pwallet = wallet.get();
     if (!EnsureWalletIsAvailable(pwallet, false))
-        return "no wallet";
+	{
+        LogPrintf("\nDefaultRecAddress::ERROR %f No pwallet", 03142021);
+		return "";
+	}
+
+    boost::to_upper(sNamedEntry);
     std::string sDefaultRecAddress;
-    for (auto item : pwallet->mapAddressBook) {
+    for (auto item : pwallet->mapAddressBook) 
+	{
         CTxDestination txd1 = item.first;
         std::string sAddr = EncodeDestination(txd1);
         std::string strName = item.second.name;
         bool fMine = IsMine(*pwallet, item.first);
-        if (fMine) {
+
+		if (fMine) {
             boost::to_upper(strName);
-            boost::to_upper(sType);
-            if (strName == sType) {
-                sDefaultRecAddress = sAddr;
-                return sDefaultRecAddress;
+            if (strName == sNamedEntry) 
+			{
+                return sAddr;
             }
-            sDefaultRecAddress = sAddr;
         }
     }
+	// Not in the book
+    std::string sError;
+    if (sNamedEntry == "")
+		sNamedEntry = "NA";
+  
+    CPubKey pubkey;
+    if (!pwallet->GetKeyFromPool(pubkey, false))
+    {
+	   LogPrintf("\r\nDefaultRecAddress cant get key from keypool: denied %f",831);
+	   return "";
+    }
+
+    CKeyID vchAddress = pubkey.GetID();
+    pwallet->MarkDirty();
+    pwallet->SetAddressBook(vchAddress, sNamedEntry, "receive");
+
+    sDefaultRecAddress = EncodeDestination(vchAddress);
+    LogPrintf("\r\nDefaultRecAddress for %s=%s, Error=%s", sNamedEntry, sDefaultRecAddress, sError);
+   
     return sDefaultRecAddress;
 }
+
 
 std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::string& sError)
 {
