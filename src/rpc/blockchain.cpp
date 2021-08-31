@@ -124,6 +124,9 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.pushKV("difficulty", GetDifficulty(blockindex));
     result.pushKV("chainwork", blockindex->nChainWork.GetHex());
     result.pushKV("nTx", (uint64_t)blockindex->nTx);
+	// Biblepay - RX
+	result.pushKV("randomxdata", blockindex->RandomXData);
+	result.pushKV("randomxkey", blockindex->RandomXKey.GetHex());
 
     if (blockindex->pprev)
         result.pushKV("previousblockhash", blockindex->pprev->GetBlockHash().GetHex());
