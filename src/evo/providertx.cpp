@@ -123,7 +123,8 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     }
     // don't allow reuse of payout key for other keys (don't allow people to put the payee key onto an online server)
     if (payoutDest == CTxDestination(ptx.keyIDOwner) || payoutDest == CTxDestination(ptx.keyIDVoting)) {
-        return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee-reuse");
+		if (false)
+			return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee-reuse");
     }
 
     // It's allowed to set addr to 0, which will put the MN into PoSe-banned state and require a ProUpServTx to be issues later
