@@ -269,7 +269,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 		uint256 rxhash = GetRandomXHash3(sHeaderHex, uRXKey, iThreadID);
 		if (UintToArith256(rxhash) > bnTarget) 
 		{
-			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[4] height %f hash %s ", nHeight, rxhash.GetHex());
+			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[4] height %f , headerhex %s, key %s, hash %s ", nHeight, sHeaderHex, uRXKey.GetHex(), rxhash.GetHex());
 			return false;
 		}
 	}

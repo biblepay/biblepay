@@ -678,16 +678,22 @@ bool fAllowedToMine = true;
 				while (fAllowedToMine)
 				{
 
+					pblock->nNonce += 1;
+					uint256 rxHeader = uint256S("0x" + DoubleToString(GetAdjustedTime(), 0) + DoubleToString(iThreadID, 0) + DoubleToString(pblock->nNonce, 0));
+					pblock->RandomXData = "<rxheader>" + rxHeader.GetHex() + "</rxheader>";
 					uint256 rxhash = GetRandomXHash3(pblock->RandomXData, uRXKey, iThreadID);
 					nHashesDone += 1;
+				
 					if (UintToArith256(rxhash) <= hashTarget)
 					{
 						// Found a solution
+						LogPrintf("\r\nMiner::Found a randomx block solo mining! hashes=%f, hash=%s, thread=%f", nHashesDone, rxhash.GetHex(), iThreadID);
+
 						std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
 						bool bAccepted = !ProcessNewBlock(Params(), shared_pblock, true, NULL);
 						if (!bAccepted)
 						{
-							LogPrint(BCLog::NET, "\nblock rejected.");
+							LogPrintf("\nblock rejected.");
 							MilliSleep(15000);
 						}
 						coinbaseScript->KeepScript();
@@ -698,9 +704,6 @@ bool fAllowedToMine = true;
 						break;
 					}
 						
-					pblock->nNonce += 1;
-					uint256 rxHeader = uint256S("0x" + DoubleToString(GetAdjustedTime(), 0) + DoubleToString(iThreadID, 0) + DoubleToString(pblock->nNonce, 0));
-					pblock->RandomXData = "<rxheader>" + rxHeader.GetHex() + "</rxheader>";
 			
 					if ((pblock->nNonce & 0xFF) == 0)
 					{

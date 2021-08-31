@@ -2578,6 +2578,10 @@ UniValue exec(const JSONRPCRequest& request)
 		std::vector<unsigned char> v = ParseHex(sHeader);
 		uint256 uRX3 = RandomX_Hash(v, uKey, 99);
 		results.push_back(Pair("hash2", uRX3.GetHex()));
+		std::string sFakeHeader = "<rxheader>" + sHeader + "</rxheader>";
+		uint256 rxhash3 = GetRandomXHash3(sFakeHeader, uKey, 2);
+		results.push_back(Pair("hash3", rxhash3.GetHex()));
+
 	}
 	else if (sItem == "getgovlimit")
 	{

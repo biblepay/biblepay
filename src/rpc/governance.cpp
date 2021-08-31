@@ -1120,11 +1120,11 @@ UniValue getgovernanceinfo(const JSONRPCRequest& request)
     obj.pushKV("superblockcycle", Params().GetConsensus().nSuperblockCycle);
     obj.pushKV("lastsuperblock", nLastSuperblock);
     obj.pushKV("nextsuperblock", nNextSuperblock);
-	obj.pushKV("nextdailysuperblock", nNextSuperblock+20);
-	CAmount nNextDailyLimit = GetDailyPaymentsLimit(nNextSuperblock+20);
+	int nNextDailyHeight = nBlockHeight - (nBlockHeight % BLOCKS_PER_DAY) + 20 + BLOCKS_PER_DAY;
+	obj.pushKV("nextdailysuperblock", nNextDailyHeight);
+	CAmount nNextDailyLimit = GetDailyPaymentsLimit(nNextSuperblock + 20);
 	obj.pushKV("nextdailylimit", nNextDailyLimit/COIN);
     obj.pushKV("nextmonthlylimit", CSuperblock::GetPaymentsLimit(nNextSuperblock)/COIN);
-
     return obj;
 }
 

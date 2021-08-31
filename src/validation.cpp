@@ -1213,15 +1213,7 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 	double dGovernancePercent = .50;
 	CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy * dGovernancePercent : 0;
 	CAmount nNetSubsidy = nSubsidy - nSuperblockPart;
-	//double nAPM = ExtractAPM(nPrevHeight);
-	// 0 = OFF, -1 = PRICE MISSING, 1 = UNCHANGED, 2 = INCREASED, 3 = DECREASED
-	// Per Songs Pool:  If we turn APM back on in the future, make it so we only restrict payments if our price goes down (but let emissions flow if price is Unchanged, or Increased).
-	//if (nAPM == 3)
-	//{
-		// With Automatic Price Mooning, we decrease the block subsidy down to 7 if our Price has decreased over the last 24 hours.  (Otherwise, normal emissions occur).
-	//	nNetSubsidy = APM2_REWARD * COIN;
-	//}
-	LogPrintf("\r\nGetBlockSubsidy::Total Deflation %f, Base Subsidy %f, Superblock Part %f, NetSubsidy %f ", nTotalDeflation/COIN, nSubsidyBase, nSuperblockPart/COIN, nNetSubsidy/COIN);
+	// LogPrintf("\r\nGetBlockSubsidy::Total Deflation %f, Base Subsidy %f, Superblock Part %f, NetSubsidy %f ", nTotalDeflation/COIN, nSubsidyBase, nSuperblockPart/COIN, nNetSubsidy/COIN);
 
 	return fSuperblockPartOnly ? nSuperblockPart : nNetSubsidy;
 }
