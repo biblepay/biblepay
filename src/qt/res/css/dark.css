@@ -47,7 +47,7 @@ QDialog,
 QMainWindow,
 WalletFrame {
     background-color: #323233; /*grey*/
-    max-width:1500px;
+    max-width:2500px;
 }
 
 QMessageBox 
@@ -70,7 +70,8 @@ border-image: url(':/images/rg') 0 0 0 0 stretch stretch;
 border-top:0px solid #000;
 min-height:743px;
 height:743px;
-max-width:1444px;
+max-height:1444px;
+max-width:2500px;
 min-width:925px;
 margin:0;
 }
@@ -80,9 +81,9 @@ QToolBar {
 background-color:#971B20;
 border:0px solid #000;
 height:650px;
+max-height:1300px;
 min-height:650px;
 /* overflow:hidden; */
-/* min-height:840px; */
 width:190px;
 max-width:190px;
 text-align:left;
@@ -104,7 +105,6 @@ padding:0;
 background-color:transparent;
 border:0px solid #fff;
 width:900px;
-/*height:750px;*/
 margin:0;
 padding:0;
 }
@@ -301,7 +301,7 @@ QWidget#contentWidget { /* The actual content with the text/buttons/etc... */
 border-image: url(':/images/rg') 0 0 0 0 stretch stretch;
 border-top:0px solid #000;
 margin:0;
-max-width:1500px;
+max-width:2500px;
 padding-top:20px;
 padding-bottom: 20px;
 }
@@ -675,7 +675,6 @@ QProgressBar
 QProgressBar {
     background-color: #c7c7c7;
     color: #000000;
-    /*max-width:1500px;*/
 }
 
 QProgressBar::chunk {
@@ -814,7 +813,8 @@ QPushButton - Special case, tabbar replacement buttons
 #btnSignMessage,
 #btnVerifyMessage {
     border-color: #bb1b20;
-    color: #818181;
+    xcolor: #818181;
+    color: silver;
 }
 
 /* Debug window buttons */
@@ -1314,10 +1314,12 @@ RPCConsole
 
 QWidget#RPCConsole { /* RPC Console Dialog Box */
     background-color: #323233;
+    color: silver;
 }
 
 RPCConsole QTableView {
-    color: #c7c7c7;
+    color: silver;
+    xoldcolor:#c7c7c7;
 }
 
 #rpcAutoCompleter {
@@ -1326,12 +1328,12 @@ RPCConsole QTableView {
 }
 
 #rpcAutoCompleter::item {
-    color: #c7c7c7;
+    color: silver;
 }
 
 #rpcAutoCompleter::item:selected {
     background-color: #4a4a4b;
-    color: #c7c7c7;
+    color: silver;
 }
 
 /******************************************************

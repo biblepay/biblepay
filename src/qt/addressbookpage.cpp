@@ -17,6 +17,8 @@
 #include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
 #include <qt/qrdialog.h>
+#include "random.h"
+#include "rpcpog.h"
 
 #include <QIcon>
 #include <QMenu>
@@ -101,7 +103,7 @@ AddressBookPage::AddressBookPage(Mode _mode, Tabs _tab, QWidget* parent) :
     case ReceivingTab:
         ui->labelExplanation->setText(tr("These are your BiblePay addresses for receiving payments. It is recommended to use a new receiving address for each transaction."));
         ui->deleteAddress->setVisible(false);
-        ui->newAddress->setVisible(false);
+        ui->newAddress->setVisible(true);
         break;
     }
 
@@ -208,8 +210,10 @@ void AddressBookPage::on_newAddress_clicked()
         return;
 
     if (tab == ReceivingTab) {
-        return;
-    }
+		std::string sNewAddress = GetRandHash().GetHex().substr(0,6);
+	   	DefaultRecAddress(sNewAddress);
+		return;
+	}
 
     EditAddressDialog dlg(EditAddressDialog::NewSendingAddress, this);
     dlg.setModel(model);
