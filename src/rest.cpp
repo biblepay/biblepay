@@ -730,6 +730,7 @@ static const struct {
       {"/rest/mempool/info", rest_mempool_info},
       {"/rest/mempool/contents", rest_mempool_contents},
   	  {"/rest/getaddressutxos/", rest_getaddressutxos},
+	  {"/rest/pushtx/", rest_pushtx},
       {"/rest/headers/", rest_headers},
       {"/rest/getutxos", rest_getutxos},
 };
