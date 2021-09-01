@@ -738,6 +738,8 @@ std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
 	CAmount nPaymentsLimit = GetDailyPaymentsLimit(nHeight);
 	// The chain is either 'main' or 'test'
 	std::string sChain = chainparams.NetworkIDString();
+	// 9-1-2021
+
     LogPrintf("GetDailySuperblock::Payments Limits %f %f ", nHeight, nPaymentsLimit/COIN);
 	std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
 	std::string sFile = "utxointegration_" + sChain + "_" + sDate + ".dat";
@@ -1523,3 +1525,108 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 
 //////////////////////////////////////////////////////////////////////////////// End of Watchman On The Wall ////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, std::string strMessage, std::string& strError)
+{
+	CTxDestination destAddr2 = DecodeDestination(sBitcoinAddress);
+	bool isValid = IsValidDestination(destAddr2);
+
+	if (!isValid) 
+	{
+		strError = "Invalid address";
+		return false;
+	}
+	if (sSignature.empty() || sBitcoinAddress.empty() || strMessage.empty())
+	{
+		strError = "Vitals empty.";
+		return false;
+	}
+	const CKeyID *keyID2 = boost::get<CKeyID>(&destAddr2);
+	//	const CKeyMetadata* metaKeyID2 = nullptr;
+
+	bool fInvalid = false;
+	std::vector<unsigned char> vchSig2 = DecodeBase64(sSignature.c_str(), &fInvalid);
+	if (fInvalid)
+	{
+		strError = "Malformed base64 encoding";
+		return false;
+	}
+	CHashWriter ss2(SER_GETHASH, 0);
+	ss2 << strMessageMagic;
+	ss2 << strMessage;
+	
+	CPubKey pubkey2;
+    if (!pubkey2.RecoverCompact(ss2.GetHash(), vchSig2)) 
+	{
+		strError = "Unable to recover public key.";
+		return false;
+	}
+	bool fSuccess = (EncodeDestination(pubkey2.GetID()) == sBitcoinAddress);
+	return fSuccess;
+}
+
+std::string GetTransactionMessage(CTransactionRef tx)
+{
+    std::string sMsg;
+    for (unsigned int i = 0; i < tx->vout.size(); i++) {
+        sMsg += tx->vout[i].sTxOutMessage;
+    }
+    return sMsg;
+}
+
+
+std::string ScanChainForData(int nHeight, int nTime)
+{
+    int nMaxDepth = nHeight;
+    int nMinDepth = nHeight - BLOCKS_PER_DAY;
+    CBlockIndex* pindex = FindBlockByHeight(nMaxDepth);
+
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+	std::string sDataOut;
+
+    while (pindex && pindex->nHeight >= nMinDepth) 
+	{
+        CBlock block;
+        if (ReadBlockFromDisk(block, pindex, consensusParams)) 
+		{
+            if (pindex->nHeight % 100 == 0)
+                LogPrintf("SCFD %f @ %f, ", pindex->nHeight, GetAdjustedTime());
+            for (unsigned int n = 0; n < block.vtx.size(); n++) 
+			{
+				std::string sData = GetTransactionMessage(block.vtx[n]);
+				std::string sMsg = ExtractXML(sData, "<BOMSG>", "</BOMSG>");
+				//std::string sBOSigner = ExtractXML(sData, "<BOSIGNER>", "</BOSIGNER>");
+				std::string sBOSig = ExtractXML(sData, "<BOSIG>", "</BOSIG>");
+				std::string sMsgKey = ExtractXML(sData, "<MK>", "</MK>");
+				std::string sMV = ExtractXML(sData, "<MV>", "</MV>");
+				if (sMsgKey == "GSC")
+				{
+					std::string sError;
+					bool fPassed = CheckStakeSignature(consensusParams.FoundationAddress, sBOSig, sMsg, sError);
+					LogPrintf("\r\nScanChainForGSC Data %s , Passed=%f", sData, fPassed);
+
+					if (fPassed)
+					{
+						std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
+						std::string sIntDate = ExtractXML(sData, "<DATE>", "</DATE>");
+						if (sIntDate == sDate)
+						{
+							sDataOut = sData;
+						}
+						//std::string sFile = "utxointegration_" + sChain + "_" + sDate + ".dat";
+					}
+				}
+
+		    }
+		}
+        if (pindex->pprev)
+		{
+			pindex = pindex->pprev;
+		}
+		else
+		{
+			break;
+		}
+    }
+	return sDataOut;
+}

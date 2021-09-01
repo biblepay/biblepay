@@ -106,5 +106,7 @@ CAmount GetDailyPaymentsLimit(int nHeight);
 std::string WatchmanOnTheWall(bool fForce, std::string& sContract);
 bool ChainSynced(CBlockIndex* pindex);
 bool Contains(std::string data, std::string instring);
+std::string ScanChainForData(int nHeight, int nTime);
+std::string strReplace(std::string str_input, std::string str_to_find, std::string str_to_replace_with);
 
 #endif

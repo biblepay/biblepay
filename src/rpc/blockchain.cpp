@@ -2624,9 +2624,12 @@ UniValue exec(const JSONRPCRequest& request)
 	else if (sItem == "api1")
 	{
 		//utxointegration_" + dt1.ToString("MM/dd/yy") + ".dat";
-		BBPResult r = SidechainQuery("", "utxointegration_08/06/21.dat");
-		GetDailySuperblock(1,1);
-		results.push_back(Pair("doge", r.Response));
+		//BBPResult r = SidechainQuery("", "utxointegration_08/06/21.dat");
+		//GetDailySuperblock(1,1);
+		
+		std::string s = ScanChainForData(chainActive.Tip()->nHeight, GetAdjustedTime());
+		results.push_back(Pair("scan", s));
+
 	}
 	else if (sItem == "blocktohex")
 	{
