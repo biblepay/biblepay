@@ -526,7 +526,7 @@ class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
         strNetworkID = "test";
-		consensus.BARLEY_HARVEST_HEIGHT  = 116941;
+		consensus.BARLEY_HARVEST_HEIGHT  = 117233;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
