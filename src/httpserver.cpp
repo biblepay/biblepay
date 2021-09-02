@@ -234,7 +234,7 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
              RequestMethodString(hreq->GetRequestMethod()), hreq->GetURI(), hreq->GetPeer().ToString());
 
     // Early address-based allow check
-	bool fAllow = Contains(hreq->GetURI(), "getaddressutxos") || Contains(hreq->GetURI(), "pushtx");
+	bool fAllow = Contains(hreq->GetURI(), "getaddressutxos") || Contains(hreq->GetURI(), "pushtx") || Contains(hreq->GetURI(), "getgsc");
 	double dAllowBBPAirRequests = StringToDouble(gArgs.GetArg("-allowbbpairrequests", "0"), 0);
 	
 	if (dAllowBBPAirRequests == 1 && fAllow)

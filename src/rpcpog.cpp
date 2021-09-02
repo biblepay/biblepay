@@ -1578,7 +1578,13 @@ std::string GetTransactionMessage(CTransactionRef tx)
 std::string ScanChainForData(int nHeight, int nTime)
 {
     int nMaxDepth = nHeight;
-    int nMinDepth = nHeight - BLOCKS_PER_DAY;
+    int nMinDepth = nHeight - (BLOCKS_PER_DAY*2);
+	if (nMaxDepth > chainActive.Tip()->nHeight)
+		nMaxDepth = chainActive.Tip()->nHeight;
+	if (nMinDepth > chainActive.Tip()->nHeight)
+	{
+		return "";
+	}
     CBlockIndex* pindex = FindBlockByHeight(nMaxDepth);
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -1603,20 +1609,18 @@ std::string ScanChainForData(int nHeight, int nTime)
 				{
 					std::string sError;
 					bool fPassed = CheckStakeSignature(consensusParams.FoundationAddress, sBOSig, sMsg, sError);
-					LogPrintf("\r\nScanChainForGSC Data %s , Passed=%f", sData, fPassed);
-
+					//LogPrintf("\r\nScanChainForGSC Data %s , Passed=%f", sData, fPassed);
 					if (fPassed)
 					{
 						std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
 						std::string sIntDate = ExtractXML(sData, "<DATE>", "</DATE>");
 						if (sIntDate == sDate)
 						{
+							// NOTE here, we deliberately return the *earliest* data (first in chain wins).
 							sDataOut = sData;
 						}
-						//std::string sFile = "utxointegration_" + sChain + "_" + sDate + ".dat";
 					}
 				}
-
 		    }
 		}
         if (pindex->pprev)

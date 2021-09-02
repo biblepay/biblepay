@@ -305,8 +305,7 @@ static bool rest_chaininfo(HTTPRequest* req, const std::string& strURIPart)
 static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 {
     std::promise<void> promise;
-
-	// This API call is used by our air wallet to push a transaction into the network 
+	// This API call is used by our network to push a transaction from external API callers
 	if (!CheckWarmup(req))
         return false;
     std::string sHex = req->ReadBody();
@@ -316,10 +315,8 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 		    return RESTERR(req, HTTP_NOT_FOUND, "Rest-Tx Decode Failed");
     CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
 	const uint256& hashTx = tx->GetHash();
-
     CAmount nMaxRawTxFee = maxTxFee;
     bool fBypassLimits = false;
-   
     {
 		// cs_main scope
         LOCK(cs_main);
@@ -369,7 +366,6 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
         // a transaction already in mempool.
         promise.set_value();
     }
-
     } // cs_main
 
     promise.get_future().wait();
@@ -390,110 +386,23 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 	return true;
 }
 
-static bool rest_pushtx0(HTTPRequest* req, const std::string& strURIPart)
-{
-	// This API call is used by our air wallet to push a transaction into the network 
-	if (!CheckWarmup(req))
-        return false;
-    std::string sHex = req->ReadBody();
-	sHex = strReplace(sHex, "tx_hex=", "");
-	CMutableTransaction mtx;
-	if (!DecodeHexTx(mtx, sHex))
-		    return RESTERR(req, HTTP_NOT_FOUND, "Rest-Tx Decode Failed");
-    CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
-	const uint256& hashTx = tx->GetHash();
-
-	CAmount nMaxRawTxFee = maxTxFee;
-	bool fInstantSend = false;
-	bool fBypassLimits = false;
-	
-	
-	CCoinsViewCache &view = *pcoinsTip;
-	bool fHaveChain = false;
-	for (size_t o = 0; !fHaveChain && o < tx->vout.size(); o++) 
-	{
-        const Coin& existingCoin = view.AccessCoin(COutPoint(hashTx, o));
-        fHaveChain = !existingCoin.IsSpent();
-    }
-	bool fHaveMempool = mempool.exists(hashTx);
-
-
-
-	if (!fHaveMempool && !fHaveChain) 
-	{
-		CValidationState state;
-		bool fMissingInputs;
-		if (!AcceptToMemoryPool(mempool, state, std::move(tx), nullptr, !fBypassLimits, nMaxRawTxFee)) 
-		{
-			if (state.IsInvalid()) 
-			{
-				return RESTERR(req, HTTP_NOT_FOUND, strprintf("%i: %s", state.GetRejectCode(), state.GetRejectReason()));
-		    }
-			else 
-			{
-                if (fMissingInputs) 
-				{
-					return RESTERR(req, HTTP_NOT_FOUND, "MISSING_INPUTS");
-                }
-			}
-	   	}
-	}
-	else if (fHaveChain) 
-	{
-		return RESTERR(req, HTTP_NOT_FOUND, "transaction already in block chain");
-    }
-    if(!g_connman)
-	{
-		return RESTERR(req, HTTP_NOT_FOUND, "P2P Functionality missing or disabled");
-	}
-
-    g_connman->RelayTransaction(*tx);
-
-	// Return data
-	UniValue mempoolInfoObject = mempoolInfoToJSON();
-	req->WriteHeader("Content-Type", "application/json");
-	req->WriteHeader("Access-Control-Allow-Origin", "*");
-    UniValue objPush(UniValue::VOBJ);
-    objPush.push_back(Pair("txid", hashTx.GetHex()));
-    LogPrintf("\nRest::PushTx::Success TXID %s\n", hashTx.GetHex()); 
-
-	std::string strJSON = objPush.write() + "\n";
-	req->WriteReply(HTTP_OK, strJSON);
-	return true;
-}
-
 
 static bool rest_getgsc(HTTPRequest* req, const std::string& strURIPart)
 {
 	if (!CheckWarmup(req))
         return false;
-//    std::string sDate;
-  //  ParseDataFormat(sDate, strURIPart);
-
-//	if (sDate.empty())
-//	{
-//		return RESTERR(req, HTTP_NOT_FOUND, "Invalid Date");
- //   }
-
 
 	int nBlockHeight = chainActive.Height();
 	int nNextDailyHeight = nBlockHeight - (nBlockHeight % BLOCKS_PER_DAY) + 20 + BLOCKS_PER_DAY;
 	std::string sData = ScanChainForData(nNextDailyHeight, GetAdjustedTime());
 	std::string sHash = ExtractXML(sData, "<hash>", "</hash>");
-	
-
-
 	req->WriteHeader("Content-Type", "application/json");
 	req->WriteHeader("Access-Control-Allow-Origin", "*");
     UniValue obj(UniValue::VOBJ);
-
-//	obj.push_back(Pair("txid", hashTx.GetHex()));
 	obj.push_back(Pair("nextdailysuperblock", nNextDailyHeight));
 	obj.push_back(Pair("hash", sHash));
-
-
+	obj.push_back(Pair("data", sData));
     LogPrintf("\nRest::rest_getgsc::Success %f\n", GetAdjustedTime()); 
-
 	std::string strJSON = obj.write() + "\n";
 	req->WriteReply(HTTP_OK, strJSON);
 	return true;
