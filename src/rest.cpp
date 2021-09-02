@@ -386,7 +386,6 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 	return true;
 }
 
-
 static bool rest_getgsc(HTTPRequest* req, const std::string& strURIPart)
 {
 	if (!CheckWarmup(req))
@@ -407,8 +406,6 @@ static bool rest_getgsc(HTTPRequest* req, const std::string& strURIPart)
 	req->WriteReply(HTTP_OK, strJSON);
 	return true;
 }
-
-
 
 static bool rest_mempool_info(HTTPRequest* req, const std::string& strURIPart)
 {

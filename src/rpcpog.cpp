@@ -734,20 +734,21 @@ CAmount GetDailyPaymentsLimit(int nHeight)
 std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
 {
 	const CChainParams& chainparams = Params();
-
 	CAmount nPaymentsLimit = GetDailyPaymentsLimit(nHeight);
 	// The chain is either 'main' or 'test'
 	std::string sChain = chainparams.NetworkIDString();
-	// 9-1-2021
-
     LogPrintf("GetDailySuperblock::Payments Limits %f %f ", nHeight, nPaymentsLimit/COIN);
-	std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
-	std::string sFile = "utxointegration_" + sChain + "_" + sDate + ".dat";
+
+	//std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
+	//BBPResult b = SidechainQuery("", sFile);
+	std::string sData = ScanChainForData(nHeight, nTime);
+
+	std::string sHash = ExtractXML(sData, "<hash>", "</hash>");
+	std::string sData = ExtractXML(sData, "<data>", "</data>");
+
+	LogPrintf("\nHash %s, Data %s", sHash, sData);
+
 	std::vector<Portfolio> vPortfolio;
-	BBPResult b = SidechainQuery("", sFile);
-	std::string sHash = ExtractXML(b.Response, "<hash>", "</hash>");
-	std::string sData = ExtractXML(b.Response, "<data>", "</data>");
-	LogPrintf("\nHash %s, Data %s, File %s", sHash, sData, sFile);
 	std::vector<std::string> vRows = Split(sData, "<row>");
 	double nTotal = 0;
 	double nSuperblockLimit = (nPaymentsLimit/COIN) * .99;
@@ -846,22 +847,27 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
     }
 	if (nTotalPayments == 0)
 	{
-		// Ensure this block is more than 8 hours old, since nothing is in it...
+		// Now that the GSC is stored in the chain, we don't need to check this old rule anymore...
+		/*
 		if (nElapsed < 60 * 60 * 8)
 		{
+	    	// Ensure this block is more than 8 hours old, since nothing is in it...
 			LogPrintf("\nValidateDailySuperblock::ERROR - Superblock is less than 8 hours old, and superblock is empty!  Waiting for a valid superblock... ElapsedTime=%f\n", nElapsed);
 			return false;
 		}
+		
 		CAmount nTotalSubsidy = 0;
 		for (const auto& txout3 : txNew.vout)
 		{
 			nTotalSubsidy += txout3.nValue;
 		}
+
 		if (nElapsed > (60 * 60 * 8) && nTotalSubsidy > (MAX_BLOCK_SUBSIDY*COIN))
 		{
 			LogPrintf("\nValidateDailySuperblock::ERROR - Superblock is greater than 8 hours old, and empty, with more than MAX_BLOCK_SUBSIDY[%f] in payments... Rejected.. \n", nTotalSubsidy/COIN);
 			return false;
 		}
+		*/
 	}
     return true;
 }
@@ -1542,7 +1548,6 @@ bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, st
 		return false;
 	}
 	const CKeyID *keyID2 = boost::get<CKeyID>(&destAddr2);
-	//	const CKeyMetadata* metaKeyID2 = nullptr;
 
 	bool fInvalid = false;
 	std::vector<unsigned char> vchSig2 = DecodeBase64(sSignature.c_str(), &fInvalid);
@@ -1574,11 +1579,10 @@ std::string GetTransactionMessage(CTransactionRef tx)
     return sMsg;
 }
 
-
-std::string ScanChainForData(int nHeight, int nTime)
+std::string ScanChainForData(int nHeight, int64_t nTime)
 {
     int nMaxDepth = nHeight;
-    int nMinDepth = nHeight - (BLOCKS_PER_DAY*2);
+    int nMinDepth = nHeight - (BLOCKS_PER_DAY * 2);
 	if (nMaxDepth > chainActive.Tip()->nHeight)
 		nMaxDepth = chainActive.Tip()->nHeight;
 	if (nMinDepth > chainActive.Tip()->nHeight)
@@ -1596,12 +1600,13 @@ std::string ScanChainForData(int nHeight, int nTime)
         if (ReadBlockFromDisk(block, pindex, consensusParams)) 
 		{
             if (pindex->nHeight % 100 == 0)
-                LogPrintf("SCFD %f @ %f, ", pindex->nHeight, GetAdjustedTime());
+			{
+               // LogPrintf("SCFD %f @ %f, ", pindex->nHeight, GetAdjustedTime());
+			}
             for (unsigned int n = 0; n < block.vtx.size(); n++) 
 			{
 				std::string sData = GetTransactionMessage(block.vtx[n]);
 				std::string sMsg = ExtractXML(sData, "<BOMSG>", "</BOMSG>");
-				//std::string sBOSigner = ExtractXML(sData, "<BOSIGNER>", "</BOSIGNER>");
 				std::string sBOSig = ExtractXML(sData, "<BOSIG>", "</BOSIG>");
 				std::string sMsgKey = ExtractXML(sData, "<MK>", "</MK>");
 				std::string sMV = ExtractXML(sData, "<MV>", "</MV>");
@@ -1609,12 +1614,11 @@ std::string ScanChainForData(int nHeight, int nTime)
 				{
 					std::string sError;
 					bool fPassed = CheckStakeSignature(consensusParams.FoundationAddress, sBOSig, sMsg, sError);
-					//LogPrintf("\r\nScanChainForGSC Data %s , Passed=%f", sData, fPassed);
 					if (fPassed)
 					{
-						std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
-						std::string sIntDate = ExtractXML(sData, "<DATE>", "</DATE>");
-						if (sIntDate == sDate)
+						// GSC data is signed, in chain, hard (not dynamic), with the block->nTime matching the contract date within a period of blocks_per_day*2 at the *earliest* height
+						int nGSCHeight = (int)StringToDouble(ExtractXML(sData, "<height>", "</height>"));
+						if (nGSCHeight == nHeight)
 						{
 							// NOTE here, we deliberately return the *earliest* data (first in chain wins).
 							sDataOut = sData;
