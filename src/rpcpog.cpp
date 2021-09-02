@@ -735,17 +735,11 @@ std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
 {
 	const CChainParams& chainparams = Params();
 	CAmount nPaymentsLimit = GetDailyPaymentsLimit(nHeight);
-	// The chain is either 'main' or 'test'
 	std::string sChain = chainparams.NetworkIDString();
     LogPrintf("GetDailySuperblock::Payments Limits %f %f ", nHeight, nPaymentsLimit/COIN);
-
-	//std::string sDate = DateTimeStrFormat("%m_%d_%y", nTime);
-	//BBPResult b = SidechainQuery("", sFile);
-	std::string sData = ScanChainForData(nHeight, nTime);
-
-	std::string sHash = ExtractXML(sData, "<hash>", "</hash>");
-	std::string sData = ExtractXML(sData, "<data>", "</data>");
-
+	std::string sData0 = ScanChainForData(nHeight, nTime);
+	std::string sHash = ExtractXML(sData0, "<hash>", "</hash>");
+	std::string sData = ExtractXML(sData0, "<data>", "</data>");
 	LogPrintf("\nHash %s, Data %s", sHash, sData);
 
 	std::vector<Portfolio> vPortfolio;
@@ -1617,7 +1611,7 @@ std::string ScanChainForData(int nHeight, int64_t nTime)
 					if (fPassed)
 					{
 						// GSC data is signed, in chain, hard (not dynamic), with the block->nTime matching the contract date within a period of blocks_per_day*2 at the *earliest* height
-						int nGSCHeight = (int)StringToDouble(ExtractXML(sData, "<height>", "</height>"));
+						int nGSCHeight = (int)StringToDouble(ExtractXML(sData, "<height>", "</height>"), 0);
 						if (nGSCHeight == nHeight)
 						{
 							// NOTE here, we deliberately return the *earliest* data (first in chain wins).
