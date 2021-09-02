@@ -218,6 +218,7 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
         UniValue o(UniValue::VOBJ);
         ScriptPubKeyToUniv(txout.scriptPubKey, o, true);
         out.pushKV("scriptPubKey", o);
+		out.pushKV("txoutmessage", txout.sTxOutMessage);
 
         // Add spent information if spentindex is enabled
         if (ptxSpentInfo != nullptr) {

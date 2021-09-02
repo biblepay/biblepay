@@ -21,6 +21,8 @@
 #include "util.h"
 #include "rpcpog.h"
 #include "net.h"
+#include <validationinterface.h>
+#include <future>
 
 #include <boost/algorithm/string.hpp>
 
@@ -299,7 +301,96 @@ static bool rest_chaininfo(HTTPRequest* req, const std::string& strURIPart)
     }
 }
 
+
 static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
+{
+    std::promise<void> promise;
+
+	// This API call is used by our air wallet to push a transaction into the network 
+	if (!CheckWarmup(req))
+        return false;
+    std::string sHex = req->ReadBody();
+	sHex = strReplace(sHex, "tx_hex=", "");
+	CMutableTransaction mtx;
+	if (!DecodeHexTx(mtx, sHex))
+		    return RESTERR(req, HTTP_NOT_FOUND, "Rest-Tx Decode Failed");
+    CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
+	const uint256& hashTx = tx->GetHash();
+
+    CAmount nMaxRawTxFee = maxTxFee;
+    bool fBypassLimits = false;
+   
+    {
+		// cs_main scope
+        LOCK(cs_main);
+		CCoinsViewCache &view = *pcoinsTip;
+		bool fHaveChain = false;
+        for (size_t o = 0; !fHaveChain && o < tx->vout.size(); o++) 
+		{
+			const Coin& existingCoin = view.AccessCoin(COutPoint(hashTx, o));
+			fHaveChain = !existingCoin.IsSpent();
+        }
+	    bool fHaveMempool = mempool.exists(hashTx);
+		if (!fHaveMempool && !fHaveChain) 
+		{
+        // push to local node and sync with wallets
+        CValidationState state;
+        bool fMissingInputs;
+        if (!AcceptToMemoryPool(mempool, state, std::move(tx), &fMissingInputs, fBypassLimits /* bypass_limits */, nMaxRawTxFee)) {
+            if (state.IsInvalid()) 
+			{
+                return RESTERR(req, HTTP_NOT_FOUND, "TRANSACTION_REJECTED_" + FormatStateMessage(state));
+            } 
+			else 
+			{
+                if (fMissingInputs) 
+				{
+                    return RESTERR(req, HTTP_NOT_FOUND, "Missing inputs");
+                }
+                return RESTERR(req, HTTP_NOT_FOUND, "TRANSACTION_ERROR_" + FormatStateMessage(state));
+            }
+        }
+		else 
+		{
+            // If wallet is enabled, ensure that the wallet has been made aware
+            // of the new transaction prior to returning. This prevents a race
+            // where a user might call sendrawtransaction with a transaction
+            // to/from their wallet, immediately call some wallet RPC, and get
+            // a stale result because callbacks have not yet been processed.
+            CallFunctionInValidationInterfaceQueue([&promise] {
+                promise.set_value();
+            });
+        }
+    } else if (fHaveChain) 
+		{
+        return RESTERR(req, HTTP_NOT_FOUND, "RPC_TRANSACTION_ALREADY_IN_CHAIN");
+    } else {
+        // Make sure we don't block forever if re-sending
+        // a transaction already in mempool.
+        promise.set_value();
+    }
+
+    } // cs_main
+
+    promise.get_future().wait();
+
+    if(!g_connman)
+        return RESTERR(req, HTTP_NOT_FOUND, "Peer-to-peer functionality missing or disabled");
+
+    g_connman->RelayTransaction(*tx);
+
+	// Return data
+	req->WriteHeader("Content-Type", "application/json");
+	req->WriteHeader("Access-Control-Allow-Origin", "*");
+    UniValue objPush(UniValue::VOBJ);
+    objPush.push_back(Pair("txid", hashTx.GetHex()));
+    LogPrintf("\nRest::PushTx::Success TXID %s\n", hashTx.GetHex()); 
+	std::string strJSON = objPush.write() + "\n";
+	req->WriteReply(HTTP_OK, strJSON);
+	return true;
+}
+
+static bool rest_pushtx0(HTTPRequest* req, const std::string& strURIPart)
 {
 	// This API call is used by our air wallet to push a transaction into the network 
 	if (!CheckWarmup(req))
@@ -311,9 +402,12 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 		    return RESTERR(req, HTTP_NOT_FOUND, "Rest-Tx Decode Failed");
     CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
 	const uint256& hashTx = tx->GetHash();
+
 	CAmount nMaxRawTxFee = maxTxFee;
 	bool fInstantSend = false;
 	bool fBypassLimits = false;
+	
+	
 	CCoinsViewCache &view = *pcoinsTip;
 	bool fHaveChain = false;
 	for (size_t o = 0; !fHaveChain && o < tx->vout.size(); o++) 
@@ -322,6 +416,9 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
         fHaveChain = !existingCoin.IsSpent();
     }
 	bool fHaveMempool = mempool.exists(hashTx);
+
+
+
 	if (!fHaveMempool && !fHaveChain) 
 	{
 		CValidationState state;
@@ -364,6 +461,44 @@ static bool rest_pushtx(HTTPRequest* req, const std::string& strURIPart)
 	req->WriteReply(HTTP_OK, strJSON);
 	return true;
 }
+
+
+static bool rest_getgsc(HTTPRequest* req, const std::string& strURIPart)
+{
+	if (!CheckWarmup(req))
+        return false;
+//    std::string sDate;
+  //  ParseDataFormat(sDate, strURIPart);
+
+//	if (sDate.empty())
+//	{
+//		return RESTERR(req, HTTP_NOT_FOUND, "Invalid Date");
+ //   }
+
+
+	int nBlockHeight = chainActive.Height();
+	int nNextDailyHeight = nBlockHeight - (nBlockHeight % BLOCKS_PER_DAY) + 20 + BLOCKS_PER_DAY;
+	std::string sData = ScanChainForData(nNextDailyHeight, GetAdjustedTime());
+	std::string sHash = ExtractXML(sData, "<hash>", "</hash>");
+	
+
+
+	req->WriteHeader("Content-Type", "application/json");
+	req->WriteHeader("Access-Control-Allow-Origin", "*");
+    UniValue obj(UniValue::VOBJ);
+
+//	obj.push_back(Pair("txid", hashTx.GetHex()));
+	obj.push_back(Pair("nextdailysuperblock", nNextDailyHeight));
+	obj.push_back(Pair("hash", sHash));
+
+
+    LogPrintf("\nRest::rest_getgsc::Success %f\n", GetAdjustedTime()); 
+
+	std::string strJSON = obj.write() + "\n";
+	req->WriteReply(HTTP_OK, strJSON);
+	return true;
+}
+
 
 
 static bool rest_mempool_info(HTTPRequest* req, const std::string& strURIPart)
@@ -655,8 +790,7 @@ static bool rest_getaddressutxos(HTTPRequest* req, const std::string& strURIPart
 {
 	// This API call is used to retrieve UTXO information by Address
 	// NOTE:  You must enable the addressindex=1 in the biblepay.conf (and reindex=1 once only on start) to use this functionality.
-	LogPrintf("\n%f", 701);
-
+	
     if (!CheckWarmup(req))
 	{
 		LogPrintf("\nRest_getaddressutxos not warmed up %f ", 1);
@@ -731,6 +865,7 @@ static const struct {
       {"/rest/mempool/contents", rest_mempool_contents},
   	  {"/rest/getaddressutxos/", rest_getaddressutxos},
 	  {"/rest/pushtx/", rest_pushtx},
+	  {"/rest/getgsc/", rest_getgsc},
       {"/rest/headers/", rest_headers},
       {"/rest/getutxos", rest_getutxos},
 };
