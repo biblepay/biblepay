@@ -274,6 +274,20 @@ public:
         return (vin.size() == 1 && vin[0].prevout.IsNull());
     }
 
+	bool IsGSCPayment() const
+	{
+		// Determine if this is a GSC payment
+		bool IsSuperblock = (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() > 3);
+		if (IsSuperblock)
+		{
+			CAmount nValueOut = GetValueOut();
+			bool bGSC = nValueOut <= (20000 * COIN);
+			return bGSC;
+		}
+		return false;
+    }
+
+
     friend bool operator==(const CTransaction& a, const CTransaction& b)
     {
         return a.hash == b.hash;

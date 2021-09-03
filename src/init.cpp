@@ -31,6 +31,7 @@
 #include <policy/feerate.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
+#include "rpcpog.h"
 #include <rpc/server.h>
 #include <rpc/register.h>
 #include <rpc/blockchain.h>
@@ -1926,7 +1927,7 @@ bool AppInitMain()
     }
 
     // ********************************************************* Step 7b: load block chain
-
+	
     fReindex = gArgs.GetBoolArg("-reindex", false);
     bool fReindexChainState = gArgs.GetBoolArg("-reindex-chainstate", false);
 
@@ -2297,24 +2298,35 @@ bool AppInitMain()
 
     // ********************************************************* Step 10c: schedule BiblePay-specific tasks
 
+	LogPrintf("step %f", 701);
+
     scheduler.scheduleEvery(std::bind(&CNetFulfilledRequestManager::DoMaintenance, std::ref(netfulfilledman)), 60 * 1000);
+	LogPrintf("step %f", 702);
+
     scheduler.scheduleEvery(std::bind(&CMasternodeSync::DoMaintenance, std::ref(masternodeSync), std::ref(*g_connman)), 1 * 1000);
+	LogPrintf("step %f", 703);
+
     scheduler.scheduleEvery(std::bind(&CMasternodeUtils::DoMaintenance, std::ref(*g_connman)), 1 * 1000);
+	LogPrintf("step %f", 704);
 
     if (!fDisableGovernance) {
         scheduler.scheduleEvery(std::bind(&CGovernanceManager::DoMaintenance, std::ref(governance), std::ref(*g_connman)), 60 * 5 * 1000);
     }
+	LogPrintf("step %f", 705);
 
     if (fMasternodeMode) {
         scheduler.scheduleEvery(std::bind(&CCoinJoinServer::DoMaintenance, std::ref(coinJoinServer), std::ref(*g_connman)), 1 * 1000);
     }
+LogPrintf("step %f", 706);
 
     if (gArgs.GetBoolArg("-statsenabled", DEFAULT_STATSD_ENABLE)) {
         int nStatsPeriod = std::min(std::max((int)gArgs.GetArg("-statsperiod", DEFAULT_STATSD_PERIOD), MIN_STATSD_PERIOD), MAX_STATSD_PERIOD);
         scheduler.scheduleEvery(PeriodicStats, nStatsPeriod * 1000);
     }
+LogPrintf("step %f", 707);
 
     llmq::StartLLMQSystem();
+LogPrintf("step %f", 708);
 
     // ********************************************************* Step 11: import blocks
 
@@ -2457,6 +2469,9 @@ bool AppInitMain()
     }
 
     // ********************************************************* Step 13: finished
+
+	// BiblePay
+	LockStakes();
 
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));

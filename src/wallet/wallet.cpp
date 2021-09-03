@@ -22,6 +22,8 @@
 #include <policy/policy.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
+#include "rpcpog.h"
+
 #include <script/script.h>
 #include <script/sign.h>
 #include <timedata.h>
@@ -3973,6 +3975,34 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransac
               100 * feeCalc.est.fail.withinTarget / (feeCalc.est.fail.totalConfirmed + feeCalc.est.fail.inMempool + feeCalc.est.fail.leftMempool),
               feeCalc.est.fail.withinTarget, feeCalc.est.fail.totalConfirmed, feeCalc.est.fail.inMempool, feeCalc.est.fail.leftMempool);
     return true;
+}
+
+
+void CWallet::LockByMask(std::string sUA)
+{
+	// BBP UTXOs end in a 5 digit pin:
+	CCoinControl coin_control;
+	std::vector<COutput> vAvailableCoins;
+	LOCK2(cs_main, cs_wallet);
+    {
+	    AvailableCoins(vAvailableCoins, true, &coin_control);
+	}
+	for (auto out : vAvailableCoins)
+    {
+		if(!out.fSpendable)
+                continue;
+		const CWalletTx *pcoin = out.tx;
+		COutPoint out1(out.tx->GetHash(), out.i);
+		CAmount nAmount = pcoin->tx->vout[out.i].nValue;
+		std::string sRecipient = PubKeyToAddress(pcoin->tx->vout[out.i].scriptPubKey);
+		int nPin = (int)AddressToPinV2(sUA, sRecipient);
+		bool fUTXO = CompareMask2(nAmount, nPin);
+		bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
+		if (!fLocked && fUTXO)
+		{
+			LockCoin(out1);
+		}
+	}
 }
 
 /**

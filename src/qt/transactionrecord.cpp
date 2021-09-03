@@ -53,6 +53,8 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(interfaces::Wal
                 sub.idx = i; // vout index
                 sub.credit = txout.nValue;
                 sub.involvesWatchAddress = mine & ISMINE_WATCH_ONLY;
+				sub.IsGSCPayment = wtx.tx->IsGSCPayment();
+
                 if (wtx.txout_address_is_mine[i])
                 {
                     // Received by BiblePay Address
@@ -72,6 +74,12 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(interfaces::Wal
                 {
                     // Generated
                     sub.type = TransactionRecord::Generated;
+
+					if (sub.IsGSCPayment && i != 0)
+					{
+						sub.type = TransactionRecord::GSCPayment;
+					}
+				
                 }
 
                 parts.append(sub);

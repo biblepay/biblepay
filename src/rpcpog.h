@@ -108,5 +108,10 @@ bool ChainSynced(CBlockIndex* pindex);
 bool Contains(std::string data, std::string instring);
 std::string ScanChainForData(int nHeight, int64_t nTime);
 std::string strReplace(std::string str_input, std::string str_to_find, std::string str_to_replace_with);
+double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress);
+void LockStakes();
+bool CompareMask2(CAmount nAmount, double nMask);
+const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
+
 
 #endif

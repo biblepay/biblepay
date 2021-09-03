@@ -90,6 +90,8 @@ BitcoinGUI::BitcoinGUI(interfaces::Node& node, const NetworkStyle* networkStyle,
     appToolBar(0),
     appToolBarLogoAction(0),
 	unchainedAction(0),
+	prayerRequestAction(0),
+	forumAction(0),
     overviewButton(0),
     historyButton(0),
     masternodeButton(0),
@@ -601,21 +603,42 @@ void BitcoinGUI::createToolBars()
         overviewButton = new QToolButton(this);
         overviewButton->setText(tr("&Overview"));
         overviewButton->setStatusTip(tr("Show general overview of wallet"));
+		overviewButton->setIcon(QIcon(":/icons/home"));
+		overviewButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		overviewButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
         tabGroup->addButton(overviewButton);
 
         sendCoinsButton = new QToolButton(this);
         sendCoinsButton->setText(sendCoinsMenuAction->text());
         sendCoinsButton->setStatusTip(sendCoinsMenuAction->statusTip());
+
+		sendCoinsButton->setIcon(QIcon(":/icons/send"));
+		sendCoinsButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		sendCoinsButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+
         tabGroup->addButton(sendCoinsButton);
 
         receiveCoinsButton = new QToolButton(this);
         receiveCoinsButton->setText(receiveCoinsMenuAction->text());
         receiveCoinsButton->setStatusTip(receiveCoinsMenuAction->statusTip());
+		
+		receiveCoinsButton->setIcon(QIcon(":/icons/receive"));
+		receiveCoinsButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		receiveCoinsButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
         tabGroup->addButton(receiveCoinsButton);
 
         historyButton = new QToolButton(this);
         historyButton->setText(tr("&Transactions"));
         historyButton->setStatusTip(tr("Browse transaction history"));
+
+		historyButton->setIcon(QIcon(":/icons/history"));
+		historyButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		historyButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+
         tabGroup->addButton(historyButton);
 
         coinJoinCoinsButton = new QToolButton(this);
@@ -628,6 +651,11 @@ void BitcoinGUI::createToolBars()
             masternodeButton = new QToolButton(this);
             masternodeButton->setText(tr("&Sanctuaries"));
             masternodeButton->setStatusTip(tr("Browse Sanctuaries"));
+
+			masternodeButton->setIcon(QIcon(":/icons/masternodes"));
+			masternodeButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+			masternodeButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
             tabGroup->addButton(masternodeButton);
             connect(masternodeButton, SIGNAL(clicked()), this, SLOT(gotoMasternodePage()));
         }
@@ -638,11 +666,33 @@ void BitcoinGUI::createToolBars()
 		unchainedAction->setStatusTip(tr("Unchained"));
 		unchainedAction->setToolTip(unchainedAction->statusTip());
 		unchainedAction->setCheckable(true);
-		unchainedAction->setIcon(QIcon(":/icons/notsynced"));
+		unchainedAction->setIcon(QIcon(":/icons/network"));
 		unchainedAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		unchainedAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 		tabGroup->addButton(unchainedAction);
 		connect(unchainedAction, SIGNAL(clicked()), this, SLOT(showUnchained()));
+
+		prayerRequestAction = new QToolButton(this);
+		prayerRequestAction->setText(tr("&Prayer Req."));
+		prayerRequestAction->setStatusTip(tr("View Prayers or Add a Prayer Request"));
+		prayerRequestAction->setToolTip(prayerRequestAction->statusTip());
+		prayerRequestAction->setCheckable(true);
+		prayerRequestAction->setIcon(QIcon(":/icons/cross"));
+		prayerRequestAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		prayerRequestAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+		tabGroup->addButton(prayerRequestAction);
+		connect(prayerRequestAction, SIGNAL(clicked()), this, SLOT(showPrayerRequests()));
+
+		forumAction = new QToolButton(this);
+		forumAction->setText(tr("&Forum"));
+		forumAction->setStatusTip(tr("Navigate to the BiblePay Forum"));
+		forumAction->setToolTip(prayerRequestAction->statusTip());
+		forumAction->setCheckable(true);
+		forumAction->setIcon(QIcon(":/icons/chat"));
+		forumAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		forumAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+		tabGroup->addButton(forumAction);
+		connect(prayerRequestAction, SIGNAL(clicked()), this, SLOT(showForum()));
 
 	    // END OF BIBLEPAY
 
@@ -1074,6 +1124,19 @@ void BitcoinGUI::showUnchained()
 	std::string sURL = "https://unchained.biblepay.org";
 	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
 }
+
+void BitcoinGUI::showPrayerRequests()
+{
+	std::string sURL = "https://unchained.biblepay.org/PrayerBlog";
+	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
+}
+
+void BitcoinGUI::showForum()
+{
+	std::string sURL = "https://forum.biblepay.org/index.php?topic=517.0";
+	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
+}
+
 
 void BitcoinGUI::gotoOverviewPage()
 {

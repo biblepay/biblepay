@@ -92,6 +92,7 @@ public:
         RecvFromOther,
         SendToSelf,
         RecvWithCoinJoin,
+		GSCPayment,
         CoinJoinMixing,
         CoinJoinCollateralPayment,
         CoinJoinMakeCollaterals,
@@ -149,6 +150,7 @@ public:
 
     /** Whether the transaction was sent/received with a watch-only address */
     bool involvesWatchAddress;
+	bool IsGSCPayment;
 
     /// Label
     QString label;

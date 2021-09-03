@@ -16,6 +16,7 @@
 
 #include <interfaces/node.h>
 #include <key_io.h>
+#include "rpcpog.h"
 #include <wallet/coincontrol.h>
 #include <ui_interface.h>
 #include <txmempool.h>
@@ -449,6 +450,8 @@ void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
         m_coin_control->UnSelectAll();
         coinControlUpdateLabels();
         Q_EMIT coinsSent(currentTransaction.getWtx()->get().GetHash());
+		// BIBLEPAY
+		LockStakes();
     }
     fNewRecipientAllowed = true;
 }
@@ -912,6 +915,7 @@ void SendCoinsDialog::coinControlChangeEdited(const QString& text)
         }
     }
 }
+
 
 // Coin Control: update labels
 void SendCoinsDialog::coinControlUpdateLabels()

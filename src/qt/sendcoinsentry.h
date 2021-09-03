@@ -49,6 +49,8 @@ public:
 public Q_SLOTS:
     void clear();
     void checkSubtractFeeFromAmount();
+	void donateToFoundation();
+
 
 Q_SIGNALS:
     void removeEntry(SendCoinsEntry *entry);

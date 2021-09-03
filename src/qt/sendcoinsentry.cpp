@@ -10,6 +10,7 @@
 #include <qt/addresstablemodel.h>
 #include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
+#include <chainparams.h>
 
 #include <QApplication>
 #include <QClipboard>
@@ -42,6 +43,7 @@ SendCoinsEntry::SendCoinsEntry(QWidget* parent) :
     // Connect signals
     connect(ui->payAmount, SIGNAL(valueChanged()), this, SIGNAL(payAmountChanged()));
     connect(ui->checkboxSubtractFeeFromAmount, SIGNAL(toggled(bool)), this, SIGNAL(subtractFeeFromAmountChanged()));
+	connect(ui->checkboxDonateToFoundation, SIGNAL(toggled(bool)), this, SLOT(donateToFoundation()));
     connect(ui->deleteButton, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_is, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_s, SIGNAL(clicked()), this, SLOT(deleteClicked()));
@@ -51,6 +53,24 @@ SendCoinsEntry::SendCoinsEntry(QWidget* parent) :
 SendCoinsEntry::~SendCoinsEntry()
 {
     delete ui;
+}
+
+void SendCoinsEntry::donateToFoundation()
+{
+	const CChainParams& chainparams = Params();
+	bool bCheckedF = (ui->checkboxDonateToFoundation->checkState() == Qt::Checked);
+
+	if (bCheckedF)
+	{
+		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().FoundationAddress));
+	    ui->payAmount->setFocus();
+	}
+	else
+	{
+		ui->payTo->setText("");
+		ui->payAmount->clear();
+        ui->payAmount->setFocus();
+	}
 }
 
 void SendCoinsEntry::on_pasteButton_clicked()
@@ -101,6 +121,7 @@ void SendCoinsEntry::clear()
     ui->addAsLabel->clear();
     ui->payAmount->clear();
     ui->checkboxSubtractFeeFromAmount->setCheckState(Qt::Unchecked);
+	ui->checkboxDonateToFoundation->setCheckState(Qt::Unchecked);
     ui->messageTextLabel->clear();
     ui->messageTextLabel->hide();
     ui->messageLabel->hide();

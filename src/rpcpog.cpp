@@ -734,9 +734,10 @@ CAmount GetDailyPaymentsLimit(int nHeight)
 std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
 {
 	const CChainParams& chainparams = Params();
-	CAmount nPaymentsLimit = GetDailyPaymentsLimit(nHeight);
+	CAmount nPaymentsLimit = GetDailyPaymentsLimit(nHeight) - (MAX_BLOCK_SUBSIDY * COIN);
 	std::string sChain = chainparams.NetworkIDString();
     LogPrintf("GetDailySuperblock::Payments Limits %f %f ", nHeight, nPaymentsLimit/COIN);
+
 	std::string sData0 = ScanChainForData(nHeight, nTime);
 	std::string sHash = ExtractXML(sData0, "<hash>", "</hash>");
 	std::string sData = ExtractXML(sData0, "<data>", "</data>");
@@ -1631,4 +1632,113 @@ std::string ScanChainForData(int nHeight, int64_t nTime)
 		}
     }
 	return sDataOut;
+}
+
+std::string Mid(std::string data, int nStart, int nLength)
+{
+    // Ported from VB6, except this version is 0 based (NOT 1 BASED)
+    if (nStart > data.length()) {
+        return std::string();
+    }
+
+    int nNewLength = nLength;
+    int nEndPos = nLength + nStart;
+    if (nEndPos > data.length()) {
+        nNewLength = data.length() - nStart;
+    }
+    if (nNewLength < 1)
+        return "";
+
+    std::string sOut = data.substr(nStart, nNewLength);
+    if (sOut.length() > nLength) {
+        sOut = sOut.substr(0, nLength);
+    }
+    return sOut;
+}
+
+std::string AmtToString(CAmount nAmount)
+{
+    std::string s = strprintf("%d", nAmount);
+    return s;
+}
+
+bool CompareMask2(CAmount nAmount, double nMask)
+{
+    if (nMask == 0)
+        return false;
+    std::string sMask = DoubleToString(nMask, 0);
+    bool fZero = false;
+    if (sMask.length() == 5) {
+        if (Mid(sMask, 4, 1) == "0")
+            fZero = true;
+        nMask = StringToDouble(Mid(sMask, 0, 4), 0);
+    }
+    std::string sFull = AmtToString(nAmount);
+    std::string sSec = DoubleToString(nMask, 0);
+    bool fExists = Contains(sFull, sSec);
+    return fExists;
+}
+
+int HexToInteger2(const std::string& hex)
+{
+    int x = 0;
+    std::stringstream ss;
+    ss << std::hex << hex;
+    ss >> x;
+    return x;
+}
+
+
+double ConvertHexToDouble2(std::string hex)
+{
+    int d = HexToInteger2(hex);
+    double dOut = (double)d;
+    return dOut;
+}
+
+double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
+{
+    std::string sAddress = sUnchainedAddress + sCryptoAddress;
+
+    if (sAddress.length() < 20)
+        return -1;
+
+    std::string sHash = RetrieveMd5(sAddress);
+    std::string sMath5 = sHash.substr(0, 5); // 0 - 1,048,575
+    double d = ConvertHexToDouble2("0x" + sMath5) / 11.6508;
+
+    int nMin = 10000;
+    int nMax = 99999;
+    d += nMin;
+
+    if (d > nMax)
+        d = nMax;
+
+    d = std::floor(d);
+    return d;
+
+    // Why a 5 digit pin?  This reduces the price impact biblepay consumes in expensive utxo stakes.
+}
+
+
+void LockStakes()
+{
+	std::string sUA = gArgs.GetArg("-unchainedaddress", "");
+	JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+	pwallet->LockByMask(sUA);
+}
+
+const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
+{
+    CBlockIndex* pindexHistorical;
+    CTransactionRef tx1;
+    uint256 hashBlock1;
+    if (GetTransaction(hash, tx1, Params().GetConsensus(), hashBlock1, true)) {
+        BlockMap::iterator mi = mapBlockIndex.find(hashBlock1);
+        if (mi != mapBlockIndex.end())
+            return mapBlockIndex[hashBlock1];
+    }
+    return pindexHistorical;
 }

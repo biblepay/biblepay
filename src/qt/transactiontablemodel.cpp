@@ -386,6 +386,9 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
         return tr("Sent to");
     case TransactionRecord::SendToSelf:
         return tr("Payment to yourself");
+	case TransactionRecord::GSCPayment:
+		return tr("Smart-Contract Reward");
+
     case TransactionRecord::Generated:
         return tr("Mined");
 
@@ -410,6 +413,17 @@ QVariant TransactionTableModel::txAddressDecoration(const TransactionRecord *wtx
     if (wtx->status.lockedByInstantSend) {
         return GUIUtil::getIcon("transaction_locked", GUIUtil::ThemedColor::BLUE);
     }
+
+	switch(wtx->type)
+    {
+		case TransactionRecord::GSCPayment:
+			return GUIUtil::getIcon("reward", GUIUtil::ThemedColor::RED);
+	    case TransactionRecord::Generated:
+			return GUIUtil::getIcon("tx_mined", GUIUtil::ThemedColor::RED);
+		default:
+			return GUIUtil::getIcon("tx_inout", GUIUtil::ThemedColor::RED);
+    }
+
     return QVariant();
 }
 

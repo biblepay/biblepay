@@ -17,7 +17,8 @@
 #include <script/script.h>
 #include <timedata.h>
 #include <util.h>
-
+#include "wallet/wallet.h"
+#include "rpcpog.h"
 #include <stdint.h>
 #include <string>
 
@@ -290,50 +291,101 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
     //
     // Debug view
     //
-    if (node.getLogCategories() != BCLog::NONE)
+	bool fShowAdvView = true;
+
+    std::string sStripped;
+	std::string sObjType;
+	const CBlockIndex* pindexTxList;
+
+    if (fShowAdvView)
     {
-        strHTML += "<hr><br>" + tr("Debug information") + "<br><br>";
-        for (const CTxIn& txin : wtx.tx->vin)
-            if(wallet.txinIsMine(txin))
-                strHTML += "<b>" + tr("Debit") + ":</b> " + BitcoinUnits::formatHtmlWithUnit(unit, -wallet.getDebit(txin, ISMINE_ALL)) + "<br>";
-        for (const CTxOut& txout : wtx.tx->vout)
-            if(wallet.txoutIsMine(txout))
-                strHTML += "<b>" + tr("Credit") + ":</b> " + BitcoinUnits::formatHtmlWithUnit(unit, wallet.getCredit(txout, ISMINE_ALL)) + "<br>";
+		// In Network Messages or Prayers
+
+		std::string sNetworkMessage;
+		for (unsigned int i1 = 0; i1 < wtx.tx->vout.size(); i1++)
+		{
+			sNetworkMessage += wtx.tx->vout[i1].sTxOutMessage;
+		}
+		
+		pindexTxList = GetBlockIndexByTransactionHash(wtx.tx->GetHash());
+		if (pindexTxList)
+		{
+			const Consensus::Params& consensusParams = Params().GetConsensus();
+			if (pindexTxList != NULL)
+			{
+				CBlock blockTxList;
+				if (ReadBlockFromDisk(blockTxList, pindexTxList, consensusParams)) 
+				{
+					strHTML += "<br><span>Height: " + QString::fromStdString(DoubleToString((double)pindexTxList->nHeight,0)) + "</span></b>";
+					//strHTML += "<br><span>Difficulty: " + QString::fromStdString(DoubleToString(GetDifficulty(pindexTxList), 2)) + "</span></b>";
+					strHTML += "<br><span>Time: " + QString::fromStdString(TimestampToHRDate(blockTxList.GetBlockTime())) + "</span></b>";
+					strHTML += "<br><span>Subsidy: " + QString::fromStdString(DoubleToString((double)blockTxList.vtx[0]->vout[0].nValue / COIN, 4)) + "</span></b>";
+				}
+			}
+		}
+
+		sStripped = ExtractXML(sNetworkMessage, "<MV>", "</MV>");
+		sObjType = ExtractXML(sNetworkMessage, "<MT>", "</MT>");
+		
+		strHTML += "<br><br>";
+
+        auto mine = wtx.txin_is_mine.begin();
+        for (const CTxIn& txin : wtx.tx->vin) {
+                if (*(mine++)) {
+                    strHTML += "<b>" + tr("Debit") + ":</b> " + BitcoinUnits::formatHtmlWithUnit(unit, -wallet.getDebit(txin, ISMINE_ALL)) + "<br>";
+                }
+        }
+        mine = wtx.txout_is_mine.begin();
+        for (const CTxOut& txout : wtx.tx->vout) {
+                if (*(mine++)) {
+                    strHTML += "<b>" + tr("Credit") + ":</b> " + BitcoinUnits::formatHtmlWithUnit(unit, wallet.getCredit(txout, ISMINE_ALL)) + "<br>";
+                }
+        }
+
 
         strHTML += "<br><b>" + tr("Transaction") + ":</b><br>";
         strHTML += GUIUtil::HtmlEscape(wtx.tx->ToString(), true);
 
+        QString sInputsHeader = "<br><b>" + tr("Inputs") + ":</b><ul>";
+
+		int iRow = 0;
+		if (pindexTxList != NULL)
+		{
+			for (auto txin: wtx.tx->vin)
+			{
+				COutPoint prevout = txin.prevout;
+
+				Coin prev;
+				if(pcoinsTip->GetCoin(prevout, prev))
+				{
+					{
+						iRow++;
+						if (iRow==1)
+							strHTML += sInputsHeader;
+						strHTML += "<li>";
+						const CTxOut &vout = prev.out;
+						CTxDestination address;
+						if (ExtractDestination(vout.scriptPubKey, address))
+						{
+							// if (wallet->mapAddressBook.count(address) && !wallet->mapAddressBook[address].name.empty())
+							// strHTML += GUIUtil::HtmlEscape(wallet->mapAddressBook[address].name) + " ";
+							strHTML += QString::fromStdString(EncodeDestination(address)) + " ";
+						}
+						strHTML = strHTML + " " + tr("Amount") + "=" + BitcoinUnits::formatHtmlWithUnit(unit, vout.nValue);
+					}
+				}
+			}
+		}
+
+        strHTML += "</ul>";
         strHTML += "<br><b>" + tr("Inputs") + ":</b>";
         strHTML += "<ul>";
 
-        for (const CTxIn& txin : wtx.tx->vin)
-        {
-            COutPoint prevout = txin.prevout;
+       
+		if (!sStripped.empty()) 
+			strHTML += "<br><b>"+ GUIUtil::TOQS(sObjType) + ":</b> " + GUIUtil::TOQS(sStripped) + "<br>";
 
-            Coin prev;
-            if(node.getUnspentOutput(prevout, prev))
-            {
-                {
-                    strHTML += "<li>";
-                    const CTxOut& txout = prev.out;
-                    CTxDestination address;
-                    if (ExtractDestination(txout.scriptPubKey, address))
-                    {
-                        std::string name;
-                        if (wallet.getAddress(address, &name) && !name.empty())
-                            strHTML += GUIUtil::HtmlEscape(name) + " ";
-                        strHTML += QString::fromStdString(EncodeDestination(address));
-                    }
-                    strHTML = strHTML + " " + tr("Amount") + "=" + BitcoinUnits::formatHtmlWithUnit(unit, txout.nValue);
-                    strHTML = strHTML + " IsMine=" + (wallet.txoutIsMine(txout) & ISMINE_SPENDABLE ? tr("true") : tr("false"));
-                    strHTML = strHTML + " IsWatchOnly=" + (wallet.txoutIsMine(txout) & ISMINE_WATCH_ONLY ? tr("true") : tr("false")) + "</li>";
-                }
-            }
-        }
-
-        strHTML += "</ul>";
     }
-
     strHTML += "</font></html>";
     return strHTML;
 }

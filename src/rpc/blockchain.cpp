@@ -2626,9 +2626,9 @@ UniValue exec(const JSONRPCRequest& request)
 		//utxointegration_" + dt1.ToString("MM/dd/yy") + ".dat";
 		//BBPResult r = SidechainQuery("", "utxointegration_08/06/21.dat");
 		//GetDailySuperblock(1,1);
-		
-		std::string s = ScanChainForData(chainActive.Tip()->nHeight, GetAdjustedTime());
-		results.push_back(Pair("scan", s));
+		//		std::string s = ScanChainForData(chainActive.Tip()->nHeight, GetAdjustedTime());
+		//		results.push_back(Pair("scan", s));
+		LockStakes();
 
 	}
 	else if (sItem == "blocktohex")

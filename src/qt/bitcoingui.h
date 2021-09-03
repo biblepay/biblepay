@@ -109,6 +109,8 @@ private:
     QToolBar *appToolBar;
     QToolButton *overviewButton;
 	QToolButton *unchainedAction;
+	QToolButton *forumAction;
+	QToolButton *prayerRequestAction;
     QToolButton *sendCoinsButton;
     QToolButton *coinJoinCoinsButton;
     QToolButton *receiveCoinsButton;
@@ -273,6 +275,8 @@ private Q_SLOTS:
 #ifdef ENABLE_WALLET
 	// BiblePay Unchained:
 	void showUnchained();
+	void showForum();
+	void showPrayerRequests();
     /** Switch to overview (home) page */
     void gotoOverviewPage();
     /** Switch to history (transactions) page */

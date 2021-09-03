@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SendCoinsEntry</class>
  <widget class="QStackedWidget" name="SendCoinsEntry">
@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>729</width>
-    <height>150</height>
+    <width>900</width>
+    <height>174</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -155,16 +155,31 @@
       <item>
        <widget class="BitcoinAmountField" name="payAmount"/>
       </item>
+     
+      
+            <item>
+             <widget class="QCheckBox" name="checkboxDonateToFoundation">
+              <property name="toolTip">
+               <string>Donate BiblePay to our foundation; the entire amount will be spent on good causes, such as orphan-charity.</string>
+              </property>
+              <property name="text">
+               <string>Donate to Foundation</string>
+              </property>
+             </widget>
+            </item>
+
+     
       <item>
-       <widget class="QCheckBox" name="checkboxSubtractFeeFromAmount">
-        <property name="toolTip">
-         <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
-        </property>
-        <property name="text">
-         <string>S&amp;ubtract fee from amount</string>
-        </property>
-       </widget>
+            <widget class="QCheckBox" name="checkboxSubtractFeeFromAmount">
+             <property name="toolTip">
+              <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
+             </property>
+             <property name="text">
+              <string>S&amp;ubtract fee from amount</string>
+             </property>
+            </widget>
       </item>
+     
       <item>
        <widget class="QPushButton" name="useAvailableBalanceButton">
         <property name="text">

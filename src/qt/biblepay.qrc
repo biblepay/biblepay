@@ -19,6 +19,16 @@
         <file alias="eye_minus">res/icons/eye_minus.png</file>
         <file alias="eye_plus">res/icons/eye_plus.png</file>
         <file alias="editpaste">res/icons/editpaste.png</file>
+        <file alias="network">res/icons/network.png</file>
+        <file alias="home">res/icons/overview.png</file>
+        <file alias="account32">res/icons/account32.png</file>
+        <file alias="send">res/icons/send.png</file>
+        <file alias="history">res/icons/history.png</file>
+        <file alias="masternodes">res/icons/masternodes.png</file>
+        <file alias="reward">res/icons/reward1.png</file>
+        <file alias="receive">res/icons/receive.png</file>
+        <file alias="cross">res/icons/cross3232.png</file>
+        <file alias="chat">res/icons/chat.png</file>
         <file alias="editcopy">res/icons/editcopy.png</file>
         <file alias="synced">res/icons/synced.png</file>
         <file alias="remove">res/icons/remove.png</file>
