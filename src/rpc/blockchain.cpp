@@ -1098,6 +1098,15 @@ UniValue getblock(const JSONRPCRequest& request)
             verbosity = request.params[1].get_bool() ? 1 : 0;
     }
 
+	int NUMBER_LENGTH_NON_HASH = 10;
+	if (strHash.length() < NUMBER_LENGTH_NON_HASH && !strHash.empty())
+	{
+		CBlockIndex* bindex = FindBlockByHeight(StringToDouble(strHash, 0));
+		if (bindex==NULL)
+		    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found by height");
+		hash = bindex->GetBlockHash();
+	}
+
     const CBlockIndex* pblockindex = LookupBlockIndex(hash);
     if (!pblockindex) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
@@ -2621,15 +2630,13 @@ UniValue exec(const JSONRPCRequest& request)
         TxToJSON(tx, uint256(), objTx);
         results.push_back(objTx);
 	}
-	else if (sItem == "api1")
+	else if (sItem == "nextcontract")
 	{
-		//utxointegration_" + dt1.ToString("MM/dd/yy") + ".dat";
-		//BBPResult r = SidechainQuery("", "utxointegration_08/06/21.dat");
-		//GetDailySuperblock(1,1);
-		//		std::string s = ScanChainForData(chainActive.Tip()->nHeight, GetAdjustedTime());
-		//		results.push_back(Pair("scan", s));
-		LockStakes();
-
+		int nBlockHeight = chainActive.Height();
+		int nNextDailyHeight = nBlockHeight - (nBlockHeight % BLOCKS_PER_DAY) + 20 + BLOCKS_PER_DAY;
+		std::string s = ScanChainForData(nNextDailyHeight, GetAdjustedTime());
+		results.push_back(Pair("nextdailysuperblock", nNextDailyHeight));
+		results.push_back(Pair("nextcontract", s));
 	}
 	else if (sItem == "blocktohex")
 	{

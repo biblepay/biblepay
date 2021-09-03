@@ -12,8 +12,8 @@
 
 #include <algorithm>
 
-const size_t MAX_DATA_SIZE = 512;
-const size_t MAX_NAME_SIZE = 40;
+const size_t MAX_DATA_SIZE = 1024;
+const size_t MAX_NAME_SIZE = 100;
 
 CProposalValidator::CProposalValidator(const std::string& strHexData, bool fAllowLegacyFormat) :
     objJSON(UniValue::VOBJ),
@@ -98,7 +98,7 @@ bool CProposalValidator::ValidateName()
         return false;
     }
 
-    static const std::string strAllowedChars = "-_abcdefghijklmnopqrstuvwxyz0123456789";
+    static const std::string strAllowedChars = " -_abcdefghijklmnopqrstuvwxyz0123456789";
 
     std::transform(strName.begin(), strName.end(), strName.begin(), ::tolower);
 
