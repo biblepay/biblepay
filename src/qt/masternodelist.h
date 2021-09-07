@@ -47,6 +47,7 @@ public:
         COLUMN_COLLATERAL_ADDRESS,
         COLUMN_OWNER_ADDRESS,
         COLUMN_VOTING_ADDRESS,
+		COLUMN_URL,
         COLUMN_PROTX_HASH,
     };
 
@@ -86,7 +87,9 @@ private Q_SLOTS:
     void extraInfoDIP3_clicked();
     void copyProTxHash_clicked();
     void copyCollateralOutpoint_clicked();
-
+	void navigateToChild_clicked();
+    void sponsorChild_clicked();
+    
     void handleMasternodeListChanged();
     void updateDIP3ListScheduled();
 };

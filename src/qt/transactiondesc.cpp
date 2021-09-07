@@ -307,23 +307,24 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
 			sNetworkMessage += wtx.tx->vout[i1].sTxOutMessage;
 		}
 		
+	
 		pindexTxList = GetBlockIndexByTransactionHash(wtx.tx->GetHash());
-		if (pindexTxList)
+		if (pindexTxList && chainActive.Contains(pindexTxList))
 		{
-			const Consensus::Params& consensusParams = Params().GetConsensus();
-			if (pindexTxList != NULL)
-			{
-				CBlock blockTxList;
-				if (ReadBlockFromDisk(blockTxList, pindexTxList, consensusParams)) 
+				const Consensus::Params& consensusParams = Params().GetConsensus();
+				if (pindexTxList != NULL)
 				{
-					strHTML += "<br><span>Height: " + QString::fromStdString(DoubleToString((double)pindexTxList->nHeight,0)) + "</span></b>";
-					//strHTML += "<br><span>Difficulty: " + QString::fromStdString(DoubleToString(GetDifficulty(pindexTxList), 2)) + "</span></b>";
-					strHTML += "<br><span>Time: " + QString::fromStdString(TimestampToHRDate(blockTxList.GetBlockTime())) + "</span></b>";
-					strHTML += "<br><span>Subsidy: " + QString::fromStdString(DoubleToString((double)blockTxList.vtx[0]->vout[0].nValue / COIN, 4)) + "</span></b>";
+					CBlock blockTxList;
+					if (ReadBlockFromDisk(blockTxList, pindexTxList, consensusParams)) 
+					{
+						strHTML += "<br><span>Height: " + QString::fromStdString(DoubleToString((double)pindexTxList->nHeight,0)) + "</span></b>";
+						//strHTML += "<br><span>Difficulty: " + QString::fromStdString(DoubleToString(GetDifficulty(pindexTxList), 2)) + "</span></b>";
+						strHTML += "<br><span>Time: " + QString::fromStdString(TimestampToHRDate(blockTxList.GetBlockTime())) + "</span></b>";
+						strHTML += "<br><span>Subsidy: " + QString::fromStdString(DoubleToString((double)blockTxList.vtx[0]->vout[0].nValue / COIN, 4)) + "</span></b>";
+					}
 				}
-			}
 		}
-
+	
 		sStripped = ExtractXML(sNetworkMessage, "<MV>", "</MV>");
 		sObjType = ExtractXML(sNetworkMessage, "<MT>", "</MT>");
 		

@@ -179,6 +179,11 @@
            <string>Voting Address</string>
           </property>
          </column>
+         <column>
+          <property name="text">
+           <string>Child URL</string>
+          </property>
+         </column>
         </widget>
        </item>
       </layout>

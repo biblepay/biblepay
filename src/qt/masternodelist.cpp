@@ -7,6 +7,12 @@
 #include <qt/guiutil.h>
 #include <netbase.h>
 #include <qt/walletmodel.h>
+// BIBLEPAY
+#include "validation.h"
+#include "rpcpog.h"
+#include <QDesktopServices>
+#include <QUrl>
+// END OF BIBLEPAY
 
 #include <univalue.h>
 
@@ -93,13 +99,24 @@ MasternodeList::MasternodeList(QWidget* parent) :
 
     QAction* copyProTxHashAction = new QAction(tr("Copy ProTx Hash"), this);
     QAction* copyCollateralOutpointAction = new QAction(tr("Copy Collateral Outpoint"), this);
+	// POOS
+	QAction* navigateToChildAction = new QAction(tr("View Child Biography"), this);
+	QAction* sponsorChildAction = new QAction(tr("Sponsor Child for this Sanctuary"), this);
+
     contextMenuDIP3 = new QMenu(this);
     contextMenuDIP3->addAction(copyProTxHashAction);
     contextMenuDIP3->addAction(copyCollateralOutpointAction);
+	// POOS
+	contextMenuDIP3->addAction(navigateToChildAction);
+	contextMenuDIP3->addAction(sponsorChildAction);
+
     connect(ui->tableWidgetMasternodesDIP3, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuDIP3(const QPoint&)));
     connect(ui->tableWidgetMasternodesDIP3, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(extraInfoDIP3_clicked()));
     connect(copyProTxHashAction, SIGNAL(triggered()), this, SLOT(copyProTxHash_clicked()));
     connect(copyCollateralOutpointAction, SIGNAL(triggered()), this, SLOT(copyCollateralOutpoint_clicked()));
+	// POOS
+	connect(sponsorChildAction, SIGNAL(triggered()), this, SLOT(sponsorChild_clicked()));
+	connect(navigateToChildAction, SIGNAL(triggered()), this, SLOT(navigateToChild_clicked()));
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateDIP3ListScheduled()));
@@ -231,7 +248,20 @@ void MasternodeList::updateDIP3List()
         QByteArray addr_ba(reinterpret_cast<const char*>(addr_key.data()), addr_key.size());
         QTableWidgetItem* addressItem = new CMasternodeListWidgetItem<QByteArray>(QString::fromStdString(dmn->pdmnState->addr.ToString()), addr_ba);
         QTableWidgetItem* statusItem = new QTableWidgetItem(mnList.IsMNValid(dmn) ? tr("ENABLED") : (mnList.IsMNPoSeBanned(dmn) ? tr("POSE_BANNED") : tr("UNKNOWN")));
-        QTableWidgetItem* PoSeScoreItem = new CMasternodeListWidgetItem<int>(QString::number(dmn->pdmnState->nPoSePenalty), dmn->pdmnState->nPoSePenalty);
+
+
+		// BIBLEPAY - POOS
+		int64_t nAdditionalPenalty = 0;
+		bool fOK = mapPOOSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()] != 255;
+		if (!fOK)
+		{
+			statusItem = new QTableWidgetItem(tr("POOS_BANNED"));
+			nAdditionalPenalty = 700;
+		}
+
+		// END OF POOS
+
+        QTableWidgetItem* PoSeScoreItem = new CMasternodeListWidgetItem<int>(QString::number(dmn->pdmnState->nPoSePenalty  +  nAdditionalPenalty), dmn->pdmnState->nPoSePenalty);
         QTableWidgetItem* registeredItem = new CMasternodeListWidgetItem<int>(QString::number(dmn->pdmnState->nRegisteredHeight), dmn->pdmnState->nRegisteredHeight);
         QTableWidgetItem* lastPaidItem = new CMasternodeListWidgetItem<int>(QString::number(dmn->pdmnState->nLastPaidHeight), dmn->pdmnState->nLastPaidHeight);
 
@@ -281,7 +311,11 @@ void MasternodeList::updateDIP3List()
         QTableWidgetItem* votingItem = new QTableWidgetItem(votingStr);
 
         QTableWidgetItem* proTxHashItem = new QTableWidgetItem(QString::fromStdString(dmn->proTxHash.ToString()));
-
+		// BIBLEPAY - POOS
+		std::string sOp = dmn->pdmnState->pubKeyOperator.Get().ToString();
+		std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sOp);
+		QTableWidgetItem* urlItem = new QTableWidgetItem(QString::fromStdString(std::get<0>(t) + "/" + std::get<1>(t)));
+        // END OF POOS
         if (strCurrentFilterDIP3 != "") {
             strToFilter = addressItem->text() + " " +
                           statusItem->text() + " " +
@@ -310,6 +344,7 @@ void MasternodeList::updateDIP3List()
         ui->tableWidgetMasternodesDIP3->setItem(0, COLUMN_COLLATERAL_ADDRESS, collateralItem);
         ui->tableWidgetMasternodesDIP3->setItem(0, COLUMN_OWNER_ADDRESS, ownerItem);
         ui->tableWidgetMasternodesDIP3->setItem(0, COLUMN_VOTING_ADDRESS, votingItem);
+		ui->tableWidgetMasternodesDIP3->setItem(0, COLUMN_URL, urlItem);
         ui->tableWidgetMasternodesDIP3->setItem(0, COLUMN_PROTX_HASH, proTxHashItem);
     });
 
@@ -372,9 +407,47 @@ void MasternodeList::extraInfoDIP3_clicked()
     // Title of popup window
     QString strWindowtitle = tr("Additional information for DIP3 Masternode %1").arg(QString::fromStdString(dmn->proTxHash.ToString()));
     QString strText = QString::fromStdString(json.write(2));
+	// POOS
+	std::string sOp = dmn->pdmnState->pubKeyOperator.Get().ToString();
+	std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sOp);
+	std::string sNarr = "\r\nChild ID: " + std::get<2>(t);
+	strText += QString::fromStdString(sNarr);
+	// END OF POOS
 
     QMessageBox::information(this, strWindowtitle, strText);
 }
+
+void MasternodeList::sponsorChild_clicked()
+{
+	int row = ui->tableWidgetMasternodesDIP3->selectionModel()->currentIndex().row();
+    if (row > -1)
+    {
+	    auto dmn = GetSelectedDIP3MN();
+	    if (!dmn) 
+			return;
+		std::string sOp = dmn->pdmnState->pubKeyOperator.Get().ToString();
+		std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sOp);
+		std::string sURL = "https://wiki.biblepay.org/Sanctuary_Child_Sponsorship?childid=" + std::get<2>(t);
+		std::string sNarr = "To sponsor a child for this sanctuary, please see this page to make a payment:  " + sURL +  " .  Your Child ID [" + std::get<2>(t) + "] has been copied to the clipboard.  ";
+	    QApplication::clipboard()->setText(QString::fromStdString(std::get<2>(t)));
+		std::string sTitle = "Becoming an Active Sanctuary";
+		QMessageBox::information(this, QString::fromStdString(sTitle), QString::fromStdString(sNarr));
+		QUrl pUrl(QString::fromStdString(sURL));
+		QDesktopServices::openUrl(pUrl);
+	}
+}
+
+void MasternodeList::navigateToChild_clicked()
+{
+	int row = ui->tableWidgetMasternodesDIP3->selectionModel()->currentIndex().row();
+    if (row > -1)
+    {
+		QString Url = ui->tableWidgetMasternodesDIP3->item(row, 11)->text();
+		QUrl pUrl(Url);
+		QDesktopServices::openUrl(pUrl);
+	}
+}
+
 
 void MasternodeList::copyProTxHash_clicked()
 {

@@ -98,7 +98,7 @@ BBPResult UnchainedQuery(std::string sXMLSource, std::string sAPI);
 BBPResult SidechainQuery(std::string sXMLSource, std::string sAPI);
 std::shared_ptr<CReserveScript> GetScriptForMining();
 std::string TimestampToHRDate(double dtm);
-std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight);
+std::vector<Portfolio> GetDailySuperblock(int nHeight);
 std::string GJE(std::string sKey, std::string sValue, bool bIncludeDelimiter, bool bQuoteValue);
 bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_t nBlockTime);
 bool IsDailySuperblock(int nHeight);
@@ -106,12 +106,16 @@ CAmount GetDailyPaymentsLimit(int nHeight);
 std::string WatchmanOnTheWall(bool fForce, std::string& sContract);
 bool ChainSynced(CBlockIndex* pindex);
 bool Contains(std::string data, std::string instring);
-std::string ScanChainForData(int nHeight, int64_t nTime);
+std::string ScanChainForData(int nHeight);
 std::string strReplace(std::string str_input, std::string str_to_find, std::string str_to_replace_with);
 double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress);
 void LockStakes();
 bool CompareMask2(CAmount nAmount, double nMask);
 const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
+std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey);
+bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout);
+int GetNextDailySuperblock(int nHeight);
+std::string AmountToString(const CAmount& amount);
 
 
 #endif

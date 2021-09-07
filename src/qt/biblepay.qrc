@@ -38,7 +38,6 @@
         <file alias="fontbigger">res/icons/fontbigger.png</file>
         <file alias="fontsmaller">res/icons/fontsmaller.png</file>
         <file alias="notsynced">res/icons/notsynced.png</file>
-        <file alias="reward">res/icons/reward2.png</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="general">res/css/general.css</file>

@@ -92,6 +92,10 @@
 #include <zmq/zmqrpc.h>
 #endif
 
+// BIBLEPAY
+extern void ThreadPOOS(CConnman& connman);
+// END OF BIBLEPAY
+
 bool fFeeEstimatesInitialized = false;
 static const bool DEFAULT_PROXYRANDOMIZE = true;
 static const bool DEFAULT_REST_ENABLE = true;
@@ -2475,6 +2479,7 @@ LogPrintf("step %f", 708);
 
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
+	threadGroup.create_thread(boost::bind(&ThreadPOOS, boost::ref(connman)));
 
     g_wallet_init_interface.Start(scheduler);
 

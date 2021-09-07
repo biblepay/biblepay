@@ -262,7 +262,7 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
 	bool fSuperblock = IsDailySuperblock(nBlockHeight);
 	if (fSuperblock)
 	{
-		std::vector<Portfolio> p = GetDailySuperblock(GetAdjustedTime(), nBlockHeight);
+		std::vector<Portfolio> p = GetDailySuperblock(nBlockHeight);
 		for (int i = 0; i < p.size(); i++)
 		{
 			CScript spkPayee = GetScriptForDestination(DecodeDestination(p[i].OwnerAddress));
@@ -323,6 +323,23 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
     if (!dmnPayee) {
         return false;
     }
+
+	// POOS - R ANDREWS - 7-18-2020
+	if (pindex != NULL)
+	{
+		// mission critical todo: should we add one bitsstate to current spork to allow emergency off for this?
+		double nOrphanBanning = 1;
+		int64_t nElapsed = GetAdjustedTime() - pindex->GetBlockTime();
+		if (nElapsed < (60 * 60 * 24) && nOrphanBanning == 1)
+		{
+			bool fPoosValid = POOSOrphanTest(dmnPayee->pdmnState->pubKeyOperator.Get().ToString(), 30);
+			if (!fPoosValid)
+			{
+				masternodeReward = 100 * COIN;
+			}
+		}
+	}
+	// End of POOS
 
     CAmount operatorReward = 0;
     if (dmnPayee->nOperatorReward != 0 && dmnPayee->pdmnState->scriptOperatorPayout != CScript()) {

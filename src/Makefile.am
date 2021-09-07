@@ -232,6 +232,7 @@ BITCOIN_CORE_H = \
   netmessagemaker.h \
   node/coinstats.h \
   noui.h \
+  pose.h \
   policy/feerate.h \
   policy/fees.h \
   policy/policy.h \
@@ -368,6 +369,7 @@ libbiblepay_server_a_SOURCES = \
   noui.cpp \
   policy/fees.cpp \
   policy/policy.cpp \
+  pose.cpp \
   pow.cpp \
   rest.cpp \
   rpc/blockchain.cpp \

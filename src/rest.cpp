@@ -392,8 +392,8 @@ static bool rest_getgsc(HTTPRequest* req, const std::string& strURIPart)
         return false;
 
 	int nBlockHeight = chainActive.Height();
-	int nNextDailyHeight = nBlockHeight - (nBlockHeight % BLOCKS_PER_DAY) + 20 + BLOCKS_PER_DAY;
-	std::string sData = ScanChainForData(nNextDailyHeight, GetAdjustedTime());
+	int nNextDailyHeight = GetNextDailySuperblock(nBlockHeight);
+	std::string sData = ScanChainForData(nNextDailyHeight);
 	std::string sHash = ExtractXML(sData, "<hash>", "</hash>");
 	req->WriteHeader("Content-Type", "application/json");
 	req->WriteHeader("Access-Control-Allow-Origin", "*");

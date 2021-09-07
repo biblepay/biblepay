@@ -136,6 +136,7 @@ struct Params {
     uint256 hashGenesisBlock;
     uint256 hashDevnetGenesisBlock;
 	int BARLEY_HARVEST_HEIGHT;
+	int BARLEY_HARVEST_HEIGHT2;
 	int RANDOMX_HEIGHT;
 	int LLMQHeight;
 

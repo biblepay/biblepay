@@ -14,7 +14,6 @@
 #include <core_io.h>
 #include <consensus/validation.h>
 #include <validation.h>
-// #include <rpc/index/txindex.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
 #include <primitives/transaction.h>
@@ -28,22 +27,15 @@
 #include <hash.h>
 #include <validationinterface.h>
 #include <warnings.h>
-
 #include <masternode/masternode-sync.h>
-
 #include <evo/specialtx.h>
 #include <evo/cbtx.h>
-
 #include <llmq/quorums_chainlocks.h>
 #include <llmq/quorums_instantsend.h>
-
 #include <stdint.h>
-
 #include <univalue.h>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp> // boost::thread::interrupt
-
 #include <memory>
 #include <mutex>
 #include <condition_variable>
@@ -2632,11 +2624,32 @@ UniValue exec(const JSONRPCRequest& request)
 	}
 	else if (sItem == "nextcontract")
 	{
-		int nBlockHeight = chainActive.Height();
-		int nNextDailyHeight = nBlockHeight - (nBlockHeight % BLOCKS_PER_DAY) + 20 + BLOCKS_PER_DAY;
-		std::string s = ScanChainForData(nNextDailyHeight, GetAdjustedTime());
+		int nNextDailyHeight = 0;
+		if (request.params.size() > 1)
+		{
+			nNextDailyHeight = (int)StringToDouble(request.params[1].get_str(), 0);
+		}
+		else
+		{
+			int nBlockHeight = chainActive.Height();
+			nNextDailyHeight = GetNextDailySuperblock(nBlockHeight);
+		}
+
+		std::string s = ScanChainForData(nNextDailyHeight);
 		results.push_back(Pair("nextdailysuperblock", nNextDailyHeight));
 		results.push_back(Pair("nextcontract", s));
+		std::vector<Portfolio> vPortfolio = GetDailySuperblock(nNextDailyHeight);
+		CAmount nTotalPayments = 0;
+		for (int i = 0; i < vPortfolio.size(); i++)
+		{
+			std::string sRecipient1 = vPortfolio[i].OwnerAddress;
+			CAmount nAmount1 = vPortfolio[i].Owed * COIN;
+			nTotalPayments += nAmount1;
+			results.push_back(Pair("Recipient" + DoubleToString(i, 0), sRecipient1));
+			results.push_back(Pair("Amount" + DoubleToString(i,0) , AmountToString(nAmount1)));
+		
+		}
+		results.push_back(Pair("Total", AmountToString(nTotalPayments)));
 	}
 	else if (sItem == "blocktohex")
 	{

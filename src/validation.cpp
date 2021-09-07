@@ -248,7 +248,7 @@ double nHashCounter = 0;
 double dHashesPerSec = 0;
 int64_t nHPSTimerStart = 0;
 int iMinerThreadCount = 0;
-
+std::map<std::string, int> mapPOOSStatus;
 // END OF BIBLEPAY AREA
 
 std::atomic<bool> fDIP0001ActiveAtTip{false};
@@ -1185,24 +1185,7 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
     for (int i = iSubsidyDecreaseInterval; i <= nPrevHeight; i += iSubsidyDecreaseInterval) 
 	{
         nTotalDeflation += (nSubsidy * iDeflationRate);
-		/*
-		// Starting at height 166000, we increased our deflation rate to 20.04% (from 19.5%) to free extra Coins to pay for DWS Rewards (Dynamic-Whale-Staking):
-		if (i > 0 && consensusParams.PODC2_CUTOVER_HEIGHT && i < consensusParams.ANTI_GPU_HEIGHT)
-		{
-			iDeflationRate = .0167; // 1.67% per month, 20.04% annual
-		}
-		else if (i >= consensusParams.ANTI_GPU_HEIGHT && i <= consensusParams.POOM_PHASEOUT_HEIGHT)
-		{
-			// As of Jan 18th, 2020, we have emitted 187 million too many coins for the current date, so we need to pull the horns in - with a target of meeting 2,334,900,554 emitted coins as of 12-9-2020 (see our schedule here: http://wiki.bible[pay].org/Emission_Schedule)
-			iDeflationRate = .0216; // 25.92% annually
-		}
-		else if (i > consensusParams.POOM_PHASEOUT_HEIGHT)
-		{
-			// To pay for the DWS increase, we have increased our deflation rate to .025 (30% annually).  https://forum.biblepay.org/index.php?topic=532.msg7389#msg7389
-			iDeflationRate = .025; 
-		}
-		*/
-    }
+	}
 	nSubsidy -= nTotalDeflation;
 
     // Monthly Budget: 
@@ -1213,7 +1196,6 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 	double dGovernancePercent = .50;
 	CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy * dGovernancePercent : 0;
 	CAmount nNetSubsidy = nSubsidy - nSuperblockPart;
-	// LogPrintf("\r\nGetBlockSubsidy::Total Deflation %f, Base Subsidy %f, Superblock Part %f, NetSubsidy %f ", nTotalDeflation/COIN, nSubsidyBase, nSuperblockPart/COIN, nNetSubsidy/COIN);
 
 	return fSuperblockPartOnly ? nSuperblockPart : nNetSubsidy;
 }
@@ -1222,21 +1204,18 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
 {
     // https://wiki.bible[pay].org/Economics
 	// http://forum.bible[pay].org/index.php?topic=33.0
-	// Sanctuaries receive 20% of the reward, while they sponsor an orphan out of their own finances.
-	
-	/*
-	if (nHeight > 0 && nHeight < consensusParams.BarleyHarvestHeight)
+	// Sanctuaries sponsor an orphan out of their own finances.
+	CAmount ret = .20 * blockValue;
+    
+	if (nHeight > -1 && nHeight <= Params().GetConsensus().BARLEY_HARVEST_HEIGHT2)
 	{
-		ret = .6575 * blockValue;
-	}
-	if (nHeight > consensusParams.HARVEST_HEIGHT2)
-	{
-		// Sanctuaries are now are required to sponsor one orphan; however daily UTXO staking rewards pay the 'investor' component, therefore we are decreasing the sanc reward to 20% of the coinbase
 		ret = .20 * blockValue;
 	}
-	*/
-
-	return static_cast<CAmount>(blockValue * .20);
+	else if (nHeight > Params().GetConsensus().BARLEY_HARVEST_HEIGHT2)
+	{
+		ret = .50 * blockValue;
+	}
+	return ret;
 }
 
 bool IsInitialBlockDownload()

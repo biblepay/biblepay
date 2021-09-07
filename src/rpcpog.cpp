@@ -719,6 +719,17 @@ bool IsDailySuperblock(int nHeight)
 	return fDaily;
 }
 
+int GetNextDailySuperblock(int nHeight)
+{
+	for (int i = 0; i < BLOCKS_PER_DAY*2; i++)
+	{
+		int nNewHeight = nHeight + i;
+		if (IsDailySuperblock(nNewHeight))
+			return nNewHeight;
+	}
+	return 0;
+}
+
 static double UTXO_BLOCK_PERCENTAGE = .30;
 CAmount GetDailyPaymentsLimit(int nHeight)
 {
@@ -731,17 +742,16 @@ CAmount GetDailyPaymentsLimit(int nHeight)
 	return nPaymentsLimit;
 }
 
-std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
+std::vector<Portfolio> GetDailySuperblock(int nHeight)
 {
 	const CChainParams& chainparams = Params();
 	CAmount nPaymentsLimit = GetDailyPaymentsLimit(nHeight) - (MAX_BLOCK_SUBSIDY * COIN);
 	std::string sChain = chainparams.NetworkIDString();
     LogPrintf("GetDailySuperblock::Payments Limits %f %f ", nHeight, nPaymentsLimit/COIN);
-
-	std::string sData0 = ScanChainForData(nHeight, nTime);
+	std::string sData0 = ScanChainForData(nHeight);
 	std::string sHash = ExtractXML(sData0, "<hash>", "</hash>");
 	std::string sData = ExtractXML(sData0, "<data>", "</data>");
-	LogPrintf("\nHash %s, Data %s", sHash, sData);
+	//	LogPrintf("\nHash %s, Data %s", sHash, sData);
 
 	std::vector<Portfolio> vPortfolio;
 	std::vector<std::string> vRows = Split(sData, "<row>");
@@ -765,7 +775,7 @@ std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
 			p.Owed = p.Strength * nSuperblockLimit;
 			nTotal += p.Strength;
 			LogPrintf("\r\n Owner %s, BBP %f, Strength %f ", p.OwnerAddress, p.AmountBBP, p.Strength);
-			bool fValid = ValidateAddress2(p.OwnerAddress);
+			bool fValid = ValidateAddress2(p.OwnerAddress) && p.Owed > 1;
 			if (fValid)
 				vPortfolio.push_back(p);
 		}
@@ -782,8 +792,11 @@ std::vector<Portfolio> GetDailySuperblock(int64_t nTime, int nHeight)
 		vPortfolio.clear();
 		return vPortfolio;
 	}
+	/* Reserved
 	uint256 sha1 = GetSHA256Hash("<data>" + sData + "</data>");
 	uint256 sha2 = uint256S("0x" + sHash);
+	*/
+	// Mission critical todo: Before testing is over; test with 100 participants (stress test the data size)
 	return vPortfolio;
 }
 
@@ -801,6 +814,24 @@ std::string GJE(std::string sKey, std::string sValue, bool bIncludeDelimiter, bo
     return sOut;
 }
 
+double AmountToDouble(const CAmount& amount)
+{
+    double nAmount = (double)amount / COIN;
+    return nAmount;
+}
+
+bool IsBetween(CAmount n1, CAmount n2, double nFudgeFactor)
+{
+	// Allows for floating point rounding errors which we have observed on arm64.
+	if (n1 == n2)
+		return true;
+	double d1 = AmountToDouble(n1);
+	double d2 = AmountToDouble(n2);
+ 	double d3 = std::abs(d1-d2);
+	bool fPass = (d3 <= nFudgeFactor);
+	return fPass;
+}
+
 bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_t nBlockTime)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -816,19 +847,18 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
     }
 
 	CAmount nTotalPayments = 0;
-	std::vector<Portfolio> vPortfolio = GetDailySuperblock(nBlockTime, nBlockHeight);
+	std::vector<Portfolio> vPortfolio = GetDailySuperblock(nBlockHeight);
 	for (int i = 0; i < vPortfolio.size(); i++)
 	{
         bool found = false;
 		std::string sRecipient1 = vPortfolio[i].OwnerAddress;
 		CAmount nAmount1 = vPortfolio[i].Owed * COIN;
 		nTotalPayments += nAmount1;
-		
-        for (const auto& txout2 : txNew.vout) 
+	    for (const auto& txout2 : txNew.vout) 
 		{
 			std::string sRecipient2 = PubKeyToAddress(txout2.scriptPubKey);
 			CAmount nAmount2 = txout2.nValue;
-            if (sRecipient1 == sRecipient2 && nAmount1 == nAmount2) 
+            if (sRecipient1 == sRecipient2 && IsBetween(nAmount1, nAmount2, 1.0))
             {
                  found = true;
                  break;
@@ -1574,7 +1604,7 @@ std::string GetTransactionMessage(CTransactionRef tx)
     return sMsg;
 }
 
-std::string ScanChainForData(int nHeight, int64_t nTime)
+std::string ScanChainForData(int nHeight)
 {
     int nMaxDepth = nHeight;
     int nMinDepth = nHeight - (BLOCKS_PER_DAY * 2);
@@ -1611,7 +1641,7 @@ std::string ScanChainForData(int nHeight, int64_t nTime)
 					bool fPassed = CheckStakeSignature(consensusParams.FoundationAddress, sBOSig, sMsg, sError);
 					if (fPassed)
 					{
-						// GSC data is signed, in chain, hard (not dynamic), with the block->nTime matching the contract date within a period of blocks_per_day*2 at the *earliest* height
+						// GSC data is signed, in chain, hard (not dynamic) at the *earliest* height
 						int nGSCHeight = (int)StringToDouble(ExtractXML(sData, "<height>", "</height>"), 0);
 						if (nGSCHeight == nHeight)
 						{
@@ -1660,6 +1690,16 @@ std::string AmtToString(CAmount nAmount)
 {
     std::string s = strprintf("%d", nAmount);
     return s;
+}
+
+std::string AmountToString(const CAmount& amount)
+{
+    bool sign = amount < 0;
+    int64_t n_abs = (sign ? -amount : amount);
+    int64_t quotient = n_abs / COIN;
+    int64_t remainder = n_abs % COIN;
+    std::string sAmount = strprintf("%s%d.%08d", sign ? "-" : "", quotient, remainder);
+    return sAmount;
 }
 
 bool CompareMask2(CAmount nAmount, double nMask)
@@ -1741,4 +1781,31 @@ const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
             return mapBlockIndex[hashBlock1];
     }
     return pindexHistorical;
+}
+
+std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey)
+{
+    std::string sURL = "https://";
+    std::string sDomain = "";
+	const CChainParams& chainparams = Params();
+    std::string sNetworkID = chainparams.NetworkIDString();
+    if (sDomain.empty())
+	{
+		sDomain = sNetworkID == "test" ? "foundation.biblepay.org" : "biblepay.cameroonone.org";
+	}
+    sURL += sDomain;
+    if (sSanctuaryPubKey.empty())
+        return std::make_tuple("", "", "");
+    std::string sPrefix = sSanctuaryPubKey.substr(0, std::min((int)sSanctuaryPubKey.length(), 8));
+    std::string sPage = "bios/" + sPrefix + ".htm";
+    return std::make_tuple(sURL, sPage, sPrefix);
+}
+
+bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout)
+{
+    std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sSanctuaryPubKey);
+    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 25, 1);
+    std::string sOK = ExtractXML(sResponse, "Status:", "\r\n");
+    bool fOK = Contains(sOK, "OK");
+    return fOK;
 }

@@ -1120,7 +1120,7 @@ UniValue getgovernanceinfo(const JSONRPCRequest& request)
     obj.pushKV("superblockcycle", Params().GetConsensus().nSuperblockCycle);
     obj.pushKV("lastsuperblock", nLastSuperblock);
     obj.pushKV("nextsuperblock", nNextSuperblock);
-	int nNextDailyHeight = nBlockHeight - (nBlockHeight % BLOCKS_PER_DAY) + 20 + BLOCKS_PER_DAY;
+	int nNextDailyHeight = GetNextDailySuperblock(nBlockHeight);
 	obj.pushKV("nextdailysuperblock", nNextDailyHeight);
 	CAmount nNextDailyLimit = GetDailyPaymentsLimit(nNextSuperblock + 20);
 	obj.pushKV("nextdailylimit", nNextDailyLimit/COIN);

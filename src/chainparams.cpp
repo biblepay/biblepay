@@ -312,6 +312,8 @@ public:
     CMainParams() {
         strNetworkID = "main";
 		consensus.BARLEY_HARVEST_HEIGHT  = 350000;
+		consensus.BARLEY_HARVEST_HEIGHT2 = 350000;
+
 		consensus.RANDOMX_HEIGHT = 184675;
 
         consensus.nSubsidyHalvingInterval = 210240; // Note: actual number of blocks per calendar year with DGW v3 is ~200700 (for example 449750 - 249050)
@@ -344,7 +346,7 @@ public:
         consensus.DIP0003Height = 278014;
 		consensus.LLMQHeight = 278014;
 		// The below height should be the same as Barley_Harvest Height
-        consensus.DIP0003EnforcementHeight = 325000;
+        consensus.DIP0003EnforcementHeight = 350000;
         consensus.DIP0003EnforcementHash = uint256S("0x0");
         consensus.DIP0008Height = 279407; // 
         consensus.powLimit = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
@@ -526,7 +528,8 @@ class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
         strNetworkID = "test";
-		consensus.BARLEY_HARVEST_HEIGHT  = 117233;
+		consensus.BARLEY_HARVEST_HEIGHT = 117233;
+		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
