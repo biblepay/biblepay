@@ -296,7 +296,9 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
     std::string sStripped;
 	std::string sObjType;
 	const CBlockIndex* pindexTxList;
+	int64_t nAge = GetAdjustedTime() - wtx.tx->nLockTime;
 
+	
     if (fShowAdvView)
     {
 		// In Network Messages or Prayers
@@ -309,8 +311,11 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
 		
 	
 		pindexTxList = GetBlockIndexByTransactionHash(wtx.tx->GetHash());
-		if (pindexTxList && chainActive.Contains(pindexTxList))
+		// Wallet can crash here if tx is not in a block yet...
+		if (nAge > (60 * 30))
 		{
+			if (pindexTxList && chainActive.Contains(pindexTxList))
+			{
 				const Consensus::Params& consensusParams = Params().GetConsensus();
 				if (pindexTxList != NULL)
 				{
@@ -323,6 +328,7 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
 						strHTML += "<br><span>Subsidy: " + QString::fromStdString(DoubleToString((double)blockTxList.vtx[0]->vout[0].nValue / COIN, 4)) + "</span></b>";
 					}
 				}
+			}
 		}
 	
 		sStripped = ExtractXML(sNetworkMessage, "<MV>", "</MV>");

@@ -415,13 +415,14 @@ bool CBlockTreeDB::ReadFlag(const std::string &name, bool &fValue) {
 
 bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
 {
+	// Time to seek the Lord
+
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
 
     pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, uint256()));
-
+	int iPos = 0;
     // Load mapBlockIndex
     while (pcursor->Valid()) {
-        boost::this_thread::interruption_point();
         std::pair<char, uint256> key;
         if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX) {
             CDiskBlockIndex diskindex;
@@ -440,14 +441,22 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nNonce         = diskindex.nNonce;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
-
                	pindexNew->RandomXKey     = diskindex.RandomXKey;
-				pindexNew->RandomXData    = diskindex.RandomXData;
+    			pindexNew->RandomXData    = diskindex.RandomXData;
+				iPos++;
+				if (iPos % 5000 == 0)
+				{
+			        boost::this_thread::interruption_point();
+    			    std::string strMsg = strprintf(_("Loading Block Index (%f)"), iPos);
+					uiInterface.InitMessage(strMsg);
+				}
+				int64_t nElapsed = GetAdjustedTime() - diskindex.nTime;
+				if (nElapsed < (60 * 60 * 24 * 7))
+				{
+					if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams, pindexNew->nHeight, pindexNew->RandomXData, pindexNew->RandomXKey, 0, pindexNew->nTime))
+						return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
+				}
 				
-
-                if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams, pindexNew->nHeight, pindexNew->RandomXData, pindexNew->RandomXKey, 0, pindexNew->nTime))
-                    return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
-
                 pcursor->Next();
             } else {
                 return error("%s: failed to read value", __func__);

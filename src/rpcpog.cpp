@@ -178,7 +178,7 @@ std::string ReverseHex(std::string const& src)
 }
 
 
-bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID)
+bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData)
 {
 	JSONRPCRequest r;
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
@@ -192,14 +192,31 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
     std::string strError;
     std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
-    CRecipient recipient = {scriptPubKey, nValue, false};
-    vecSend.push_back(recipient);
+
+
+
+	// BiblePay - Handle extremely large data transactions:
+    if (sOptionalData.length() > 2999 && nValue > 0) {
+        double nReq = ceil(sOptionalData.length() / 10000);
+        double n1 = (double)nValue / COIN;
+        double n2 = n1 / nReq;
+        for (int n3 = 0; n3 < nReq; n3++) {
+            CAmount indAmt = n2 * COIN;
+            CRecipient recipient = {scriptPubKey, indAmt, false};
+            vecSend.push_back(recipient);
+        }
+    } else {
+        CRecipient recipient = {scriptPubKey, nValue, false};
+        vecSend.push_back(recipient);
+    }
+
+
     int nMinConfirms = 0;
     CCoinControl coinControl;
     int nChangePos = -1;
     CTransactionRef tx;
 
-    if (!pwallet->CreateTransaction(vecSend, tx, reservekey, nFeeRequired, nChangePos, strError, coinControl, true, 0)) 
+    if (!pwallet->CreateTransaction(vecSend, tx, reservekey, nFeeRequired, nChangePos, strError, coinControl, true, 0, sOptionalData)) 
 	{
         sError = "Unable to Create Transaction: " + strError;
         return false;
@@ -213,7 +230,6 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
     sTXID = tx->GetHash().GetHex();
 	return true;
 }
-
 
 
 std::string DefaultRecAddress(std::string sNamedEntry)
@@ -1808,4 +1824,157 @@ bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout)
     std::string sOK = ExtractXML(sResponse, "Status:", "\r\n");
     bool fOK = Contains(sOK, "OK");
     return fOK;
+}
+
+std::string GetSANDirectory1()
+{
+	boost::filesystem::path pathConfigFile = GetDataDir(false) / "conf.dat";
+    boost::filesystem::path dir = pathConfigFile.parent_path();
+    std::string sDir = dir.string() + "/SAN/";
+    boost::filesystem::path pathSAN(sDir);
+    if (!boost::filesystem::exists(pathSAN)) {
+        boost::filesystem::create_directory(pathSAN);
+    }
+    return sDir;
+}
+
+void SerializeSidechainToFile(int nHeight)
+{
+    if (nHeight < 100) 
+		return;
+    std::string sPort = gArgs.GetArg("-port", "0");
+	const CChainParams& chainparams = Params();
+
+	std::string sNetworkName = chainparams.NetworkIDString();
+    std::string sTarget = GetSANDirectory1() + "sidechain_" + sPort + sNetworkName;
+    FILE* outFile = fopen(sTarget.c_str(), "w");
+    LogPrintf("Serializing Sidechain... %s at %f", sTarget, GetAdjustedTime());
+    for (auto ii : mapSidechain) 
+	{
+        Sidechain s = mapSidechain[ii.first];
+        std::string sRow = DoubleToString(nHeight, 0) + "<col-sidechain>" + ii.first + "<col-sidechain>" + s.ObjectType + "<col-sidechain>" + s.URL + "<col-sidechain>" 
+			+ DoubleToString(s.Time, 0) + "<col-sidechain>" + DoubleToString(s.Height, 0) + "<row-sidechain>";
+        sRow = strReplace(sRow, "\r", "[~r]");
+        sRow = strReplace(sRow, "\n", "[~n]");
+        sRow += "\r\n";
+        fputs(sRow.c_str(), outFile);
+    }
+    LogPrintf("...Done Serializing Sidechain... %f ", GetAdjustedTime());
+    fclose(outFile);
+}
+
+int DeserializeSidechainFromFile()
+{
+	const CChainParams& chainparams = Params();
+	std::string sNetworkName = chainparams.NetworkIDString();
+    std::string sPort = gArgs.GetArg("-port", "0");
+    std::string sSource = GetSANDirectory1() + "sidechain_" + sPort + sNetworkName;
+    LogPrintf("\nDeserializing sidechain from file %s at %f", sSource, GetAdjustedTime());
+    boost::filesystem::path pathIn(sSource);
+    std::ifstream streamIn;
+    streamIn.open(pathIn.string().c_str());
+    if (!streamIn) return -1;
+    int nHeight = 0;
+    std::string line;
+    int iRows = 0;
+    while (std::getline(streamIn, line)) {
+        line = strReplace(line, "[~r]", "\r");
+        line = strReplace(line, "[~n]", "\n");
+        std::vector<std::string> vRows = Split(line.c_str(), "<row-sidechain>");
+        for (int i = 0; i < (int)vRows.size(); i++) {
+            std::vector<std::string> vCols = Split(vRows[i].c_str(), "<col-sidechain>");
+            if (vCols.size() > 4) 
+			{
+				Sidechain s;
+		        int cHeight = StringToDouble(vCols[0], 0);
+                if (cHeight > nHeight)
+					nHeight = cHeight;
+                std::string sKey = vCols[1];
+				s.ObjectType = vCols[2];
+				s.URL = vCols[3];
+				s.Time = StringToDouble(vCols[4], 0);
+				s.Height = StringToDouble(vCols[5], 0);
+				mapSidechain[sKey] = s;
+				if (false)
+					LogPrintf("SC txid %s value %s ", sKey, s.URL);
+                iRows++;
+            }
+        }
+    }
+    streamIn.close();
+    LogPrintf(" Processed %f sidechain rows - %f\n", iRows, GetAdjustedTime());
+    return nHeight;
+}
+
+void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
+{
+    int nDeserializedHeight = 0;
+
+    if (fColdBoot) {
+        nDeserializedHeight = DeserializeSidechainFromFile();
+        if (chainActive.Tip()->nHeight < nDeserializedHeight && nDeserializedHeight > 0) {
+            LogPrintf(" Chain Height %f, Loading entire sidechain index\n", chainActive.Tip()->nHeight);
+            nDeserializedHeight = 0;
+        }
+    }
+
+    int nMaxDepth = chainActive.Tip()->nHeight;
+    int nMinDepth = fDuringConnectBlock ? nMaxDepth - 1 : nMaxDepth - (BLOCKS_PER_DAY * 30 * 12 * 7); // Seven years
+    if (nDeserializedHeight > 0 && nDeserializedHeight < nMaxDepth)
+        nMinDepth = nDeserializedHeight;
+    if (nMinDepth < 0)
+        nMinDepth = 0;
+    CBlockIndex* pindex = FindBlockByHeight(nMinDepth);
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    while (pindex && pindex->nHeight < nMaxDepth) {
+        if (!pindex)
+            break;
+
+        if (pindex->nHeight < chainActive.Tip()->nHeight)
+            pindex = chainActive.Next(pindex);
+
+        CBlock block;
+        if (ReadBlockFromDisk(block, pindex, consensusParams)) {
+            if (pindex->nHeight % 25000 == 0)
+                LogPrintf(" MSC %f @ %f, ", pindex->nHeight, GetAdjustedTime());
+            for (unsigned int n = 0; n < block.vtx.size(); n++) 
+			{
+                double dTotalSent = 0;
+                std::string sTxMsg = "";
+                double dFoundationDonation = 0;
+                CAmount nTotalBurned = 0;
+                for (unsigned int i = 0; i < block.vtx[n]->vout.size(); i++) 
+				{
+                    sTxMsg += block.vtx[n]->vout[i].sTxOutMessage;
+                    /*
+                    std::string sPK = PubKeyToAddress(block.vtx[n]->vout[i].scriptPubKey);
+				    double dAmount = block.vtx[n]->vout[i].nValue / COIN;
+            	    if (sPK == consensusParams.FoundationAddress || sPK == consensusParams.FoundationPODSAddress) {
+                        dFoundationDonation += dAmount;
+                    }
+                    if (sPK == consensusParams.BurnAddress) {
+                        nTotalBurned += block.vtx[n]->vout[i].nValue;
+                    }
+					*/
+                }
+				std::string sSC = ExtractXML(sTxMsg, "<sc>", "</sc>");
+				if (!sSC.empty())
+				{
+					Sidechain s;
+					s.ObjectType = ExtractXML(sSC, "<objtype>", "</objtype>");
+					s.URL = ExtractXML(sSC, "<url>", "</url>");
+					s.Time = block.GetBlockTime();
+					s.Height = pindex->nHeight;
+					std::string sTXID = block.vtx[n]->GetHash().GetHex();
+					mapSidechain[sTXID] = s;
+					LogPrintf("Processing Sidechain TXID %s [%s] URL [%s] sz %f ", sTXID, sSC, s.URL, (double)mapSidechain.size());
+				}
+            }
+        }
+    }
+    if (fColdBoot) {
+        if (nMaxDepth > (nDeserializedHeight - 1000)) {
+            SerializeSidechainToFile(nMaxDepth - 1);
+        }
+    }
 }

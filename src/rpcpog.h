@@ -28,6 +28,24 @@ struct BBPResult
 	CAmount nAmount = 0;
 };
 
+struct Sidechain
+{
+	std::string ObjectType;
+	std::string URL;
+	int64_t Time;
+	int Height;
+	void ToJson(UniValue& obj)
+	{
+		obj.clear();
+		obj.setObject();
+		obj.push_back(Pair("ObjectType", ObjectType));
+		obj.push_back(Pair("URL", URL));
+		obj.push_back(Pair("Time", Time));
+		obj.push_back(Pair("Height", Height));
+	}
+
+};
+
 struct Portfolio
 {
 	std::string OwnerAddress;
@@ -73,7 +91,6 @@ struct BBPProposal
 	std::string sProposalHRTime;
 };
 
-
 uint256 CoordToUint256(int row, int col);
 double StringToDouble(std::string s, int place);
 std::string DoubleToString(double d, int place);
@@ -81,7 +98,7 @@ std::string ReverseHex(std::string const& src);
 std::string DefaultRecAddress(std::string sType);
 CBlockIndex* FindBlockByHeight(int nHeight);
 std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::string& sError);
-bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID);
+bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData = "");
 std::vector<std::string> Split(std::string s, std::string delim);
 bool SendManyXML(std::string XML, std::string& sTXID);
 std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
@@ -116,6 +133,9 @@ std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string s
 bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout);
 int GetNextDailySuperblock(int nHeight);
 std::string AmountToString(const CAmount& amount);
-
+void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot);
+int DeserializeSidechainFromFile();
+void SerializeSidechainToFile(int nHeight);
+std::string Mid(std::string data, int nStart, int nLength);
 
 #endif

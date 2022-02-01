@@ -29,7 +29,7 @@
 #include <QSettings>
 #include <QTextDocument>
 
-#define SEND_CONFIRM_DELAY   3
+#define SEND_CONFIRM_DELAY   2
 
 static const std::array<int, 9> confTargets = { {2, 4, 6, 12, 24, 48, 144, 504, 1008} };
 int getConfTargetForIndex(int index) {
@@ -285,6 +285,15 @@ void SendCoinsDialog::on_sendButton_clicked()
 
 void SendCoinsDialog::send(QList<SendCoinsRecipient> recipients)
 {
+	if (!fCoinControlUnlocked)
+	{
+		LockStakes();
+		fCoinControlUnlocked = true;
+		LogPrintf("Locking stakes %f", 282);
+		// We do this once just in case they resynced from zero and all the sancs they own are unlocked... This prevents an accidental spend of the sancs
+		// (When you spend a sanc, its quite disastrous for the user as they have to recreate the sanc and notify cameroon-one of the new public key for the orphan).
+	}
+
     // prepare transaction for getting txFee earlier
     WalletModelTransaction currentTransaction(recipients);
     WalletModel::SendCoinsReturn prepareStatus;

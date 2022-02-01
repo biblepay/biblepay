@@ -247,8 +247,10 @@ int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 double nHashCounter = 0;
 double dHashesPerSec = 0;
 int64_t nHPSTimerStart = 0;
+bool fCoinControlUnlocked = false;
 int iMinerThreadCount = 0;
 std::map<std::string, int> mapPOOSStatus;
+std::map<std::string, Sidechain> mapSidechain;
 // END OF BIBLEPAY AREA
 
 std::atomic<bool> fDIP0001ActiveAtTip{false};
@@ -2475,6 +2477,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
 	{
 		std::string sContractOut;
 		WatchmanOnTheWall(false, sContractOut);
+		MemorizeSidechain(true, false);
 	}
 
     return true;
@@ -4284,10 +4287,8 @@ fs::path GetBlockPosFilename(const CDiskBlockPos &pos, const char *prefix)
 CBlockIndex * CChainState::InsertBlockIndex(const uint256& hash)
 {
     AssertLockHeld(cs_main);
-
     if (hash.IsNull())
         return nullptr;
-
     // Return existing
     BlockMap::iterator mi = mapBlockIndex.find(hash);
     if (mi != mapBlockIndex.end())
@@ -4297,7 +4298,6 @@ CBlockIndex * CChainState::InsertBlockIndex(const uint256& hash)
     CBlockIndex* pindexNew = new CBlockIndex();
     mi = mapBlockIndex.insert(std::make_pair(hash, pindexNew)).first;
     pindexNew->phashBlock = &((*mi).first);
-
     return pindexNew;
 }
 
@@ -4305,7 +4305,7 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
 {
     if (!blocktree.LoadBlockIndexGuts(consensus_params, [this](const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs_main) { return this->InsertBlockIndex(hash); }))
         return false;
-
+	LogPrintf("step ", 501);
     boost::this_thread::interruption_point();
 
     // Calculate nChainWork

@@ -2449,6 +2449,26 @@ UniValue exec(const JSONRPCRequest& request)
 		// If we made it this far and an error was not thrown:
 		results.push_back(Pair("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes."));
 	}
+	else if (sItem == "testsc")
+	{
+		std::string sToAddress = DefaultRecAddress("sc");
+		std::string sTXID;
+		std::string sError;
+		std::string sXML = "<sc><objtype>test</objtype><url>https://test.com/</url></sc>";
+		bool fSent = RPCSendMoney(sError, sToAddress, 1 * COIN, sTXID, sXML);
+		results.push_back(Pair("TXID", sTXID));
+	}
+	else if (sItem == "listsc")
+	{
+		results.push_back(Pair("scsz", mapSidechain.size()));
+		for (auto ii : mapSidechain) 
+		{
+			Sidechain s = mapSidechain[ii.first];
+		    UniValue o;
+            s.ToJson(o);
+    		results.push_back(Pair(ii.first, o));
+		}
+	}
 	else if (sItem == "upgradesanc")
 	{
 		if (request.params.size() != 3)

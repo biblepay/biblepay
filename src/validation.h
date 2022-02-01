@@ -45,8 +45,8 @@ class CTxMemPool;
 class CValidationState;
 class PrecomputedTransactionData;
 struct ChainTxData;
-
 struct LockPoints;
+struct Sidechain;
 
 /** Default for -whitelistrelay. */
 static const bool DEFAULT_WHITELISTRELAY = true;
@@ -186,9 +186,11 @@ static const int MAX_BLOCK_SUBSIDY = 20000;
 static const int SANCTUARY_COLLATERAL = 4500001;
 extern int64_t nHPSTimerStart;
 extern std::map<std::string, int> mapPOOSStatus;
+extern std::map<std::string, Sidechain> mapSidechain;
 extern double nHashCounter;
 extern double dHashesPerSec;
 extern int iMinerThreadCount;
+extern bool fCoinControlUnlocked;
 static const int DEFAULT_GENERATE_THREADS = 1;
 static const int DEFAULT_GENERATE = 1;
 void KillBlockchainFiles();

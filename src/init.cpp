@@ -1955,6 +1955,7 @@ bool AppInitMain()
 
     bool fLoaded = false;
     int64_t nStart = GetTimeMillis();
+	LogPrintf("step %f", 601);
 
     while (!fLoaded && !fRequestShutdown) {
         bool fReset = fReindex;
@@ -1971,6 +1972,8 @@ bool AppInitMain()
                 pcoinsTip.reset();
                 pcoinsdbview.reset();
                 pcoinscatcher.reset();
+				LogPrintf("step %f", 602);
+
                 // new CBlockTreeDB tries to delete the existing file, which
                 // fails if it's still open from the previous loop. Close it first:
                 pblocktree.reset();
@@ -1983,6 +1986,7 @@ bool AppInitMain()
                 deterministicMNManager.reset(new CDeterministicMNManager(*evoDb));
 
                 llmq::InitLLMQSystem(*evoDb, false, fReset || fReindexChainState);
+				LogPrintf("step %f", 603);
 
                 if (fReset) {
                     pblocktree->WriteReindexing(true);
@@ -1990,6 +1994,7 @@ bool AppInitMain()
                     if (fPruneMode)
                         CleanupBlockRevFiles();
                 }
+				LogPrintf("step %f", 604);
 
                 if (fRequestShutdown) break;
 
@@ -2002,6 +2007,7 @@ bool AppInitMain()
                     strLoadError = _("Error loading block database");
                     break;
                 }
+				LogPrintf("step %f", 604.1);
 
                 if (!fDisableGovernance && !fTxIndex
                    && chainparams.NetworkIDString() != CBaseChainParams::REGTEST) { // TODO remove this when pruning is fixed. See https://github.com/biblepay/biblepay/pull/1817 and https://github.com/biblepay/biblepay/pull/1743
@@ -2056,6 +2062,7 @@ bool AppInitMain()
                     strLoadError = _("Error initializing block database");
                     break;
                 }
+				LogPrintf("step %f", 605);
 
                 // At this point we're either in reindex or we've loaded a useful
                 // block tree into mapBlockIndex!
@@ -2084,6 +2091,7 @@ bool AppInitMain()
                     strLoadError = _("Failed to commit EvoDB");
                     break;
                 }
+				LogPrintf("step %f", 606);
 
                 bool is_coinsview_empty = fReset || fReindexChainState || pcoinsTip->GetBestBlock().IsNull();
                 if (!is_coinsview_empty) {
@@ -2105,6 +2113,7 @@ bool AppInitMain()
                     strLoadError = _("Error upgrading evo database");
                     break;
                 }
+				LogPrintf("step %f", 607);
 
                 if (!is_coinsview_empty) {
                     uiInterface.InitMessage(_("Verifying blocks..."));
@@ -2112,6 +2121,7 @@ bool AppInitMain()
                         LogPrintf("Prune: pruned datadir may not have more than %d blocks; only checking available blocks\n",
                             MIN_BLOCKS_TO_KEEP);
                     }
+					LogPrintf("step %f", 608);
 
                     CBlockIndex* tip = chainActive.Tip();
                     RPCNotifyBlockChange(true, tip);
@@ -2127,6 +2137,7 @@ bool AppInitMain()
                         strLoadError = _("Corrupted block database detected");
                         break;
                     }
+					LogPrintf("step %f", 609);
 
                     ResetBlockFailureFlags(nullptr);
                 }
@@ -2159,6 +2170,7 @@ bool AppInitMain()
             }
         }
     }
+	LogPrintf("step %f", 611);
 
     // As LoadBlockIndex can take several minutes, it's possible the user
     // requested to kill the GUI during the last operation. If so, exit.
@@ -2207,6 +2219,7 @@ bool AppInitMain()
         LogPrintf("Shutdown requested. Exiting.\n");
         return false;
     }
+	LogPrintf("step %f", 612);
 
     // ********************************************************* Step 10a: Prepare Masternode related stuff
     fMasternodeMode = false;
@@ -2377,6 +2390,7 @@ LogPrintf("step %f", 708);
     // ********************************************************* Step 12: start node
 
     int chain_active_height;
+LogPrintf("step %f", 709);
 
     //// debug print
     {
@@ -2387,6 +2401,11 @@ LogPrintf("step %f", 708);
     LogPrintf("chainActive.Height() = %d\n",   chain_active_height);
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))
         StartTorControl();
+
+	// Memorize Sidechain
+    uiInterface.InitMessage(_("Memorizing Sidechain..."));
+    MemorizeSidechain(false, true);
+	LogPrintf("step %f", 710);
 
     Discover();
 

@@ -233,7 +233,7 @@ TransactionTableModel::TransactionTableModel(WalletModel *parent):
         fProcessingQueuedTransactions(false),
         cachedChainLockHeight(-1)
 {
-    columns << QString() << QString() << tr("Date") << tr("Type") << tr("Address / Label") << BitcoinUnits::getAmountColumnTitle(walletModel->getOptionsModel()->getDisplayUnit());
+    columns << QString() << QString() << tr("Date") << tr("Type") << tr("Address / Label") << tr("Amount     ");
     priv->refreshWallet(walletModel->wallet());
 
     connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));

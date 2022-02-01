@@ -194,7 +194,8 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
             return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-key");
         }
 
-        if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
+        if (false && !deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
+			// Biblepay has this issue between versions.
             if (ptx.keyIDOwner != ptx.keyIDVoting) {
                 return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }
@@ -351,7 +352,8 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
         }
 
         if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
-            if (dmn->pdmnState->keyIDOwner != ptx.keyIDVoting) {
+			// BiblePay has this situation in between versions...
+            if (false && dmn->pdmnState->keyIDOwner != ptx.keyIDVoting) {
                 return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }
         }

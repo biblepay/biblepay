@@ -3553,8 +3553,11 @@ bool CWallet::GetBudgetSystemCollateralTX(CTransactionRef& tx, uint256 hash, CAm
 }
 
 bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CReserveKey& reservekey, CAmount& nFeeRet,
-                                int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign, int nExtraPayloadSize)
+                                int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign, int nExtraPayloadSize, std::string sPayload)
 {
+
+	int MAX_BBP_VOUT_MESSAGE_LENGTH = 3000; // Found in transaction.h
+
     CAmount nValue = 0;
     int nChangePosRequest = nChangePosInOut;
     unsigned int nSubtractFeeFromAmount = 0;
@@ -3709,6 +3712,41 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransac
                     }
                     txNew.vout.push_back(txout);
                 }
+
+				// BIBLEPAY - VOUTS
+				if (!sPayload.empty() && txNew.vout.size() > 0)
+				{
+					int nReq = ceil(sPayload.length() / (MAX_BBP_VOUT_MESSAGE_LENGTH));
+					//Check string size limit in transaction.h HARVEST
+					if (txNew.vout.size() >= nReq)
+					{
+						if (sPayload.length() <= MAX_BBP_VOUT_MESSAGE_LENGTH)
+						{
+							txNew.vout[0].sTxOutMessage = sPayload;
+						}
+						else
+						{
+							for (int iReq = 0; iReq <= nReq && iReq < txNew.vout.size(); iReq++)
+							{
+								int nPointer = iReq * MAX_BBP_VOUT_MESSAGE_LENGTH;
+								if (nPointer < sPayload.length())
+								{
+									std::string sChunk = Mid(sPayload, nPointer, MAX_BBP_VOUT_MESSAGE_LENGTH);
+									txNew.vout[iReq].sTxOutMessage = sChunk;
+								}
+							}
+						}
+					}
+					else
+					{
+						strFailReason = _("ERROR::Message is too long");
+						LogPrintf("\nERROR::CreateTransaction Failed::[%s] containing [%s]", strFailReason, sPayload);
+						return false;
+					}
+				}
+				// END OF BIBLEPAY
+
+
 
                 // Choose coins to use
                 bool bnb_used;
@@ -3997,10 +4035,13 @@ void CWallet::LockByMask(std::string sUA)
 		std::string sRecipient = PubKeyToAddress(pcoin->tx->vout[out.i].scriptPubKey);
 		int nPin = (int)AddressToPinV2(sUA, sRecipient);
 		bool fUTXO = CompareMask2(nAmount, nPin);
-		bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
-		if (!fLocked && fUTXO)
+		bool fSanc = (nAmount == (4500001 * COIN));
+		bool fPB = CompareMask2(nAmount, 777);
+		if (fUTXO || fSanc || fPB)
 		{
-			LockCoin(out1);
+			bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
+			if (!fLocked)
+				LockCoin(out1);
 		}
 	}
 }
