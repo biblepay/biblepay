@@ -1,4 +1,4 @@
-﻿*.sublime-project
+*.sublime-project
 *.sublime-workspace
 todo.txt
 reset-files.bash
@@ -10,11 +10,9 @@ src/biblepay
 src/biblepayd
 src/biblepay-cli
 src/biblepay-tx
-src/test/test_biblepay
 src/test/test_biblepay_fuzzy
 src/qt/test/test_biblepay-qt
 src/qt/res/css/colors/*
-src/bench/bench_biblepay
 
 # autoreconf
 Makefile.in
