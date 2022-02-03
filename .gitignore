@@ -1,4 +1,4 @@
-﻿*.sublime-project
+*.sublime-project
 *.sublime-workspace
 todo.txt
 reset-files.bash
@@ -10,11 +10,9 @@ src/biblepay
 src/biblepayd
 src/biblepay-cli
 src/biblepay-tx
-src/test/test_biblepay
-src/test/test_biblepay_fuzzy
-src/qt/test/test_biblepay-qt
-src/qt/res/css/colors/*
-src/bench/bench_biblepay
+src/test/testbiblepay
+src/qt/test/testbiblepay-qt
+src/bench/benchbiblepay
 
 # autoreconf
 Makefile.in
@@ -38,7 +36,9 @@ config.status
 configure
 libtool
 src/config/biblepay-config.h
+src/config/coin-config.h
 src/config/biblepay-config.h.in
+src/config/coin-config.h.in
 src/config/stamp-h1
 share/setup.nsi
 share/qt/Info.plist
@@ -63,6 +63,8 @@ libconftest.dylib*
 *.pyc
 *.o
 *.o-*
+*.patch
+!depends/patches/*/*.patch
 *.a
 *.pb.cc
 *.pb.h
@@ -74,10 +76,6 @@ libconftest.dylib*
 *.json.h
 *.raw.h
 
-# Only ignore unexpected patches
-*.patch
-!depends/patches/**/*.patch
-
 #libtool object files
 *.lo
 *.la
@@ -86,13 +84,13 @@ libconftest.dylib*
 *.qm
 Makefile
 biblepay-qt
-BiblePay-Qt.app
-background.tiff*
+Biblepay-Qt.app
 !/depends/Makefile
 
 # Unit-tests
 Makefile.test
 biblepay-qt_test
+src/test/buildenv.py
 
 # Resources cpp
 qrc_*.cpp
@@ -100,13 +98,12 @@ qrc_*.cpp
 # Mac specific
 .DS_Store
 build
-*.dSYM
 
 #lcov
 *.gcno
 *.gcda
 /*.info
-test_biblepay.coverage/
+testbiblepay.coverage/
 total.coverage/
 coverage_percent.txt
 
@@ -114,8 +111,9 @@ coverage_percent.txt
 linux-coverage-build
 linux-build
 win32-build
-test/config.ini
-test/cache/*
+qa/pull-tester/tests_config.py
+qa/pull-tester/tests_config.ini
+qa/cache/*
 
 !src/leveldb*/Makefile
 
@@ -140,3 +138,16 @@ make
 # CLion
 .idea
 cmake-build-debug
+contrib/devtools/windows/DevelopBiblePay.sln
+contrib/devtools/windows/DevelopBiblePay.suo
+src/.vs/src/v15/.suo
+src/.vs/VSWorkspaceState.json
+src/.vs/CMake Overview
+src/.vs/ProjectSettings.json
+src/.vs/slnx.sqlite
+src/.vs/src/v16/.suo
+src/.vs/src/v16/Browse.VC.db
+contrib/Windows/Burn/.vs/Burn/v16/Server/sqlite3/storage.ide
+*.lock
+*.suo
+contrib/Windows/Burn/Burn.suo

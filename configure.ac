@@ -24,7 +24,7 @@ AC_ARG_VAR(ARFLAGS, [Flags for the archiver, defaults to <cr> if not set])
 if test "x${ARFLAGS+set}" != "xset"; then
   ARFLAGS="cr"
 fi
- 
+
 AC_CANONICAL_HOST
 
 AH_TOP([#ifndef BIBLEPAY_CONFIG_H])
