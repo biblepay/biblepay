@@ -84,7 +84,7 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValid
         if (calculatedMerkleRoot != cbTx.merkleRootMNList) {
 			LogPrintf("\nERROR::CheckCbTxMerkleRoots::Bad-cbtx-mnmerkleroot, calculated merkleroot %s, merklerootlist %s", calculatedMerkleRoot.GetHex(), cbTx.merkleRootMNList.GetHex());
 			// Mission Critical todo; if this works, add a block height here.
-			//             return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
+			// return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
         }
 
         int64_t nTime3 = GetTimeMicros(); nTimeMerkleMNL += nTime3 - nTime2;

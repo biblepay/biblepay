@@ -1201,6 +1201,34 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
         ret.pushKV("bogosize", (int64_t)stats.nBogoSize);
         ret.pushKV("hash_serialized_2", stats.hashSerialized.GetHex());
         ret.pushKV("disk_size", stats.nDiskSize);
+
+
+		// Circulating = Emitted minus burned
+		ret.pushKV("total_circulating_money_supply", ValueFromAmount(stats.nTotalAmount));
+		ret.pushKV("total_burned", ValueFromAmount(stats.nTotalBurned));
+	
+		double nPct = ((stats.nTotalAmount/COIN) + .01) / 5200000000;
+		ret.pushKV("percent_emitted", nPct);
+
+		// Emission target, Dec 2022: https://wiki.biblepay.org/Emission_Schedule
+		double nEmissionTargetDec2022 = 3297004487;
+		ret.pushKV("emission_target_dec_2022", nEmissionTargetDec2022);
+
+		int64_t Dec2021_Epoch = 1640470023;
+		double dTotalDeflationComponent = .50; 
+		
+		int64_t nRemainingDays = (Dec2021_Epoch - GetAdjustedTime()) / 86400;
+		int64_t nGenesisBlock = 1496347844;
+		int64_t nDaysSinceGenesis = (GetAdjustedTime() - nGenesisBlock) / 86400;
+
+		double nEmissionPerDay = stats.nTotalAmount/COIN / nDaysSinceGenesis;
+		double nSythesizedTarget2022 = (nRemainingDays * (nEmissionPerDay * dTotalDeflationComponent)) + (stats.nTotalAmount / COIN);
+		ret.pushKV("avg_emissions_per_day_since_inception", nEmissionPerDay);
+		ret.pushKV("estimated_emissions_as_of_dec_2022", nSythesizedTarget2022);
+
+		double nBudgetaryHealthPct = nSythesizedTarget2022 / nEmissionTargetDec2022;
+		ret.pushKV("budgetary_health_pct_dec_2022", nBudgetaryHealthPct);
+
         ret.pushKV("total_amount", ValueFromAmount(stats.nTotalAmount));
     } else {
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Unable to read UTXO set");

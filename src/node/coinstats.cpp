@@ -12,6 +12,7 @@
 #include <serialize.h>
 #include <validation.h>
 #include <uint256.h>
+#include "rpcpog.h"
 // #include <util/system.h>
 #include <util.h>
 
@@ -26,14 +27,27 @@ static void ApplyStats(CCoinsStats &stats, CHashWriter& ss, const uint256& hash,
     ss << hash;
     ss << VARINT(outputs.begin()->second.nHeight * 2 + outputs.begin()->second.fCoinBase ? 1u : 0u);
     stats.nTransactions++;
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
     for (const auto& output : outputs) {
         ss << VARINT(output.first + 1);
         ss << output.second.out.scriptPubKey;
         ss << VARINT(output.second.out.nValue, VarIntMode::NONNEGATIVE_SIGNED);
         stats.nTransactionOutputs++;
-        stats.nTotalAmount += output.second.out.nValue;
         stats.nBogoSize += 32 /* txid */ + 4 /* vout index */ + 4 /* height + coinbase */ + 8 /* amount */ +
                            2 /* scriptPubKey len */ + output.second.out.scriptPubKey.size() /* scriptPubKey */;
+
+		// BIBLEPAY - Track Burned Coins
+		std::string sPK = PubKeyToAddress(output.second.out.scriptPubKey);
+		if (sPK == consensusParams.BurnAddress)
+		{
+			stats.nTotalBurned += output.second.out.nValue;
+		}
+		else
+		{
+		    stats.nTotalAmount += output.second.out.nValue;
+		}
+
     }
     ss << VARINT(0u);
 }

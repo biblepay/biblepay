@@ -311,8 +311,8 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-		consensus.BARLEY_HARVEST_HEIGHT  = 350000;
-		consensus.BARLEY_HARVEST_HEIGHT2 = 350000;
+		consensus.BARLEY_HARVEST_HEIGHT  = 320000;
+		consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
 
 		consensus.RANDOMX_HEIGHT = 184675;
 
@@ -346,7 +346,7 @@ public:
         consensus.DIP0003Height = 278014;
 		consensus.LLMQHeight = 278014;
 		// The below height should be the same as Barley_Harvest Height
-        consensus.DIP0003EnforcementHeight = 350000;
+        consensus.DIP0003EnforcementHeight = 320000;
         consensus.DIP0003EnforcementHash = uint256S("0x0");
         consensus.DIP0008Height = 279407; // 
         consensus.powLimit = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
@@ -505,6 +505,7 @@ public:
 					{145000, uint256S("0xe830a524fc6a71aa0c3171db1ef592893f84de65fdcda57ddff8b378dcbda12f")},
 					{206000, uint256S("0xc5c6dfcc2b84fb48873b1fd45d2a693a183fbaef8c79673d6defb2b073ef09d2")},
                     {270000, uint256S("0x4cb48793f323d2252cfc9f5b233931e8a727a091532841379a375390d9e31e20")},
+					{315770, uint256S("0xe8fb51c409c9c2942e60e15d013efc475eacd0a4fa9df8d54eddfaa0c421146a")},
 				}
             }
         };

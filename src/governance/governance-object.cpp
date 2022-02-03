@@ -152,7 +152,7 @@ bool CGovernanceObject::ProcessVote(CNode* pfrom,
         // Someone is doing something fishy, there can be no two votes from the same masternode
         // with the same timestamp for the same object and signal and yet different hash/outcome.
         std::ostringstream ostr;
-        ostr << "CGovernanceObject::ProcessVote -- Invalid vote, same timestamp for the different outcome";
+        ostr << "CGovernanceObject::ProcessVote -- Invalid vote 2, same timestamp for the different outcome";
         if (vote.GetOutcome() < voteInstanceRef.eOutcome) {
             // This is an arbitrary comparison, we have to agree on some way
             // to pick the "winning" vote.
@@ -187,11 +187,11 @@ bool CGovernanceObject::ProcessVote(CNode* pfrom,
     // Finally check that the vote is actually valid (done last because of cost of signature verification)
     if (!vote.IsValid(onlyVotingKeyAllowed)) {
         std::ostringstream ostr;
-        ostr << "CGovernanceObject::ProcessVote -- Invalid vote"
+        ostr << "CGovernanceObject::ProcessVote -- Invalid vote 1"
              << ", MN outpoint = " << vote.GetMasternodeOutpoint().ToStringShort()
              << ", governance object hash = " << GetHash().ToString()
              << ", vote hash = " << vote.GetHash().ToString();
-        LogPrintf("%s\n", ostr.str());
+		LogPrint(BCLog::GOBJECT, "%s\n", ostr.str());
         exception = CGovernanceException(ostr.str(), GOVERNANCE_EXCEPTION_PERMANENT_ERROR, 20);
         governance.AddInvalidVote(vote);
         return false;
