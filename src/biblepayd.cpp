@@ -1,6 +1,6 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -21,8 +21,6 @@
 #include <utilstrencodings.h>
 #include <walletinitinterface.h>
 #include <stacktraces.h>
-
-#include <boost/thread.hpp>
 
 #include <stdio.h>
 
@@ -62,7 +60,11 @@ bool AppInit(int argc, char* argv[])
     //
     // Parameters
     //
-    // If Qt is used, parameters/biblepay.conf are parsed in qt/biblepay.cpp's main()
+    // If Qt is used, parameters/biblepay.confare parsed in qt/biblepay.cpp's main()
+    SetupServerArgs();
+#if HAVE_DECL_DAEMON
+    gArgs.AddArg("-daemon", "Run in the background as a daemon and accept commands", false, OptionsCategory::OPTIONS);
+#endif
     gArgs.ParseParameters(argc, argv);
 
     if (gArgs.IsArgSet("-printcrashinfo")) {
@@ -73,7 +75,7 @@ bool AppInit(int argc, char* argv[])
     // Process help and version before taking care about datadir
     if (gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") ||  gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version"))
     {
-        std::string strUsage = strprintf(_("%s Daemon"), _(PACKAGE_NAME)) + " " + _("version") + " " + FormatFullVersion() + "\n";
+        std::string strUsage = strprintf("%s Daemon", PACKAGE_NAME) + " version " + FormatFullVersion() + "\n";
 
         if (gArgs.IsArgSet("-version"))
         {
@@ -81,10 +83,10 @@ bool AppInit(int argc, char* argv[])
         }
         else
         {
-            strUsage += "\n" + _("Usage:") + "\n" +
-                  "  biblepayd [options]                     " + strprintf(_("Start %s Daemon"), _(PACKAGE_NAME)) + "\n";
+            strUsage += "\nUsage:\n"
+                  "  biblepayd [options]                     " + strprintf("Start %s Daemon", PACKAGE_NAME) + "\n";
 
-            strUsage += "\n" + HelpMessage(HMM_BITCOIND);
+            strUsage += "\n" + gArgs.GetHelpMessage();
         }
 
         fprintf(stdout, "%s", strUsage.c_str());
@@ -150,13 +152,20 @@ bool AppInit(int argc, char* argv[])
         if (gArgs.GetBoolArg("-daemon", false))
         {
 #if HAVE_DECL_DAEMON
-            fprintf(stdout, "BiblePay Core server starting\n");
+#if defined(MAC_OSX)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+            fprintf(stdout, "Biblepay Core server starting\n");
 
             // Daemonize
             if (daemon(1, 0)) { // don't chdir (1), do close FDs (0)
                 fprintf(stderr, "Error: daemon() failed: %s\n", strerror(errno));
                 return false;
             }
+#if defined(MAC_OSX)
+#pragma GCC diagnostic pop
+#endif
 #else
             fprintf(stderr, "Error: -daemon is not supported on this operating system\n");
             return false;

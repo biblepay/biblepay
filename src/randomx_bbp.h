@@ -12,5 +12,6 @@ uint256 RandomX_Hash(uint256 hash, uint256 uKey, int iThreadID);
 uint256 RandomX_Hash(std::vector<unsigned char> data0, uint256 uKey, int iThreadID);
 uint256 RandomX_Hash(std::vector<unsigned char> data0, std::vector<unsigned char> datakey);
 uint256 RandomX_SlowHash(std::vector<unsigned char> data0, uint256 uKey);
+uint256 GetRandomXHash3(std::string sHeaderHex, uint256 key, int iThreadID);
 
 #endif

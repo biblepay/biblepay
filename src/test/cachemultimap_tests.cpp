@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
 
 #include <cachemultimap.h>
 

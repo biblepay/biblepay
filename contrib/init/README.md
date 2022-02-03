@@ -1,4 +1,4 @@
-Sample configuration files for:
+﻿Sample configuration files for:
 ```
 SystemD: biblepayd.service
 Upstart: biblepayd.conf

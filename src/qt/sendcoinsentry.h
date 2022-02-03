@@ -29,7 +29,7 @@ public:
     ~SendCoinsEntry();
 
     void setModel(WalletModel *model);
-    bool validate();
+    bool validate(interfaces::Node& node);
     SendCoinsRecipient getValue();
 
     /** Return whether the entry is still empty and unedited */
@@ -49,6 +49,8 @@ public:
 public Q_SLOTS:
     void clear();
     void checkSubtractFeeFromAmount();
+	void donateToFoundation();
+
 
 Q_SIGNALS:
     void removeEntry(SendCoinsEntry *entry);
@@ -63,8 +65,6 @@ private Q_SLOTS:
     void on_addressBookButton_clicked();
     void on_pasteButton_clicked();
     void updateDisplayUnit();
-	void updateFoundationAddress();
-	void diaryEntry();
 
 protected:
     void changeEvent(QEvent* e);

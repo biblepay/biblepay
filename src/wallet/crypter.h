@@ -67,7 +67,7 @@ public:
 
 typedef std::vector<unsigned char, secure_allocator<unsigned char> > CKeyingMaterial;
 
-namespace wallet_crypto
+namespace wallet_crypto_tests
 {
     class TestCrypter;
 }
@@ -75,7 +75,7 @@ namespace wallet_crypto
 /** Encryption/decryption context with key information */
 class CCrypter
 {
-friend class wallet_crypto::TestCrypter; // for test access to chKey/chIV
+friend class wallet_crypto_tests::TestCrypter; // for test access to chKey/chIV
 private:
     std::vector<unsigned char, secure_allocator<unsigned char>> vchKey;
     std::vector<unsigned char, secure_allocator<unsigned char>> vchIV;
@@ -112,28 +112,6 @@ public:
 bool EncryptAES256(const SecureString& sKey, const SecureString& sPlaintext, const std::string& sIV, std::string& sCiphertext);
 bool DecryptAES256(const SecureString& sKey, const std::string& sCiphertext, const std::string& sIV, SecureString& sPlaintext);
 
-std::string EncryptAES256(std::string sPlaintext, std::string sKey);
-std::string EncryptAES256WithIV(std::string sPlaintext, std::string sKey, std::string sIV);
-
-std::string DecryptAES256(std::string s64, std::string sKey);
-std::string DecryptAES256WithIV(std::string s64, std::string sKey, std::string sIV);
-
-bool BibleDecrypt(const std::vector<unsigned char>& vchCiphertext,std::vector<unsigned char>& vchPlaintext);
-bool BibleEncrypt(std::vector<unsigned char> vchPlaintext, std::vector<unsigned char> &vchCiphertext);
-std::vector<unsigned char> StringToVector(std::string sData);
-std::string VectorToString(std::vector<unsigned char> v);
-std::string RPAD(std::string sUnpadded, int nLength);
-
-
-int RSA_GENERATE_KEYPAIR(std::string sPublicKeyPath, std::string sPrivateKeyPath);
-unsigned char *RSA_ENCRYPT_CHAR(std::string sPubKeyPath, unsigned char *plaintext, int plaintext_length, int& cipher_len, int& rsa_len, std::string& sError);
-void RSA_Encrypt_File(std::string sPubKeyPath, std::string sSourcePath, std::string sEncryptPath, std::string& sError);
-unsigned char *RSA_DECRYPT_CHAR(std::string sPriKeyPath, unsigned char *ciphertext, int ciphrtext_size, int& plaintxt_len, std::string& sError);
-void RSA_Decrypt_File(std::string sPriKeyPath, std::string sSourcePath, std::string sDecryptPath, std::string sError);
-std::string RSA_Encrypt_String(std::string sPubKeyPath, std::string sData, std::string& sError);
-std::string RSA_Decrypt_String(std::string sPrivKeyPath, std::string sData, std::string& sError);
-std::string RSA_Encrypt_String_With_Key(std::string sPubKey, std::string sData, std::string& sError);
-std::string RSA_Decrypt_String_With_Key(std::string sPrivKey, std::string sData, std::string& sError);
 
 /** Keystore which keeps the private keys encrypted.
  * It derives from the basic key store, which is used if no encryption is active.
@@ -141,9 +119,9 @@ std::string RSA_Decrypt_String_With_Key(std::string sPrivKey, std::string sData,
 class CCryptoKeyStore : public CBasicKeyStore
 {
 private:
-    CHDChain cryptedHDChain;
+    CHDChain cryptedHDChain GUARDED_BY(cs_KeyStore);
 
-    CKeyingMaterial vMasterKey;
+    CKeyingMaterial vMasterKey GUARDED_BY(cs_KeyStore);
 
     //! if fUseCrypto is true, mapKeys must be empty
     //! if fUseCrypto is false, vMasterKey must be empty
@@ -156,25 +134,25 @@ private:
     bool fOnlyMixingAllowed;
 
 protected:
+    using CryptedKeyMap = std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char>>>;
+
     bool SetCrypted();
 
     //! will encrypt previously unencrypted keys
     bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
 
-    bool EncryptHDChain(const CKeyingMaterial& vMasterKeyIn);
+    bool EncryptHDChain(const CKeyingMaterial& vMasterKeyIn, const CHDChain& chain = CHDChain());
     bool DecryptHDChain(CHDChain& hdChainRet) const;
     bool SetHDChain(const CHDChain& chain);
     bool SetCryptedHDChain(const CHDChain& chain);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn, bool fForMixingOnly = false);
-    CryptedKeyMap mapCryptedKeys;
+    CryptedKeyMap mapCryptedKeys GUARDED_BY(cs_KeyStore);
 
 public:
     CCryptoKeyStore() : fUseCrypto(false), fDecryptionThoroughlyChecked(false), fOnlyMixingAllowed(false)
     {
     }
-	std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
-	std::vector<char> ReadAllBytes(char const* filename);
 
     bool IsCrypted() const { return fUseCrypto; }
     bool IsLocked(bool fForMixing = false) const;

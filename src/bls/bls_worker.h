@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -56,7 +56,7 @@ public:
     void Start();
     void Stop();
 
-    bool GenerateContributions(int threshold, const BLSIdVector& ids, BLSVerificationVectorPtr& vvecRet, BLSSecretKeyVector& skShares);
+    bool GenerateContributions(int threshold, const BLSIdVector& ids, BLSVerificationVectorPtr& vvecRet, BLSSecretKeyVector& skSharesRet);
 
     // The following functions are all used to aggregate verification (public key) vectors
     // Inputs are in the following form:

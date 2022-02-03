@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -48,10 +48,10 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
-        READWRITE(FLATDATA(pchMessageStart));
-        READWRITE(FLATDATA(pchCommand));
+        READWRITE(pchMessageStart);
+        READWRITE(pchCommand);
         READWRITE(nMessageSize);
-        READWRITE(FLATDATA(pchChecksum));
+        READWRITE(pchChecksum);
     }
 
     char pchMessageStart[MESSAGE_START_SIZE];
@@ -268,13 +268,11 @@ extern const char *QGETSIGSHARES;
 extern const char *QBSIGSHARES;
 extern const char *QSIGREC;
 extern const char *QSIGSHARE;
+extern const char* QGETDATA;
+extern const char* QDATA;
 extern const char *CLSIG;
 extern const char *ISLOCK;
 extern const char *MNAUTH;
-extern const char *CHAT;
-extern const char *EMAIL;
-extern const char *EMAILREQUEST;
-extern const char *ALERT;
 };
 
 /* Get a vector of all valid message types (see above) */
@@ -285,14 +283,14 @@ enum ServiceFlags : uint64_t {
     // Nothing
     NODE_NONE = 0,
     // NODE_NETWORK means that the node is capable of serving the complete block chain. It is currently
-    // set by all BiblePay Core non pruned nodes, and is unset by SPV clients or other light clients.
+    // set by all Biblepay Core non pruned nodes, and is unset by SPV clients or other light clients.
     NODE_NETWORK = (1 << 0),
     // NODE_GETUTXO means the node is capable of responding to the getutxo protocol request.
-    // BiblePay Core does not support this but a patch set called Bitcoin XT does.
+    // Biblepay Core does not support this but a patch set called Bitcoin XT does.
     // See BIP 64 for details on how this is implemented.
     NODE_GETUTXO = (1 << 1),
     // NODE_BLOOM means the node is capable and willing to handle bloom-filtered connections.
-    // BiblePay Core nodes used to support this by default, without advertising this bit,
+    // Biblepay Core nodes used to support this by default, without advertising this bit,
     // but no longer do as of protocol version 70201 (= NO_BLOOM_VERSION)
     NODE_BLOOM = (1 << 2),
     // NODE_XTHIN means the node supports Xtreme Thinblocks
@@ -329,7 +327,7 @@ enum ServiceFlags : uint64_t {
  * Thus, generally, avoid calling with peerServices == NODE_NONE, unless
  * state-specific flags must absolutely be avoided. When called with
  * peerServices == NODE_NONE, the returned desirable service flags are
- * guaranteed to not change dependant on state - ie they are suitable for
+ * guaranteed to not change dependent on state - ie they are suitable for
  * use when describing peers which we know to be desirable, but for which
  * we do not have a confirmed set of service flags.
  *
@@ -382,8 +380,8 @@ public:
             READWRITE(nTime);
         uint64_t nServicesInt = nServices;
         READWRITE(nServicesInt);
-        nServices = (ServiceFlags)nServicesInt;
-        READWRITE(*(CService*)this);
+        nServices = static_cast<ServiceFlags>(nServicesInt);
+        READWRITEAS(CService, *this);
     }
 
     // TODO: make private (improves encapsulation)
@@ -427,10 +425,6 @@ enum GetDataMsg {
     MSG_QUORUM_RECOVERED_SIG = 28,
     MSG_CLSIG = 29,
     MSG_ISLOCK = 30,
-	MSG_CHAT=70,
-	MSG_EMAIL=71,
-	MSG_EMAILREQUEST=72,
-	MSG_ALERT=99,
 };
 
 /** inv message data */

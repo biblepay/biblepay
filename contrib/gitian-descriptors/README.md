@@ -1,4 +1,4 @@
-### Gavin's notes on getting Gitian builds up and running using KVM
+﻿### Gavin's notes on getting Gitian builds up and running using KVM
 
 These instructions distilled from
 [https://help.ubuntu.com/community/KVM/Installation](https://help.ubuntu.com/community/KVM/Installation).

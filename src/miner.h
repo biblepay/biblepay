@@ -8,6 +8,7 @@
 
 #include <primitives/block.h>
 #include <txmempool.h>
+#include <validation.h>
 
 #include <stdint.h>
 #include <memory>
@@ -18,14 +19,13 @@ class CBlockIndex;
 class CChainParams;
 class CConnman;
 class CScript;
-class CReserveKey;
-class CWallet;
+
 namespace Consensus { struct Params; };
 
 static const bool DEFAULT_PRINTPRIORITY = false;
-void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams);
-bool CreateBlockForStratum(std::string sAddress, uint256 uRandomXKey, std::vector<unsigned char> vRandomXHeader, std::string& sError, CBlock& blockX);
 
+bool CreateBlockForStratum(std::string sAddress, uint256 uRandomXKey, std::vector<unsigned char> vRandomXHeader, std::string& sError, CBlock& blockX);
+void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams);
 
 struct CBlockTemplate
 {
@@ -160,10 +160,10 @@ public:
 
     explicit BlockAssembler(const CChainParams& params);
     BlockAssembler(const CChainParams& params, const Options& options);
-
+	
     /** Construct a new block template with coinbase to scriptPubKeyIn */
     std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, std::string sPoolMiningPublicKey, uint256 uRandomXKey, std::vector<unsigned char> vRandomXHeader);
-  
+
 private:
     // utility functions
     /** Clear the block's state and prepare for assembling a new block */
@@ -175,7 +175,7 @@ private:
     /** Add transactions based on feerate including unconfirmed ancestors
       * Increments nPackagesSelected / nDescendantsUpdated with corresponding
       * statistics from the package selection (for logging statistics). */
-    void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated);
+    void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated) EXCLUSIVE_LOCKS_REQUIRED(mempool.cs);
 
     // helper functions for addPackageTxs()
     /** Remove confirmed (inBlock) entries from given set */
@@ -189,13 +189,13 @@ private:
     bool TestPackageTransactions(const CTxMemPool::setEntries& package);
     /** Return true if given transaction from mapTx has already been evaluated,
       * or if the transaction's cached data in mapTx is incorrect. */
-    bool SkipMapTxEntry(CTxMemPool::txiter it, indexed_modified_transaction_set &mapModifiedTx, CTxMemPool::setEntries &failedTx);
+    bool SkipMapTxEntry(CTxMemPool::txiter it, indexed_modified_transaction_set &mapModifiedTx, CTxMemPool::setEntries &failedTx) EXCLUSIVE_LOCKS_REQUIRED(mempool.cs);
     /** Sort the package in an order that is valid to appear in a block */
-    void SortForBlock(const CTxMemPool::setEntries& package, CTxMemPool::txiter entry, std::vector<CTxMemPool::txiter>& sortedEntries);
+    void SortForBlock(const CTxMemPool::setEntries& package, std::vector<CTxMemPool::txiter>& sortedEntries);
     /** Add descendants of given transactions to mapModifiedTx with ancestor
       * state updated assuming given transactions are inBlock. Returns number
       * of updated descendants. */
-    int UpdatePackagesForAdded(const CTxMemPool::setEntries& alreadyAdded, indexed_modified_transaction_set &mapModifiedTx);
+    int UpdatePackagesForAdded(const CTxMemPool::setEntries& alreadyAdded, indexed_modified_transaction_set &mapModifiedTx) EXCLUSIVE_LOCKS_REQUIRED(mempool.cs);
 };
 
 /** Modify the extranonce in a block */

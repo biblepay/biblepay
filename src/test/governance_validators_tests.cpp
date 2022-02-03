@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
 
 #include <governance/governance-validators.h>
 #include <utilstrencodings.h>
@@ -28,7 +28,7 @@ std::string CreateEncodedProposalObject(const UniValue& objJSON)
 
     UniValue outerArray(UniValue::VARR);
     outerArray.push_back(innerArray);
-    
+
     std::string strData = outerArray.write();
     std::string strHex = HexStr(strData);
     return strHex;

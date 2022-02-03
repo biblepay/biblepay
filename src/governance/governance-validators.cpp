@@ -1,18 +1,19 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <governance/governance-object.h>
 #include <governance/governance-validators.h>
 
-#include <base58.h>
+#include <key_io.h>
 #include <timedata.h>
 #include <tinyformat.h>
 #include <utilstrencodings.h>
 
 #include <algorithm>
 
-const size_t MAX_DATA_SIZE = 512;
-const size_t MAX_NAME_SIZE = 40;
+const size_t MAX_DATA_SIZE = 1024;
+const size_t MAX_NAME_SIZE = 100;
 
 CProposalValidator::CProposalValidator(const std::string& strHexData, bool fAllowLegacyFormat) :
     objJSON(UniValue::VOBJ),
@@ -41,6 +42,10 @@ bool CProposalValidator::Validate(bool fCheckExpiration)
         strErrorMessages += "JSON parsing error;";
         return false;
     }
+    if (!ValidateType()) {
+        strErrorMessages += "Invalid type;";
+        return false;
+    }
     if (!ValidateName()) {
         strErrorMessages += "Invalid name;";
         return false;
@@ -64,6 +69,22 @@ bool CProposalValidator::Validate(bool fCheckExpiration)
     return true;
 }
 
+bool CProposalValidator::ValidateType()
+{
+    int64_t nType;
+    if (!GetDataValue("type", nType)) {
+        strErrorMessages += "type field not found;";
+        return false;
+    }
+
+    if (nType != GOVERNANCE_OBJECT_PROPOSAL) {
+        strErrorMessages += strprintf("type is not %d;", GOVERNANCE_OBJECT_PROPOSAL);
+        return false;
+    }
+
+    return true;
+}
+
 bool CProposalValidator::ValidateName()
 {
     std::string strName;
@@ -77,7 +98,7 @@ bool CProposalValidator::ValidateName()
         return false;
     }
 
-    static const std::string strAllowedChars = "-_abcdefghijklmnopqrstuvwxyz0123456789";
+    static const std::string strAllowedChars = " -_abcdefghijklmnopqrstuvwxyz0123456789";
 
     std::transform(strName.begin(), strName.end(), strName.begin(), ::tolower);
 
@@ -294,8 +315,6 @@ bool CProposalValidator::CheckURL(const std::string& strURLIn)
     std::string::size_type nPos = strRest.find(':');
 
     if (nPos != std::string::npos) {
-        //std::string strSchema = strRest.substr(0,nPos);
-
         if (nPos < strRest.size()) {
             strRest = strRest.substr(nPos + 1);
         } else {

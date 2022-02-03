@@ -2,8 +2,8 @@
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef BITCOIN_POLICYESTIMATOR_H
-#define BITCOIN_POLICYESTIMATOR_H
+#ifndef BITCOIN_POLICY_FEES_H
+#define BITCOIN_POLICY_FEES_H
 
 #include <amount.h>
 #include <policy/feerate.h>
@@ -69,7 +69,7 @@ class TxConfirmStats;
 
 /* Identifier for each of the 3 different TxConfirmStats which will track
  * history over different time horizons. */
-enum FeeEstimateHorizon {
+enum class FeeEstimateHorizon {
     SHORT_HALFLIFE = 0,
     MED_HALFLIFE = 1,
     LONG_HALFLIFE = 2
@@ -176,8 +176,8 @@ private:
      * invalidates old estimates files. So leave it at 1000 unless it becomes
      * necessary to lower it, and then lower it substantially.
      */
-    static constexpr double MIN_BUCKET_FEERATE = 100007777;
-    static constexpr double MAX_BUCKET_FEERATE = 1000077777777777;
+    static constexpr double MIN_BUCKET_FEERATE = 1000;
+    static constexpr double MAX_BUCKET_FEERATE = 1e7;
 
     /** Spacing of FeeRate buckets
      * We have to lump transactions into buckets based on feerate, but we want to be able
@@ -224,7 +224,7 @@ public:
     bool Read(CAutoFile& filein);
 
     /** Empty mempool transactions on shutdown to record failure to confirm for txs still in mempool */
-    void FlushUnconfirmed(CTxMemPool& pool);
+    void FlushUnconfirmed();
 
     /** Calculation of highest target that estimates are tracked for */
     unsigned int HighestTargetTracked(FeeEstimateHorizon horizon) const;
@@ -273,4 +273,4 @@ private:
     unsigned int MaxUsableEstimate() const;
 };
 
-#endif /*BITCOIN_POLICYESTIMATOR_H */
+#endif // BITCOIN_POLICY_FEES_H

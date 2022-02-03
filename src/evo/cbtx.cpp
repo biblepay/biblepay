@@ -1,22 +1,21 @@
-// Copyright (c) 2017-2019 The Däsh Core developers
+﻿// Copyright (c) 2017-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <evo/cbtx.h>
 #include <evo/deterministicmns.h>
-#include <llmq/quorums.h>
 #include <llmq/quorums_blockprocessor.h>
 #include <llmq/quorums_commitment.h>
 #include <evo/simplifiedmns.h>
 #include <evo/specialtx.h>
 
+#include <chain.h>
 #include <chainparams.h>
 #include <consensus/merkle.h>
-#include <univalue.h>
-#include <validation.h>
 
 bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
+	// BiblePay
 	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
 	if (!fLLMQActive2)
 		return true;
@@ -42,10 +41,8 @@ bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidatio
         return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-height");
     }
 
-    if (pindexPrev) 
-	{
-		bool fDIP0008Active = pindexPrev->nHeight > Params().GetConsensus().DIP0008Height;
-	
+    if (pindexPrev) {
+        bool fDIP0008Active = pindexPrev->nHeight >= Params().GetConsensus().DIP0008Height;
         if (fDIP0008Active && cbTx.nVersion < 2) {
             return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-version");
         }
@@ -55,8 +52,9 @@ bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidatio
 }
 
 // This can only be done after the block has been fully processed, as otherwise we won't have the finished MN list
-bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValidationState& state)
+bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValidationState& state, const CCoinsViewCache& view)
 {
+	// BIBLEPAY
 	bool fLLMQActive2 = pindex->nHeight >= Params().GetConsensus().LLMQHeight;
 
     if (block.vtx[0]->nType != TRANSACTION_COINBASE || !fLLMQActive2) {
@@ -77,15 +75,16 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValid
     int64_t nTime2 = GetTimeMicros(); nTimePayload += nTime2 - nTime1;
     LogPrint(BCLog::BENCHMARK, "          - GetTxPayload: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimePayload * 0.000001);
 
-
     if (pindex) {
         uint256 calculatedMerkleRoot;
-        if (!CalcCbTxMerkleRootMNList(block, pindex->pprev, calculatedMerkleRoot, state)) {
+        if (!CalcCbTxMerkleRootMNList(block, pindex->pprev, calculatedMerkleRoot, state, view)) {
             // pass the state returned by the function above
             return false;
         }
         if (calculatedMerkleRoot != cbTx.merkleRootMNList) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
+			LogPrintf("\nERROR::CheckCbTxMerkleRoots::Bad-cbtx-mnmerkleroot, calculated merkleroot %s, merklerootlist %s", calculatedMerkleRoot.GetHex(), cbTx.merkleRootMNList.GetHex());
+			// Mission Critical todo; if this works, add a block height here.
+			// return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
         }
 
         int64_t nTime3 = GetTimeMicros(); nTimeMerkleMNL += nTime3 - nTime2;
@@ -109,7 +108,7 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValid
     return true;
 }
 
-bool CalcCbTxMerkleRootMNList(const CBlock& block, const CBlockIndex* pindexPrev, uint256& merkleRootRet, CValidationState& state)
+bool CalcCbTxMerkleRootMNList(const CBlock& block, const CBlockIndex* pindexPrev, uint256& merkleRootRet, CValidationState& state, const CCoinsViewCache& view)
 {
     LOCK(deterministicMNManager->cs);
 
@@ -121,7 +120,7 @@ bool CalcCbTxMerkleRootMNList(const CBlock& block, const CBlockIndex* pindexPrev
 
     try {
         CDeterministicMNList tmpMNList;
-        if (!deterministicMNManager->BuildNewListFromBlock(block, pindexPrev, state, tmpMNList, false)) {
+        if (!deterministicMNManager->BuildNewListFromBlock(block, pindexPrev, state, view, tmpMNList, false)) {
             // pass the state returned by the function above
             return false;
         }
@@ -267,6 +266,6 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
 
 std::string CCbTx::ToString() const
 {
-    return strprintf("CCbTx(nHeight=%d, nVersion=%d, merkleRootMNList=%s, merkleRootQuorums=%s)",
+    return strprintf("CCbTx(nVersion=%d, nHeight=%d, merkleRootMNList=%s, merkleRootQuorums=%s)",
         nVersion, nHeight, merkleRootMNList.ToString(), merkleRootQuorums.ToString());
 }

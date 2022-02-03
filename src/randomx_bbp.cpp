@@ -5,6 +5,9 @@
 
 #include "randomx_bbp.h"
 #include "hash.h"
+#include "util.h"
+#include "rpcpog.h"
+#include <utilstrencodings.h>
 
 static std::map<int, randomx_cache*> rxcache;
 static std::map<int, randomx_vm*> myvm;
@@ -15,11 +18,20 @@ static std::map<int, uint256> msGlobalKey;
 // Statement from Rob Andrews about RandomX in regards to MAC-OS support
 // May 13th, 2021
 // RandomX works on Linux compiles and Windows compiles, but we are unable to compile the randomx hash algorithm on the MAC.  
-// To my knowledge, since RandomX uses a virtual machine, we may need to reach out to tevador to find out if he can accomodate us with a special slow clang build, then we can link to that library.
+// To my knowledge, since RandomX uses a virtual machine, we need to reach out to Tevador for assistance with a special slow clang build, so that we can link to that library.
 // In the mean time, since Mac is only 1% of our user base, we are providing a conditional compilation solution that blocks the RandomX hash functions on mac.
-// This effectively turns the MAC nodes into SPV clients.
-// An additional problem is that when MIP compiles RandomX on an older mac using some type of ingenious method to get past the errors, gatekeeper throws an error because the instructions are 
-// being executed in a VM, so I feel the best course of action temporarily is to disable RandomX on the MAC.
+// This effectively turns the MAC nodes into SPV clients.  (This means that BiblePay runs on MAC, but in order to mine, they will need to convince Tevador to build an XMRIG miner for MAC).
+
+
+static std::map<int, std::mutex> cs_rxhash;
+uint256 GetRandomXHash3(std::string sHeaderHex, uint256 key, int iThreadID)
+{
+    std::unique_lock<std::mutex> lock(cs_rxhash[iThreadID]);
+    std::string randomXBlockHeader = ExtractXML(sHeaderHex, "<rxheader>", "</rxheader>");
+    std::vector<unsigned char> data0 = ParseHex(randomXBlockHeader);
+    uint256 uRXMined = RandomX_Hash(data0, key, iThreadID);
+    return uRXMined;
+}
 
 
 void init(uint256 uKey, int iThreadID)

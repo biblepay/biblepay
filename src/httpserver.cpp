@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The Bitcoin Core developers
+﻿// Copyright (c) 2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,9 +11,11 @@
 #include <utilstrencodings.h>
 #include <netbase.h>
 #include <rpc/protocol.h> // For HTTP status codes
+#include <rpcpog.h>
 #include <sync.h>
 #include <ui_interface.h>
 
+#include <deque>
 #include <memory>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +32,6 @@
 #include <event2/keyvalq_struct.h>
 
 #include <support/events.h>
-#include "rpcpog.h"
 
 #ifdef EVENT__HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -44,7 +45,7 @@
 #include <condition_variable>
 
 /** Maximum size of http request (request line + headers) */
-static const size_t MAX_HEADERS_SIZE = 100000;
+static const size_t MAX_HEADERS_SIZE = 8192;
 
 /** HTTP request work item */
 class HTTPWorkItem final : public HTTPClosure
@@ -217,7 +218,6 @@ static std::string RequestMethodString(HTTPRequest::RequestMethod m)
 /** HTTP request callback */
 static void http_request_cb(struct evhttp_request* req, void* arg)
 {
-
     // Disable reading to work around a libevent bug, fixed in 2.2.0.
     if (event_get_version_number() >= 0x02010600 && event_get_version_number() < 0x02020001) {
         evhttp_connection* conn = evhttp_request_get_connection(req);
@@ -230,38 +230,35 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
     }
     std::unique_ptr<HTTPRequest> hreq(new HTTPRequest(req));
 
-	
     LogPrint(BCLog::HTTP, "Received a %s request for %s from %s\n",
              RequestMethodString(hreq->GetRequestMethod()), hreq->GetURI(), hreq->GetPeer().ToString());
 
     // Early address-based allow check
-	bool fAllow = Contains(hreq->GetURI(), "getaddressutxos") || Contains(hreq->GetURI(), "pushtx");
-	double dAllowBBPAirRequests = cdbl(gArgs.GetArg("-allowbbpairrequests", "0"), 0);
-
-	if (false)
-	{
-		LogPrintf("\nhttp_request_cb Received a %s request for %s from %s allowbbpair %f \n",
-             RequestMethodString(hreq->GetRequestMethod()), hreq->GetURI(), hreq->GetPeer().ToString(), dAllowBBPAirRequests);
-	}
-
-
+	bool fAllow = Contains(hreq->GetURI(), "getaddressutxos") || Contains(hreq->GetURI(), "pushtx") || Contains(hreq->GetURI(), "getgsc");
+	double dAllowBBPAirRequests = StringToDouble(gArgs.GetArg("-allowbbpairrequests", "0"), 0);
+	
 	if (dAllowBBPAirRequests == 1 && fAllow)
 	{
 		// This request is OK on this server
+		LogPrint(BCLog::HTTP, "\nAllowed %f", 1);
 	}
-	else
+    else 
 	{
 		if (!ClientAllowed(hreq->GetPeer())) {
-			hreq->WriteReply(HTTP_FORBIDDEN);
-			return;
+		
+        hreq->WriteReply(HTTP_FORBIDDEN);
+        return;
 		}
+    }
 
-		// Early reject unknown HTTP methods
-		if (hreq->GetRequestMethod() == HTTPRequest::UNKNOWN) {
-			hreq->WriteReply(HTTP_BADMETHOD);
-			return;
-		}
-	}
+    // Early reject unknown HTTP methods
+    if (hreq->GetRequestMethod() == HTTPRequest::UNKNOWN) {
+		LogPrint(BCLog::HTTP, "\nUnknown %f", 1);
+
+        hreq->WriteReply(HTTP_BADMETHOD);
+        return;
+    }
+
     // Find registered handler for prefix
     std::string strURI = hreq->GetURI();
     std::string path;
@@ -290,7 +287,8 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
             item->req->WriteReply(HTTP_INTERNAL, "Work queue depth exceeded");
         }
     } else {
-		LogPrintf("\nReq not found %f", 427021);
+		LogPrint(BCLog::HTTP, "\nNOT_FOUND %f", 1);
+
         hreq->WriteReply(HTTP_NOTFOUND);
     }
 }
@@ -317,14 +315,15 @@ static bool ThreadHTTP(struct event_base* base, struct evhttp* http)
 static bool HTTPBindAddresses(struct evhttp* http)
 {
     int defaultPort = gArgs.GetArg("-rpcport", BaseParams().RPCPort());
-	LogPrintf("\nHTTP port=%f", defaultPort);
-
     std::vector<std::pair<std::string, uint16_t> > endpoints;
 
     // Determine what addresses to bind to
-    if (!gArgs.IsArgSet("-rpcallowip")) { // Default to loopback if not allowing external IPs
+    if (!(gArgs.IsArgSet("-rpcallowip") && gArgs.IsArgSet("-rpcbind"))) { // Default to loopback if not allowing external IPs
         endpoints.push_back(std::make_pair("::1", defaultPort));
         endpoints.push_back(std::make_pair("127.0.0.1", defaultPort));
+        if (gArgs.IsArgSet("-rpcallowip")) {
+            LogPrintf("WARNING: option -rpcallowip was specified without -rpcbind; this doesn't usually make sense\n");
+        }
         if (gArgs.IsArgSet("-rpcbind")) {
             LogPrintf("WARNING: option -rpcbind was ignored because -rpcallowip was not specified, refusing to allow everyone to connect\n");
         }
@@ -335,16 +334,17 @@ static bool HTTPBindAddresses(struct evhttp* http)
             SplitHostPort(strRPCBind, port, host);
             endpoints.push_back(std::make_pair(host, port));
         }
-    } else { // No specific bind address specified, bind to any
-        endpoints.push_back(std::make_pair("::", defaultPort));
-        endpoints.push_back(std::make_pair("0.0.0.0", defaultPort));
     }
 
     // Bind addresses
     for (std::vector<std::pair<std::string, uint16_t> >::iterator i = endpoints.begin(); i != endpoints.end(); ++i) {
-        LogPrintf("\nBinding RPC on address %s port %i\n", i->first, i->second);
+        LogPrint(BCLog::HTTP, "Binding RPC on address %s port %i\n", i->first, i->second);
         evhttp_bound_socket *bind_handle = evhttp_bind_socket_with_handle(http, i->first.empty() ? nullptr : i->first.c_str(), i->second);
         if (bind_handle) {
+            CNetAddr addr;
+            if (i->first.empty() || (LookupHost(i->first.c_str(), addr, false) && addr.IsBindAny())) {
+                LogPrintf("WARNING: the RPC server is not safe to expose to untrusted networks such as the public internet\n");
+            }
             boundSockets.push_back(bind_handle);
         } else {
             LogPrintf("Binding RPC on address %s port %i failed.\n", i->first, i->second);
@@ -423,6 +423,7 @@ bool InitHTTPServer()
 
     LogPrint(BCLog::HTTP, "Initialized HTTP server\n");
     int workQueueDepth = std::max((long)gArgs.GetArg("-rpcworkqueue", DEFAULT_HTTP_WORKQUEUE), 1L);
+    LogPrintf("HTTP: creating work queue of depth %d\n", workQueueDepth);
 
     workQueue = new WorkQueue<HTTPClosure>(workQueueDepth);
     // transfer ownership to eventBase/HTTP via .release()
@@ -513,7 +514,7 @@ struct event_base* EventBase()
 static void httpevent_callback_fn(evutil_socket_t, short, void* data)
 {
     // Static handler: simply call inner handler
-    HTTPEvent *self = ((HTTPEvent*)data);
+    HTTPEvent *self = static_cast<HTTPEvent*>(data);
     self->handler();
     if (self->deleteWhenTriggered)
         delete self;

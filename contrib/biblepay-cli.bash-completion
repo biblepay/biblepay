@@ -1,10 +1,10 @@
-# bash programmable completion for biblepay-cli(1)
+﻿# bash programmable completion for biblepay-cli(1)
 # Copyright (c) 2012-2016 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 # call $biblepay-cli for RPC
-biblepay_rpc() {
+_biblepay_rpc() {
     # determine already specified args necessary for RPC
     local rpcargs=()
     for i in ${COMP_LINE}; do
@@ -18,13 +18,13 @@ biblepay_rpc() {
 }
 
 # Add wallet accounts to COMPREPLY
-biblepay_accounts() {
+_biblepay_accounts() {
     local accounts
-    accounts=$(biblepay_rpc listaccounts | awk -F '"' '{ print $2 }')
+    accounts=$(_biblepay_rpc listaccounts | awk -F '"' '{ print $2 }')
     COMPREPLY=( "${COMPREPLY[@]}" $( compgen -W "$accounts" -- "$cur" ) )
 }
 
-biblepay_cli() {
+_biblepay_cli() {
     local cur prev words=() cword
     local biblepay_cli
 
@@ -60,7 +60,7 @@ biblepay_cli() {
     if ((cword > 3)); then
         case ${words[cword-3]} in
             addmultisigaddress)
-                biblepay_accounts
+                _biblepay_accounts
                 return 0
                 ;;
             getbalance|gettxout|importaddress|importpubkey|importprivkey|listreceivedbyaccount|listreceivedbyaddress|listsinceblock)
@@ -85,7 +85,7 @@ biblepay_cli() {
                 return 0
                 ;;
             move|setaccount)
-                biblepay_accounts
+                _biblepay_accounts
                 return 0
                 ;;
         esac
@@ -101,7 +101,7 @@ biblepay_cli() {
             return 0
             ;;
         getaccountaddress|getaddressesbyaccount|getbalance|getnewaddress|getreceivedbyaccount|listtransactions|move|sendfrom|sendmany)
-            biblepay_accounts
+            _biblepay_accounts
             return 0
             ;;
     esac
@@ -130,7 +130,7 @@ biblepay_cli() {
 
             # only parse help if senseful
             if [[ -z "$cur" || "$cur" =~ ^[a-z] ]]; then
-                commands=$(biblepay_rpc help 2>/dev/null | awk '$1 ~ /^[a-z]/ { print $1; }')
+                commands=$(_biblepay_rpc help 2>/dev/null | awk '$1 ~ /^[a-z]/ { print $1; }')
             fi
 
             COMPREPLY=( $( compgen -W "$helpopts $commands" -- "$cur" ) )
@@ -143,7 +143,7 @@ biblepay_cli() {
             ;;
     esac
 } &&
-complete -F biblepay_cli biblepay-cli
+complete -F _biblepay_cli biblepay-cli
 
 # Local variables:
 # mode: shell-script

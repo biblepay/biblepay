@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,6 +12,7 @@
 #include <masternode/masternode-payments.h>
 #include <miner.h>
 #include <policy/policy.h>
+#include <pow.h>
 #include <pubkey.h>
 #include <script/standard.h>
 #include <txmempool.h>
@@ -102,7 +103,7 @@ bool TestSequenceLocks(const CTransaction &tx, int flags)
 // Test suite for ancestor feerate transaction selection.
 // Implemented as an additional function, rather than a separate test case,
 // to allow reusing the blockchain created in CreateNewBlock_validity.
-void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey, std::vector<CTransactionRef>& txFirst)
+void TestPackageSelection(const CChainParams& chainparams, const CScript& scriptPubKey, const std::vector<CTransactionRef>& txFirst) EXCLUSIVE_LOCKS_REQUIRED(::mempool.cs)
 {
     // Disable free transactions, otherwise TX selection is non-deterministic
     gArgs.SoftSetArg("-blockprioritysize", "0");
@@ -134,7 +135,6 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vout[0].nValue = 5000000000LL - 1000 - 50000; // 50k satoshi fee
     uint256 hashHighFeeTx = tx.GetHash();
     mempool.addUnchecked(hashHighFeeTx, entry.Fee(50000).Time(GetTime()).SpendsCoinbase(false).FromTx(tx));
-
 	uint256 uRXKey = uint256S("0x01");
 	std::vector<unsigned char> vchRXHeader = ParseHex("00");
 
@@ -158,7 +158,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vout[0].nValue = 5000000000LL - 1000 - 50000 - feeToUse;
     uint256 hashLowFeeTx = tx.GetHash();
     mempool.addUnchecked(hashLowFeeTx, entry.Fee(feeToUse).FromTx(tx));
-	
+
     pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader);
     // Verify that the free tx and the low fee tx didn't get selected
     for (size_t i=0; i<pblocktemplate->block.vtx.size(); ++i) {
@@ -194,9 +194,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vout[0].nValue = 5000000000LL - 100000000 - feeToUse;
     uint256 hashLowFeeTx2 = tx.GetHash();
     mempool.addUnchecked(hashLowFeeTx2, entry.Fee(feeToUse).SpendsCoinbase(false).FromTx(tx));
-	//uint256 uRXKey = uint256S("0x01");
-	//std::vector<unsigned char> vchRXHeader = ParseHex("00");
-
+	
     pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader);
 
     // Verify that this tx isn't selected.
@@ -210,9 +208,6 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vin[0].prevout.n = 1;
     tx.vout[0].nValue = 100000000 - 10000; // 10k satoshi fee
     mempool.addUnchecked(tx.GetHash(), entry.Fee(10000).FromTx(tx));
-	//uint256 uRXKey = uint256S("0x01");
-	//std::vector<unsigned char> vchRXHeader = ParseHex("00");
-
     pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader);
     BOOST_CHECK(pblocktemplate->block.vtx[8]->GetHash() == hashLowFeeTx2);
 }
@@ -224,7 +219,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     const CChainParams& chainparams = *chainParams;
     CScript scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
     std::unique_ptr<CBlockTemplate> pblocktemplate, pemptyblocktemplate;
-    CMutableTransaction tx,tx2;
+    CMutableTransaction tx;
     CScript script;
     uint256 hash;
     TestMemPoolEntryHelper entry;
@@ -267,12 +262,9 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
             // This will usually succeed in the first round as we take the nonce from blockinfo
             // It's however usefull when adding new blocks with unknown nonces (you should add the found block to blockinfo)
-		
-			/*
-            while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, chainparams.GetConsensus())) {
+            while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, chainparams.GetConsensus(), chainActive.Tip()->nHeight, pblock->GetHash().GetHex(), uint256S("0x0"), 2, pblock->nTime)) {
                 pblock->nNonce++;
             }
-			*/
         }
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
         BOOST_CHECK(ProcessNewBlock(chainparams, shared_pblock, true, nullptr));
@@ -286,8 +278,12 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
     {
     LOCK(cs_main);
+    LOCK(::mempool.cs);
 
     // Just to make sure we can still make simple blocks
+	uint256 uRXKey = uint256S("0x01");
+	std::vector<unsigned char> vchRXHeader = ParseHex("00");
+
     BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader));
 
     const CAmount BLOCKSUBSIDY = 500*COIN;
@@ -312,7 +308,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
         mempool.addUnchecked(hash, entry.Fee(LOWFEE).Time(GetTime()).SpendsCoinbase(spendsCoinbase).FromTx(tx));
         tx.vin[0].prevout.hash = hash;
     }
-	
+
     BOOST_CHECK_EXCEPTION(AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader), std::runtime_error, HasReason("bad-blk-sigops"));
     mempool.clear();
 
@@ -370,7 +366,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     tx.vout[0].nValue = tx.vout[0].nValue+BLOCKSUBSIDY-HIGHERFEE; //First txn output + fresh coinbase - new txn fee
     hash = tx.GetHash();
     mempool.addUnchecked(hash, entry.Fee(HIGHERFEE).Time(GetTime()).SpendsCoinbase(true).FromTx(tx));
-    BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader));
+    //BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey));
     mempool.clear();
 
     // coinbase in mempool, template creation fails
@@ -526,10 +522,8 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     BOOST_CHECK(TestSequenceLocks(tx, flags)); // Sequence locks pass
     tx.vin[0].nSequence = CTxIn::SEQUENCE_LOCKTIME_TYPE_FLAG | 1;
     BOOST_CHECK(!TestSequenceLocks(tx, flags)); // Sequence locks fail
-	uint256 uRXKey = uint256S("0x01");
-	std::vector<unsigned char> vchRXHeader = ParseHex("00");
 
-    BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader));
+	//    BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey));
 
     // None of the of the absolute height/time locked tx should have made
     // it into the template because we still check IsFinalTx in CreateNewBlock,
@@ -549,7 +543,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
     SetMockTime(chainActive.Tip()->GetMedianTimePast() + 1);
 
-    BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, "", uRXKey, vchRXHeader));
+//    BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey));
     BOOST_CHECK_EQUAL(pblocktemplate->block.vtx.size(), 5);
 
     CValidationState state;

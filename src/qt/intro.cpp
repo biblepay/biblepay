@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,6 +13,7 @@
 
 #include <qt/guiutil.h>
 
+#include <interfaces/node.h>
 #include <util.h>
 
 #include <QFileDialog>
@@ -23,7 +24,7 @@
 
 static const uint64_t GB_BYTES = 1000000000LL;
 /* Minimum free space (in GB) needed for data directory */
-static const uint64_t BLOCK_CHAIN_SIZE = 5;
+static const uint64_t BLOCK_CHAIN_SIZE = 35;
 /* Minimum free space (in GB) needed for data directory when pruned; Does not include prune target */
 static const uint64_t CHAIN_STATE_SIZE = 1;
 /* Total required space (in GB) depending on user choice (prune, not prune) */
@@ -123,7 +124,6 @@ Intro::Intro(QWidget *parent) :
     ui->setupUi(this);
     ui->welcomeLabel->setText(ui->welcomeLabel->text().arg(tr(PACKAGE_NAME)));
     ui->storageLabel->setText(ui->storageLabel->text().arg(tr(PACKAGE_NAME)));
-	std::cout << ".\nUI 5.1" << std::endl;
 
     ui->lblExplanation1->setText(ui->lblExplanation1->text()
         .arg(tr(PACKAGE_NAME))
@@ -148,12 +148,10 @@ Intro::Intro(QWidget *parent) :
     }
     requiredSpace += CHAIN_STATE_SIZE;
     ui->sizeWarningLabel->setText(
-        tr("%1 will download and store a copy of the BiblePay block chain.").arg(tr(PACKAGE_NAME)) + " " +
+        tr("%1 will download and store a copy of the Biblepay block chain.").arg(tr(PACKAGE_NAME)) + " " +
         storageRequiresMsg.arg(requiredSpace) + " " +
         tr("The wallet will also be stored in this directory.")
     );
-	std::cout << ".\nUI 5.2" << std::endl;
-
     startThread();
 }
 
@@ -190,7 +188,7 @@ QString Intro::getDefaultDataDirectory()
     return GUIUtil::boostPathToQString(GetDefaultDataDir());
 }
 
-bool Intro::pickDataDirectory()
+bool Intro::pickDataDirectory(interfaces::Node& node)
 {
     QSettings settings;
     /* If data directory provided on command line, no need to look at settings
@@ -209,9 +207,10 @@ bool Intro::pickDataDirectory()
         /* Let the user choose one */
         Intro intro;
         GUIUtil::disableMacFocusRect(&intro);
-        GUIUtil::loadStyleSheet(&intro);
+        GUIUtil::loadStyleSheet(true);
         intro.setDataDirectory(dataDirDefaultCurrent);
-        intro.setWindowIcon(QIcon(":icons/bitcoin"));
+        intro.setWindowIcon(QIcon(":icons/biblepay"));
+
         while(true)
         {
             if(!intro.exec())
@@ -237,11 +236,12 @@ bool Intro::pickDataDirectory()
         settings.setValue("strDataDirDefault", dataDirDefaultCurrent);
     }
     /* Only override -datadir if different from the default, to make it possible to
-     * override -datadir in the biblepay.conf file in the default data directory
+     * override -datadir in the biblepay.conffile in the default data directory
      * (to be consistent with biblepayd behavior)
      */
-    if(dataDir != dataDirDefaultCurrent)
-        gArgs.SoftSetArg("-datadir", GUIUtil::qstringToBoostPath(dataDir).string()); // use OS locale for path setting
+    if(dataDir != dataDirDefaultCurrent) {
+        node.softSetArg("-datadir", GUIUtil::qstringToBoostPath(dataDir).string()); // use OS locale for path setting
+    }
     return true;
 }
 

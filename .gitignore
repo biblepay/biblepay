@@ -1,4 +1,4 @@
-*.sublime-project
+﻿*.sublime-project
 *.sublime-workspace
 todo.txt
 reset-files.bash
@@ -10,9 +10,11 @@ src/biblepay
 src/biblepayd
 src/biblepay-cli
 src/biblepay-tx
-src/test/testbiblepay
-src/qt/test/testbiblepay-qt
-src/bench/benchbiblepay
+src/test/test_biblepay
+src/test/test_biblepay_fuzzy
+src/qt/test/test_biblepay-qt
+src/qt/res/css/colors/*
+src/bench/bench_biblepay
 
 # autoreconf
 Makefile.in
@@ -36,9 +38,7 @@ config.status
 configure
 libtool
 src/config/biblepay-config.h
-src/config/coin-config.h
 src/config/biblepay-config.h.in
-src/config/coin-config.h.in
 src/config/stamp-h1
 share/setup.nsi
 share/qt/Info.plist
@@ -63,8 +63,6 @@ libconftest.dylib*
 *.pyc
 *.o
 *.o-*
-*.patch
-!depends/patches/*/*.patch
 *.a
 *.pb.cc
 *.pb.h
@@ -76,6 +74,10 @@ libconftest.dylib*
 *.json.h
 *.raw.h
 
+# Only ignore unexpected patches
+*.patch
+!depends/patches/**/*.patch
+
 #libtool object files
 *.lo
 *.la
@@ -84,13 +86,13 @@ libconftest.dylib*
 *.qm
 Makefile
 biblepay-qt
-Biblepay-Qt.app
+BiblePay-Qt.app
+background.tiff*
 !/depends/Makefile
 
 # Unit-tests
 Makefile.test
 biblepay-qt_test
-src/test/buildenv.py
 
 # Resources cpp
 qrc_*.cpp
@@ -98,12 +100,13 @@ qrc_*.cpp
 # Mac specific
 .DS_Store
 build
+*.dSYM
 
 #lcov
 *.gcno
 *.gcda
 /*.info
-testbiblepay.coverage/
+test_biblepay.coverage/
 total.coverage/
 coverage_percent.txt
 
@@ -111,9 +114,8 @@ coverage_percent.txt
 linux-coverage-build
 linux-build
 win32-build
-qa/pull-tester/tests_config.py
-qa/pull-tester/tests_config.ini
-qa/cache/*
+test/config.ini
+test/cache/*
 
 !src/leveldb*/Makefile
 
@@ -138,28 +140,3 @@ make
 # CLion
 .idea
 cmake-build-debug
-contrib/devtools/windows/DevelopBiblePay.sln
-contrib/devtools/windows/DevelopBiblePay.suo
-src/.vs/src/v15/.suo
-src/.vs/VSWorkspaceState.json
-src/.vs/CMake Overview
-src/.vs/ProjectSettings.json
-src/.vs/slnx.sqlite
-src/.vs/src/v16/.suo
-src/.vs/src/v16/Browse.VC.db
-contrib/Windows/Burn/.vs/Burn/v16/Server/sqlite3/storage.ide
-*.lock
-*.suo
-contrib/Windows/Burn/Burn.suo
-*.opendb
-contrib/Windows/BiblePay/.vs/BiblePay/v16/Browse.VC.db
-contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide
-*.ide-wal
-contrib/Windows/BiblePay/.vs/BiblePay/v16/Server/sqlite3/storage.ide-shm
-*.cache
-*.ipch
-contrib/Windows/BiblePay/bin/Debug/BiblePay.exe.config
-contrib/Windows/BiblePay/bin/Debug/BiblePay.pdb
-contrib/Windows/BiblePay/obj/Debug/BiblePay.csproj.FileListAbsolute.txt
-contrib/Windows/BiblePay/obj/Debug/BiblePay.pdb
-contrib/Windows/BiblePay/obj/Debug/BiblePay.Properties.Resources.resources

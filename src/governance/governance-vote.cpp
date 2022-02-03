@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,7 +6,6 @@
 #include <governance/governance-object.h>
 #include <masternode/masternode-sync.h>
 #include <messagesigner.h>
-#include <spork.h>
 #include <util.h>
 
 #include <evo/deterministicmns.h>
@@ -229,16 +228,13 @@ bool CGovernanceVote::Sign(const CBLSSecretKey& key)
     if (!sig.IsValid()) {
         return false;
     }
-    sig.GetBuf(vchSig);
+    vchSig = sig.ToByteVector();
     return true;
 }
 
 bool CGovernanceVote::CheckSignature(const CBLSPublicKey& pubKey) const
 {
-    uint256 hash = GetSignatureHash();
-    CBLSSignature sig;
-    sig.SetBuf(vchSig);
-    if (!sig.VerifyInsecure(pubKey, hash)) {
+    if (!CBLSSignature(vchSig).VerifyInsecure(pubKey, GetSignatureHash())) {
         LogPrintf("CGovernanceVote::CheckSignature -- VerifyInsecure() failed\n");
         return false;
     }
@@ -299,19 +295,19 @@ bool operator<(const CGovernanceVote& vote1, const CGovernanceVote& vote2)
     if (!fResult) {
         return false;
     }
-    fResult = fResult && (vote1.nParentHash == vote2.nParentHash);
+    fResult = (vote1.nParentHash == vote2.nParentHash);
 
     fResult = fResult && (vote1.nVoteOutcome < vote2.nVoteOutcome);
     if (!fResult) {
         return false;
     }
-    fResult = fResult && (vote1.nVoteOutcome == vote2.nVoteOutcome);
+    fResult = (vote1.nVoteOutcome == vote2.nVoteOutcome);
 
     fResult = fResult && (vote1.nVoteSignal == vote2.nVoteSignal);
     if (!fResult) {
         return false;
     }
-    fResult = fResult && (vote1.nVoteSignal == vote2.nVoteSignal);
+    fResult = (vote1.nVoteSignal == vote2.nVoteSignal);
 
     fResult = fResult && (vote1.nTime < vote2.nTime);
 

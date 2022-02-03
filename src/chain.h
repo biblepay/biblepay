@@ -7,8 +7,8 @@
 #define BITCOIN_CHAIN_H
 
 #include <arith_uint256.h>
+#include <consensus/params.h>
 #include <primitives/block.h>
-#include <pow.h>
 #include <tinyformat.h>
 #include <uint256.h>
 
@@ -91,7 +91,7 @@ struct CDiskBlockPos
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(VARINT(nFile));
+        READWRITE(VARINT(nFile, VarIntMode::NONNEGATIVE_SIGNED));
         READWRITE(VARINT(nPos));
     }
 
@@ -236,13 +236,12 @@ public:
         nStatus = 0;
         nSequenceId = 0;
         nTimeMax = 0;
-		RandomXKey = uint256();
+
         nVersion       = 0;
         hashMerkleRoot = uint256();
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
-		RandomXData = std::string();
     }
 
     CBlockIndex()
@@ -259,6 +258,7 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+		// BIBLEPAY
 		RandomXKey     = block.RandomXKey;
 	    RandomXData    = block.RandomXData;
     }
@@ -396,13 +396,13 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action) {
         int _nVersion = s.GetVersion();
         if (!(s.GetType() & SER_GETHASH))
-            READWRITE(VARINT(_nVersion));
+            READWRITE(VARINT(_nVersion, VarIntMode::NONNEGATIVE_SIGNED));
 
-        READWRITE(VARINT(nHeight));
+        READWRITE(VARINT(nHeight, VarIntMode::NONNEGATIVE_SIGNED));
         READWRITE(VARINT(nStatus));
         READWRITE(VARINT(nTx));
         if (nStatus & (BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO))
-            READWRITE(VARINT(nFile));
+            READWRITE(VARINT(nFile, VarIntMode::NONNEGATIVE_SIGNED));
         if (nStatus & BLOCK_HAVE_DATA)
             READWRITE(VARINT(nDataPos));
         if (nStatus & BLOCK_HAVE_UNDO)
@@ -478,9 +478,6 @@ public:
 
     /** Efficiently check whether a block is present in this chain. */
     bool Contains(const CBlockIndex *pindex) const {
-		// R Andrews
-		if (!pindex)
-			return false;
         return (*this)[pindex->nHeight] == pindex;
     }
 

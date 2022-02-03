@@ -1,5 +1,5 @@
-#ifndef MASTERNODELIST_H
-#define MASTERNODELIST_H
+#ifndef BITCOIN_QT_MASTERNODELIST_H
+#define BITCOIN_QT_MASTERNODELIST_H
 
 #include <primitives/transaction.h>
 #include <sync.h>
@@ -34,6 +34,22 @@ class MasternodeList : public QWidget
 public:
     explicit MasternodeList(QWidget* parent = 0);
     ~MasternodeList();
+
+    enum {
+        COLUMN_SERVICE,
+        COLUMN_STATUS,
+        COLUMN_POSE,
+        COLUMN_REGISTERED,
+        COLUMN_LAST_PAYMENT,
+        COLUMN_NEXT_PAYMENT,
+        COLUMN_PAYOUT_ADDRESS,
+        COLUMN_OPERATOR_REWARD,
+        COLUMN_COLLATERAL_ADDRESS,
+        COLUMN_OWNER_ADDRESS,
+        COLUMN_VOTING_ADDRESS,
+		COLUMN_URL,
+        COLUMN_PROTX_HASH,
+    };
 
     void setClientModel(ClientModel* clientModel);
     void setWalletModel(WalletModel* walletModel);
@@ -71,10 +87,10 @@ private Q_SLOTS:
     void extraInfoDIP3_clicked();
     void copyProTxHash_clicked();
     void copyCollateralOutpoint_clicked();
-
-    void handleMasternodeListChanged();
 	void navigateToChild_clicked();
     void sponsorChild_clicked();
+    
+    void handleMasternodeListChanged();
     void updateDIP3ListScheduled();
 };
-#endif // MASTERNODELIST_H
+#endif // BITCOIN_QT_MASTERNODELIST_H

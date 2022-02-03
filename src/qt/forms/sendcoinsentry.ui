@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>767</width>
-    <height>348</height>
+    <width>900</width>
+    <height>174</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -57,7 +57,7 @@
       <item>
        <widget class="QValidatedLineEdit" name="payTo">
         <property name="toolTip">
-         <string>The BiblePay address to send the payment to</string>
+         <string>The Biblepay address to send the payment to</string>
         </property>
        </widget>
       </item>
@@ -151,49 +151,35 @@
      </widget>
     </item>
     <item row="2" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayoutAmount" stretch="0,1,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayoutAmount" stretch="0,1,0">
       <item>
        <widget class="BitcoinAmountField" name="payAmount"/>
       </item>
+     
+      
+            <item>
+             <widget class="QCheckBox" name="checkboxDonateToFoundation">
+              <property name="toolTip">
+               <string>Donate BiblePay to our foundation; the entire amount will be spent on good causes, such as orphan-charity.</string>
+              </property>
+              <property name="text">
+               <string>Donate to Foundation</string>
+              </property>
+             </widget>
+            </item>
+
+     
       <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Maximum</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>35</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
+            <widget class="QCheckBox" name="checkboxSubtractFeeFromAmount">
+             <property name="toolTip">
+              <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
+             </property>
+             <property name="text">
+              <string>S&amp;ubtract fee from amount</string>
+             </property>
+            </widget>
       </item>
-      <item>
-       <spacer name="horizontalSpacer_77">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkboxSubtractFeeFromAmount">
-        <property name="toolTip">
-         <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
-        </property>
-        <property name="text">
-         <string>S&amp;ubtract fee from amount</string>
-        </property>
-       </widget>
-      </item>
+     
       <item>
        <widget class="QPushButton" name="useAvailableBalanceButton">
         <property name="text">
@@ -203,158 +189,7 @@
       </item>
      </layout>
     </item>
-    <item row="5" column="0">
-     <widget class="QLabel" name="messageCaption">
-      <property name="text">
-       <string>Prayers&lt;br&gt;or Diary Entry:</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayout_7">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QValidatedLineEdit" name="txtMessage">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>125</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Send Custom Message to Recipient </string>
-        </property>
-        <property name="maxLength">
-         <number>2000</number>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="6" column="0">
-     <widget class="QLabel" name="lblatt">
-      <property name="text">
-       <string>Attached File:</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-      <property name="tooltip" stdset="0">
-       <cstring>Attach a file to this message</cstring>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayout_71">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QValidatedLineEdit" name="txtFile">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>455</width>
-          <height>27</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>600</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Attached File</string>
-        </property>
-        <property name="maxLength">
-         <number>1000</number>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>12</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnAttach">
-        <property name="text">
-         <string>Attach File</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_3">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblIPFSFee">
-        <property name="font">
-         <font>
-          <pointsize>6</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>** A fee per KB applies</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>6</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </item>
-    <item row="61" column="0">
+    <item row="3" column="0">
      <widget class="QLabel" name="messageLabel">
       <property name="text">
        <string>Message:</string>
@@ -364,72 +199,22 @@
       </property>
      </widget>
     </item>
-    <item row="61" column="1">
+    <item row="3" column="1">
      <widget class="QLabel" name="messageTextLabel">
       <property name="toolTip">
-       <string>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</string>
+       <string>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Biblepay network.</string>
       </property>
       <property name="textFormat">
        <enum>Qt::PlainText</enum>
       </property>
      </widget>
     </item>
-    <item row="71" column="0" colspan="2">
+    <item row="4" column="0" colspan="2">
      <widget class="Line" name="line">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
-    </item>
-    <item row="3" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayoutCheckboxes2">
-      <item>
-       <widget class="QCheckBox" name="chkDonate">
-        <property name="toolTip">
-         <string>Send Coins to DAC to Support Orphans?</string>
-        </property>
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string>Donate to DAC?</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="chkTithe">
-        <property name="toolTip">
-         <string>Add an additional 10% to the transaction to be sent to Support Orphans?</string>
-        </property>
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string>Add Tithe for DAC?</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="chkPrayer">
-        <property name="toolTip">
-         <string>Prayer Request</string>
-        </property>
-        <property name="text">
-         <string>Prayer Request</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="chkDiary">
-        <property name="toolTip">
-         <string>Add a Diary Entry (Healing Campaign)</string>
-        </property>
-        <property name="text">
-         <string>Add Diary Entry?</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
     </item>
    </layout>
   </widget>

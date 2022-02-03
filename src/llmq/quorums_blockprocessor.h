@@ -1,9 +1,9 @@
-// Copyright (c) 2018-2020 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BIBLEPAY_QUORUMS_BLOCKPROCESSOR_H
-#define BIBLEPAY_QUORUMS_BLOCKPROCESSOR_H
+#ifndef BITCOIN_LLMQ_QUORUMS_BLOCKPROCESSOR_H
+#define BITCOIN_LLMQ_QUORUMS_BLOCKPROCESSOR_H
 
 #include <llmq/quorums_commitment.h>
 #include <llmq/quorums_utils.h>
@@ -15,6 +15,7 @@
 
 #include <map>
 #include <unordered_map>
+#include <unordered_lru_cache.h>
 
 class CNode;
 class CConnman;
@@ -32,16 +33,16 @@ private:
     std::map<std::pair<Consensus::LLMQType, uint256>, uint256> minableCommitmentsByQuorum;
     std::map<uint256, CFinalCommitment> minableCommitments;
 
-    std::unordered_map<std::pair<Consensus::LLMQType, uint256>, bool, StaticSaltedHasher> hasMinedCommitmentCache;
+    std::map<Consensus::LLMQType, unordered_lru_cache<uint256, bool, StaticSaltedHasher>> mapHasMinedCommitmentCache;
 
 public:
-    explicit CQuorumBlockProcessor(CEvoDB& _evoDb) : evoDb(_evoDb) {}
+    explicit CQuorumBlockProcessor(CEvoDB& _evoDb);
 
-    void UpgradeDB();
+    bool UpgradeDB();
 
-    void ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, CConnman& connman);
+    void ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv);
 
-    bool ProcessBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state);
+    bool ProcessBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state, bool fJustCheck);
     bool UndoBlock(const CBlock& block, const CBlockIndex* pindex);
 
     void AddMinableCommitment(const CFinalCommitment& fqc);
@@ -57,15 +58,15 @@ public:
     std::map<Consensus::LLMQType, std::vector<const CBlockIndex*>> GetMinedAndActiveCommitmentsUntilBlock(const CBlockIndex* pindex);
 
 private:
-    bool GetCommitmentsFromBlock(const CBlock& block, const CBlockIndex* pindex, std::map<Consensus::LLMQType, CFinalCommitment>& ret, CValidationState& state);
-    bool ProcessCommitment(int nHeight, const uint256& blockHash, const CFinalCommitment& qc, CValidationState& state);
-    bool IsMiningPhase(Consensus::LLMQType llmqType, int nHeight);
+    static bool GetCommitmentsFromBlock(const CBlock& block, const CBlockIndex* pindex, std::map<Consensus::LLMQType, CFinalCommitment>& ret, CValidationState& state);
+    bool ProcessCommitment(int nHeight, const uint256& blockHash, const CFinalCommitment& qc, CValidationState& state, bool fJustCheck);
+    static bool IsMiningPhase(Consensus::LLMQType llmqType, int nHeight);
     bool IsCommitmentRequired(Consensus::LLMQType llmqType, int nHeight);
-    uint256 GetQuorumBlockHash(Consensus::LLMQType llmqType, int nHeight);
+    static uint256 GetQuorumBlockHash(Consensus::LLMQType llmqType, int nHeight);
 };
 
 extern CQuorumBlockProcessor* quorumBlockProcessor;
 
 } // namespace llmq
 
-#endif//BIBLEPAY_QUORUMS_BLOCKPROCESSOR_H
+#endif // BITCOIN_LLMQ_QUORUMS_BLOCKPROCESSOR_H

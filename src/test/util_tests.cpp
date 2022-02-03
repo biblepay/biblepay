@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -82,6 +82,20 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
         "04 67 8a fd b0");
 
     BOOST_CHECK_EQUAL(
+        HexStr(ParseHex_expected + sizeof(ParseHex_expected),
+               ParseHex_expected + sizeof(ParseHex_expected)),
+        "");
+
+    BOOST_CHECK_EQUAL(
+        HexStr(ParseHex_expected + sizeof(ParseHex_expected),
+               ParseHex_expected + sizeof(ParseHex_expected), true),
+        "");
+
+    BOOST_CHECK_EQUAL(
+        HexStr(ParseHex_expected, ParseHex_expected),
+        "");
+
+    BOOST_CHECK_EQUAL(
         HexStr(ParseHex_expected, ParseHex_expected, true),
         "");
 
@@ -90,6 +104,58 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
     BOOST_CHECK_EQUAL(
         HexStr(ParseHex_vec, true),
         "04 67 8a fd b0");
+
+    BOOST_CHECK_EQUAL(
+        HexStr(ParseHex_vec.rbegin(), ParseHex_vec.rend()),
+        "b0fd8a6704"
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(ParseHex_vec.rbegin(), ParseHex_vec.rend(), true),
+        "b0 fd 8a 67 04"
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(std::reverse_iterator<const uint8_t *>(ParseHex_expected),
+               std::reverse_iterator<const uint8_t *>(ParseHex_expected)),
+        ""
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(std::reverse_iterator<const uint8_t *>(ParseHex_expected),
+               std::reverse_iterator<const uint8_t *>(ParseHex_expected), true),
+        ""
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(std::reverse_iterator<const uint8_t *>(ParseHex_expected + 1),
+               std::reverse_iterator<const uint8_t *>(ParseHex_expected)),
+        "04"
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(std::reverse_iterator<const uint8_t *>(ParseHex_expected + 1),
+               std::reverse_iterator<const uint8_t *>(ParseHex_expected), true),
+        "04"
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(std::reverse_iterator<const uint8_t *>(ParseHex_expected + 5),
+               std::reverse_iterator<const uint8_t *>(ParseHex_expected)),
+        "b0fd8a6704"
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(std::reverse_iterator<const uint8_t *>(ParseHex_expected + 5),
+               std::reverse_iterator<const uint8_t *>(ParseHex_expected), true),
+        "b0 fd 8a 67 04"
+    );
+
+    BOOST_CHECK_EQUAL(
+        HexStr(std::reverse_iterator<const uint8_t *>(ParseHex_expected + 65),
+               std::reverse_iterator<const uint8_t *>(ParseHex_expected)),
+        "5f1df16b2b704c8a578d0bbaf74d385cde12c11ee50455f3c438ef4c3fbcf649b6de611feae06279a60939e028a8d65c10b73071a6f16719274855feb0fd8a6704"
+    );
 }
 
 
@@ -98,8 +164,25 @@ BOOST_AUTO_TEST_CASE(util_DateTimeStrFormat)
     BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M:%S", 0), "1970-01-01 00:00:00");
     BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M:%S", 0x7FFFFFFF), "2038-01-19 03:14:07");
     BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M:%S", 1317425777), "2011-09-30 23:36:17");
+    BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%dT%H:%M:%SZ", 1317425777), "2011-09-30T23:36:17Z");
+    BOOST_CHECK_EQUAL(DateTimeStrFormat("%H:%M:%SZ", 1317425777), "23:36:17Z");
     BOOST_CHECK_EQUAL(DateTimeStrFormat("%Y-%m-%d %H:%M", 1317425777), "2011-09-30 23:36");
     BOOST_CHECK_EQUAL(DateTimeStrFormat("%a, %d %b %Y %H:%M:%S +0000", 1317425777), "Fri, 30 Sep 2011 23:36:17 +0000");
+}
+
+BOOST_AUTO_TEST_CASE(util_FormatISO8601DateTime)
+{
+    BOOST_CHECK_EQUAL(FormatISO8601DateTime(1317425777), "2011-09-30T23:36:17Z");
+}
+
+BOOST_AUTO_TEST_CASE(util_FormatISO8601Date)
+{
+    BOOST_CHECK_EQUAL(FormatISO8601Date(1317425777), "2011-09-30");
+}
+
+BOOST_AUTO_TEST_CASE(util_FormatISO8601Time)
+{
+    BOOST_CHECK_EQUAL(FormatISO8601Time(1317425777), "23:36:17Z");
 }
 
 struct TestArgsManager : public ArgsManager
@@ -500,7 +583,7 @@ BOOST_AUTO_TEST_CASE(util_GetChainName)
     BOOST_CHECK_THROW(test_args.GetChainName(), std::runtime_error);
 
     // check setting the network to test (and thus making
-    // [test] regtest=1 potentially relevent) doesn't break things
+    // [test] regtest=1 potentially relevant) doesn't break things
     test_args.SelectConfigNetwork("test");
 
     test_args.ParseParameters(0, (char**)argv_testnet);
@@ -734,6 +817,21 @@ BOOST_AUTO_TEST_CASE(util_time_GetTime)
     BOOST_CHECK(us_0 < GetTime<std::chrono::microseconds>());
 }
 
+BOOST_AUTO_TEST_CASE(test_IsDigit)
+{
+    BOOST_CHECK_EQUAL(IsDigit('0'), true);
+    BOOST_CHECK_EQUAL(IsDigit('1'), true);
+    BOOST_CHECK_EQUAL(IsDigit('8'), true);
+    BOOST_CHECK_EQUAL(IsDigit('9'), true);
+
+    BOOST_CHECK_EQUAL(IsDigit('0' - 1), false);
+    BOOST_CHECK_EQUAL(IsDigit('9' + 1), false);
+    BOOST_CHECK_EQUAL(IsDigit(0), false);
+    BOOST_CHECK_EQUAL(IsDigit(1), false);
+    BOOST_CHECK_EQUAL(IsDigit(8), false);
+    BOOST_CHECK_EQUAL(IsDigit(9), false);
+}
+
 BOOST_AUTO_TEST_CASE(test_ParseInt32)
 {
     int32_t n;
@@ -918,9 +1016,9 @@ BOOST_AUTO_TEST_CASE(test_FormatSubVersion)
     std::vector<std::string> comments2;
     comments2.push_back(std::string("comment1"));
     comments2.push_back(SanitizeString(std::string("Comment2; .,_?@-; !\"#$%&'()*+/<=>[]\\^`{|}~"), SAFE_CHARS_UA_COMMENT)); // Semicolon is discouraged but not forbidden by BIP-0014
-    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, std::vector<std::string>()),std::string("/Test:0.9.99/"));
-    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments),std::string("/Test:0.9.99(comment1)/"));
-    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments2),std::string("/Test:0.9.99(comment1; Comment2; .,_?@-; )/"));
+    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, std::vector<std::string>()),std::string("/Test:0.9.99.0/"));
+    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments),std::string("/Test:0.9.99.0(comment1)/"));
+    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments2),std::string("/Test:0.9.99.0(comment1; Comment2; .,_?@-; )/"));
 }
 
 BOOST_AUTO_TEST_CASE(test_ParseFixedPoint)
@@ -988,21 +1086,6 @@ BOOST_AUTO_TEST_CASE(test_ParseFixedPoint)
     BOOST_CHECK(!ParseFixedPoint("1.", 8, &amount));
 }
 
-BOOST_AUTO_TEST_CASE(version_info_helper)
-{
-    BOOST_CHECK(StringVersionToInt("1.1.1") == 0x010101);
-    BOOST_CHECK(IntVersionToString(0x010101) == "1.1.1");
-
-    BOOST_CHECK_THROW(StringVersionToInt("1.1.hgdghfgf"), std::bad_cast);
-    BOOST_CHECK_THROW(StringVersionToInt("1.1"), std::bad_cast);
-    BOOST_CHECK_THROW(StringVersionToInt("1.1.1f"), std::bad_cast);
-    BOOST_CHECK_THROW(StringVersionToInt("1.1.1000"), std::bad_cast);
-    BOOST_CHECK_THROW(StringVersionToInt("10"), std::bad_cast);
-    BOOST_CHECK_THROW(StringVersionToInt("1.1.1.1"), std::bad_cast);
-    BOOST_CHECK_THROW(IntVersionToString(0x01010101), std::bad_cast);
-    BOOST_CHECK_THROW(IntVersionToString(0), std::bad_cast);
-}
-
 static void TestOtherThread(fs::path dirname, std::string lockname, bool *result)
 {
     *result = LockDirectory(dirname, lockname);
@@ -1016,9 +1099,8 @@ static constexpr char ExitCommand = 'X';
 static void TestOtherProcess(fs::path dirname, std::string lockname, int fd)
 {
     char ch;
-    int rv;
     while (true) {
-        rv = read(fd, &ch, 1); // Wait for command
+        int rv = read(fd, &ch, 1); // Wait for command
         assert(rv == 1);
         switch(ch) {
         case LockCommand:
@@ -1043,7 +1125,7 @@ static void TestOtherProcess(fs::path dirname, std::string lockname, int fd)
 
 BOOST_AUTO_TEST_CASE(test_LockDirectory)
 {
-    fs::path dirname = fs::temp_directory_path() / fs::unique_path();
+    fs::path dirname = SetDataDir("test_LockDirectory") / fs::unique_path();
     const std::string lockname = ".lock";
 #ifndef WIN32
     // Revert SIGCHLD to default, otherwise boost.test will catch and fail on
@@ -1127,6 +1209,22 @@ BOOST_AUTO_TEST_CASE(test_LockDirectory)
     // Clean up
     ReleaseDirectoryLocks();
     fs::remove_all(dirname);
+}
+
+BOOST_AUTO_TEST_CASE(test_DirIsWritable)
+{
+    // Should be able to write to the data dir.
+    fs::path tmpdirname = SetDataDir("test_DirIsWritable");
+    BOOST_CHECK_EQUAL(DirIsWritable(tmpdirname), true);
+
+    // Should not be able to write to a non-existent dir.
+    tmpdirname = tmpdirname / fs::unique_path();
+    BOOST_CHECK_EQUAL(DirIsWritable(tmpdirname), false);
+
+    fs::create_directory(tmpdirname);
+    // Should be able to write to it now.
+    BOOST_CHECK_EQUAL(DirIsWritable(tmpdirname), true);
+    fs::remove(tmpdirname);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

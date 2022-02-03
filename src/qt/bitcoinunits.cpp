@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,10 +19,10 @@ BitcoinUnits::BitcoinUnits(QObject *parent):
 QList<BitcoinUnits::Unit> BitcoinUnits::availableUnits()
 {
     QList<BitcoinUnits::Unit> unitlist;
-    unitlist.append(BBP);
-    unitlist.append(mBBP);
-    unitlist.append(uBBP);
-    unitlist.append(pence);
+    unitlist.append(BIBLEPAY);
+    unitlist.append(mBIBLEPAY);
+    unitlist.append(uBIBLEPAY);
+    unitlist.append(duffs);
     return unitlist;
 }
 
@@ -30,10 +30,10 @@ bool BitcoinUnits::valid(int unit)
 {
     switch(unit)
     {
-    case BBP:
-    case mBBP:
-    case uBBP:
-    case pence:
+    case BIBLEPAY:
+    case mBIBLEPAY:
+    case uBIBLEPAY:
+    case duffs:
         return true;
     default:
         return false;
@@ -46,10 +46,10 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-            case BBP: return QString("BBP");
-            case mBBP: return QString("mBBP");
-            case uBBP: return QString::fromUtf8("μBBP");
-            case pence: return QString("pence");
+            case BIBLEPAY: return QString("BIBLEPAY");
+            case mBIBLEPAY: return QString("mBIBLEPAY");
+            case uBIBLEPAY: return QString::fromUtf8("μBIBLEPAY");
+            case duffs: return QString("duffs");
             default: return QString("???");
         }
     }
@@ -57,10 +57,10 @@ QString BitcoinUnits::name(int unit)
     {
         switch(unit)
         {
-            case BBP: return QString("tBBP");
-            case mBBP: return QString("mtBBP");
-            case uBBP: return QString::fromUtf8("μtBBP");
-            case pence: return QString("tpence");
+            case BIBLEPAY: return QString("tBIBLEPAY");
+            case mBIBLEPAY: return QString("mtBIBLEPAY");
+            case uBIBLEPAY: return QString::fromUtf8("μtBIBLEPAY");
+            case duffs: return QString("tduffs");
             default: return QString("???");
         }
     }
@@ -72,10 +72,10 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case BBP: return QString("BBP");
-            case mBBP: return QString("Milli-BBP (1 / 1" THIN_SP_UTF8 "000)");
-            case uBBP: return QString("Micro-BBP (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case pence: return QString("Ten Nano-BBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case BIBLEPAY: return QString("BiblePay");
+            case mBIBLEPAY: return QString("Milli-BiblePay (1 / 1" THIN_SP_UTF8 "000)");
+            case uBIBLEPAY: return QString("Micro-BiblePay (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case duffs: return QString("Ten Nano-BiblePay (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -83,10 +83,10 @@ QString BitcoinUnits::description(int unit)
     {
         switch(unit)
         {
-            case BBP: return QString("TestBBP");
-            case mBBP: return QString("Milli-TestBBP (1 / 1" THIN_SP_UTF8 "000)");
-            case uBBP: return QString("Micro-TestBBP (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-            case pence: return QString("Ten Nano-TestBBP (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case BIBLEPAY: return QString("TestBiblePays");
+            case mBIBLEPAY: return QString("Milli-TestBiblePay (1 / 1" THIN_SP_UTF8 "000)");
+            case uBIBLEPAY: return QString("Micro-TestBiblePay (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+            case duffs: return QString("Ten Nano-TestBiblePay (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
             default: return QString("???");
         }
     }
@@ -96,10 +96,10 @@ qint64 BitcoinUnits::factor(int unit)
 {
     switch(unit)
     {
-    case BBP:  return 100000000;
-    case mBBP: return 100000;
-    case uBBP: return 100;
-    case pence: return 1;
+    case BIBLEPAY:  return 100000000;
+    case mBIBLEPAY: return 100000;
+    case uBIBLEPAY: return 100;
+    case duffs: return 1;
     default:   return 100000000;
     }
 }
@@ -108,10 +108,10 @@ int BitcoinUnits::decimals(int unit)
 {
     switch(unit)
     {
-    case BBP: return 8;
-    case mBBP: return 5;
-    case uBBP: return 2;
-    case pence: return 0;
+    case BIBLEPAY: return 8;
+    case mBIBLEPAY: return 5;
+    case uBIBLEPAY: return 2;
+    case duffs: return 0;
     default: return 0;
     }
 }

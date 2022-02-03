@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -41,7 +41,7 @@ class AmountValidator : public QValidator
 public:
     explicit AmountValidator(QObject *parent) :
         QValidator(parent),
-        currentUnit(BitcoinUnits::BBP) {}
+        currentUnit(BitcoinUnits::BIBLEPAY) {}
 
     State validate(QString &input, int &pos) const
     {
@@ -69,7 +69,7 @@ class AmountLineEdit: public QLineEdit
 public:
     explicit AmountLineEdit(QWidget *parent):
         QLineEdit(parent),
-        currentUnit(BitcoinUnits::BBP)
+        currentUnit(BitcoinUnits::BIBLEPAY)
     {
         setAlignment(Qt::AlignLeft);
         amountValidator = new AmountValidator(this);
@@ -117,7 +117,7 @@ public:
         ensurePolished();
         const QFontMetrics fm(fontMetrics());
         int h = 0;
-        int w = fm.width(BitcoinUnits::format(BitcoinUnits::BBP, BitcoinUnits::maxMoney(), false, BitcoinUnits::separatorAlways));
+        int w = fm.width(BitcoinUnits::format(BitcoinUnits::BIBLEPAY, BitcoinUnits::maxMoney(), false, BitcoinUnits::separatorAlways));
         w += 2; // cursor blinking space
         w += GUIUtil::biblepayThemeActive() ? 24 : 0; // counteract padding from css
         return QSize(w, h);

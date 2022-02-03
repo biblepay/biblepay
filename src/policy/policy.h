@@ -30,7 +30,6 @@ static const unsigned int MAX_STANDARD_TX_SIGOPS = 4000;
 static const unsigned int DEFAULT_MAX_MEMPOOL_SIZE = 300;
 /** Default for -incrementalrelayfee, which sets the minimum feerate increase for mempool limiting or BIP 125 replacement **/
 static const unsigned int DEFAULT_INCREMENTAL_RELAY_FEE = 1000;
-static const unsigned int MAX_BBP_VOUT_MESSAGE_LENGTH = 3000;
 /** Min feerate for defining dust. Historically this has been based on the
  * minRelayTxFee, however changing the dust limit changes which transactions are
  * standard and should be done with care and ideally rarely. It makes sense to
@@ -52,7 +51,8 @@ static const unsigned int STANDARD_SCRIPT_VERIFY_FLAGS = MANDATORY_SCRIPT_VERIFY
                                                          SCRIPT_VERIFY_NULLFAIL |
                                                          SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY |
                                                          SCRIPT_VERIFY_CHECKSEQUENCEVERIFY |
-                                                         SCRIPT_VERIFY_LOW_S;
+                                                         SCRIPT_VERIFY_LOW_S |
+                                                         SCRIPT_ENABLE_DIP0020_OPCODES;
 
 /** For convenience, standard but not mandatory verify flags. */
 static const unsigned int STANDARD_NOT_MANDATORY_VERIFY_FLAGS = STANDARD_SCRIPT_VERIFY_FLAGS & ~MANDATORY_SCRIPT_VERIFY_FLAGS;

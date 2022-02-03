@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright (c) 2013-2014 Tomas Dzetkulic
  * Copyright (c) 2013-2014 Pavol Rusnak
  *
@@ -20,6 +20,9 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#ifndef BITCOIN_BIP39_ENGLISH_H
+#define BITCOIN_BIP39_ENGLISH_H
 
 const char * const wordlist[] = {
 "abandon",
@@ -2072,3 +2075,5 @@ const char * const wordlist[] = {
 "zoo",
 0,
 };
+
+#endif // BITCOIN_BIP39_ENGLISH_H

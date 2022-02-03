@@ -1,9 +1,9 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef MASTERNODE_PAYMENTS_H
-#define MASTERNODE_PAYMENTS_H
+#ifndef BITCOIN_MASTERNODE_MASTERNODE_PAYMENTS_H
+#define BITCOIN_MASTERNODE_MASTERNODE_PAYMENTS_H
 
 #include <util.h>
 #include <core_io.h>
@@ -17,9 +17,8 @@ class CMasternodePayments;
 
 /// TODO: all 4 functions do not belong here really, they should be refactored/moved somewhere (main.cpp ?)
 bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockReward, std::string& strErrorRet);
-bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
+bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward, int64_t nTime);
 void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet, std::vector<CTxOut>& voutSuperblockPaymentsRet);
-std::map<int, std::string> GetRequiredPaymentsStrings(int nStartHeight, int nEndHeight);
 
 extern CMasternodePayments mnpayments;
 
@@ -31,10 +30,10 @@ extern CMasternodePayments mnpayments;
 class CMasternodePayments
 {
 public:
-    bool GetBlockTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet) const;
-    bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward) const;
+    static bool GetBlockTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet);
+    static bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
 
-    bool GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet) const;
+    static bool GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet);
 };
 
-#endif
+#endif // BITCOIN_MASTERNODE_MASTERNODE_PAYMENTS_H

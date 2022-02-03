@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,43 +6,39 @@
 #include <evo/providertx.h>
 #include <evo/specialtx.h>
 
-#include <base58.h>
 #include <chainparams.h>
 #include <clientversion.h>
-#include <core_io.h>
+#include <coins.h>
 #include <hash.h>
 #include <messagesigner.h>
 #include <script/standard.h>
-#include <streams.h>
-#include <univalue.h>
 #include <validation.h>
 
 template <typename ProTx>
 static bool CheckService(const uint256& proTxHash, const ProTx& proTx, CValidationState& state)
 {
     if (!proTx.addr.IsValid()) {
-        return state.DoS(7, false, REJECT_INVALID, "bad-protx-ipaddr");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
     if (Params().RequireRoutableExternalIP() && !proTx.addr.IsRoutable()) {
-        return state.DoS(7, false, REJECT_INVALID, "bad-protx-ipaddr");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
 
-	// Non-Standard Ports Support:
+	// Biblepay - Non-Standard Ports Support:
 	if (false)
 	{
 		static int mainnetDefaultPort = CreateChainParams(CBaseChainParams::MAIN)->GetDefaultPort();
-		if (Params().NetworkIDString() == CBaseChainParams::MAIN) 
-		{
+		if (Params().NetworkIDString() == CBaseChainParams::MAIN) {
 			if (proTx.addr.GetPort() != mainnetDefaultPort) {
-				return state.DoS(31, false, REJECT_INVALID, "bad-protx-ipaddr-port");
+				return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr-port");
 			}
 		} else if (proTx.addr.GetPort() == mainnetDefaultPort) {
-			return state.DoS(31, false, REJECT_INVALID, "bad-protx-ipaddr-port");
+			return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr-port");
 		}
 	}
 
     if (!proTx.addr.IsIPv4()) {
-        return state.DoS(32, false, REJECT_INVALID, "bad-protx-ipaddr");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-ipaddr");
     }
 
     return true;
@@ -88,9 +84,8 @@ static bool CheckInputsHash(const CTransaction& tx, const ProTx& proTx, CValidat
     return true;
 }
 
-bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
+bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view)
 {
-
 	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
 	if (!fLLMQActive2)
 		return true;
@@ -115,20 +110,21 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     }
 
     if (ptx.keyIDOwner.IsNull() || !ptx.pubKeyOperator.IsValid() || ptx.keyIDVoting.IsNull()) {
-        return state.DoS(34, false, REJECT_INVALID, "bad-protx-key-null");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-null");
     }
     if (!ptx.scriptPayout.IsPayToPublicKeyHash() && !ptx.scriptPayout.IsPayToScriptHash()) {
-        return state.DoS(35, false, REJECT_INVALID, "bad-protx-payee");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee");
     }
 
     CTxDestination payoutDest;
     if (!ExtractDestination(ptx.scriptPayout, payoutDest)) {
         // should not happen as we checked script types before
-        return state.DoS(36, false, REJECT_INVALID, "bad-protx-payee-dest");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee-dest");
     }
     // don't allow reuse of payout key for other keys (don't allow people to put the payee key onto an online server)
     if (payoutDest == CTxDestination(ptx.keyIDOwner) || payoutDest == CTxDestination(ptx.keyIDVoting)) {
-        return state.DoS(37, false, REJECT_INVALID, "bad-protx-payee-reuse");
+		if (false)
+			return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee-reuse");
     }
 
     // It's allowed to set addr to 0, which will put the MN into PoSe-banned state and require a ProUpServTx to be issues later
@@ -139,7 +135,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     }
 
     if (ptx.nOperatorReward > 10000) {
-        return state.DoS(38, false, REJECT_INVALID, "bad-protx-operator-reward");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-operator-reward");
     }
 
     CTxDestination collateralTxDest;
@@ -148,32 +144,32 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
     if (!ptx.collateralOutpoint.hash.IsNull()) {
         Coin coin;
-        if (!GetUTXOCoin(ptx.collateralOutpoint, coin) || coin.out.nValue != SANCTUARY_COLLATERAL * COIN) {
-            return state.DoS(39, false, REJECT_INVALID, "bad-protx-collateral");
+        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != SANCTUARY_COLLATERAL * COIN) {
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
         }
 
         if (!ExtractDestination(coin.out.scriptPubKey, collateralTxDest)) {
-            return state.DoS(41, false, REJECT_INVALID, "bad-protx-collateral-dest");
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-dest");
         }
 
         // Extract key from collateral. This only works for P2PK and P2PKH collaterals and will fail for P2SH.
         // Issuer of this ProRegTx must prove ownership with this key by signing the ProRegTx
         keyForPayloadSig = boost::get<CKeyID>(&collateralTxDest);
         if (!keyForPayloadSig) {
-            return state.DoS(42, false, REJECT_INVALID, "bad-protx-collateral-pkh");
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-pkh");
         }
 
         collateralOutpoint = ptx.collateralOutpoint;
     } else {
         if (ptx.collateralOutpoint.n >= tx.vout.size()) {
-            return state.DoS(43, false, REJECT_INVALID, "bad-protx-collateral-index");
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-index");
         }
         if (tx.vout[ptx.collateralOutpoint.n].nValue != SANCTUARY_COLLATERAL * COIN) {
-            return state.DoS(44, false, REJECT_INVALID, "bad-protx-collateral");
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
         }
 
         if (!ExtractDestination(tx.vout[ptx.collateralOutpoint.n].scriptPubKey, collateralTxDest)) {
-            return state.DoS(45, false, REJECT_INVALID, "bad-protx-collateral-dest");
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-dest");
         }
 
         collateralOutpoint = COutPoint(tx.GetHash(), ptx.collateralOutpoint.n);
@@ -182,7 +178,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     // don't allow reuse of collateral key for other keys (don't allow people to put the collateral key onto an online server)
     // this check applies to internal and external collateral, but internal collaterals are not necessarely a P2PKH
     if (collateralTxDest == CTxDestination(ptx.keyIDOwner) || collateralTxDest == CTxDestination(ptx.keyIDVoting)) {
-        return state.DoS(46, false, REJECT_INVALID, "bad-protx-collateral-reuse");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-reuse");
     }
 
     if (pindexPrev) {
@@ -190,17 +186,18 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
         // only allow reusing of addresses when it's for the same collateral (which replaces the old MN)
         if (mnList.HasUniqueProperty(ptx.addr) && mnList.GetUniquePropertyMN(ptx.addr)->collateralOutpoint != collateralOutpoint) {
-            return state.DoS(47, false, REJECT_DUPLICATE, "bad-protx-dup-addr");
+            return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-addr");
         }
 
         // never allow duplicate keys, even if this ProTx would replace an existing MN
         if (mnList.HasUniqueProperty(ptx.keyIDOwner) || mnList.HasUniqueProperty(ptx.pubKeyOperator)) {
-            return state.DoS(48, false, REJECT_DUPLICATE, "bad-protx-dup-key");
+            return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-key");
         }
 
-        if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
+        if (false && !deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
+			// Biblepay has this issue between versions.
             if (ptx.keyIDOwner != ptx.keyIDVoting) {
-                return state.DoS(49, false, REJECT_INVALID, "bad-protx-key-not-same");
+                return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }
         }
     }
@@ -227,11 +224,9 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
 bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
-
 	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
 	if (!fLLMQActive2)
 		return true;
-
 
     if (tx.nType != TRANSACTION_PROVIDER_UPDATE_SERVICE) {
         return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
@@ -260,16 +255,16 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
 
         // don't allow updating to addresses already used by other MNs
         if (mnList.HasUniqueProperty(ptx.addr) && mnList.GetUniquePropertyMN(ptx.addr)->proTxHash != ptx.proTxHash) {
-            return state.DoS(51, false, REJECT_DUPLICATE, "bad-protx-dup-addr");
+            return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-addr");
         }
 
         if (ptx.scriptOperatorPayout != CScript()) {
             if (mn->nOperatorReward == 0) {
                 // don't allow to set operator reward payee in case no operatorReward was set
-                return state.DoS(52, false, REJECT_INVALID, "bad-protx-operator-payee");
+                return state.DoS(10, false, REJECT_INVALID, "bad-protx-operator-payee");
             }
             if (!ptx.scriptOperatorPayout.IsPayToPublicKeyHash() && !ptx.scriptOperatorPayout.IsPayToScriptHash()) {
-                return state.DoS(53, false, REJECT_INVALID, "bad-protx-operator-payee");
+                return state.DoS(10, false, REJECT_INVALID, "bad-protx-operator-payee");
             }
         }
 
@@ -287,7 +282,7 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
     return true;
 }
 
-bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
+bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view)
 {
 	bool fLLMQActive2 = pindexPrev->nHeight >= Params().GetConsensus().LLMQHeight;
 	if (!fLLMQActive2)
@@ -310,16 +305,16 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
     }
 
     if (!ptx.pubKeyOperator.IsValid() || ptx.keyIDVoting.IsNull()) {
-        return state.DoS(54, false, REJECT_INVALID, "bad-protx-key-null");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-null");
     }
     if (!ptx.scriptPayout.IsPayToPublicKeyHash() && !ptx.scriptPayout.IsPayToScriptHash()) {
-        return state.DoS(55, false, REJECT_INVALID, "bad-protx-payee");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee");
     }
 
     CTxDestination payoutDest;
     if (!ExtractDestination(ptx.scriptPayout, payoutDest)) {
         // should not happen as we checked script types before
-        return state.DoS(56, false, REJECT_INVALID, "bad-protx-payee-dest");
+        return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee-dest");
     }
 
     if (pindexPrev) {
@@ -331,11 +326,11 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
 
         // don't allow reuse of payee key for other keys (don't allow people to put the payee key onto an online server)
         if (payoutDest == CTxDestination(dmn->pdmnState->keyIDOwner) || payoutDest == CTxDestination(ptx.keyIDVoting)) {
-            return state.DoS(57, false, REJECT_INVALID, "bad-protx-payee-reuse");
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-payee-reuse");
         }
 
         Coin coin;
-        if (!GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+        if (!view.GetCoin(dmn->collateralOutpoint, coin) || coin.IsSpent()) {
             // this should never happen (there would be no dmn otherwise)
             return state.DoS(100, false, REJECT_INVALID, "bad-protx-collateral");
         }
@@ -346,19 +341,20 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
             return state.DoS(100, false, REJECT_INVALID, "bad-protx-collateral-dest");
         }
         if (collateralTxDest == CTxDestination(dmn->pdmnState->keyIDOwner) || collateralTxDest == CTxDestination(ptx.keyIDVoting)) {
-            return state.DoS(58, false, REJECT_INVALID, "bad-protx-collateral-reuse");
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-reuse");
         }
 
         if (mnList.HasUniqueProperty(ptx.pubKeyOperator)) {
             auto otherDmn = mnList.GetUniquePropertyMN(ptx.pubKeyOperator);
             if (ptx.proTxHash != otherDmn->proTxHash) {
-                return state.DoS(59, false, REJECT_DUPLICATE, "bad-protx-dup-key");
+                return state.DoS(10, false, REJECT_DUPLICATE, "bad-protx-dup-key");
             }
         }
 
         if (!deterministicMNManager->IsDIP3Enforced(pindexPrev->nHeight)) {
-            if (dmn->pdmnState->keyIDOwner != ptx.keyIDVoting) {
-                return state.DoS(61, false, REJECT_INVALID, "bad-protx-key-not-same");
+			// BiblePay has this situation in between versions...
+            if (false && dmn->pdmnState->keyIDOwner != ptx.keyIDVoting) {
+                return state.DoS(10, false, REJECT_INVALID, "bad-protx-key-not-same");
             }
         }
 

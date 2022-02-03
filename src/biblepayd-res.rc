@@ -1,4 +1,4 @@
-#include <windows.h>             // needed for VERSIONINFO
+﻿#include <windows.h>             // needed for VERSIONINFO
 #include "clientversion.h"       // holds the needed client version information
 
 #define VER_PRODUCTVERSION     CLIENT_VERSION_MAJOR,CLIENT_VERSION_MINOR,CLIENT_VERSION_REVISION,CLIENT_VERSION_BUILD

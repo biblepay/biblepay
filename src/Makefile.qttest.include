@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
-# Copyright (c) 2014-2018 The Däsh Core developers
+# Copyright (c) 2014-2018 The DÃSH Core Developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -55,7 +55,7 @@ nodist_qt_test_test_biblepay_qt_SOURCES = $(TEST_QT_MOC_CPP)
 
 qt_test_test_biblepay_qt_LDADD = $(LIBBITCOINQT) $(LIBBITCOIN_SERVER)
 if ENABLE_WALLET
-qt_test_test_biblepay_qt_LDADD += $(LIBBITCOIN_WALLET)
+qt_test_test_biblepay_qt_LDADD += $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET)
 endif
 if ENABLE_ZMQ
 qt_test_test_biblepay_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)

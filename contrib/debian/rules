@@ -1,4 +1,4 @@
-#!/usr/bin/make -f
+﻿#!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
 #DEB_MAKE_CHECK_TARGET = test_biblepay

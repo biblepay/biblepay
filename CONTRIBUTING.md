@@ -1,7 +1,7 @@
-Contributing to BiblePay Core
+﻿Contributing to Biblepay Core
 ============================
 
-The BiblePay Core project operates an open contributor model where anyone is
+The Biblepay Core project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review, testing
 and patches. This document explains the practical process and guidelines for
 contributing.
@@ -57,7 +57,7 @@ the pull request affects. Valid areas as:
 
   - *Consensus* for changes to consensus critical code
   - *Docs* for changes to the documentation
-  - *Qt* for changes to BiblePay-qt
+  - *Qt* for changes to biblepay-qt
   - *Mining* for changes to the mining code
   - *Net* or *P2P* for changes to the peer-to-peer network code
   - *RPC/REST/ZMQ* for changes to the RPC, REST or ZMQ APIs
@@ -82,7 +82,7 @@ Examples:
     Trivial: Fix typo in init.cpp
 
 Note that translations should not be submitted as pull requests, please see
-[Translation Process](https://github.com/BiblePaypay/BiblePay/blob/master/doc/translation_process.md) 
+[Translation Process](https://github.com/biblepay/biblepay/blob/master/doc/translation_process.md) 
 for more information on helping with translations.
 
 If a pull request is not to be considered for merging (yet), please
@@ -106,10 +106,10 @@ before it will be merged. The basic squashing workflow is shown below.
 
     git checkout your_branch_name
     git rebase -i HEAD~n
-    # n is normally the number of commits in the pull
-    # set commits from 'pick' to 'squash', save and quit
-    # on the next screen, edit/refine commit messages
-    # save and quit
+    # n is normally the number of commits in the pull request.
+    # Set commits (except the one in the first line) from 'pick' to 'squash', save and quit.
+    # On the next screen, edit/refine commit messages.
+    # Save and quit.
     git push -f # (force push to GitHub)
 
 If you have problems with squashing (or other workflows with `git`), you can
@@ -161,11 +161,11 @@ where possible keep them short, uncomplex and easy to verify.
 "Decision Making" Process
 -------------------------
 
-The following applies to code changes to the BiblePay Core project (and related
+The following applies to code changes to the Biblepay Core project (and related
 projects such as libsecp256k1), and is not to be confused with overall BiblePay
 Network Protocol consensus changes.
 
-Whether a pull request is merged into BiblePay Core rests with the project merge
+Whether a pull request is merged into Biblepay Core rests with the project merge
 maintainers and ultimately the project lead.
 
 Maintainers will take into consideration if a patch is in line with the general
@@ -224,7 +224,7 @@ higher in terms of discussion and peer review requirements, keeping in mind that
 mistakes could be very costly to the wider community. This includes refactoring
 of consensus critical code.
 
-Where a patch set proposes to change the BiblePay consensus, it must have been
+Where a patch set proposes to change the Biblepay consensus, it must have been
 discussed extensively on the mailing list and IRC, be accompanied by a widely
 discussed BIP and have a generally widely perceived technical consensus of being
 a worthwhile change based on the judgement of the maintainers.
@@ -250,7 +250,7 @@ function gfd() {
 
 ### Finding Reviewers
 
-The review process is normally fairly responsive on the BiblePay Core repository, however
+The review process is normally fairly responsive on the Biblepay Core repository, however
 this might not always be the case. If you find that you've been waiting
 for a pull request to be given attention for several months, there may be a number
 of reasons for this, some of which you can do something about:
@@ -282,7 +282,7 @@ of reasons for this, some of which you can do something about:
 Release Policy
 --------------
 
-The project leader is the release manager for each BiblePay Core release.
+The project leader is the release manager for each Biblepay Core release.
 
 Copyright
 ---------

@@ -1,9 +1,9 @@
-// Copyright (c) 2018-2020 The Däsh Core developers
+﻿// Copyright (c) 2018-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BIBLEPAY_EVODB_H
-#define BIBLEPAY_EVODB_H
+#ifndef BITCOIN_EVO_EVODB_H
+#define BITCOIN_EVO_EVODB_H
 
 #include <dbwrapper.h>
 #include <sync.h>
@@ -98,6 +98,8 @@ public:
 
     bool CommitRootTransaction();
 
+    bool IsEmpty() { return db.IsEmpty(); }
+
     bool VerifyBestBlock(const uint256& hash);
     void WriteBestBlock(const uint256& hash);
 
@@ -110,4 +112,4 @@ private:
 
 extern std::unique_ptr<CEvoDB> evoDb;
 
-#endif //BIBLEPAY_EVODB_H
+#endif // BITCOIN_EVO_EVODB_H

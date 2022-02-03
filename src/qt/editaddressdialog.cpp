@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2014 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2011-2014 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -27,10 +27,6 @@ EditAddressDialog::EditAddressDialog(Mode _mode, QWidget *parent) :
 
     switch(mode)
     {
-    case NewReceivingAddress:
-        setWindowTitle(tr("New receiving address"));
-        ui->addressEdit->setEnabled(false);
-        break;
     case NewSendingAddress:
         setWindowTitle(tr("New sending address"));
         break;
@@ -45,6 +41,10 @@ EditAddressDialog::EditAddressDialog(Mode _mode, QWidget *parent) :
 
     mapper = new QDataWidgetMapper(this);
     mapper->setSubmitPolicy(QDataWidgetMapper::ManualSubmit);
+
+    GUIUtil::ItemDelegate* delegate = new GUIUtil::ItemDelegate(mapper);
+    connect(delegate, &GUIUtil::ItemDelegate::keyEscapePressed, this, &EditAddressDialog::reject);
+    mapper->setItemDelegate(delegate);
 }
 
 EditAddressDialog::~EditAddressDialog()
@@ -75,10 +75,9 @@ bool EditAddressDialog::saveCurrentRow()
 
     switch(mode)
     {
-    case NewReceivingAddress:
     case NewSendingAddress:
         address = model->addRow(
-                mode == NewSendingAddress ? AddressTableModel::Send : AddressTableModel::Receive,
+                AddressTableModel::Send,
                 ui->labelEdit->text(),
                 ui->addressEdit->text());
         break;

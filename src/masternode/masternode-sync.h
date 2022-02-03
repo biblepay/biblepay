@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef MASTERNODE_SYNC_H
-#define MASTERNODE_SYNC_H
+#ifndef BITCOIN_MASTERNODE_MASTERNODE_SYNC_H
+#define BITCOIN_MASTERNODE_MASTERNODE_SYNC_H
 
 #include <chain.h>
 #include <net.h>
@@ -46,23 +46,22 @@ private:
 public:
     CMasternodeSync() { Reset(true, false); }
 
+    static void SendGovernanceSyncRequest(CNode* pnode, CConnman& connman);
 
-    void SendGovernanceSyncRequest(CNode* pnode, CConnman& connman);
+    bool IsBlockchainSynced() const { return nCurrentAsset > MASTERNODE_SYNC_BLOCKCHAIN; }
+    bool IsSynced() const { return nCurrentAsset == MASTERNODE_SYNC_FINISHED; }
 
-    bool IsBlockchainSynced() { return nCurrentAsset > MASTERNODE_SYNC_BLOCKCHAIN; }
-    bool IsSynced() { return nCurrentAsset == MASTERNODE_SYNC_FINISHED; }
-
-    int GetAssetID() { return nCurrentAsset; }
-    int GetAttempt() { return nTriedPeerCount; }
+    int GetAssetID() const { return nCurrentAsset; }
+    int GetAttempt() const { return nTriedPeerCount; }
     void BumpAssetLastTime(const std::string& strFuncName);
-    int64_t GetAssetStartTime() { return nTimeAssetSyncStarted; }
-    std::string GetAssetName();
-    std::string GetSyncStatus();
+    int64_t GetAssetStartTime() const { return nTimeAssetSyncStarted; }
+    std::string GetAssetName() const;
+    std::string GetSyncStatus() const;
 
     void Reset(bool fForce = false, bool fNotifyReset = true);
     void SwitchToNextAsset(CConnman& connman);
 
-    void ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv);
+    void ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv) const;
     void ProcessTick(CConnman& connman);
 
     void AcceptedBlockHeader(const CBlockIndex *pindexNew);
@@ -72,4 +71,4 @@ public:
     void DoMaintenance(CConnman &connman);
 };
 
-#endif
+#endif // BITCOIN_MASTERNODE_MASTERNODE_SYNC_H

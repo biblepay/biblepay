@@ -1,38 +1,38 @@
-UNIX BUILD NOTES
+﻿UNIX BUILD NOTES
 ====================
-Some notes on how to build BiblePay Core in Unix.
+Some notes on how to build Biblepay Core in Unix.
 
 (for OpenBSD specific instructions, see [build-openbsd.md](build-openbsd.md))
 
 Base build dependencies
 -----------------------
-Building the dependencies and BiblePay Core requires some essential build tools and libraries to be installed before.
+Building the dependencies and Biblepay Core requires some essential build tools and libraries to be installed before.
 
 Run the following commands to install required packages:
 
 ##### Debian/Ubuntu:
 ```bash
-$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
+$ sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils
 ```
 
 ##### Fedora:
 ```bash
-$ sudo dnf install gcc-c++ libtool make autoconf automake python3 cmake libstdc++-static patch
+$ sudo dnf install gcc-c++ libtool make autoconf automake python3 libstdc++-static patch
 ```
 
 ##### Arch Linux:
 ```bash
-$ pacman -S base-devel python3 cmake
+$ pacman -S base-devel python3
 ```
 
 ##### Alpine Linux:
 ```sh
-$ sudo apk --update --no-cache add autoconf automake cmake curl g++ gcc libexecinfo-dev libexecinfo-static libtool make perl pkgconfig python3 patch linux-headers
+$ sudo apk --update --no-cache add autoconf automake curl g++ gcc libexecinfo-dev libexecinfo-static libtool make perl pkgconfig python3 patch linux-headers
 ```
 
 ##### FreeBSD/OpenBSD:
 ```bash
-pkg_add gmake cmake libtool
+pkg_add gmake libtool
 pkg_add autoconf # (select highest version, e.g. 2.69)
 pkg_add automake # (select highest version, e.g. 1.15)
 pkg_add python # (select highest version, e.g. 3.5)
@@ -78,7 +78,7 @@ Hardening enables the following features:
 
 * Non-executable Stack
     If the stack is executable then trivial stack based buffer overflow exploits are possible if
-    vulnerable buffers are found. By default, BiblePay Core should be built with a non-executable stack
+    vulnerable buffers are found. By default, Biblepay Core should be built with a non-executable stack
     but if one of the libraries it uses asks for an executable stack or someone makes a mistake
     and uses a compiler extension which requires an executable stack, it will silently build an
     executable without the non-executable stack protection.
@@ -94,7 +94,7 @@ Hardening enables the following features:
 
 Disable-wallet mode
 --------------------
-When the intention is to run only a P2P node without a wallet, BiblePay Core may be compiled in
+When the intention is to run only a P2P node without a wallet, Biblepay Core may be compiled in
 disable-wallet mode with:
 
     ./configure --prefix=<prefix> --disable-wallet

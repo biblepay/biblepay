@@ -1,20 +1,19 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+﻿// Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The Däsh Core developers
+// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <rpc/blockchain.h>
 
 #include <amount.h>
-#include <chain.h>
 #include <chainparams.h>
 #include <checkpoints.h>
 #include <coins.h>
+#include <node/coinstats.h>
 #include <core_io.h>
 #include <consensus/validation.h>
 #include <validation.h>
-#include <core_io.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
 #include <primitives/transaction.h>
@@ -26,31 +25,24 @@
 #include <util.h>
 #include <utilstrencodings.h>
 #include <hash.h>
+#include <validationinterface.h>
 #include <warnings.h>
 #include <masternode/masternode-sync.h>
-
 #include <evo/specialtx.h>
 #include <evo/cbtx.h>
-
 #include <llmq/quorums_chainlocks.h>
 #include <llmq/quorums_instantsend.h>
-
 #include <stdint.h>
-
 #include <univalue.h>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp> // boost::thread::interrupt
-
 #include <memory>
 #include <mutex>
 #include <condition_variable>
 #include "rpcpog.h"
-#include "smartcontract-server.h"
-#include "kjv.h"
 #include "governance/governance-classes.h"
 #include "randomx_bbp.h"
-#include "rpcutxo.h"
+
 
 struct CUpdatedBlock
 {
@@ -75,17 +67,14 @@ UniValue signrawtransaction(const JSONRPCRequest& request);
 UniValue dumpprivkey(const JSONRPCRequest& request); 
 UniValue sendrawtransaction(const JSONRPCRequest& request);
 UniValue importprivkey(const JSONRPCRequest& request);
-/* Calculate the difficulty for a given block index,
- * or the block index of the given chain.
+
+/* Calculate the difficulty for a given block index.
  */
-double GetDifficulty(const CChain& chain, const CBlockIndex* blockindex)
+double GetDifficulty(const CBlockIndex* blockindex)
 {
     if (blockindex == nullptr)
     {
-        if (chain.Tip() == nullptr)
-            return 1.0;
-        else
-            blockindex = chain.Tip();
+        return 1.0;
     }
 
     int nShift = (blockindex->nBits >> 24) & 0xff;
@@ -106,133 +95,38 @@ double GetDifficulty(const CChain& chain, const CBlockIndex* blockindex)
     return dDiff * 10;
 }
 
-double GetDifficulty(const CBlockIndex* blockindex)
-{
-    return GetDifficulty(chainActive, blockindex);
-}
-
-boost::filesystem::path GetGenericFilePath(std::string sPath)
-{
-    boost::filesystem::path pathConfigFile(sPath);
-    if (!pathConfigFile.is_complete())
-        pathConfigFile = GetDataDir() / pathConfigFile;
-    return pathConfigFile;
-}
-
-std::string ScanSanctuaryConfigFile(std::string sName)
-{
-    int linenumber = 1;
-    boost::filesystem::path pathMasternodeConfigFile = GetMasternodeConfigFile();
-    boost::filesystem::ifstream streamConfig(pathMasternodeConfigFile);
-    if (!streamConfig.good()) 
-		return std::string();
-	for(std::string line; std::getline(streamConfig, line); linenumber++)
-    {
-        if(line.empty()) continue;
-        std::istringstream iss(line);
-        std::string comment, alias, ip, privKey, txHash, outputIndex;
-        if (iss >> comment) 
-		{
-            if(comment.at(0) == '#') continue;
-            iss.str(line);
-            iss.clear();
-        }
-
-		if (comment == sName)
-		{
-			streamConfig.close();
-			return line;
-		}
-    }
-    streamConfig.close();
-    return std::string();
-}
-
-
-void AppendSanctuaryFile(std::string sFile, std::string sData)
-{
-    boost::filesystem::path pathDeterministicConfigFile = GetGenericFilePath(sFile);
-    boost::filesystem::ifstream streamConfig(pathDeterministicConfigFile);
-	bool fReadable = streamConfig.good();
-	if (fReadable)
-		streamConfig.close();
-    FILE* configFile = fopen(pathDeterministicConfigFile.string().c_str(), "a");
-    if (configFile != nullptr) 
-	{
-	    if (!fReadable) 
-		{
-            std::string strHeader = "# Deterministic Sanctuary Configuration File\n"
-				"# Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Sent-TxId\n";
-            fwrite(strHeader.c_str(), std::strlen(strHeader.c_str()), 1, configFile);
-        }
-    }
-	fwrite(sData.c_str(), std::strlen(sData.c_str()), 1, configFile);
-    fclose(configFile);
-}
-
-
-std::string ScanDeterministicConfigFile(std::string sName)
-{
-    int linenumber = 1;
-    boost::filesystem::path pathDeterministicFile = GetDeterministicConfigFile();
-    boost::filesystem::ifstream streamConfig(pathDeterministicFile);
-    if (!streamConfig.good()) 
-		return std::string();
-	//Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Se$
-
-	for(std::string line; std::getline(streamConfig, line); linenumber++)
-    {
-        if(line.empty()) continue;
-        std::istringstream iss(line);
-        std::string sanctuary_name, ip, blsPubKey, BlsPrivKey, colOutputTxId, colOutputIndex, ProRegTxId, ProRegCollAddress, ProRegCollAddFundSentTxId;
-        if (iss >> sanctuary_name) 
-		{
-            if(sanctuary_name.at(0) == '#') continue;
-            iss.str(line);
-            iss.clear();
-        }
-
-		if (sanctuary_name == sName)
-		{
-			streamConfig.close();
-			return line;
-		}
-    }
-    streamConfig.close();
-    return std::string();
-}
-
-
 UniValue blockheaderToJSON(const CBlockIndex* blockindex)
 {
     AssertLockHeld(cs_main);
     UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
+    result.pushKV("hash", blockindex->GetBlockHash().GetHex());
     int confirmations = -1;
     // Only report confirmations if the block is on the main chain
     if (chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
-    result.push_back(Pair("confirmations", confirmations));
-    result.push_back(Pair("height", blockindex->nHeight));
-    result.push_back(Pair("version", blockindex->nVersion));
-    result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
-    result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
-	
-    result.push_back(Pair("time", (int64_t)blockindex->nTime));
-    result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
-    result.push_back(Pair("nonce", (uint64_t)blockindex->nNonce));
-    result.push_back(Pair("bits", strprintf("%08x", blockindex->nBits)));
-    result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
-    result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-    result.push_back(Pair("nTx", (uint64_t)blockindex->nTx));
+    result.pushKV("confirmations", confirmations);
+    result.pushKV("height", blockindex->nHeight);
+    result.pushKV("version", blockindex->nVersion);
+    result.pushKV("versionHex", strprintf("%08x", blockindex->nVersion));
+    result.pushKV("merkleroot", blockindex->hashMerkleRoot.GetHex());
+    result.pushKV("time", (int64_t)blockindex->nTime);
+    result.pushKV("mediantime", (int64_t)blockindex->GetMedianTimePast());
+    result.pushKV("nonce", (uint64_t)blockindex->nNonce);
+    result.pushKV("bits", strprintf("%08x", blockindex->nBits));
+    result.pushKV("difficulty", GetDifficulty(blockindex));
+    result.pushKV("chainwork", blockindex->nChainWork.GetHex());
+    result.pushKV("nTx", (uint64_t)blockindex->nTx);
+	// Biblepay - RX
+	result.pushKV("randomxdata", blockindex->RandomXData);
+	result.pushKV("randomxkey", blockindex->RandomXKey.GetHex());
 
     if (blockindex->pprev)
-        result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
+        result.pushKV("previousblockhash", blockindex->pprev->GetBlockHash().GetHex());
     CBlockIndex *pnext = chainActive.Next(blockindex);
     if (pnext)
-        result.push_back(Pair("nextblockhash", pnext->GetBlockHash().GetHex()));
+        result.pushKV("nextblockhash", pnext->GetBlockHash().GetHex());
 
-    result.push_back(Pair("chainlock", llmq::chainLocksHandler->HasChainLock(blockindex->nHeight, blockindex->GetBlockHash())));
+    result.pushKV("chainlock", llmq::chainLocksHandler->HasChainLock(blockindex->nHeight, blockindex->GetBlockHash()));
 
     return result;
 }
@@ -241,24 +135,18 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
 {
     AssertLockHeld(cs_main);
     UniValue result(UniValue::VOBJ);
-	if (blockindex)
-		result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
+    result.pushKV("hash", blockindex->GetBlockHash().GetHex());
     int confirmations = -1;
     // Only report confirmations if the block is on the main chain
-    if (blockindex && chainActive.Contains(blockindex))
+    if (chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
-    result.push_back(Pair("confirmations", confirmations));
-    result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION)));
-	if (blockindex)
-		 result.push_back(Pair("height", blockindex->nHeight));
-    result.push_back(Pair("version", block.nVersion));
-    result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
-    result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
-	bool chainLock = false;
-	if (blockindex)
-	{
-		chainLock = llmq::chainLocksHandler->HasChainLock(blockindex->nHeight, blockindex->GetBlockHash());
-	}
+    result.pushKV("confirmations", confirmations);
+    result.pushKV("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION));
+    result.pushKV("height", blockindex->nHeight);
+    result.pushKV("version", block.nVersion);
+    result.pushKV("versionHex", strprintf("%08x", block.nVersion));
+    result.pushKV("merkleroot", block.hashMerkleRoot.GetHex());
+    bool chainLock = llmq::chainLocksHandler->HasChainLock(blockindex->nHeight, blockindex->GetBlockHash());
     UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {
@@ -267,87 +155,37 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
             UniValue objTx(UniValue::VOBJ);
             TxToUniv(*tx, uint256(), objTx, true);
             bool fLocked = llmq::quorumInstantSendManager->IsLocked(tx->GetHash());
-            objTx.push_back(Pair("instantlock", fLocked || chainLock));
-            objTx.push_back(Pair("instantlock_internal", fLocked));
+            objTx.pushKV("instantlock", fLocked || chainLock);
+            objTx.pushKV("instantlock_internal", fLocked);
             txs.push_back(objTx);
         }
         else
             txs.push_back(tx->GetHash().GetHex());
     }
-    result.push_back(Pair("tx", txs));
+    result.pushKV("tx", txs);
     if (!block.vtx[0]->vExtraPayload.empty()) {
         CCbTx cbTx;
         if (GetTxPayload(block.vtx[0]->vExtraPayload, cbTx)) {
             UniValue cbTxObj;
             cbTx.ToJson(cbTxObj);
-            result.push_back(Pair("cbTx", cbTxObj));
+            result.pushKV("cbTx", cbTxObj);
         }
     }
-    result.push_back(Pair("time", block.GetBlockTime()));
-	if (blockindex)
-		result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
-	result.push_back(Pair("hrtime", TimestampToHRDate(block.GetBlockTime())));
-    result.push_back(Pair("nonce", (uint64_t)block.nNonce));
-    result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
-	if (blockindex)
-	{
-		result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
-		result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
-		result.push_back(Pair("nTx", (uint64_t)blockindex->nTx));
-	}
-    result.push_back(Pair("subsidy", block.vtx[0]->vout[0].nValue/COIN));
-	result.push_back(Pair("blockversion", GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage)));
-	if (block.vtx.size() > 1)
-		result.push_back(Pair("sanctuary_reward", block.vtx[0]->vout[1].nValue/COIN));
-	// BiblePay
-	bool bShowPrayers = true;
-    
-	if (blockindex && blockindex->pprev)
-	{
-        result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
-		const Consensus::Params& consensusParams = Params().GetConsensus();
-		std::string sVerses = GetBibleHashVerses(block.GetHash(), block.GetBlockTime(), blockindex->pprev->nTime, blockindex->pprev->nHeight, blockindex->pprev);
-		if (bShowPrayers) 
-			result.push_back(Pair("verses", sVerses));
-		result.push_back(Pair("chaindata", block.vtx[0]->vout[0].sTxOutMessage));
-		bool fChainLock = llmq::chainLocksHandler->HasChainLock(blockindex->nHeight, blockindex->GetBlockHash());
-		result.push_back(Pair("chainlock", fChainLock));
-		/*
-		UniValue objIPFS(UniValue::VOBJ);
-		
-		for (auto item: mapSidechainTransactions)
-		{
-			if (item.second.nHeight == blockindex->nHeight)
-			{
-				std::string sDesc = "FileName: " + item.second.FileName + ", Fee=" + RoundToString(item.second.nFee/COIN, 4) + ", Size=" + RoundToString(item.second.nSize, 2) 
-					+ ", Duration=" + RoundToString(item.second.nDuration, 0)
-					+ ", Density=" + RoundToString(item.second.nDensity, 0) + ", BlockHash=" + item.second.BlockHash + ", URL=" + item.second.URL + ", Network=" + item.second.Network 
-					+ ", Height=" + RoundToString(item.second.nHeight, 0);
-				objIPFS.push_back(Pair(item.second.TXID, sDesc));
-			}
-		}
-		result.push_back(Pair("bipfs", objIPFS));
-		*/
-    }
+    result.pushKV("time", block.GetBlockTime());
+    result.pushKV("mediantime", (int64_t)blockindex->GetMedianTimePast());
+    result.pushKV("nonce", (uint64_t)block.nNonce);
+    result.pushKV("bits", strprintf("%08x", block.nBits));
+    result.pushKV("difficulty", GetDifficulty(blockindex));
+    result.pushKV("chainwork", blockindex->nChainWork.GetHex());
+    result.pushKV("nTx", (uint64_t)blockindex->nTx);
 
-	if (blockindex)
-	{
-		CBlockIndex *pnext = chainActive.Next(blockindex);
-		if (pnext)
-			result.push_back(Pair("nextblockhash", pnext->GetBlockHash().GetHex()));
-		// Genesis Block only:
-		if (blockindex && blockindex->nHeight==0)
-		{
-			int iStart=0;
-			int iEnd=0;
-			// Display a verse from Genesis 1:1 for The Genesis Block:
-			GetBookStartEnd("gen", iStart, iEnd);
-			std::string sVerse = GetVerse("gen", 1, 1, iStart - 1, iEnd);
-			boost::trim(sVerse);
-			result.push_back(Pair("verses", sVerse));
-		}
-	}
-    result.push_back(Pair("chainlock", chainLock));
+    if (blockindex->pprev)
+        result.pushKV("previousblockhash", blockindex->pprev->GetBlockHash().GetHex());
+    CBlockIndex *pnext = chainActive.Next(blockindex);
+    if (pnext)
+        result.pushKV("nextblockhash", pnext->GetBlockHash().GetHex());
+
+    result.pushKV("chainlock", chainLock);
 
     return result;
 }
@@ -391,11 +229,12 @@ UniValue getbestchainlock(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 0)
         throw std::runtime_error(
             "getbestchainlock\n"
-            "\nReturns the block hash of the best chainlock. Throws an error if there is no known chainlock yet. "
+            "\nReturns information about the best chainlock. Throws an error if there is no known chainlock yet."
             "\nResult:\n"
             "{\n"
             "  \"blockhash\" : \"hash\",      (string) The block hash hex encoded\n"
             "  \"height\" : n,              (numeric) The block height or index\n"
+            "  \"signature\" : \"hash\",    (string) The chainlock's BLS signature.\n"
             "  \"known_block\" : true|false (boolean) True if the block is known by our node\n"
             "}\n"
             "\nExamples:\n"
@@ -408,10 +247,12 @@ UniValue getbestchainlock(const JSONRPCRequest& request)
     if (clsig.IsNull()) {
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Unable to find any chainlock");
     }
-    result.push_back(Pair("blockhash", clsig.blockHash.GetHex()));
-    result.push_back(Pair("height", clsig.nHeight));
+    result.pushKV("blockhash", clsig.blockHash.GetHex());
+    result.pushKV("height", clsig.nHeight);
+    result.pushKV("signature", clsig.sig.ToString());
+
     LOCK(cs_main);
-    result.push_back(Pair("known_block", mapBlockIndex.count(clsig.blockHash) > 0));
+    result.pushKV("known_block", mapBlockIndex.count(clsig.blockHash) > 0);
     return result;
 }
 
@@ -458,8 +299,8 @@ UniValue waitfornewblock(const JSONRPCRequest& request)
         block = latestblock;
     }
     UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("hash", block.hash.GetHex()));
-    ret.push_back(Pair("height", block.height));
+    ret.pushKV("hash", block.hash.GetHex());
+    ret.pushKV("height", block.height);
     return ret;
 }
 
@@ -500,8 +341,8 @@ UniValue waitforblock(const JSONRPCRequest& request)
     }
 
     UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("hash", block.hash.GetHex()));
-    ret.push_back(Pair("height", block.height));
+    ret.pushKV("hash", block.hash.GetHex());
+    ret.pushKV("height", block.height);
     return ret;
 }
 
@@ -542,9 +383,24 @@ UniValue waitforblockheight(const JSONRPCRequest& request)
         block = latestblock;
     }
     UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("hash", block.hash.GetHex()));
-    ret.push_back(Pair("height", block.height));
+    ret.pushKV("hash", block.hash.GetHex());
+    ret.pushKV("height", block.height);
     return ret;
+}
+
+UniValue syncwithvalidationinterfacequeue(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 0) {
+        throw std::runtime_error(
+            "syncwithvalidationinterfacequeue\n"
+            "\nWaits for the validation interface queue to catch up on everything that was there when we entered this function.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("syncwithvalidationinterfacequeue","")
+            + HelpExampleRpc("syncwithvalidationinterfacequeue","")
+        );
+    }
+    SyncWithValidationInterfaceQueue();
+    return NullUniValue;
 }
 
 UniValue getdifficulty(const JSONRPCRequest& request)
@@ -561,43 +417,59 @@ UniValue getdifficulty(const JSONRPCRequest& request)
         );
 
     LOCK(cs_main);
-    return GetDifficulty();
+    return GetDifficulty(chainActive.Tip());
 }
 
 std::string EntryDescriptionString()
 {
     return "    \"size\" : n,                 (numeric) transaction size in bytes\n"
-           "    \"fee\" : n,                  (numeric) transaction fee in " + CURRENCY_UNIT + "\n"
-           "    \"modifiedfee\" : n,          (numeric) transaction fee with fee deltas used for mining priority\n"
+           "    \"fee\" : n,                  (numeric) transaction fee in " + CURRENCY_UNIT + " (DEPRECATED)\n"
+           "    \"modifiedfee\" : n,          (numeric) transaction fee with fee deltas used for mining priority (DEPRECATED)\n"
            "    \"time\" : n,                 (numeric) local time transaction entered pool in seconds since 1 Jan 1970 GMT\n"
            "    \"height\" : n,               (numeric) block height when transaction entered pool\n"
            "    \"descendantcount\" : n,      (numeric) number of in-mempool descendant transactions (including this one)\n"
            "    \"descendantsize\" : n,       (numeric) size of in-mempool descendants (including this one)\n"
-           "    \"descendantfees\" : n,       (numeric) modified fees (see above) of in-mempool descendants (including this one)\n"
+           "    \"descendantfees\" : n,       (numeric) modified fees (see above) of in-mempool descendants (including this one) (DEPRECATED)\n"
            "    \"ancestorcount\" : n,        (numeric) number of in-mempool ancestor transactions (including this one)\n"
            "    \"ancestorsize\" : n,         (numeric) size of in-mempool ancestors (including this one)\n"
-           "    \"ancestorfees\" : n,         (numeric) modified fees (see above) of in-mempool ancestors (including this one)\n"
+           "    \"ancestorfees\" : n,         (numeric) modified fees (see above) of in-mempool ancestors (including this one) (DEPRECATED)\n"
+           "    \"fees\" : {\n"
+           "        \"base\" : n,         (numeric) transaction fee in " + CURRENCY_UNIT + "\n"
+           "        \"modified\" : n,     (numeric) transaction fee with fee deltas used for mining priority in " + CURRENCY_UNIT + "\n"
+           "        \"ancestor\" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this one) in " + CURRENCY_UNIT + "\n"
+           "        \"descendent\" : n,   (numeric) number of in-mempool ancestor transactions (including this one) in " + CURRENCY_UNIT + "\n"
+           "    }\n"
            "    \"depends\" : [               (array) unconfirmed transactions used as inputs for this transaction\n"
            "        \"transactionid\",        (string) parent transaction id\n"
            "       ... ],\n"
+           "    \"spentby\" : [           (array) unconfirmed transactions spending outputs from this transaction\n"
+           "        \"transactionid\",    (string) child transaction id\n"
+           "       ... ]\n"
            "    \"instantlock\" : true|false  (boolean) True if this transaction was locked via InstantSend\n";
 }
 
-void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
+void entryToJSON(UniValue &info, const CTxMemPoolEntry &e) EXCLUSIVE_LOCKS_REQUIRED(::mempool.cs)
 {
     AssertLockHeld(mempool.cs);
 
-    info.push_back(Pair("size", (int)e.GetTxSize()));
-    info.push_back(Pair("fee", ValueFromAmount(e.GetFee())));
-    info.push_back(Pair("modifiedfee", ValueFromAmount(e.GetModifiedFee())));
-    info.push_back(Pair("time", e.GetTime()));
-    info.push_back(Pair("height", (int)e.GetHeight()));
-    info.push_back(Pair("descendantcount", e.GetCountWithDescendants()));
-    info.push_back(Pair("descendantsize", e.GetSizeWithDescendants()));
-    info.push_back(Pair("descendantfees", e.GetModFeesWithDescendants()));
-    info.push_back(Pair("ancestorcount", e.GetCountWithAncestors()));
-    info.push_back(Pair("ancestorsize", e.GetSizeWithAncestors()));
-    info.push_back(Pair("ancestorfees", e.GetModFeesWithAncestors()));
+    UniValue fees(UniValue::VOBJ);
+    fees.pushKV("base", ValueFromAmount(e.GetFee()));
+    fees.pushKV("modified", ValueFromAmount(e.GetModifiedFee()));
+    fees.pushKV("ancestor", ValueFromAmount(e.GetModFeesWithAncestors()));
+    fees.pushKV("descendant", ValueFromAmount(e.GetModFeesWithDescendants()));
+    info.pushKV("fees", fees);
+
+    info.pushKV("size", (int)e.GetTxSize());
+    info.pushKV("fee", ValueFromAmount(e.GetFee()));
+    info.pushKV("modifiedfee", ValueFromAmount(e.GetModifiedFee()));
+    info.pushKV("time", e.GetTime());
+    info.pushKV("height", (int)e.GetHeight());
+    info.pushKV("descendantcount", e.GetCountWithDescendants());
+    info.pushKV("descendantsize", e.GetSizeWithDescendants());
+    info.pushKV("descendantfees", e.GetModFeesWithDescendants());
+    info.pushKV("ancestorcount", e.GetCountWithAncestors());
+    info.pushKV("ancestorsize", e.GetSizeWithAncestors());
+    info.pushKV("ancestorfees", e.GetModFeesWithAncestors());
     const CTransaction& tx = e.GetTx();
     std::set<std::string> setDepends;
     for (const CTxIn& txin : tx.vin)
@@ -612,8 +484,17 @@ void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
         depends.push_back(dep);
     }
 
-    info.push_back(Pair("depends", depends));
-    info.push_back(Pair("instantlock", llmq::quorumInstantSendManager->IsLocked(tx.GetHash())));
+    info.pushKV("depends", depends);
+
+    UniValue spent(UniValue::VARR);
+    const CTxMemPool::txiter &it = mempool.mapTx.find(tx.GetHash());
+    const CTxMemPool::setEntries &setChildren = mempool.GetMemPoolChildren(it);
+    for (const CTxMemPool::txiter &childiter : setChildren) {
+        spent.push_back(childiter->GetTx().GetHash().ToString());
+    }
+
+    info.pushKV("spentby", spent);
+    info.pushKV("instantlock", llmq::quorumInstantSendManager->IsLocked(tx.GetHash()));
 }
 
 UniValue mempoolToJSON(bool fVerbose)
@@ -627,7 +508,7 @@ UniValue mempoolToJSON(bool fVerbose)
             const uint256& hash = e.GetTx().GetHash();
             UniValue info(UniValue::VOBJ);
             entryToJSON(info, e);
-            o.push_back(Pair(hash.ToString(), info));
+            o.pushKV(hash.ToString(), info);
         }
         return o;
     }
@@ -734,7 +615,7 @@ UniValue getmempoolancestors(const JSONRPCRequest& request)
             const uint256& _hash = e.GetTx().GetHash();
             UniValue info(UniValue::VOBJ);
             entryToJSON(info, e);
-            o.push_back(Pair(_hash.ToString(), info));
+            o.pushKV(_hash.ToString(), info);
         }
         return o;
     }
@@ -798,7 +679,7 @@ UniValue getmempooldescendants(const JSONRPCRequest& request)
             const uint256& _hash = e.GetTx().GetHash();
             UniValue info(UniValue::VOBJ);
             entryToJSON(info, e);
-            o.push_back(Pair(_hash.ToString(), info));
+            o.pushKV(_hash.ToString(), info);
         }
         return o;
     }
@@ -940,10 +821,10 @@ UniValue getblockheader(const JSONRPCRequest& request)
     if (!request.params[1].isNull())
         fVerbose = request.params[1].get_bool();
 
-    if (mapBlockIndex.count(hash) == 0)
+    const CBlockIndex* pblockindex = LookupBlockIndex(hash);
+    if (!pblockindex) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
-
-    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    }
 
     if (!fVerbose)
     {
@@ -1048,7 +929,7 @@ UniValue getblockheaders(const JSONRPCRequest& request)
 static CBlock GetBlockChecked(const CBlockIndex* pblockindex)
 {
     CBlock block;
-    if (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0) {
+    if (IsBlockPruned(pblockindex)) {
         throw JSONRPCError(RPC_MISC_ERROR, "Block not available (pruned data)");
     }
 
@@ -1212,16 +1093,17 @@ UniValue getblock(const JSONRPCRequest& request)
 	int NUMBER_LENGTH_NON_HASH = 10;
 	if (strHash.length() < NUMBER_LENGTH_NON_HASH && !strHash.empty())
 	{
-		CBlockIndex* bindex = FindBlockByHeight(cdbl(strHash, 0));
+		CBlockIndex* bindex = FindBlockByHeight(StringToDouble(strHash, 0));
 		if (bindex==NULL)
 		    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found by height");
 		hash = bindex->GetBlockHash();
 	}
-   
-    if (mapBlockIndex.count(hash) == 0)
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
 
-    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    const CBlockIndex* pblockindex = LookupBlockIndex(hash);
+    if (!pblockindex) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+    }
+
     const CBlock block = GetBlockChecked(pblockindex);
 
     if (verbosity <= 0)
@@ -1233,100 +1115,6 @@ UniValue getblock(const JSONRPCRequest& request)
     }
 
     return blockToJSON(block, pblockindex, verbosity >= 2);
-}
-
-struct CCoinsStats
-{
-    int nHeight;
-    uint256 hashBlock;
-    uint64_t nTransactions;
-    uint64_t nTransactionOutputs;
-    uint64_t nBogoSize;
-    uint256 hashSerialized;
-    uint64_t nDiskSize;
-    CAmount nTotalAmount = 0;
-    CAmount nTotalBurned = 0;
-    CAmount nTotalDAC = 0;
-    CCoinsStats() : nHeight(0), nTransactions(0), nTransactionOutputs(0), nBogoSize(0), nDiskSize(0), nTotalAmount(0), nTotalBurned(0), nTotalDAC(0) {}
-};
-
-static void ApplyStats(CCoinsStats &stats, CHashWriter& ss, const uint256& hash, const std::map<uint32_t, Coin>& outputs)
-{
-    assert(!outputs.empty());
-    ss << hash;
-    ss << VARINT(outputs.begin()->second.nHeight * 2 + outputs.begin()->second.fCoinBase);
-    stats.nTransactions++;
-	const Consensus::Params& consensusParams = Params().GetConsensus();
-			
-    for (const auto output : outputs) {
-        ss << VARINT(output.first + 1);
-        ss << output.second.out.scriptPubKey;
-        ss << VARINT(output.second.out.nValue);
-        stats.nTransactionOutputs++;
-        stats.nBogoSize += 32 /* txid */ + 4 /* vout index */ + 4 /* height + coinbase */ + 8 /* amount */ +
-                           2 /* scriptPubKey len */ + output.second.out.scriptPubKey.size() /* scriptPubKey */;
-
-
-		// BIBLEPAY - Track Burned Coins
-		std::string sPK = PubKeyToAddress(output.second.out.scriptPubKey);
-		if (sPK == consensusParams.BurnAddress)
-		{
-			stats.nTotalBurned += output.second.out.nValue;
-		}
-		else if (sPK == consensusParams.BurnAddressOrphanDonations)
-		{
-			stats.nTotalDAC += output.second.out.nValue;
-		}
-		else if (sPK == consensusParams.BurnAddressWhaleMatches)
-		{
-			stats.nTotalDAC += output.second.out.nValue;
-		}
-		else
-		{
-		    stats.nTotalAmount += output.second.out.nValue;
-		}
-
-    }
-    ss << VARINT(0);
-}
-
-//! Calculate statistics about the unspent transaction output set
-static bool GetUTXOStats(CCoinsView *view, CCoinsStats &stats)
-{
-    std::unique_ptr<CCoinsViewCursor> pcursor(view->Cursor());
-    assert(pcursor);
-
-    CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-    stats.hashBlock = pcursor->GetBestBlock();
-    {
-        LOCK(cs_main);
-        stats.nHeight = mapBlockIndex.find(stats.hashBlock)->second->nHeight;
-    }
-    ss << stats.hashBlock;
-    uint256 prevkey;
-    std::map<uint32_t, Coin> outputs;
-    while (pcursor->Valid()) {
-        boost::this_thread::interruption_point();
-        COutPoint key;
-        Coin coin;
-        if (pcursor->GetKey(key) && pcursor->GetValue(coin)) {
-            if (!outputs.empty() && key.hash != prevkey) {
-                ApplyStats(stats, ss, prevkey, outputs);
-                outputs.clear();
-            }
-            prevkey = key.hash;
-            outputs[key.n] = std::move(coin);
-        } else {
-            return error("%s: unable to read value", __func__);
-        }
-        pcursor->Next();
-    }
-    if (!outputs.empty()) {
-        ApplyStats(stats, ss, prevkey, outputs);
-    }
-    stats.hashSerialized = ss.GetHash();
-    stats.nDiskSize = view->EstimateSize();
-    return true;
 }
 
 UniValue pruneblockchain(const JSONRPCRequest& request)
@@ -1370,7 +1158,7 @@ UniValue pruneblockchain(const JSONRPCRequest& request)
     else if (height > chainHeight)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Blockchain is shorter than the attempted prune height.");
     else if (height > chainHeight - MIN_BLOCKS_TO_KEEP) {
-        LogPrint(BCLog::RPC, "Attempt to prune blocks close to the tip.  Retaining the minimum number of blocks.");
+        LogPrint(BCLog::RPC, "Attempt to prune blocks close to the tip.  Retaining the minimum number of blocks.\n");
         height = chainHeight - MIN_BLOCKS_TO_KEEP;
     }
 
@@ -1406,43 +1194,42 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
     CCoinsStats stats;
     FlushStateToDisk();
     if (GetUTXOStats(pcoinsdbview.get(), stats)) {
-        ret.push_back(Pair("height", (int64_t)stats.nHeight));
-        ret.push_back(Pair("bestblock", stats.hashBlock.GetHex()));
-        ret.push_back(Pair("transactions", (int64_t)stats.nTransactions));
-        ret.push_back(Pair("txouts", (int64_t)stats.nTransactionOutputs));
-        ret.push_back(Pair("bogosize", (int64_t)stats.nBogoSize));
-        ret.push_back(Pair("hash_serialized_2", stats.hashSerialized.GetHex()));
-        ret.push_back(Pair("disk_size", stats.nDiskSize));
+        ret.pushKV("height", (int64_t)stats.nHeight);
+        ret.pushKV("bestblock", stats.hashBlock.GetHex());
+        ret.pushKV("transactions", (int64_t)stats.nTransactions);
+        ret.pushKV("txouts", (int64_t)stats.nTransactionOutputs);
+        ret.pushKV("bogosize", (int64_t)stats.nBogoSize);
+        ret.pushKV("hash_serialized_2", stats.hashSerialized.GetHex());
+        ret.pushKV("disk_size", stats.nDiskSize);
+
 
 		// Circulating = Emitted minus burned
-		ret.push_back(Pair("total_circulating_money_supply", ValueFromAmount(stats.nTotalAmount)));
-		ret.push_back(Pair("total_burned", ValueFromAmount(stats.nTotalBurned)));
+		ret.pushKV("total_circulating_money_supply", ValueFromAmount(stats.nTotalAmount));
+		ret.pushKV("total_burned", ValueFromAmount(stats.nTotalBurned));
 	
 		double nPct = ((stats.nTotalAmount/COIN) + .01) / 5200000000;
-		ret.push_back(Pair("percent_emitted", nPct));
+		ret.pushKV("percent_emitted", nPct);
 
-		// Emission target, Dec 2021: https://wiki.biblepay.org/Emission_Schedule_2020
-		double nEmissionTargetDec2021 = 2847218800;
-		ret.push_back(Pair("emission_target_dec_2021", nEmissionTargetDec2021));
+		// Emission target, Dec 2022: https://wiki.biblepay.org/Emission_Schedule
+		double nEmissionTargetDec2022 = 3297004487;
+		ret.pushKV("emission_target_dec_2022", nEmissionTargetDec2022);
 
 		int64_t Dec2021_Epoch = 1640470023;
 		double dTotalDeflationComponent = .50; 
-		// With APM on and total deflation to date, we are in money saving mode for approx 150 more days.  By Dec 2021 our total circulating supply should match the above wiki page.
-		// Once our budget is reconciled, we will disable dws whale staking and stick with our static emission schedule (that uses UTXO staking via GSC).
 		
 		int64_t nRemainingDays = (Dec2021_Epoch - GetAdjustedTime()) / 86400;
 		int64_t nGenesisBlock = 1496347844;
 		int64_t nDaysSinceGenesis = (GetAdjustedTime() - nGenesisBlock) / 86400;
 
 		double nEmissionPerDay = stats.nTotalAmount/COIN / nDaysSinceGenesis;
-		double nSythesizedTarget2021 = (nRemainingDays * (nEmissionPerDay * dTotalDeflationComponent)) + (stats.nTotalAmount / COIN);
-		ret.push_back(Pair("avg_emissions_per_day", nEmissionPerDay));
-		ret.push_back(Pair("estimated_emissions_as_of_dec_2021", nSythesizedTarget2021));
+		double nSythesizedTarget2022 = (nRemainingDays * (nEmissionPerDay * dTotalDeflationComponent)) + (stats.nTotalAmount / COIN);
+		ret.pushKV("avg_emissions_per_day_since_inception", nEmissionPerDay);
+		ret.pushKV("estimated_emissions_as_of_dec_2022", nSythesizedTarget2022);
 
-		double nBudgetaryHealthPct = nSythesizedTarget2021 / nEmissionTargetDec2021;
-		ret.push_back(Pair("budgetary_health_pct_dec_2021", nBudgetaryHealthPct));
+		double nBudgetaryHealthPct = nSythesizedTarget2022 / nEmissionTargetDec2022;
+		ret.pushKV("budgetary_health_pct_dec_2022", nBudgetaryHealthPct);
 
-        ret.push_back(Pair("total_amount", ValueFromAmount(stats.nTotalAmount)));
+        ret.pushKV("total_amount", ValueFromAmount(stats.nTotalAmount));
     } else {
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Unable to read UTXO set");
     }
@@ -1512,19 +1299,18 @@ UniValue gettxout(const JSONRPCRequest& request)
         }
     }
 
-    BlockMap::iterator it = mapBlockIndex.find(pcoinsTip->GetBestBlock());
-    CBlockIndex *pindex = it->second;
-    ret.push_back(Pair("bestblock", pindex->GetBlockHash().GetHex()));
+    const CBlockIndex* pindex = LookupBlockIndex(pcoinsTip->GetBestBlock());
+    ret.pushKV("bestblock", pindex->GetBlockHash().GetHex());
     if (coin.nHeight == MEMPOOL_HEIGHT) {
-        ret.push_back(Pair("confirmations", 0));
+        ret.pushKV("confirmations", 0);
     } else {
-        ret.push_back(Pair("confirmations", (int64_t)(pindex->nHeight - coin.nHeight + 1)));
+        ret.pushKV("confirmations", (int64_t)(pindex->nHeight - coin.nHeight + 1));
     }
-    ret.push_back(Pair("value", ValueFromAmount(coin.out.nValue)));
+    ret.pushKV("value", ValueFromAmount(coin.out.nValue));
     UniValue o(UniValue::VOBJ);
     ScriptPubKeyToUniv(coin.out.scriptPubKey, o, true);
-    ret.push_back(Pair("scriptPubKey", o));
-    ret.push_back(Pair("coinbase", (bool)coin.fCoinBase));
+    ret.pushKV("scriptPubKey", o);
+    ret.pushKV("coinbase", (bool)coin.fCoinBase);
 
     return ret;
 }
@@ -1574,16 +1360,16 @@ static UniValue SoftForkMajorityDesc(int version, CBlockIndex* pindex, const Con
             activated = pindex->nHeight >= consensusParams.BIP65Height;
             break;
     }
-    rv.push_back(Pair("status", activated));
+    rv.pushKV("status", activated);
     return rv;
 }
 
 static UniValue SoftForkDesc(const std::string &name, int version, CBlockIndex* pindex, const Consensus::Params& consensusParams)
 {
     UniValue rv(UniValue::VOBJ);
-    rv.push_back(Pair("id", name));
-    rv.push_back(Pair("version", version));
-    rv.push_back(Pair("reject", SoftForkMajorityDesc(version, pindex, consensusParams)));
+    rv.pushKV("id", name);
+    rv.pushKV("version", version);
+    rv.pushKV("reject", SoftForkMajorityDesc(version, pindex, consensusParams));
     return rv;
 }
 
@@ -1592,29 +1378,29 @@ static UniValue BIP9SoftForkDesc(const Consensus::Params& consensusParams, Conse
     UniValue rv(UniValue::VOBJ);
     const ThresholdState thresholdState = VersionBitsTipState(consensusParams, id);
     switch (thresholdState) {
-    case THRESHOLD_DEFINED: rv.push_back(Pair("status", "defined")); break;
-    case THRESHOLD_STARTED: rv.push_back(Pair("status", "started")); break;
-    case THRESHOLD_LOCKED_IN: rv.push_back(Pair("status", "locked_in")); break;
-    case THRESHOLD_ACTIVE: rv.push_back(Pair("status", "active")); break;
-    case THRESHOLD_FAILED: rv.push_back(Pair("status", "failed")); break;
+    case ThresholdState::DEFINED: rv.pushKV("status", "defined"); break;
+    case ThresholdState::STARTED: rv.pushKV("status", "started"); break;
+    case ThresholdState::LOCKED_IN: rv.pushKV("status", "locked_in"); break;
+    case ThresholdState::ACTIVE: rv.pushKV("status", "active"); break;
+    case ThresholdState::FAILED: rv.pushKV("status", "failed"); break;
     }
-    if (THRESHOLD_STARTED == thresholdState)
+    if (ThresholdState::STARTED == thresholdState)
     {
-        rv.push_back(Pair("bit", consensusParams.vDeployments[id].bit));
+        rv.pushKV("bit", consensusParams.vDeployments[id].bit);
     }
-    rv.push_back(Pair("startTime", consensusParams.vDeployments[id].nStartTime));
-    rv.push_back(Pair("timeout", consensusParams.vDeployments[id].nTimeout));
-    rv.push_back(Pair("since", VersionBitsTipStateSinceHeight(consensusParams, id)));
-    if (THRESHOLD_STARTED == thresholdState)
+    rv.pushKV("startTime", consensusParams.vDeployments[id].nStartTime);
+    rv.pushKV("timeout", consensusParams.vDeployments[id].nTimeout);
+    rv.pushKV("since", VersionBitsTipStateSinceHeight(consensusParams, id));
+    if (ThresholdState::STARTED == thresholdState)
     {
         UniValue statsUV(UniValue::VOBJ);
         BIP9Stats statsStruct = VersionBitsTipStatistics(consensusParams, id);
-        statsUV.push_back(Pair("period", statsStruct.period));
-        statsUV.push_back(Pair("threshold", statsStruct.threshold));
-        statsUV.push_back(Pair("elapsed", statsStruct.elapsed));
-        statsUV.push_back(Pair("count", statsStruct.count));
-        statsUV.push_back(Pair("possible", statsStruct.possible));
-        rv.push_back(Pair("statistics", statsUV));
+        statsUV.pushKV("period", statsStruct.period);
+        statsUV.pushKV("threshold", statsStruct.threshold);
+        statsUV.pushKV("elapsed", statsStruct.elapsed);
+        statsUV.pushKV("count", statsStruct.count);
+        statsUV.pushKV("possible", statsStruct.possible);
+        rv.pushKV("statistics", statsUV);
     }
     return rv;
 }
@@ -1625,7 +1411,7 @@ void BIP9SoftForkDescPushBack(UniValue& bip9_softforks, const Consensus::Params&
     // A timeout value of 0 guarantees a softfork will never be activated.
     // This is used when softfork codes are merged without specifying the deployment schedule.
     if (consensusParams.vDeployments[id].nTimeout > 0)
-        bip9_softforks.push_back(Pair(VersionBitsDeploymentInfo[id].name, BIP9SoftForkDesc(consensusParams, id)));
+        bip9_softforks.pushKV(VersionBitsDeploymentInfo[id].name, BIP9SoftForkDesc(consensusParams, id));
 }
 
 UniValue getblockchaininfo(const JSONRPCRequest& request)
@@ -1636,7 +1422,8 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
             "Returns an object containing various state info regarding blockchain processing.\n"
             "\nResult:\n"
             "{\n"
-            "  \"chain\": \"xxxx\",              (string) current network name as defined in BIP70 (main, test, regtest)\n"
+            "  \"chain\": \"xxxx\",              (string) current network name as defined in BIP70 (main, test, regtest) and\n"
+            "                                          devnet or devnet-<name> for \"-devnet\" and \"-devnet=<name>\" respectively\n"
             "  \"blocks\": xxxxxx,             (numeric) the current number of blocks processed in the server\n"
             "  \"headers\": xxxxxx,            (numeric) the current number of headers we have validated\n"
             "  \"bestblockhash\": \"...\",       (string) the hash of the currently best block\n"
@@ -1684,18 +1471,20 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
+    std::string strChainName = gArgs.IsArgSet("-devnet") ? gArgs.GetDevNetName() : Params().NetworkIDString();
+
     UniValue obj(UniValue::VOBJ);
-    obj.push_back(Pair("chain",                 Params().NetworkIDString()));
-    obj.push_back(Pair("blocks",                (int)chainActive.Height()));
-    obj.push_back(Pair("headers",               pindexBestHeader ? pindexBestHeader->nHeight : -1));
-    obj.push_back(Pair("bestblockhash",         chainActive.Tip()->GetBlockHash().GetHex()));
-    obj.push_back(Pair("difficulty",            (double)GetDifficulty()));
-    obj.push_back(Pair("mediantime",            (int64_t)chainActive.Tip()->GetMedianTimePast()));
-    obj.push_back(Pair("verificationprogress",  GuessVerificationProgress(Params().TxData(), chainActive.Tip())));
-    obj.push_back(Pair("initialblockdownload",  IsInitialBlockDownload()));
-    obj.push_back(Pair("chainwork",             chainActive.Tip()->nChainWork.GetHex()));
-    obj.push_back(Pair("size_on_disk",          CalculateCurrentUsage()));
-    obj.push_back(Pair("pruned",                fPruneMode));
+    obj.pushKV("chain",                 strChainName);
+    obj.pushKV("blocks",                (int)chainActive.Height());
+    obj.pushKV("headers",               pindexBestHeader ? pindexBestHeader->nHeight : -1);
+    obj.pushKV("bestblockhash",         chainActive.Tip()->GetBlockHash().GetHex());
+    obj.pushKV("difficulty",            (double)GetDifficulty(chainActive.Tip()));
+    obj.pushKV("mediantime",            (int64_t)chainActive.Tip()->GetMedianTimePast());
+    obj.pushKV("verificationprogress",  GuessVerificationProgress(Params().TxData(), chainActive.Tip()));
+    obj.pushKV("initialblockdownload",  IsInitialBlockDownload());
+    obj.pushKV("chainwork",             chainActive.Tip()->nChainWork.GetHex());
+    obj.pushKV("size_on_disk",          CalculateCurrentUsage());
+    obj.pushKV("pruned",                fPruneMode);
     if (fPruneMode) {
         CBlockIndex* block = chainActive.Tip();
         assert(block);
@@ -1703,13 +1492,13 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
             block = block->pprev;
         }
 
-        obj.push_back(Pair("pruneheight",        block->nHeight));
+        obj.pushKV("pruneheight",        block->nHeight);
 
         // if 0, execution bypasses the whole if block.
         bool automatic_pruning = (gArgs.GetArg("-prune", 0) != 1);
-        obj.push_back(Pair("automatic_pruning",  automatic_pruning));
+        obj.pushKV("automatic_pruning",  automatic_pruning);
         if (automatic_pruning) {
-            obj.push_back(Pair("prune_target_size",  nPruneTarget));
+            obj.pushKV("prune_target_size",  nPruneTarget);
         }
     }
 
@@ -1724,14 +1513,10 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     for (int pos = Consensus::DEPLOYMENT_CSV; pos != Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++pos) {
         BIP9SoftForkDescPushBack(bip9_softforks, consensusParams, static_cast<Consensus::DeploymentPos>(pos));
     }
-    obj.push_back(Pair("softforks",             softforks));
-	/*
-	BiblePay has csv, dip1, bip147, dip3, and dip8 heights hardcoded in the code
-	In the next rebase, I think we should bitshift these switches in the block version to make us fully compatible.
-    obj.push_back(Pair("bip9_softforks", bip9_softforks));
-	*/
+    obj.pushKV("softforks",             softforks);
+    obj.pushKV("bip9_softforks", bip9_softforks);
 
-    obj.push_back(Pair("warnings", GetWarnings("statusbar")));
+    obj.pushKV("warnings", GetWarnings("statusbar"));
     return obj;
 }
 
@@ -1843,12 +1628,12 @@ UniValue getchaintips(const JSONRPCRequest& request)
         if(nCountMax-- < 1) break;
 
         UniValue obj(UniValue::VOBJ);
-        obj.push_back(Pair("height", block->nHeight));
-        obj.push_back(Pair("hash", block->phashBlock->GetHex()));
-        obj.push_back(Pair("difficulty", GetDifficulty(block)));
-        obj.push_back(Pair("chainwork", block->nChainWork.GetHex()));
-        obj.push_back(Pair("branchlen", branchLen));
-        obj.push_back(Pair("forkpoint", pindexFork->phashBlock->GetHex()));
+        obj.pushKV("height", block->nHeight);
+        obj.pushKV("hash", block->phashBlock->GetHex());
+        obj.pushKV("difficulty", GetDifficulty(block));
+        obj.pushKV("chainwork", block->nChainWork.GetHex());
+        obj.pushKV("branchlen", branchLen);
+        obj.pushKV("forkpoint", pindexFork->phashBlock->GetHex());
 
         std::string status;
         if (chainActive.Contains(block)) {
@@ -1857,6 +1642,9 @@ UniValue getchaintips(const JSONRPCRequest& request)
         } else if (block->nStatus & BLOCK_FAILED_MASK) {
             // This block or one of its ancestors is invalid.
             status = "invalid";
+        } else if (block->nStatus & BLOCK_CONFLICT_CHAINLOCK) {
+            // This block or one of its ancestors is conflicting with ChainLocks.
+            status = "conflicting";
         } else if (block->nChainTx == 0) {
             // This block cannot be connected because full block data for it or one of its parents is missing.
             status = "headers-only";
@@ -1870,7 +1658,7 @@ UniValue getchaintips(const JSONRPCRequest& request)
             // No clue.
             status = "unknown";
         }
-        obj.push_back(Pair("status", status));
+        obj.pushKV("status", status);
 
         res.push_back(obj);
     }
@@ -1881,14 +1669,14 @@ UniValue getchaintips(const JSONRPCRequest& request)
 UniValue mempoolInfoToJSON()
 {
     UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("size", (int64_t) mempool.size()));
-    ret.push_back(Pair("bytes", (int64_t) mempool.GetTotalTxSize()));
-    ret.push_back(Pair("usage", (int64_t) mempool.DynamicMemoryUsage()));
+    ret.pushKV("size", (int64_t) mempool.size());
+    ret.pushKV("bytes", (int64_t) mempool.GetTotalTxSize());
+    ret.pushKV("usage", (int64_t) mempool.DynamicMemoryUsage());
     size_t maxmempool = gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
-    ret.push_back(Pair("maxmempool", (int64_t) maxmempool));
-    ret.push_back(Pair("mempoolminfee", ValueFromAmount(std::max(mempool.GetMinFee(maxmempool), ::minRelayTxFee).GetFeePerK())));
-    ret.push_back(Pair("minrelaytxfee", ValueFromAmount(::minRelayTxFee.GetFeePerK())));
-    ret.push_back(Pair("instantsendlocks", (int64_t)llmq::quorumInstantSendManager->GetInstantSendLockCount()));
+    ret.pushKV("maxmempool", (int64_t) maxmempool);
+    ret.pushKV("mempoolminfee", ValueFromAmount(std::max(mempool.GetMinFee(maxmempool), ::minRelayTxFee).GetFeePerK()));
+    ret.pushKV("minrelaytxfee", ValueFromAmount(::minRelayTxFee.GetFeePerK()));
+    ret.pushKV("instantsendlocks", (int64_t)llmq::quorumInstantSendManager->GetInstantSendLockCount());
 
     return ret;
 }
@@ -1939,17 +1727,17 @@ UniValue preciousblock(const JSONRPCRequest& request)
 
     {
         LOCK(cs_main);
-        if (mapBlockIndex.count(hash) == 0)
+        pblockindex = LookupBlockIndex(hash);
+        if (!pblockindex) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
-
-        pblockindex = mapBlockIndex[hash];
+        }
     }
 
     CValidationState state;
     PreciousBlock(state, Params(), pblockindex);
 
     if (!state.IsValid()) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, state.GetRejectReason());
+        throw JSONRPCError(RPC_DATABASE_ERROR, FormatStateMessage(state));
     }
 
     return NullUniValue;
@@ -1975,10 +1763,11 @@ UniValue invalidateblock(const JSONRPCRequest& request)
 
     {
         LOCK(cs_main);
-        if (mapBlockIndex.count(hash) == 0)
+        CBlockIndex* pblockindex = LookupBlockIndex(hash);
+        if (!pblockindex) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+        }
 
-        CBlockIndex* pblockindex = mapBlockIndex[hash];
         InvalidateBlock(state, Params(), pblockindex);
     }
 
@@ -1987,7 +1776,7 @@ UniValue invalidateblock(const JSONRPCRequest& request)
     }
 
     if (!state.IsValid()) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, state.GetRejectReason());
+        throw JSONRPCError(RPC_DATABASE_ERROR, FormatStateMessage(state));
     }
 
     return NullUniValue;
@@ -2013,10 +1802,11 @@ UniValue reconsiderblock(const JSONRPCRequest& request)
 
     {
         LOCK(cs_main);
-        if (mapBlockIndex.count(hash) == 0)
+        CBlockIndex* pblockindex = LookupBlockIndex(hash);
+        if (!pblockindex) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+        }
 
-        CBlockIndex* pblockindex = mapBlockIndex[hash];
         ResetBlockFailureFlags(pblockindex);
     }
 
@@ -2024,7 +1814,7 @@ UniValue reconsiderblock(const JSONRPCRequest& request)
     ActivateBestChain(state, Params());
 
     if (!state.IsValid()) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, state.GetRejectReason());
+        throw JSONRPCError(RPC_DATABASE_ERROR, FormatStateMessage(state));
     }
 
     return NullUniValue;
@@ -2041,12 +1831,13 @@ UniValue getchaintxstats(const JSONRPCRequest& request)
             "2. \"blockhash\"  (string, optional) The hash of the block that ends the window.\n"
             "\nResult:\n"
             "{\n"
-            "  \"time\": xxxxx,                (numeric) The timestamp for the final block in the window in UNIX format.\n"
-            "  \"txcount\": xxxxx,             (numeric) The total number of transactions in the chain up to that point.\n"
-            "  \"window_block_count\": xxxxx,  (numeric) Size of the window in number of blocks.\n"
-            "  \"window_tx_count\": xxxxx,     (numeric) The number of transactions in the window. Only returned if \"window_block_count\" is > 0.\n"
-            "  \"window_interval\": xxxxx,     (numeric) The elapsed time in the window in seconds. Only returned if \"window_block_count\" is > 0.\n"
-            "  \"txrate\": x.xx,               (numeric) The average rate of transactions per second in the window. Only returned if \"window_interval\" is > 0.\n"
+            "  \"time\": xxxxx,                         (numeric) The timestamp for the final block in the window in UNIX format.\n"
+            "  \"txcount\": xxxxx,                      (numeric) The total number of transactions in the chain up to that point.\n"
+            "  \"window_final_block_hash\": \"...\",      (string) The hash of the final block in the window.\n"
+            "  \"window_block_count\": xxxxx,           (numeric) Size of the window in number of blocks.\n"
+            "  \"window_tx_count\": xxxxx,              (numeric) The number of transactions in the window. Only returned if \"window_block_count\" is > 0.\n"
+            "  \"window_interval\": xxxxx,              (numeric) The elapsed time in the window in seconds. Only returned if \"window_block_count\" is > 0.\n"
+            "  \"txrate\": x.xx,                        (numeric) The average rate of transactions per second in the window. Only returned if \"window_interval\" is > 0.\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("getchaintxstats", "")
@@ -2056,25 +1847,18 @@ UniValue getchaintxstats(const JSONRPCRequest& request)
     const CBlockIndex* pindex;
     int blockcount = 30 * 24 * 60 * 60 / Params().GetConsensus().nPowTargetSpacing; // By default: 1 month
 
-    bool havehash = !request.params[1].isNull();
-    uint256 hash;
-    if (havehash) {
-        hash = uint256S(request.params[1].get_str());
-    }
-
-    {
+    if (request.params[1].isNull()) {
         LOCK(cs_main);
-        if (havehash) {
-            auto it = mapBlockIndex.find(hash);
-            if (it == mapBlockIndex.end()) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
-            }
-            pindex = it->second;
-            if (!chainActive.Contains(pindex)) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Block is not in main chain");
-            }
-        } else {
-            pindex = chainActive.Tip();
+        pindex = chainActive.Tip();
+    } else {
+        uint256 hash = uint256S(request.params[1].get_str());
+        LOCK(cs_main);
+        pindex = LookupBlockIndex(hash);
+        if (!pindex) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+        }
+        if (!chainActive.Contains(pindex)) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Block is not in main chain");
         }
     }
 
@@ -2095,14 +1879,15 @@ UniValue getchaintxstats(const JSONRPCRequest& request)
     int nTxDiff = pindex->nChainTx - pindexPast->nChainTx;
 
     UniValue ret(UniValue::VOBJ);
-    ret.push_back(Pair("time", (int64_t)pindex->nTime));
-    ret.push_back(Pair("txcount", (int64_t)pindex->nChainTx));
-    ret.push_back(Pair("window_block_count", blockcount));
+    ret.pushKV("time", (int64_t)pindex->nTime);
+    ret.pushKV("txcount", (int64_t)pindex->nChainTx);
+    ret.pushKV("window_final_block_hash", pindex->GetBlockHash().GetHex());
+    ret.pushKV("window_block_count", blockcount);
     if (blockcount > 0) {
-        ret.push_back(Pair("window_tx_count", nTxDiff));
-        ret.push_back(Pair("window_interval", nTimeDiff));
+        ret.pushKV("window_tx_count", nTxDiff);
+        ret.pushKV("window_interval", nTimeDiff);
         if (nTimeDiff > 0) {
-            ret.push_back(Pair("txrate", ((double)nTxDiff) / nTimeDiff));
+            ret.pushKV("txrate", ((double)nTxDiff) / nTimeDiff);
         }
     }
 
@@ -2141,7 +1926,7 @@ static UniValue getblockstats(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 4) {
         throw std::runtime_error(
             "getblockstats hash_or_height ( stats )\n"
-            "\nCompute per block statistics for a given window. All amounts are in pence.\n"
+            "\nCompute per block statistics for a given window. All amounts are in duffs.\n"
             "It won't work for some heights with pruning.\n"
             "It won't work without -txindex for utxo_size_inc, *fee or *feerate stats.\n"
             "\nArguments:\n"
@@ -2155,20 +1940,20 @@ static UniValue getblockstats(const JSONRPCRequest& request)
             "\nResult:\n"
             "{                           (json object)\n"
             "  \"avgfee\": xxxxx,          (numeric) Average fee in the block\n"
-            "  \"avgfeerate\": xxxxx,      (numeric) Average feerate (in pence per byte)\n"
+            "  \"avgfeerate\": xxxxx,      (numeric) Average feerate (in duffs per byte)\n"
             "  \"avgtxsize\": xxxxx,       (numeric) Average transaction size\n"
             "  \"blockhash\": xxxxx,       (string) The block hash (to check for potential reorgs)\n"
             "  \"height\": xxxxx,          (numeric) The height of the block\n"
             "  \"ins\": xxxxx,             (numeric) The number of inputs (excluding coinbase)\n"
             "  \"maxfee\": xxxxx,          (numeric) Maximum fee in the block\n"
-            "  \"maxfeerate\": xxxxx,      (numeric) Maximum feerate (in pence per byte)\n"
+            "  \"maxfeerate\": xxxxx,      (numeric) Maximum feerate (in duffs per byte)\n"
             "  \"maxtxsize\": xxxxx,       (numeric) Maximum transaction size\n"
             "  \"medianfee\": xxxxx,       (numeric) Truncated median fee in the block\n"
-            "  \"medianfeerate\": xxxxx,   (numeric) Truncated median feerate (in pence per byte)\n"
+            "  \"medianfeerate\": xxxxx,   (numeric) Truncated median feerate (in duffs per byte)\n"
             "  \"mediantime\": xxxxx,      (numeric) The block median time past\n"
             "  \"mediantxsize\": xxxxx,    (numeric) Truncated median transaction size\n"
             "  \"minfee\": xxxxx,          (numeric) Minimum fee in the block\n"
-            "  \"minfeerate\": xxxxx,      (numeric) Minimum feerate (in pence per byte)\n"
+            "  \"minfeerate\": xxxxx,      (numeric) Minimum feerate (in duffs per byte)\n"
             "  \"mintxsize\": xxxxx,       (numeric) Minimum transaction size\n"
             "  \"outs\": xxxxx,            (numeric) The number of outputs\n"
             "  \"subsidy\": xxxxx,         (numeric) The block subsidy\n"
@@ -2245,7 +2030,7 @@ static UniValue getblockstats(const JSONRPCRequest& request)
     CAmount totalfee = 0;
     int64_t inputs = 0;
     int64_t maxtxsize = 0;
-    int64_t mintxsize = MaxBlockSize(true);
+    int64_t mintxsize = MaxBlockSize();
     int64_t outputs = 0;
     int64_t total_size = 0;
     int64_t utxo_size_inc = 0;
@@ -2336,7 +2121,7 @@ static UniValue getblockstats(const JSONRPCRequest& request)
     ret_all.pushKV("mediantxsize", CalculateTruncatedMedian(txsize_array));
     ret_all.pushKV("minfee", (minfee == MAX_MONEY) ? 0 : minfee);
     ret_all.pushKV("minfeerate", (minfeerate == MAX_MONEY) ? 0 : minfeerate);
-    ret_all.pushKV("mintxsize", mintxsize == MaxBlockSize(true) ? 0 : mintxsize);
+    ret_all.pushKV("mintxsize", mintxsize == MaxBlockSize() ? 0 : mintxsize);
     ret_all.pushKV("outs", outputs);
     ret_all.pushKV("subsidy", pindex->pprev ? GetBlockSubsidy(pindex->pprev->nBits, pindex->pprev->nHeight, Params().GetConsensus()) : 50 * COIN);
     ret_all.pushKV("time", pindex->GetBlockTime());
@@ -2360,89 +2145,6 @@ static UniValue getblockstats(const JSONRPCRequest& request)
         ret.pushKV(stat, value);
     }
     return ret;
-}
-
-std::string MultiSigSignRawTransaction(UniValue& results, std::string sHex, std::string sOriginalHex, std::string sRedeem, std::string sMultiSigKeypairKey1)
-{
-
-	if (sRedeem.empty())
-	{
-		JSONRPCRequest mySignedTransaction;
-		mySignedTransaction.params.setArray();
-		mySignedTransaction.params.push_back(sHex);
-		UniValue mySignedTxOutput = signrawtransaction(mySignedTransaction);
-		std::string sHex = mySignedTxOutput["hex"].getValStr();
-		results.push_back(Pair("signrawtransaction_no_redeem", sHex));
-		return sHex;
-	}
-
-	JSONRPCRequest myPrivKeyRequest;
-	myPrivKeyRequest.params.setArray();
-	myPrivKeyRequest.params.push_back(sMultiSigKeypairKey1);
-	UniValue myM1PrivKey = dumpprivkey(myPrivKeyRequest);
-	std::string sM1PrivKey = myM1PrivKey.getValStr();
-
-	JSONRPCRequest myDecodeRequest;
-	myDecodeRequest.params.setArray();
-	myDecodeRequest.params.push_back(sOriginalHex);
-	UniValue myDecodedOutput = decoderawtransaction(myDecodeRequest);
-	std::string sDecodedTxId = myDecodedOutput["txid"].getValStr();
-	std::string sDecodedVout = myDecodedOutput["vout"][0]["n"].getValStr();
-	std::string sScriptHex = myDecodedOutput["vout"][0]["scriptPubKey"]["hex"].getValStr();
-		
-	JSONRPCRequest mySignedTransaction;
-	std::string mySign1 = "[{\"txid\":\"" + sDecodedTxId + "\",\"vout\":" + sDecodedVout + ",\"scriptPubKey\":\"" + sScriptHex + "\",\"redeemScript\":\"" + sRedeem + "\"}]";
-	// Note in step 5.1, we need to use the PRIVATE KEY for the first Multisig Public Key:
-	// Because of this we need to call out and get the privkey here:
-	std::string mySign2 = "[\"" + sM1PrivKey + "\"]";
-	UniValue uSign1(UniValue::VOBJ);
-	uSign1.read(mySign1);
-	UniValue uSign2(UniValue::VOBJ);
-	uSign2.read(mySign2);
-	mySignedTransaction.params.setArray();
-	mySignedTransaction.params.push_back(sHex);
-	mySignedTransaction.params.push_back(uSign1);
-	mySignedTransaction.params.push_back(uSign2);
-	results.push_back(Pair("signrawtransaction_1", sHex));
-	results.push_back(Pair("signrawtransaction_2", mySign1));
-	results.push_back(Pair("signrawtransaction_3", mySign2));
-	UniValue mySignedTxOutput = signrawtransaction(mySignedTransaction);
-	std::string sSignedTxOutputHex = mySignedTxOutput["hex"].getValStr();
-	results.push_back(Pair("SignedOutput_Hex", sSignedTxOutputHex));
-	std::string sCommand = "     signrawtransaction " + sHex + " '" + mySign1 + "' '" + mySign2 + "'       ";
-	results.push_back(Pair("command", sCommand));
-	return sSignedTxOutputHex;
-}
-
-
-std::string MultiSigCreateRawTransaction(UniValue& results, std::string sSourceUTXO, std::string sSourceVOUT, std::string sScriptPubKeyHex, std::string sRedeemScript, std::string sDestAddress, std::string sAmount)
-{
-	std::string mySpend1 = "[{\"txid\":\"" + sSourceUTXO
-		+ "\",\"vout\":" + sSourceVOUT + ",\"scriptPubKey\":\"" + sScriptPubKeyHex + "\",\"redeemScript\":\"" + sRedeemScript + "\"}]";
-	if (sScriptPubKeyHex.empty())
-	{
-		std::string mySpend1 = "[{\"txid\":\"" + sSourceUTXO
-			+ "\",\"vout\":" + sSourceVOUT + "}]";
-	}
-	std::string mySpend2 = "{\"" + sDestAddress + "\":" + sAmount + "}";
-	results.push_back(Pair("MyRawSpend", mySpend1));
-	results.push_back(Pair("MyRawSpendRecipient", mySpend2));
-		
-	JSONRPCRequest mySpendParams;
-	mySpendParams.params.setArray();
-		
-	UniValue uTemp3(UniValue::VOBJ);
-	uTemp3.read(mySpend1);
-				
-	mySpendParams.params.push_back(uTemp3);
-	UniValue uTemp4(UniValue::VOBJ);
-	uTemp4.read(mySpend2);
-	mySpendParams.params.push_back(uTemp4);
-		
-	UniValue uvSpendOutput = createrawtransaction(mySpendParams);
-	std::string sSpendHex = uvSpendOutput.getValStr();
-	results.push_back(Pair("SpendTxHex", sSpendHex));
-	return sSpendHex;
 }
 
 UniValue getspecialtxes(const JSONRPCRequest& request)
@@ -2546,6 +2248,88 @@ UniValue getspecialtxes(const JSONRPCRequest& request)
     return result;
 }
 
+std::string ScanDeterministicConfigFile(std::string sName)
+{
+    int linenumber = 1;
+    boost::filesystem::path pathDeterministicFile = GetDeterministicConfigFile();
+    boost::filesystem::ifstream streamConfig(pathDeterministicFile);
+    if (!streamConfig.good()) 
+		return std::string();
+	//Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Se$
+
+	for(std::string line; std::getline(streamConfig, line); linenumber++)
+    {
+        if(line.empty()) continue;
+        std::istringstream iss(line);
+        std::string sanctuary_name, ip, blsPubKey, BlsPrivKey, colOutputTxId, colOutputIndex, ProRegTxId, ProRegCollAddress, ProRegCollAddFundSentTxId;
+        if (iss >> sanctuary_name) 
+		{
+            if(sanctuary_name.at(0) == '#') continue;
+            iss.str(line);
+            iss.clear();
+        }
+
+		if (sanctuary_name == sName)
+		{
+			streamConfig.close();
+			return line;
+		}
+    }
+    streamConfig.close();
+    return std::string();
+}
+
+std::string ScanSanctuaryConfigFile(std::string sName)
+{
+    int linenumber = 1;
+    boost::filesystem::path pathMasternodeConfigFile = GetMasternodeConfigFile();
+    boost::filesystem::ifstream streamConfig(pathMasternodeConfigFile);
+    if (!streamConfig.good()) 
+		return std::string();
+	for(std::string line; std::getline(streamConfig, line); linenumber++)
+    {
+        if(line.empty()) continue;
+        std::istringstream iss(line);
+        std::string comment, alias, ip, privKey, txHash, outputIndex;
+        if (iss >> comment) 
+		{
+            if(comment.at(0) == '#') continue;
+            iss.str(line);
+            iss.clear();
+        }
+
+		if (comment == sName)
+		{
+			streamConfig.close();
+			return line;
+		}
+    }
+    streamConfig.close();
+    return std::string();
+}
+
+void AppendSanctuaryFile(std::string sFile, std::string sData)
+{
+    boost::filesystem::path pathDeterministicConfigFile = GetGenericFilePath(sFile);
+    boost::filesystem::ifstream streamConfig(pathDeterministicConfigFile);
+	bool fReadable = streamConfig.good();
+	if (fReadable)
+		streamConfig.close();
+    FILE* configFile = fopen(pathDeterministicConfigFile.string().c_str(), "a");
+    if (configFile != nullptr) 
+	{
+	    if (!fReadable) 
+		{
+            std::string strHeader = "# Deterministic Sanctuary Configuration File\n"
+				"# Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Sent-TxId\n";
+            fwrite(strHeader.c_str(), std::strlen(strHeader.c_str()), 1, configFile);
+        }
+    }
+	fwrite(sData.c_str(), std::strlen(sData.c_str()), 1, configFile);
+    fclose(configFile);
+}
+
+
 UniValue exec(const JSONRPCRequest& request)
 {
     if (request.fHelp || (request.params.size() != 1 && request.params.size() != 2  && request.params.size() != 3 && request.params.size() != 4 
@@ -2567,7 +2351,7 @@ UniValue exec(const JSONRPCRequest& request)
 		if (request.params.size() != 2) 
 			throw std::runtime_error("You must specify height.");
 		std::string sHeight = request.params[1].get_str();
-		int64_t nHeight = (int64_t)cdbl(sHeight,0);
+		int64_t nHeight = (int64_t)StringToDouble(sHeight, 0);
 		if (nHeight >= 1 && nHeight <= chainActive.Tip()->nHeight)
 		{
 			CBlockIndex* pindex = FindBlockByHeight(nHeight);
@@ -2580,7 +2364,7 @@ UniValue exec(const JSONRPCRequest& request)
         			results.push_back(Pair("subsidy", block.vtx[0]->vout[0].nValue/COIN));
 					std::string sRecipient = PubKeyToAddress(block.vtx[0]->vout[0].scriptPubKey);
 					results.push_back(Pair("recipient", sRecipient));
-					results.push_back(Pair("blockversion", GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage)));
+					results.push_back(Pair("blockinfo", block.vtx[0]->vout[0].sTxOutMessage));
 					results.push_back(Pair("minerguid", ExtractXML(block.vtx[0]->vout[0].sTxOutMessage,"<MINERGUID>","</MINERGUID>")));
 				}
 			}
@@ -2589,686 +2373,6 @@ UniValue exec(const JSONRPCRequest& request)
 		{
 			results.push_back(Pair("error","block not found"));
 		}
-	}
-	else if (sItem == "lockstakes")
-	{
-		LockUTXOStakes();
-		results.push_back(Pair("lock", 1));
-	}
-	else if (sItem == "testrsacreate")
-	{
-		RSAKey r = GetMyRSAKey();
-		results.push_back(Pair("pub", r.PublicKey));
-		results.push_back(Pair("priv", r.PrivateKey));
-		results.push_back(Pair("response", r.Error));
-	}
-	else if (sItem == "testnickname")
-	{
-		std::string sNN = request.params[1].get_str();
-		bool fIsMine = false;
-		bool fExist = NickNameExists("cpk", sNN, fIsMine);
-		results.push_back(Pair("ismine", fIsMine));
-	}
-	else if (sItem == "testrsa")
-	{
-		std::string sPubPath =  GetSANDirectory1() + "pubkey.pub";
-		std::string sPrivPath = GetSANDirectory1() + "privkey.priv";
-		std::string sError;
-		std::string sData = "1234567890-1234567890-1234567890";
-		std::string sEnc = RSA_Encrypt_String(sPubPath, sData ,sError);
-		results.push_back(Pair("enc", sEnc));
-		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
-		results.push_back(Pair("dec", sDec));
-	}
-	else if (sItem == "testrsa2")
-	{
-		RSAKey rsa1 = GetMyRSAKey();
-		RSAKey rsa2 = GetTestRSAKey();
-		std::string s = "";
-		for (int i = 0; i < 8192; i++)
-		{
-			s+= "n";
-		}
-		std::string sError;
-		std::string sEnc = RSA_Encrypt_String_With_Key(rsa2.PublicKey, s, sError);
-		results.push_back(Pair("enc", sEnc));
-		std::string sPrivPath =  GetSANDirectory1() + "privkeytest.priv";
-		std::string sDec = RSA_Decrypt_String(sPrivPath, sEnc, sError);
-		results.push_back(Pair("dec", sDec));
-		std::string sDec2 = RSA_Decrypt_String_With_Key(rsa2.PrivateKey, sEnc, sError);
-		results.push_back(Pair("dec2", sDec));
-	}
-	else if (sItem == "setmyaddress")
-	{
-		std::string sData = request.params[1].get_str();
-		std::vector<std::string> vD = Split(sData.c_str(), ",");
-		if (vD.size() < 5)
-		{
-			results.push_back(Pair("Error", "Address must be:  Name,Address-Line1,City,State,Zip"));
-		}
-		else
-		{
-			std::string sName = vD[0];
-			std::string sLine1 = vD[1];
-			std::string sCity = vD[2];
-			std::string sState = vD[3];
-			std::string sZip = vD[4];
-			results.push_back(Pair("Name", sName));
-			results.push_back(Pair("Address-line-1", sLine1));
-			results.push_back(Pair("City", sCity));
-			results.push_back(Pair("State", sState));
-			results.push_back(Pair("Zip", sZip));
-			results.push_back(Pair("Address Set Successfully", "NOTE:  If the fields above are incorrect, please re-set your address."));
-			std::string sHex = HexStr(sData.begin(), sData.end());
-			WriteKey("myaddress", sHex);
-		}
-	}
-	else if (sItem == "testnewkey")
-	{
-		std::string sPhrase = request.params[1].get_str();
-		DACResult d = MakeDerivedKey(sPhrase);
-		results.push_back(Pair("Address", d.Address));
-		results.push_back(Pair("Secret", d.SecretKey));
-	}
-	else if (sItem == "testreadacentry")
-	{
-		std::string sKey1 = request.params[1].get_str();
-		std::string sKey2 = request.params[2].get_str();
-		DACResult d = ReadAccountingEntry(sKey1, sKey2);
-		results.push_back(Pair("Amount", (double)d.nAmount/COIN));
-		results.push_back(Pair("Value", d.Response));
-	}
-	else if (sItem == "testwriteacentry")
-	{
-		std::string sKey1 = request.params[1].get_str();
-		std::string sKey2 = request.params[2].get_str();
-		std::string sValue = request.params[3].get_str();
-		CAmount nAmount = 5 * COIN;
-		bool fResponse = WriteAccountingEntry(sKey1, sKey2, sValue, nAmount);
-		results.push_back(Pair("Results", fResponse));	
-	}
-	else if (sItem == "testmail")
-	{
-		std::string sHelp = "exec testmail \"Name,Address-1,City,State,Zip\" \"Your customized recipient paragraph\" bbp_gift_amount 0=dry/1=real";
-		DMAddress dmFrom = DeserializeFrom();
-		results.push_back(Pair("From Name", dmFrom.Name));
-		results.push_back(Pair("From Address-line-1", dmFrom.AddressLine1));
-		results.push_back(Pair("From City", dmFrom.City));
-		results.push_back(Pair("From State", dmFrom.State));
-		results.push_back(Pair("From Zip", dmFrom.Zip));
-		std::string sData = request.params[1].get_str();
-		std::string sParagraph;
-		if (request.params.size() > 2)
-			sParagraph = request.params[2].get_str();
-		double dAmount = 0;
-		if (request.params.size() > 3)
-			dAmount = cdbl(request.params[3].get_str(), 2);
-		bool fDryRun = false;
-		if (request.params.size() > 4)
-			fDryRun = !(cdbl(request.params[4].get_str(), 0) == 1);
-		CAmount nAmount = GetBBPValueUSD(dAmount, 1537);
-		std::vector<std::string> vT = Split(sData.c_str(), ",");
-		if (vT.size() < 5)
-		{
-			results.push_back(Pair("Error", "To Address must be:  Name,Address-Line1,City,State,Zip"));
-		}
-		else
-		{
-			DMAddress dmTo;
-			dmTo.Name = vT[0];
-			dmTo.AddressLine1 = vT[1];
-			dmTo.City = vT[2];
-			dmTo.State = vT[3];
-			dmTo.Zip = vT[4];
-			dmTo.Amount = dAmount * COIN;
-			std::string sCode = dmTo.AddressLine1;
-			results.push_back(Pair("To Name", dmTo.Name));
-			results.push_back(Pair("To Address-line-1", dmTo.AddressLine1));
-			results.push_back(Pair("To City", dmTo.City));
-			results.push_back(Pair("To State", dmTo.State));
-			results.push_back(Pair("To Zip", dmTo.Zip));
-			results.push_back(Pair("Extra Paragraph", sParagraph));
-			dmTo.Paragraph1 = sParagraph;
-			results.push_back(Pair("Gift Amount", dAmount));
-			DACResult b = MailLetter(dmFrom, dmTo, true);
-			std::string sError = ExtractXML(b.Response, "<error>", "</error>");
-			std::string sPDF = ExtractXML(b.Response, "<pdf>", "</pdf>");
-			if (sError.empty())
-			{
-				results.push_back(Pair("Proof", sPDF));
-			}
-			else
-			{
-				results.push_back(Pair("Error", sError));
-			}
-		}
-	}
-	else if (sItem == "multisig1")
-	{
-		// Step 1:  Create a 1 of 2 multisig address (biblepayd createmultisig 1 N1, N2)
-		std::string sM1 = DefaultRecAddress("M1");
-		std::string sM2 = DefaultRecAddress("M2");
-
-		JSONRPCRequest myMultisig;
-		myMultisig.params.setArray();
-		myMultisig.params.push_back(1);
-		
-		std::string sArray = "[\"" + sM1 + "\",\"" + sM2 + "\"]";
-		results.push_back(Pair("Keypairs", sArray));
-
-		UniValue u(UniValue::VOBJ);
-		u.read(sArray);
-				
-		myMultisig.params.push_back(u);
-		
-		UniValue mySig = createmultisig(myMultisig);
-		
-		std::string myAddress = mySig["address"].getValStr();
-		std::string myRedeem = mySig["redeemScript"].getValStr();
-		results.push_back(Pair("Address", myAddress));
-		results.push_back(Pair("RedeemScript", myRedeem));
-
-		// Step 2:  Get a utxo from listunspent
-
-		JSONRPCRequest myUTXORequest;
-		myUTXORequest.params.setArray();
-		UniValue myUTXOs = listunspent(myUTXORequest);
-		std::string sUTXOID;
-		std::string sUTXOVOUT;
-		std::string sAmt;
-		double dAmt = 0;
-		for (int i = 0; i < myUTXOs.size(); i++)
-		{
-			sUTXOID = myUTXOs[i]["txid"].getValStr();
-			sUTXOVOUT = myUTXOs[i]["vout"].getValStr();
-			sAmt = myUTXOs[i]["amount"].getValStr();
-			dAmt = cdbl(sAmt, 2);
-			if (dAmt < 5)
-				break;
-		}
-
-		results.push_back(Pair("UTXO-1", sUTXOID));
-		results.push_back(Pair("UTXO-VOUT", sUTXOVOUT));
-		results.push_back(Pair("Amount", sAmt));
-
-		// Step 3: Create Raw Transaction that FUNDS the Multisig
-
-		std::string sFundHex = MultiSigCreateRawTransaction(results, sUTXOID, sUTXOVOUT, "", "", myAddress, "1.07");
-		
-		// Step 4:  Sign the Raw Funding transaction
-
-		std::string sFundHexSigned = MultiSigSignRawTransaction(results, sFundHex, "", "", "");
-		results.push_back(Pair("Fund Hex Signed", sFundHexSigned));
-		std::string sDestCPK = DefaultRecAddress("Christian-Public-Key");
-		// Step 5: Grab the TXID from the sFundHexSigned
-		JSONRPCRequest decodeReq;
-		decodeReq.params.setArray();
-		decodeReq.params.push_back(sFundHexSigned);
-		UniValue myDecodedOutput = decoderawtransaction(decodeReq);
-		std::string sDecodedTxId = myDecodedOutput["txid"].getValStr();
-		std::string sDecodedVout = myDecodedOutput["vout"][0]["n"].getValStr();
-		std::string sScriptPubKeyHex = myDecodedOutput["vout"][0]["scriptPubKey"]["hex"].getValStr();
-		
-		// Step 6: Create a raw transaction that SPENDS the multisig transaction into the CPK
-
-		std::string sSpendHex = MultiSigCreateRawTransaction(results, sDecodedTxId, sDecodedVout, sScriptPubKeyHex, myRedeem,	sDestCPK, "0.50");
-		
-		// Step 7:  Sign the raw SPENDING transaction using the 1st keypair of the MultiSig keychain set
-		
-		std::string sSpentHexSigned = MultiSigSignRawTransaction(results, sSpendHex, sFundHexSigned, myRedeem, sM1);
-		results.push_back(Pair("SpentHexSigned", sSpentHexSigned));
-
-		// Step 8 : Relay the Funding transaction
-		if (false)
-		{
-			JSONRPCRequest sendRawReq;
-			sendRawReq.params.setArray();
-			sendRawReq.params.push_back(sFundHexSigned);
-			UniValue myRelayedFundingTxOutput = sendrawtransaction(sendRawReq);
-			std::string sRelayedFundingTxOutputHex = myRelayedFundingTxOutput.getValStr();
-			results.push_back(Pair("FundingTxTXID", sRelayedFundingTxOutputHex));
-			// Step 9 : Relay the Spending Transaction
-			JSONRPCRequest sendSpendReq;
-			sendSpendReq.params.setArray();
-			sendSpendReq.params.push_back(sSpentHexSigned);
-			UniValue myRelayedSpendingTxOutput = sendrawtransaction(sendSpendReq);
-			std::string sRelayedSpendingTxOutputHex = myRelayedSpendingTxOutput.getValStr();
-			results.push_back(Pair("SpendingTX_TXID", sRelayedSpendingTxOutputHex));
-		}
-
-	}
-	else if (sItem == "pinfo")
-	{
-		// Used by the Pools
-		results.push_back(Pair("height", chainActive.Tip()->nHeight));
-		int64_t nElapsed = GetAdjustedTime() - chainActive.Tip()->nTime;
-		int64_t nMN = nElapsed * 256;
-		if (nElapsed > (30 * 60)) 
-			nMN=999999999;
-		if (nMN < 512) nMN = 512;
-		results.push_back(Pair("pinfo", nMN));
-		results.push_back(Pair("elapsed", nElapsed));
-	}
-	else if (sItem == "rxpools")
-	{
-		std::string sPoolList = GetSporkValue("RX_POOLS_LIST");
-		results.push_back(Pair("rx_pools", sPoolList));
-	}
-	else if (sItem == "sendalert")
-	{
-		/*
-		// This command allows BiblePay devs to send out a network alert (or an upgrade notification etc).
-		// We are able to fine tune this alert to reach only certain protocol version ranges.
-		// The alert no longer puts the client in safe mode, so this is a safe process now.
-		if (request.params.size() != 2) 
-			throw std::runtime_error("You must specify the alert in quotes");
-		std::string sAlert = request.params[1].get_str();
-	    // Alerts are relayed around the network until nRelayUntil, flood filling to every node.
-		// After the relay time is past, new nodes are told about alerts when they connect to peers, until either nExpiration or
-		// the alert is cancelled by a newer alert.   Nodes never save alerts to disk, they are in-memory-only.
-		CAlert alert;
-		alert.nRelayUntil   = GetAdjustedTime() + 15 * 60;
-		alert.nExpiration   = GetAdjustedTime() + 30 * 60 * 60;
-		alert.nID           = 1;  // keep track of alert IDs somewhere
-		alert.nCancel       = 0;   // cancels previous messages up to this ID number
-		// These versions are protocol versions
-		alert.nMinVer       = 70000;
-		alert.nMaxVer       = 70755;
-		//  1000 for Misc warnings like out of disk space and clock is wrong
-		//  2000 for longer invalid proof-of-work chain
-		//  Higher numbers mean higher priority
-		alert.nPriority     = 5000;
-		alert.strComment    = "";
-		alert.strStatusBar  = sAlert;
-		// Set specific client version/versions here. If setSubVer is empty, no filtering on subver is done:
-		// alert.setSubVer.insert(std::string("/Core:0.12.0.58/"));
-		// Sign
-		if(!alert.Sign())
-			throw std::runtime_error("Unable to sign.");
-		CDataStream sBuffer(SER_NETWORK, CLIENT_VERSION);
-		sBuffer << alert;
-		CAlert alert2;
-		sBuffer >> alert2;
-		if (!alert2.CheckSignature())
-			throw std::runtime_error("CheckSignature failed");
-		assert(alert2.vchMsg == alert.vchMsg);
-		assert(alert2.vchSig == alert.vchSig);
-		alert.SetNull();
-		results.push_back(Pair("hash", alert2.GetHash().ToString()));
-		results.push_back(Pair("msg", HexStr(alert2.vchMsg)));
-		results.push_back(Pair("sig", HexStr(alert2.vchSig)));
-		// Send
-		int nSent = 0;
-		{
-			g_connman->ForEachNode([&alert2, &nSent](CNode* pnode) {
-			if (alert2.RelayTo(pnode, *g_connman))
-			  {
-					printf("ThreadSendAlert() : Sent alert to %s\n", pnode->addr.ToString().c_str());
-					nSent++;
-			  }
-			});
-		}
-	   	results.push_back(Pair("relayed", nSent));
-		*/
-	}
-	else if (sItem == "versioncheck")
-	{
-		std::string sGithubVersion = GetGithubVersion();
-		std::string sCurrentVersion = FormatFullVersion();
-		results.push_back(Pair("Github_version", sGithubVersion));
-		results.push_back(Pair("Current_version", sCurrentVersion));
-
-	}
-	else if (sItem == "sins")
-	{
-		std::string sEntry = "";
-		int iSpecificEntry = 0;
-		UniValue aDataList = GetDataList("SIN", 7, iSpecificEntry, "", sEntry);
-		return aDataList;
-	}
-	else if (sItem == "dacengine")
-	{
-		std::map<std::string, Orphan> mapOrphans;
-		std::map<std::string, Expense> mapExpenses;
-
-		std::map<std::string, double> mapDAC = DACEngine(mapOrphans, mapExpenses);
-		for (auto dacAllocation : mapDAC)
-		{
-			std::string sAllocatedCharity = dacAllocation.first;
-			double nPct = dacAllocation.second;
-			results.push_back(Pair("Allocated Charity", sAllocatedCharity));
-			results.push_back(Pair("Percentage", nPct));
-		}
-		for (auto orphan : mapOrphans)
-		{
-			std::string sRow = "Name: " + orphan.second.Name + ", Amount: " 
-				+ RoundToString(orphan.second.MonthlyAmount, 2) + ", URL: " + orphan.second.URL + ", Charity: " + orphan.second.Charity;
-			results.push_back(Pair(orphan.first, sRow));
-		}
-
-		double nTotalExpenses = 0;
-		double nTotalRevenue = 0;
-		double nTotalRevenueBBP = 0;
-		double nTotalExpensesBBP = 0;
-		for (auto expense : mapExpenses)
-		{
-			if (expense.second.nUSDAmount > 0)
-			{
-				nTotalExpenses += expense.second.nUSDAmount;
-				nTotalExpensesBBP += expense.second.nBBPAmount;
-			}
-			else
-			{
-				nTotalRevenue += expense.second.nUSDAmount * -1;
-				nTotalRevenueBBP += expense.second.nBBPAmount * -1;
-			}
-		}
-		results.push_back(Pair("Expense Total (USD)", nTotalExpenses));
-		results.push_back(Pair("Revenue Total (USD)", nTotalRevenue));
-		// Show the Monthly Totals here
-	}
-	else if (sItem == "testpin")
-	{
-		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-		std::string s2 = request.params[1].get_str();
-		if (s2.empty())
-			s2 = sCPK;
-		double nPin = AddressToPin(s2);
-		results.push_back(Pair("pin", nPin));
-	}
-	else if (sItem == "listorphans")
-	{
-		std::string sEntry;
-		int iSE = 0;
-		UniValue uDL = GetDataList("XSPORK-ORPHAN", 999, iSE, "XSPORK-ORPHAN", sEntry);
-		return uDL;
-	}
-	else if (sItem == "listcharities")
-	{
-		std::string sEntry;
-		int iSE = 0;
-		UniValue uDL = GetDataList("XSPORK-CHARITY", 999, iSE, "XSPORK-CHARITY", sEntry);
-		return uDL;
-	}
-	else if (sItem == "readverse")
-	{
-		if (request.params.size() != 3 && request.params.size() != 4 && request.params.size() != 5)
-			throw std::runtime_error("You must specify Book and Chapter: IE 'readverse CO2 10'.  \nOptionally you may enter the Language (EN/CN) IE 'readverse CO2 10 CN'. \nOptionally you may enter the VERSE #, IE: 'readverse CO2 10 EN 2'.  To see a list of books: run getbooks.");
-		std::string sBook = request.params[1].get_str();
-		int iChapter = cdbl(request.params[2].get_str(),0);
-		int iVerse = 0;
-
-		if (request.params.size() > 3)
-		{
-			msLanguage = request.params[3].get_str();
-		}
-		if (request.params.size() > 4)
-			iVerse = cdbl(request.params[4].get_str(), 0);
-
-		if (request.params.size() == 4) iVerse = cdbl(request.params[3].get_str(), 0);
-		results.push_back(Pair("Book", sBook));
-		results.push_back(Pair("Chapter", iChapter));
-		results.push_back(Pair("Language", msLanguage));
-		if (iVerse > 0) results.push_back(Pair("Verse", iVerse));
-		int iStart = 0;
-		int iEnd = 0;
-		GetBookStartEnd(sBook, iStart, iEnd);
-		for (int i = iVerse; i < BIBLE_VERSE_COUNT; i++)
-		{
-			std::string sVerse = GetVerseML(msLanguage, sBook, iChapter, i, iStart - 1, iEnd);
-			if (iVerse > 0 && i > iVerse) break;
-			if (!sVerse.empty())
-			{
-				std::string sKey = sBook + " " + RoundToString(iChapter, 0) + ":" + RoundToString(i, 0);
-			    results.push_back(Pair(sKey, sVerse));
-			}
-		}
-	}
-	else if (sItem == "testenc")
-	{
-		std::string sPath = request.params[1].get_str();
-		bool fTest = EncryptFile(sPath, sPath + ".enc");
-		results.push_back(Pair("res", fTest));
-	}
-	else if (sItem == "testdec")
-	{
-		std::string sPath = request.params[1].get_str();
-		bool fTest = DecryptFile(sPath, sPath + ".dec");
-		results.push_back(Pair("res", fTest));
-	}
-	else if (sItem == "bipfs_list")
-	{
-		for (auto item : mapSidechainTransactions)
-		{
-			std::string sDesc = "FileName: " + item.second.FileName + ", Fee=" + RoundToString(item.second.nFee/COIN, 4) + ", Size=" + RoundToString(item.second.nSize, 2) 
-				+ ", Duration=" + RoundToString(item.second.nDuration, 0)
-				+ ", Density=" + RoundToString(item.second.nDensity, 0) + ", BlockHash=" + item.second.BlockHash + ", URL=" + item.second.URL + ", Network=" + item.second.Network 
-				+ ", Height=" + RoundToString(item.second.nHeight, 0);
-			results.push_back(Pair(item.second.TXID, sDesc));
-		}
-	}
-	else if (sItem == "bipfs_get")
-	{
-		if (request.params.size() != 4)
-			throw std::runtime_error("You must specify exec bipfs_get web_path local_path 0=not_encrypted/1=encrypted.  IE: exec bipfs_get web_path local_path 0.  "
-			" ( The web_path is the web URL.  The file_path the target folder location on your machine.  ");
-		
-		std::string sWebPath = request.params[1].get_str();
-		std::string sDirPath = request.params[2].get_str();
-		double nEncrypted = cdbl(request.params[3].get_str(), 0);
-		bool fEncrypted = nEncrypted == 1 ? true : false;
-		std::string sURL = FormatURL(sWebPath, 0); 
-		std::string sPage = FormatURL(sWebPath, 1);
-		DACResult d = DownloadFile(sURL, sPage, 443, 30000, sDirPath, fEncrypted);
-		results.push_back(Pair("Domain", sURL));
-		results.push_back(Pair("Page", sPage));
-		results.push_back(Pair("Results", d.Response));
-		results.push_back(Pair("Error", d.ErrorCode));
-	}
-	else if (sItem == "bipfs_file")
-	{
-		if (request.params.size() != 7)
-			throw std::runtime_error("You must specify exec bipfs_file file_path webpath target_density lease_duration_in_days 0=not_encrypted/1=encrypted 0=dryrun/1=real.  IE: exec bipfs_file file_path mywebpath 1 30 0 0.  "
-			" ( The file_path is the location of the file on your machine.  The web_path is the target URL of the file.  "
-			" The target density is how many world regions you would like the file to be stored in (choose 1-4).  "
-			" The lease duration in days is the number of days you would like the file stored for.  Dry Run=0 means we will not charge for the transaction, we will test the outcome and send you a price quote.  "
-			" Dry Run=1 means to actually perform the upload and charge the transaction, and make the file live on the BiblePay IPFS network. ");
-
-		std::string sDirPath = request.params[1].get_str();
-		std::string sWebPath = request.params[2].get_str();
-		int nTargetDensity = cdbl(request.params[3].get_str(), 0);
-		int nDurationDays = cdbl(request.params[4].get_str(), 0);
-		if (nTargetDensity < 1 || nTargetDensity > 4)
-			throw std::runtime_error("Invalid density. (Must be 1-4).");
-		if (nDurationDays < 1 || nDurationDays > (365*10))
-			throw std::runtime_error("Invalid lease duration (must be 1-36,500 in days).");
-
-		int nEncrypted = cdbl(request.params[5].get_str(), 0);
-		bool fEncrypted = nEncrypted == 1 ? true : false;
-
-		int nDryRun = cdbl(request.params[6].get_str(), 0);
-		if (nDryRun < 0 || nDryRun > 1)
-			throw std::runtime_error("Invalid dry run value (must be 0 or 1).");
-		bool fDryRun = nDryRun == 0 ? true : false;
-		std::string sTXID;
-		if (!fDryRun)
-		{
-			// Persist TXID
-			DACResult dDry = BIPFS_UploadFile(sDirPath, sWebPath, sTXID, nTargetDensity, nDurationDays, true, fEncrypted);
-			if (dDry.nFee/COIN < 1)
-				throw std::runtime_error("Unable to calculate fee. ");
-			std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-			std::string sHash = RetrieveMd5(sDirPath);
-			std::string sXML = "<bipfs>" + sHash + "</bipfs>";
-			std::string sError;
-			std::string sExtraPayload = "<size>" + RoundToString(dDry.nSize, 0) + "</size>";
-			sTXID = SendBlockchainMessage("bipfs", sCPK, sXML, dDry.nFee/COIN, 0, sExtraPayload, sError);
-			if (!sError.empty())
-			{
-				throw std::runtime_error("IPFS::" + sError);
-			}
-			if (false)
-				SyncSideChain(chainActive.Tip()->nHeight);
-			results.push_back(Pair("TXID", sTXID));
-		}
-		else
-		{
-			sTXID = RetrieveMd5(sDirPath);
-		}
-
-		DACResult d = BIPFS_UploadFile(sDirPath, sWebPath, sTXID, nTargetDensity, nDurationDays, fDryRun, fEncrypted);
-
-		//BOOST_FOREACH(PAIRTYPE(std::string, IPFSTransaction) item, d.mapResponses)
-		for (auto item : d.mapResponses)
-		{
-			std::string sDesc = "File: " + item.second.File + ", Response: " + item.second.Response + ", Fee=" + RoundToString(item.second.nFee/COIN, 4) + ", Size=" + RoundToString(d.nSize, 2) + "] [Error=" + d.ErrorCode + "]";
-			results.push_back(Pair(item.second.TXID, sDesc));
-			// For each Density 
-			//BOOST_FOREACH(PAIRTYPE(std::string, std::string) region, item.second.mapRegions)
-			for (auto region : item.second.mapRegions)
-			{
-				results.push_back(Pair(region.first, region.second));
-			}
-		}
-
-	}
-	else if (sItem == "bipfs_folder")
-	{
-		if (request.params.size() != 7)
-			throw std::runtime_error("You must specify exec bipfs_folder file_path webpath target_density lease_duration_in_days 0=unencrypted/1=encrypted 0=dryrun/1=real.  IE: exec bipfs_folder foldername mywebpath 1 30 0 0.  "
-			" ( The file_path is the location of the file on your machine.  The web_path is the target URL of the file.  "
-			" The target density is how many world regions you would like the file to be stored in (choose 1-4).  "
-			" The lease duration in days is the number of days you would like the file stored for.  Dry Run=0 means we will not charge for the transaction, we will test the outcome and send you a price quote.  "
-			" Dry Run=1 means to actually perform the upload and charge the transaction, and make the file live on the BiblePay IPFS network. ");
-
-		std::string sDirPath = request.params[1].get_str();
-		std::string sWebPath = request.params[2].get_str();
-		int nTargetDensity = cdbl(request.params[3].get_str(), 0);
-		int nDurationDays = cdbl(request.params[4].get_str(), 0);
-		if (nTargetDensity < 1 || nTargetDensity > 4)
-			throw std::runtime_error("Invalid density. (Must be 1-4).");
-		if (nDurationDays < 1 || nDurationDays > (365*10))
-			throw std::runtime_error("Invalid lease duration (must be 1-36,500 in days).");
-
-		int nEncrypted = cdbl(request.params[5].get_str(), 0);
-		bool fEncrypted = nEncrypted == 1 ? true : false;
-
-		if (nEncrypted < 0 || nEncrypted > 1)
-			throw std::runtime_error("Invalid encrypted (must be 0 or 1)");
-
-		int nDryRun = cdbl(request.params[6].get_str(), 0);
-		if (nDryRun < 0 || nDryRun > 1)
-			throw std::runtime_error("Invalid dry run value (must be 0 or 1).");
-		bool fDryRun = nDryRun == 0 ? true : false;
-
-		std::string sTXID;
-		if (!fDryRun)
-		{
-			// Persist TXID
-			DACResult dDry = BIPFS_UploadFolder(sDirPath, sWebPath, sTXID, nTargetDensity, nDurationDays, true, fEncrypted);
-			if (dDry.nFee/COIN < 1)
-				throw std::runtime_error("Unable to calculate fee. ");
-
-			std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-			std::string sHash = RetrieveMd5(sDirPath);
-			std::string sXML = "<bipfs>" + sHash + "</bipfs>";
-			std::string sError;
-			std::string sExtraPayload = "<size>" + RoundToString(dDry.nSize, 0) + "</size>";
-			sTXID = SendBlockchainMessage("bipfs", sCPK, sXML, dDry.nFee/COIN, 0, sExtraPayload, sError);
-			if (!sError.empty())
-			{
-				throw std::runtime_error("IPFS::" + sError);
-			}
-			// Dry run succeeded
-			results.push_back(Pair("TXID", sTXID));
-		}
-		else
-		{
-			sTXID = RetrieveMd5(sDirPath);
-		}
-
-		DACResult d = BIPFS_UploadFolder(sDirPath, sWebPath, sTXID, nTargetDensity, nDurationDays, fDryRun, fEncrypted);
-		for (auto item : d.mapResponses)
-		{
-			std::string sDesc = "File: " + item.second.File + ", Response: " + item.second.Response + ", Fee=" + RoundToString(item.second.nFee/COIN, 4) + ", Size=" + RoundToString(d.nSize, 2) + "] [Error=" + d.ErrorCode + "]";
-			results.push_back(Pair(item.second.TXID, sDesc));
-			for (auto region : item.second.mapRegions)
-			{
-				results.push_back(Pair(region.first, region.second));
-			}
-		}
-		results.push_back(Pair("Total Size", d.nSize));
-		results.push_back(Pair("Total Fee", (double)(d.nFee / COIN)));
-		results.push_back(Pair("Results", d.Response));
-	}
-	else if (sItem == "testgscvote")
-	{
-		int iNextSuperblock = 0;
-		int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
-		std::string sContract = GetGSCContract(0, true); // As of iLastSuperblock height
-		results.push_back(Pair("end_height", iLastSuperblock));
-		results.push_back(Pair("contract", sContract));
-		std::string sAddresses;
-		std::string sAmounts;
-		std::string out_qtdata;
-		int iVotes = 0;
-		uint256 uGovObjHash = uint256S("0x0");
-		uint256 uPAMHash = GetPAMHashByContract(sContract);
-		results.push_back(Pair("pam_hash", uPAMHash.GetHex()));
-		GetGSCGovObjByHeight(iNextSuperblock, uPAMHash, iVotes, uGovObjHash, sAddresses, sAmounts, out_qtdata);
-		std::string sError;
-		results.push_back(Pair("govobjhash", uGovObjHash.GetHex()));
-		results.push_back(Pair("Addresses", sAddresses));
-		results.push_back(Pair("Amounts", sAmounts));
-		results.push_back(Pair("QTData", out_qtdata));
-		double dTotal = AddVector(sAmounts, "|");
-		results.push_back(Pair("Total_Target_Spend", dTotal));
-		if (uGovObjHash == uint256S("0x0"))
-		{
-			results.push_back(Pair("contract_empty_voting", 1));
-			// create the contract
-			std::string sQuorumTrigger = SerializeSanctuaryQuorumTrigger(iLastSuperblock, iNextSuperblock, GetAdjustedTime(), sContract);
-			std::string sGobjectHash;
-			SubmitGSCTrigger(sQuorumTrigger, sGobjectHash, sError);
-			results.push_back(Pair("quorum_hex", sQuorumTrigger));
-			// Add the contract explanation as JSON
-			std::vector<unsigned char> v = ParseHex(sQuorumTrigger);
-			std::string sMyQuorumTrigger(v.begin(), v.end());
-			UniValue u(UniValue::VOBJ);
-			u.read(sMyQuorumTrigger);
-			std::string sMyJsonQuorumTrigger = u.write().c_str();
-			results.push_back(Pair("quorum_json", sMyJsonQuorumTrigger));
-			results.push_back(Pair("quorum_gobject_trigger_hash", sGobjectHash));
-			results.push_back(Pair("quorum_error", sError));
-		}
-		results.push_back(Pair("gsc_protocol_version", PROTOCOL_VERSION));
-		double nMinGSCProtocolVersion = GetSporkDouble("MIN_GSC_PROTO_VERSION", 0);
-		bool bVersionSufficient = (PROTOCOL_VERSION >= nMinGSCProtocolVersion);
-		results.push_back(Pair("min_gsc_proto_version", nMinGSCProtocolVersion));
-		results.push_back(Pair("version_sufficient", bVersionSufficient));
-		results.push_back(Pair("votes_for_my_contract", iVotes));
-		int iRequiredVotes = GetRequiredQuorumLevel(iNextSuperblock);
-		results.push_back(Pair("required_votes", iRequiredVotes));
-		results.push_back(Pair("last_superblock", iLastSuperblock));
-		results.push_back(Pair("next_superblock", iNextSuperblock));
-		CAmount nLastLimit = CSuperblock::GetPaymentsLimit(iLastSuperblock, true);
-		results.push_back(Pair("last_payments_limit", (double)nLastLimit/COIN));
-		CAmount nNextLimit = CSuperblock::GetPaymentsLimit(iNextSuperblock, true);
-		results.push_back(Pair("next_payments_limit", (double)nNextLimit/COIN));
-		bool fOverBudget = IsOverBudget(iNextSuperblock, GetAdjustedTime(), sAmounts);
-		results.push_back(Pair("overbudget", fOverBudget));
-		if (fOverBudget)
-			results.push_back(Pair("! CAUTION !", "Superblock exceeds budget, will be rejected."));
-	
-		bool fTriggered = CSuperblockManager::IsSuperblockTriggered(iNextSuperblock);
-		results.push_back(Pair("next_superblock_triggered", fTriggered));
-
-		std::string sReqPay = CSuperblockManager::GetRequiredPaymentsString(iNextSuperblock);
-		results.push_back(Pair("next_superblock_req_payments", sReqPay));
-
-		bool bRes = VoteForGSCContract(iNextSuperblock, sContract, sError);
-		results.push_back(Pair("vote_result", bRes));
-		results.push_back(Pair("vote_error", sError));
 	}
 	else if (sItem == "blocktohex")
 	{
@@ -3283,335 +2387,18 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sTxCoinbaseHex1 = EncodeHexTx(*block.vtx[0]);
 		results.push_back(Pair("blockhex", sBlockHex1));
 		results.push_back(Pair("txhex", sTxCoinbaseHex1));
-
-	}
-	else if (sItem == "hexblocktocoinbase")
-	{
-		/*
-		if (request.params.size() != 2)
-			throw std::runtime_error("You must specify the block serialization hex.");
-		JSONRPCRequest myCommand;
-		myCommand.params.setArray();
-		myCommand.params.push_back(request.params[1].get_str());
-		results = hexblocktocoinbase(myCommand);
-		*/
-	}
-	else if (sItem == "search")
-	{
-		if (request.params.size() != 2 && request.params.size() != 3)
-			throw std::runtime_error("You must specify type: IE 'exec search PRAYER'.  Optionally you may enter a search phrase: IE 'exec search PRAYER MOTHER'.");
-		std::string sType = request.params[1].get_str();
-		std::string sSearch;
-		if (request.params.size() == 3) 
-			sSearch = request.params[2].get_str();
-		std::map<std::string, std::string> mData = SearchForDataList(sType, sSearch);
-		for (auto kv : mData)
-		{
-			results.push_back(Pair(kv.first, kv.second));
-		}
-	}
-	else if (sItem == "cleanseoldpkvalue")
-	{
-		if (request.params.size() != 2 && request.params.size() != 3)
-			throw std::runtime_error("You must specify type: IE 'exec cleanseoldpkvalue pk1 pk2'");
-		std::string sPK1 = request.params[1].get_str();
-		std::string sPK2 = request.params[2].get_str();
-		std::map<std::string, std::string> mData = SearchForDataList(sPK1, sPK2);
-		for (auto kv : mData)
-		{
-			results.push_back(Pair(kv.first, kv.second));
-			std::string s1 = GetElement(kv.first, "[-]", 0);
-			std::string s2 = GetElement(kv.first, "[-]", 1);
-			std::string sError;
-			std::string sResult = SendBlockchainMessage(s1, s2, " ", 1000, 1, "", sError);
-			results.push_back(Pair("Results", sResult + " " + sError));
-			break;
-		}
-	}
-	else if (sItem == "getsporkdouble")
-	{
-		std::string sType = request.params[1].get_str();
-		double dValue = GetSporkDouble(sType, 0);
-		results.push_back(Pair(sType, dValue));
-	}
-	else if (sItem == "persistsporkmessage")
-	{
-		std::string sError = "You must specify type, key, value: IE 'exec persistsporkmessage dcccomputingprojectname rosetta'";
-		if (request.params.size() != 4)
-			 throw std::runtime_error(sError);
-		std::string sType = request.params[1].get_str();
-		std::string sPrimaryKey = request.params[2].get_str();
-		std::string sValue = request.params[3].get_str();
-
-		if (sType.empty() || sPrimaryKey.empty() || sValue.empty())
-			throw std::runtime_error(sError);
-		double dFee = fProd ? 10 : 5001;
-		// Allows a datastore chain value to be saved if blank (an edit)
-		if (sValue == "[null]")
-			sValue = "";
-    	std::string sResult = SendBlockchainMessage(sType, sPrimaryKey, sValue, dFee, 1, "", sError);
-		results.push_back(Pair("Sent", sValue));
-		results.push_back(Pair("TXID", sResult));
-		if (!sError.empty()) results.push_back(Pair("Error", sError));
-	}
-	else if (sItem == "cpk")
-	{
-		std::string sError;
-		if (request.params.size() != 2 && request.params.size() != 3 && request.params.size() != 4 && request.params.size() != 5)
-			throw std::runtime_error("You must specify exec cpk nickname [optional e-mail address] [optional vendortype=church/user/vendor] [optional: force=true/false].");
-		std::string sNickName = request.params[1].get_str();
-		bool fForce = false;
-		std::string sEmail;
-		std::string sVendorType;
-
-		if (request.params.size() >= 3)
-			sEmail = request.params[2].get_str();
-		
-		if (request.params.size() >= 4)
-			sVendorType = request.params[3].get_str();
-
-		if (request.params.size() >= 5)
-			fForce = request.params[4].get_str() == "true" ? true : false;
-
-		bool fAdv = AdvertiseChristianPublicKeypair("cpk", sNickName, sEmail, sVendorType, false, fForce, 0, "", sError);
-		results.push_back(Pair("Results", fAdv));
-		if (!fAdv)
-			results.push_back(Pair("Error", sError));
 	}
 	else if (sItem == "sendmanyxml")
 	{
 		// Pools: Allows pools to send a multi-output tx with ease
 		// Format: exec sendmanyxml from_account xml_payload comment
-	    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
-
-		LOCK2(cs_main, pwallet->cs_wallet);
 		std::string strAccount = request.params[1].get_str();
 		if (strAccount == "*")
 			throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Invalid account name");
 		std::string sXML = request.params[2].get_str();
-		int nMinDepth = 1;
-		CWalletTx wtx;
-		wtx.strFromAccount = strAccount;
-		wtx.mapValue["comment"] = request.params[3].get_str();
-		std::set<CScript> setAddress;
-		std::vector<CRecipient> vecSend;
-		CAmount totalAmount = 0;
-		std::string sRecipients = ExtractXML(sXML, "<RECIPIENTS>","</RECIPIENTS>");
-		std::vector<std::string> vRecips = Split(sRecipients.c_str(), "<ROW>");
-		for (int i = 0; i < (int)vRecips.size(); i++)
-		{
-			std::string sRecip = vRecips[i];
-			if (!sRecip.empty())
-			{
-				std::string sRecipient = ExtractXML(sRecip, "<RECIPIENT>","</RECIPIENT>");
-				double dAmount = cdbl(ExtractXML(sRecip,"<AMOUNT>","</AMOUNT>"),4);
-				if (!sRecipient.empty() && dAmount > 0)
-				{
-					  CScript spkAddress = GetScriptForDestination(DecodeDestination(sRecipient));
-
-	   		   	      if (!ValidateAddress2(sRecipient))
-						  throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid address: ") + sRecipient);
-					  if (setAddress.count(spkAddress))
-						  throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + sRecipient);
-					  setAddress.insert(spkAddress);
-					  CAmount nAmount = dAmount * COIN;
-					  if (nAmount <= 0) 
-						  throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for send");
-					  totalAmount += nAmount;
-					  bool fSubtractFeeFromAmount = false;
-				      CRecipient recipient = {spkAddress, nAmount, false, fSubtractFeeFromAmount};
-					  vecSend.push_back(recipient);
-				}
-			}
-		}
-		EnsureWalletIsUnlocked(pwallet);
-		// Send
-		CReserveKey keyChange(pwallet);
-		CAmount nFeeRequired = 0;
-		int nChangePosRet = -1;
-		std::string strFailReason;
-		bool fUseInstantSend = false;
-		bool fUsePrivateSend = false;
-		CValidationState state;
-	    CCoinControl coinControl;
-		bool fCreated = pwallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, 
-			strFailReason, coinControl, true, 0);
-		if (!fCreated)
-			throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
-    
-		if (!pwallet->CommitTransaction(wtx, keyChange, g_connman.get(), state))
-			throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
-		results.push_back(Pair("txid", wtx.GetHash().GetHex()));
-	}
-	else if (sItem == "register")
-	{
-		if (request.params.size() != 2)
-			throw std::runtime_error("The purpose of this command is to register your nickname with BMS (the decentralized web).  This feature will not be available until December 2019.  \nYou must specify your nickname.");
-		std::string sProject = "cpk-bmsuser";
-		std::string sNN;
-		sNN = request.params[1].get_str();
-		boost::to_lower(sProject);
-		std::string sError;
-		bool fAdv = AdvertiseChristianPublicKeypair(sProject, "", sNN, "", false, true, 0, "", sError);
-		results.push_back(Pair("Results", fAdv));
-		if (!fAdv)
-			results.push_back(Pair("Error", sError));
-	}
-	else if (sItem == "arm64test")
-	{
-		double n1 = cdbl(request.params[1].get_str(), 0);
-		double n2 = cdbl(request.params[2].get_str(), 0);
-		bool f = ARM64Matches(n1 * COIN, n2 * COIN);
-		results.push_back(Pair("bool", f));
-		results.push_back(Pair("n1", n1));
-		results.push_back(Pair("n2", n2));
-	}
-	else if (sItem == "blscommand")
-	{
-		if (request.params.size() != 2)	
-			throw std::runtime_error("You must specify blscommand masternodeprivkey masternodeblsprivkey.");	
-
- 		std::string sMNP = request.params[1].get_str();
-		std::string sMNBLSPrivKey = request.params[2].get_str();
-		std::string sCommand = "masternodeblsprivkey=" + sMNBLSPrivKey;
-		std::string sEnc = EncryptAES256(sCommand, sMNP);
-		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-		std::string sXML = "<blscommand>" + sEnc + "</blscommand>";
-		std::string sError;
-		std::string sResult = SendBlockchainMessage("bls", sCPK, sXML, 1, 0, "", sError);
-		if (!sError.empty())
-			results.push_back(Pair("Errors", sError));
-		results.push_back(Pair("blsmessage", sXML));
-	}
-	else if (sItem == "addexpense")
-	{
-		std::string sType = "XSPORK-EXPENSE";
-		// XSPORK-EXPENSE (TYPE) | (VALUE1) expense-id | (RECORD) (added, charity, bbpamount, usdamount)
-		std::string sDelim = "[-]";
-		std::string sExpenseID = request.params[1].get_str();
-		std::string sAdded = request.params[2].get_str();
-		std::string sCharity = request.params[3].get_str();
-		double nBBPAmount = cdbl(request.params[4].get_str(), 2);
-		double nUSDAmount = cdbl(request.params[5].get_str(), 2);
-		std::string sError;
-		if (sExpenseID.empty() || sAdded.empty() || sCharity.empty() || nUSDAmount == 0)
-		{
-			sError = "Critical information missing!";
-			throw std::runtime_error(sError);
-		}
-		std::string sValue = sAdded + sDelim + sCharity + sDelim + RoundToString(nBBPAmount, 2) + sDelim + RoundToString(nUSDAmount, 2);
-
-		double dFee = 1000;
-		std::string sResult = SendBlockchainMessage(sType, sExpenseID, sValue, dFee, 1, "", sError);
-		if (!sError.empty())
-			results.push_back(Pair("Error", sError));
-		results.push_back(Pair("Result", sResult));
-
-	}
-	else if (sItem == "addorphan")
-	{
-		std::string sType = "XSPORK-ORPHAN";
-		// XSPORK-ORPHAN (TYPE) | (VALUE1) orphan-id | (RECORD) (charity, name, URL, monthly Amount)
-		std::string sDelim = "[-]";
-		std::string sOrphanID = request.params[1].get_str();
-		std::string sCharity = request.params[2].get_str();
-		std::string sOrphanName = request.params[3].get_str();
-		std::string sURL = request.params[4].get_str();
-		double dAmt = cdbl(request.params[5].get_str(), 2);
-		std::string sError;
-		if (sOrphanID.empty() || sCharity.empty() || sOrphanName.empty() || dAmt == 0)
-		{
-			sError = "Critical orphan information missing!";
-			throw std::runtime_error(sError);
-		}
-		std::string sValue = sCharity + sDelim + sOrphanName + sDelim + sURL + sDelim + RoundToString(dAmt, 2);
-		double dFee = 1000;
-		std::string sResult = SendBlockchainMessage(sType, sOrphanID, sValue, dFee, 1, "", sError);
-		if (!sError.empty())
-			results.push_back(Pair("Error", sError));
-		results.push_back(Pair("Result", sResult));
-	}
-	else if (sItem == "addcharity")
-	{
-		std::string sType = "XSPORK-CHARITY";
-		// XSPORK-CHARITY (TYPE) | (VALUE) Charity-Name | (RECORD) (BBPAddress, URL)
-		std::string sDelim = "[-]";
-		std::string sCharity = request.params[1].get_str();
-		std::string sAddress = request.params[2].get_str();
-		std::string sURL = request.params[3].get_str();
-		std::string sError;
-		if (sCharity.empty() || sAddress.empty() || sURL.empty())
-		{
-			sError = "Critical orphan information missing!";
-			throw std::runtime_error(sError);
-		}
-		std::string sValue = sAddress + sDelim + sURL;
-		double dFee = 1000;
-		std::string sResult = SendBlockchainMessage(sType, sCharity, sValue, dFee, 1, "", sError);
-		if (!sError.empty())
-			results.push_back(Pair("Error", sError));
-		results.push_back(Pair("Result", sResult));
-	}
-	else if (sItem == "health")
-	{
-		// This command pulls the best-superblock (the one with the highest votes for the next height)
-		bool bImpossible = (!masternodeSync.IsSynced());
-		int iNextSuperblock = 0;
-		int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
-		std::string sAddresses;
-		std::string sAmounts;
-		int iVotes = 0;
-		uint256 uGovObjHash = uint256S("0x0");
-		uint256 uPAMHash = uint256S("0x0");
-		std::string out_qtdata;
-		GetGSCGovObjByHeight(iNextSuperblock, uPAMHash, iVotes, uGovObjHash, sAddresses, sAmounts, out_qtdata);
-		uint256 hPam = GetPAMHash(sAddresses, sAmounts, out_qtdata);
-		results.push_back(Pair("pam_hash", hPam.GetHex()));
-		std::string sContract = GetGSCContract(iLastSuperblock, true);
-		uint256 hPAMHash2 = GetPAMHashByContract(sContract);
-		results.push_back(Pair("pam_hash_internal", hPAMHash2.GetHex()));
-		if (hPAMHash2 != hPam)
-		{
-			results.push_back(Pair("WARNING", "Our internal PAM hash disagrees with the network. "));
-		}
-		results.push_back(Pair("govobjhash", uGovObjHash.GetHex()));
-		int iRequiredVotes = GetRequiredQuorumLevel(iNextSuperblock);
-		results.push_back(Pair("Amounts", sAmounts));
-		results.push_back(Pair("Addresses", sAddresses));
-		results.push_back(Pair("votes", iVotes));
-		results.push_back(Pair("required_votes", iRequiredVotes));
-		results.push_back(Pair("last_superblock", iLastSuperblock));
-		results.push_back(Pair("next_superblock", iNextSuperblock));
-		results.push_back(Pair("qt_data", out_qtdata));
-		bool fTriggered = CSuperblockManager::IsSuperblockTriggered(iNextSuperblock);
-		results.push_back(Pair("next_superblock_triggered", fTriggered));
-		if (bImpossible)
-		{
-			results.push_back(Pair("WARNING", "Running in Lite Mode or Sanctuaries are not synced."));
-		}
-
-		bool fHealthy = (!sAmounts.empty() && !sAddresses.empty() && uGovObjHash != uint256S("0x0")) || bImpossible;
-		results.push_back(Pair("Healthy", fHealthy));
-		bool fPassing = (iVotes >= iRequiredVotes);
-	    results.push_back(Pair("GSC_Voted_In", fPassing));
-	}
-	else if (sItem == "watchman")
-	{
-		std::string sContract;
-		std::string sResponse = WatchmanOnTheWall(true, sContract);
-		results.push_back(Pair("Response", sResponse));
-		results.push_back(Pair("Contract", sContract));
-	}
-	else if (sItem == "getgschashes")
-	{
-		int iNextSuperblock = 0;
-		int iLastSuperblock = GetLastGSCSuperblockHeight(chainActive.Tip()->nHeight, iNextSuperblock);
-		std::string sContract = GetGSCContract(0, true); // As of iLastSuperblock height
-		results.push_back(Pair("Contract", sContract));
-		uint256 hPAMHash = GetPAMHashByContract(sContract);
-		std::string sData;
-		GetGovObjDataByPamHash(iNextSuperblock, hPAMHash, sData);
-		results.push_back(Pair("Data", sData));
+		std::string sTXID;
+		SendManyXML(sXML, sTXID);
+		results.push_back(Pair("txid", sTXID));
 	}
 	else if (sItem == "masterclock")
 	{
@@ -3648,18 +2435,11 @@ UniValue exec(const JSONRPCRequest& request)
 				}
 		}
 	}
-	else if (sItem == "getdacinfo")
-	{
-		results.push_back(Pair("currency_name", CURRENCY_NAME));
-		results.push_back(Pair("DOMAIN_NAME", DOMAIN_NAME));
-		results.push_back(Pair("TICKER", CURRENCY_TICKER));
-	}
 	else if (sItem == "revivesanc")
 	{
 		// Sanctuary Revival
 		// The purpose of this command is to make it easy to Revive a POSE-banned deterministic sanctuary.  (In contrast to knowing how to create and send the protx update_service command).
 		std::string sExtraHelp = "NOTE:  If you do not have a deterministic.conf file, you can still revive your sanctuary this way: protx update_service proreg_txID sanctuaryIP:Port sanctuary_blsPrivateKey\n\n NOTE: You can right click on the sanctuary in the Sanctuaries Tab in QT and obtain the proreg_txID, and, you can write the IP down from the list.  You still need to find your sanctuaryBLSPrivKey.\n";
-
 		if (request.params.size() != 2)
 			throw std::runtime_error("revivesanc v1.1: You must specify exec revivesanc sanctuary_name (where the sanctuary_name matches the name in the deterministic.conf file).\n\n" + sExtraHelp);
 		std::string sSearch = request.params[1].get_str();
@@ -3697,76 +2477,25 @@ UniValue exec(const JSONRPCRequest& request)
 		// If we made it this far and an error was not thrown:
 		results.push_back(Pair("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes."));
 	}
-	else if (sItem == "testinvoice")
+	else if (sItem == "testsc")
 	{
-		Invoice i;
-		i.sFromAddress = DefaultRecAddress("Christian-Public-Key");
-		i.sToAddress = "ye5Q19NvrCouYhEfFHeVaEG3LqzePrTt9H";
-		i.nAmount = 5000 * COIN;
-		i.sDescription = "Cat bathing.";
-		i.nTime = GetAdjustedTime();
-		DACResult r = SendInvoice(i);
-		results.push_back(Pair("1", r.TXID));
-		results.push_back(Pair("1e", r.ErrorCode));
-
-		Invoice j;
-		j.sFromAddress = DefaultRecAddress("Christian-Public-Key");
-		j.sToAddress = "ye5Q19NvrCouYhEfFHeVaEG3LqzePrTt9H";
-		j.nAmount = 4000 * COIN;
-		j.nTime = GetAdjustedTime();
-		j.sDescription = "Cat drying.";
-
-		r = SendInvoice(j);
-
-		results.push_back(Pair("2", r.TXID));
-		results.push_back(Pair("2e", r.ErrorCode));
-
-		Payment p;
-		p.sFromAddress = i.sToAddress;
-		p.sToAddress = i.sFromAddress;
-		p.nAmount = 7777 * COIN;
-		p.nTime = GetAdjustedTime();
-		r = SendPayment(p);
-
-		results.push_back(Pair("3", r.TXID));
-		results.push_back(Pair("3e", r.ErrorCode));
+		std::string sToAddress = DefaultRecAddress("sc");
+		std::string sTXID;
+		std::string sError;
+		std::string sXML = "<sc><objtype>test</objtype><url>https://test.com/</url></sc>";
+		bool fSent = RPCSendMoney(sError, sToAddress, 1 * COIN, sTXID, sXML);
+		results.push_back(Pair("TXID", sTXID));
 	}
-	else if (sItem == "testdsql1")
+	else if (sItem == "listsc")
 	{
-		UniValue oDSQL(UniValue::VOBJ);
-		oDSQL.push_back(Pair("address", "1001 main"));
-		oDSQL.push_back(Pair("city", "sewickly"));
-		oDSQL.push_back(Pair("zip", "15001"));
-		DACResult d = SendDSQL(oDSQL, "Property", "12345");
-		results.push_back(Pair("q", d.ErrorCode));
-		d = SendDSQL(oDSQL, "Property", "12346");
-		results.push_back(Pair("q", d.ErrorCode));
-	}
-	else if (sItem == "testreadinvoice")
-	{
-		std::vector<Invoice> vI = GetInvoices();
-		std::vector<Payment> vP = GetPayments();
-		for (auto inv : vI)
-			{
-				UniValue o(UniValue::VOBJ);
-				inv.ToJson(o);
-				results.push_back(Pair(inv.GetHash().GetHex(), o));
-			}
-
-			for (auto pay : vP)
-			{
-				UniValue o(UniValue::VOBJ);
-				pay.ToJson(o);
-
-				results.push_back(Pair(pay.GetHash().GetHex(), o));
-			}
-	}
-	else if (sItem == "teststatement")
-	{
-		std::string sSvcAddress = DefaultRecAddress("Christian-Public-Key");
-		std::string sMyAddress = "ye5Q19NvrCouYhEfFHeVaEG3LqzePrTt9H";
-		std::string sInfo = "getstatement " + sSvcAddress + " " + sMyAddress;
-		results.push_back(Pair("info", sInfo));
+		results.push_back(Pair("scsz", mapSidechain.size()));
+		for (auto ii : mapSidechain) 
+		{
+			Sidechain s = mapSidechain[ii.first];
+		    UniValue o;
+            s.ToJson(o);
+    		results.push_back(Pair(ii.first, o));
+		}
 	}
 	else if (sItem == "upgradesanc")
 	{
@@ -3774,7 +2503,7 @@ UniValue exec(const JSONRPCRequest& request)
 			throw std::runtime_error("You must specify exec upgradesanc sanctuary_name (where the sanctuary_name matches the name in the masternode.conf file) 0/1 (where 0=dry-run, 1=real).   NOTE:  Please be sure your masternode.conf has a carriage return after the end of every sanctuary entry (otherwise we can't parse each entry correctly). ");
 
 		std::string sSearch = request.params[1].get_str();
-		int iDryRun = cdbl(request.params[2].get_str(), 0);
+		int iDryRun = StringToDouble(request.params[2].get_str(), 0);
 		std::string sSanc = ScanSanctuaryConfigFile(sSearch);
 		if (sSanc.empty())
 			throw std::runtime_error("Unable to find sanctuary " + sSearch + " in masternode.conf file.");
@@ -3789,7 +2518,7 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sMNP = vSanc[2];
 		std::string sCollateralTXID = vSanc[3];
 		std::string sCollateralTXIDOrdinal = vSanc[4];
-		double dColOrdinal = cdbl(sCollateralTXIDOrdinal, 0);
+		double dColOrdinal = StringToDouble(sCollateralTXIDOrdinal, 0);
 		if (sCollateralTXIDOrdinal.length() != 1 || dColOrdinal > 9 || sCollateralTXID.length() < 16)
 		{
 			throw std::runtime_error("Sanctuary entry in masternode.conf corrupted (collateral txid missing, or there is no newline at the end of the entry in the masternode.conf file.)");
@@ -3798,16 +2527,14 @@ UniValue exec(const JSONRPCRequest& request)
 		// Step 1: Fund the protx fee
 		// 1a. Create the new deterministic-sanctuary reward address
 		std::string sPayAddress = DefaultRecAddress(sSancName + "-d"); //d means deterministic
-		CScript baPayAddress = GetScriptForDestination(DecodeDestination(sPayAddress));
 		std::string sVotingAddress = DefaultRecAddress(sSancName + "-v"); //v means voting
 		std::string sError;
-		std::string sData = "<protx></protx>";  // Reserved for future use
-
-	    CWalletTx wtx;
+		
 		bool fSubtractFee = false;
 		bool fInstantSend = false;
 		// 1b. We must send 1 COIN to ourself first here, as the deterministic sanctuaries future fund receiving address must be prefunded with enough funds to cover the non-financial transaction transmission below
-		bool fSent = RPCSendMoney(sError, baPayAddress, 1 * COIN, fSubtractFee, wtx, fInstantSend, sData);
+		std::string sTXID;
+		bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID);
 
 		if (!sError.empty() || !fSent)
 			throw std::runtime_error("Unable to fund protx_register fee: " + sError);
@@ -3849,8 +2576,8 @@ UniValue exec(const JSONRPCRequest& request)
 		newRequest.params.push_back("0");             // Pct of rewards to share with Operator (This is the amount of reward we want to share with a Sanc Operator - IE a hosting company)
 		newRequest.params.push_back(sPayAddress);     // [8] = Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
 		// Fee Source Address (prevents Fee 404)
-		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-		newRequest.params.push_back(sCPK);
+		// 		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		newRequest.params.push_back(sPayAddress);
 
 		// 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
 		UniValue rProReg = protx(newRequest);
@@ -3894,38 +2621,6 @@ UniValue exec(const JSONRPCRequest& request)
 		if (iDryRun == 1)
 			AppendSanctuaryFile("deterministic.conf", sDSD);
 	}
-	else if (sItem == "randomx_pool")
-	{
-        std::unique_lock<std::mutex> lock(cs_blockchange);
-		{
-			std::string sHeader = request.params[1].get_str();
-			std::string sKey = request.params[2].get_str();
-			std::vector<unsigned char> v = ParseHex(sHeader);
-			std::vector<unsigned char> vKey = ParseHex(sKey);
-
-			std::string sRevKey = ReverseHex(sKey);
-			uint256 uKey = uint256S("0x" + sRevKey);
-			uint256 uRXMined = RandomX_Hash(v, uKey, 90);
-
-			std::vector<unsigned char> vch(160);
-			CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
-			ss << chainActive.Tip()->GetBlockHash() << uRXMined;
-			uint256 h = HashBlake((const char *)vch.data(), (const char *)vch.data() + vch.size());
-
-			results.push_back(Pair("RX", h.GetHex()));
-			results.push_back(Pair("RX_root", uRXMined.GetHex()));
-
-		}
-	}
-	else if (sItem == "pobh")
-	{
-		std::string sInput = request.params[1].get_str();
-		double d1 = cdbl(request.params[2].get_str(), 0);
-		uint256 hSource = uint256S("0x" + sInput);
-		uint256 h = BibleHashDebug(hSource, d1 == 1);
-		results.push_back(Pair("in-hash", hSource.GetHex()));
-		results.push_back(Pair("out-hash", h.GetHex()));
-	}
 	else if (sItem == "randomx")
 	{
 		std::string sHeader = request.params[1].get_str();
@@ -3935,133 +2630,23 @@ UniValue exec(const JSONRPCRequest& request)
 		std::vector<unsigned char> v = ParseHex(sHeader);
 		uint256 uRX3 = RandomX_Hash(v, uKey, 99);
 		results.push_back(Pair("hash2", uRX3.GetHex()));
-		uint256 uRX4 = HashBlake(v.begin(), v.end());
-		results.push_back(Pair("hashBlakeInSz", (int)v.size()));
-		results.push_back(Pair("hashBlake", uRX4.GetHex()));
-	}
-	else if (sItem == "analyze")
-	{
-		if (request.params.size() != 3)
-			throw std::runtime_error("You must specify height and nickname.");
-		int nHeight = cdbl(request.params[1].get_str(), 0);
-		std::string sNickName = request.params[2].get_str();
-		WriteCache("analysis", "user", sNickName, GetAdjustedTime());
-		UniValue p = GetProminenceLevels(nHeight + BLOCKS_PER_DAY, "");
-		std::string sData1 = ReadCache("analysis", "data_1");
-		std::string sData2 = ReadCache("analysis", "data_2");
-		results.push_back(Pair("Campaign", "Totals"));
+		std::string sFakeHeader = "<rxheader>" + sHeader + "</rxheader>";
+		uint256 rxhash3 = GetRandomXHash3(sFakeHeader, uKey, 2);
+		results.push_back(Pair("hash3", rxhash3.GetHex()));
 
-		std::vector<std::string> v = Split(sData2.c_str(), "\n");
-		for (int i = 0; i < (int)v.size(); i++)
-		{
-			std::string sRow = v[i];
-			results.push_back(Pair(RoundToString(i, 0), sRow));
-		}
-
-		results.push_back(Pair("Campaign", "Points"));
-
-		v = Split(sData1.c_str(), "\n");
-		for (int i = 0; i < (int)v.size(); i++)
-		{
-			std::string sRow = v[i];
-			results.push_back(Pair(RoundToString(i, 0), sRow));
-		}
-	}
-	else if (sItem == "vectoroffiles")
-	{
-		std::string dirPath = "/testbed";	
-		std::vector<std::string> skipList;
-		std::vector<std::string> g = GetVectorOfFilesInDirectory(dirPath, skipList);
-		// Iterate over the vector and print all files
-		for (auto str : g)
-		{
-			results.push_back(Pair("File", str));
-		}
-	}
-	else if (sItem == "votewithcoinage")
-	{
-		std::string sGobjectID = request.params[1].get_str();
-		std::string sOutcome = request.params[2].get_str();
-		std::string TXID_OUT;
-		std::string ERROR_OUT;
-		bool fVoted = VoteWithCoinAge(sGobjectID, sOutcome, ERROR_OUT);
-		results.push_back(Pair("vote-error", ERROR_OUT));
-		results.push_back(Pair("vote-result", fVoted));
-		if (!TXID_OUT.empty())
-		{
-			double nCoinAge = GetCoinAge(TXID_OUT);
-			results.push_back(Pair("vote-coin-age", nCoinAge));
-		}
-	}
-	else if (sItem == "getgobjectvotingdata")
-	{
-		std::string sGobjectID = request.params[1].get_str();
-
-		CoinAgeVotingDataStruct c = GetCoinAgeVotingData(sGobjectID);
-		for (int i = 0; i < 3; i++)
-		{
-			results.push_back(Pair("Vote Type", i));
-			for (auto myVote : c.mapsVoteCount[i])
-			{
-				results.push_back(Pair(myVote.first, myVote.second));
-			}
-			results.push_back(Pair("Total Votes Type " + RoundToString(i, 0), c.mapTotalVotes[i]));
-			for (auto myAge : c.mapsVoteAge[i])
-			{
-				results.push_back(Pair(myAge.first, myAge.second));
-			}
-			results.push_back(Pair("Total Age Type " + RoundToString(i, 0), c.mapTotalCoinAge[i]));
-		}
-	}
-	else if (sItem == "apminfo")
-	{
-		int iNextSuperblock = 0;
-		int nHeight = cdbl(request.params[1].get_str(), 0);
-		int iLastSuperblock = GetLastGSCSuperblockHeight(nHeight, iNextSuperblock);
-		double dAPM = CalculateAPM(iLastSuperblock);
-		double dAPM2 = CalculateAPM(iNextSuperblock);
-		double dAPM3 = ExtractAPM(iLastSuperblock);
-		results.push_back(Pair("As of Height", iLastSuperblock));
-		results.push_back(Pair("APM", dAPM));
-		results.push_back(Pair("APM_Extract", dAPM3));
-		results.push_back(Pair("APM as of Next Superblock " + RoundToString(iNextSuperblock, 0), dAPM2));
-	}
-	else if (sItem == "testhttps")
-	{
-		std::string sURL = "https://" + GetSporkValue("bms");
-		std::string sRestfulURL = "BMS/LAST_MANDATORY_VERSION";
-		std::string sResponse = Uplink(false, "", sURL, sRestfulURL, SSL_PORT, 25, 1);
-		results.push_back(Pair(sRestfulURL, sResponse));
-	}
-	else if (sItem == "sendmessage")
-	{
-		std::string sError = "You must specify type, key, value: IE 'exec sendmessage PRAYER mother Please_pray_for_my_mother.'";
-		if (request.params.size() != 4)
-			 throw std::runtime_error(sError);
-
-		std::string sType = request.params[1].get_str();
-		std::string sPrimaryKey = request.params[2].get_str();
-		std::string sValue = request.params[3].get_str();
-		if (sType.empty() || sPrimaryKey.empty() || sValue.empty())
-			throw std::runtime_error(sError);
-		std::string sResult = SendBlockchainMessage(sType, sPrimaryKey, sValue, 1, 0, "", sError);
-		results.push_back(Pair("Sent", sValue));
-		results.push_back(Pair("TXID", sResult));
-		results.push_back(Pair("Error", sError));
 	}
 	else if (sItem == "getgovlimit")
 	{
 		const Consensus::Params& consensusParams = Params().GetConsensus();
 		int nBits = 486585255;
-		int nHeight = cdbl(request.params[1].get_str(), 0);
-		CAmount nLimit = CSuperblock::GetPaymentsLimit(nHeight, true);
+		int nHeight = StringToDouble(request.params[1].get_str(), 0);
+		CAmount nLimit = CSuperblock::GetPaymentsLimit(nHeight);
 		CAmount nReward = GetBlockSubsidy(nBits, nHeight, consensusParams, false);
 		CAmount nRewardGov = GetBlockSubsidy(nBits, nHeight, consensusParams, true);
 		CAmount nSanc = GetMasternodePayment(nHeight, nReward);
         results.push_back(Pair("Limit", (double)nLimit/COIN));
 		results.push_back(Pair("Subsidy", (double)nReward/COIN));
 		results.push_back(Pair("Sanc", (double)nSanc/COIN));
-		// Evo Audit: 14700 gross, @98400=13518421, @129150=13225309/Daily = @129170=1013205
 		results.push_back(Pair("GovernanceSubsidy", (double)nRewardGov/COIN));
 	}
 	else if (sItem == "hexblocktojson")
@@ -4085,19 +2670,39 @@ UniValue exec(const JSONRPCRequest& request)
         TxToJSON(tx, uint256(), objTx);
         results.push_back(objTx);
 	}
-	else if (sItem == "hextxtojson2")
+	else if (sItem == "nextcontract")
 	{
-		std::string sHex = request.params[1].get_str();
-		CMutableTransaction tx;
-        DecodeHexTx(tx, request.params[0].get_str());
-        UniValue objTx(UniValue::VOBJ);
-        TxToJSON(tx, uint256(), objTx);
-        results.push_back(objTx);
+		int nNextDailyHeight = 0;
+		if (request.params.size() > 1)
+		{
+			nNextDailyHeight = (int)StringToDouble(request.params[1].get_str(), 0);
+		}
+		else
+		{
+			int nBlockHeight = chainActive.Height();
+			nNextDailyHeight = GetNextDailySuperblock(nBlockHeight);
+		}
+
+		std::string s = ScanChainForData(nNextDailyHeight);
+		results.push_back(Pair("nextdailysuperblock", nNextDailyHeight));
+		results.push_back(Pair("nextcontract", s));
+		std::vector<Portfolio> vPortfolio = GetDailySuperblock(nNextDailyHeight);
+		CAmount nTotalPayments = 0;
+		for (int i = 0; i < vPortfolio.size(); i++)
+		{
+			std::string sRecipient1 = vPortfolio[i].OwnerAddress;
+			CAmount nAmount1 = vPortfolio[i].Owed * COIN;
+			nTotalPayments += nAmount1;
+			results.push_back(Pair("Recipient" + DoubleToString(i, 0), sRecipient1));
+			results.push_back(Pair("Amount" + DoubleToString(i,0) , AmountToString(nAmount1)));
+		
+		}
+		results.push_back(Pair("Total", AmountToString(nTotalPayments)));
 	}
 	else if (sItem == "blocktohex")
 	{
 		std::string sBlock = request.params[1].get_str();
-		int nHeight = (int)cdbl(sBlock,0);
+		int nHeight = (int)StringToDouble(sBlock, 0);
 		if (nHeight < 0 || nHeight > chainActive.Tip()->nHeight) 
 			throw std::runtime_error("Block number out of range.");
 		CBlockIndex* pblockindex = FindBlockByHeight(nHeight);
@@ -4114,21 +2719,6 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(Pair("blockhex", sBlockHex));
 		results.push_back(Pair("txhex", sTxCoinbaseHex));
 	}
-	else if (sItem == "getarg")
-	{
-		// Allows user to display a configuration value (useful if you are not sure if you entered a config value in your file)
-		std::string sArg = request.params[1].get_str();
-		std::string sValue = gArgs.GetArg("-" + sArg, "");
-		results.push_back(Pair("arg v2.0", sValue));
-	}
-	else if (sItem == "xnonce")
-	{
-		const Consensus::Params& consensusParams = Params().GetConsensus();
-		int nHeight = consensusParams.ANTI_GPU_HEIGHT + 1;
-		double dNonce = cdbl(request.params[1].get_str(), 0);
-		bool fNonce =  CheckNonce(true, (int)dNonce, nHeight, 1, 301, consensusParams);
-		results.push_back(Pair("result", fNonce));
-	}
 	else
 	{
 		results.push_back(Pair("Error", "Command not found"));
@@ -4137,16 +2727,21 @@ UniValue exec(const JSONRPCRequest& request)
 	return results;
 }
 
+
 UniValue savemempool(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0) {
         throw std::runtime_error(
             "savemempool\n"
-            "\nDumps the mempool to disk.\n"
+            "\nDumps the mempool to disk. It will fail until the previous dump is fully loaded.\n"
             "\nExamples:\n"
             + HelpExampleCli("savemempool", "")
             + HelpExampleRpc("savemempool", "")
         );
+    }
+
+    if (!g_is_mempool_loaded) {
+        throw JSONRPCError(RPC_MISC_ERROR, "The mempool was not loaded yet");
     }
 
     if (!DumpMempool()) {
@@ -4184,15 +2779,17 @@ static const CRPCCommand commands[] =
     { "blockchain",         "pruneblockchain",        &pruneblockchain,        {"height"} },
     { "blockchain",         "savemempool",            &savemempool,            {} },
     { "blockchain",         "verifychain",            &verifychain,            {"checklevel","nblocks"} },
+
     { "blockchain",         "preciousblock",          &preciousblock,          {"blockhash"} },
 
     /* Not shown in help */
     { "hidden",             "invalidateblock",        &invalidateblock,        {"blockhash"} },
     { "hidden",             "reconsiderblock",        &reconsiderblock,        {"blockhash"} },
-    { "hidden",             "waitfornewblock",        &waitfornewblock,        {"timeout"} },
 	{ "hidden",             "exec",				      &exec,                   {"1","2","3","4","5","6","7"} },
+    { "hidden",             "waitfornewblock",        &waitfornewblock,        {"timeout"} },
     { "hidden",             "waitforblock",           &waitforblock,           {"blockhash","timeout"} },
     { "hidden",             "waitforblockheight",     &waitforblockheight,     {"height","timeout"} },
+    { "hidden",             "syncwithvalidationinterfacequeue", &syncwithvalidationinterfacequeue, {} },
 };
 
 void RegisterBlockchainRPCCommands(CRPCTable &t)
@@ -4200,34 +2797,3 @@ void RegisterBlockchainRPCCommands(CRPCTable &t)
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
 }
-
-
-uint256 Sha256001(int nType, int nVersion, std::string data)
-{
-    CHash256 ctx;
-	unsigned char *val = new unsigned char[data.length()+1];
-	strcpy((char *)val, data.c_str());
-	ctx.Write(val, data.length()+1);
-    uint256 result;
-	ctx.Finalize((unsigned char*)&result);
-    return result;
-}
-
-DMAddress DeserializeFrom()
-{
-	std::string sAddress = gArgs.GetArg("-myaddress", "");
-	std::vector<unsigned char> v = ParseHex(sAddress);
-	std::string sData(v.begin(), v.end());
-	std::vector<std::string> vD = Split(sData.c_str(), ",");
-	DMAddress dmFrom;
-
-	if (vD.size() < 5)
-		return dmFrom;
-	dmFrom.Name = vD[0];
-	dmFrom.AddressLine1 = vD[1];
-	dmFrom.City = vD[2];
-	dmFrom.State = vD[3];
-	dmFrom.Zip = vD[4];
-	return dmFrom;
-}
-

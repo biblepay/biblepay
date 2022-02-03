@@ -1,4 +1,4 @@
-Sample init scripts and service configuration for biblepayd
+﻿Sample init scripts and service configuration for biblepayd
 ==========================================================
 
 Sample scripts and configuration files for systemd, Upstart and OpenRC
@@ -84,6 +84,8 @@ Installing this .service file consists of just copying it to
 To test, run `systemctl start biblepayd` and to enable for system startup run
 `systemctl enable biblepayd`
 
+NOTE: When installing for systemd in Debian/Ubuntu the .service file needs to be copied to the /lib/systemd/system directory instead.
+
 ### OpenRC
 
 Rename biblepayd.openrc to biblepayd and drop it in /etc/init.d.  Double
@@ -92,6 +94,8 @@ check ownership and permissions and make it executable.  Test it with
 `rc-update add biblepayd`
 
 ### Upstart (for Debian/Ubuntu based distributions)
+
+Upstart is the default init system for Debian/Ubuntu versions older than 15.04. If you are using version 15.04 or newer and haven't manually configured upstart you should follow the systemd instructions instead.
 
 Drop biblepayd.conf in /etc/init.  Test by running `service biblepayd start`
 it will automatically start on reboot.
@@ -104,7 +108,7 @@ use old versions of Upstart and do not supply the start-stop-daemon utility.
 Copy biblepayd.init to /etc/init.d/biblepayd. Test by running `service biblepayd start`.
 
 Using this script, you can adjust the path and flags to the biblepayd program by
-setting the BIBLEPAYD and FLAGS environment variables in the file
+setting the biblepayd and FLAGS environment variables in the file
 /etc/sysconfig/biblepayd. You can also use the DAEMONOPTS environment variable here.
 
 ### Mac OS X

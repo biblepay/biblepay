@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
-# Copyright (c) 2014-2018 The Däsh Core developers
+# Copyright (c) 2014-2018 The DÃSH Core Developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -37,7 +37,6 @@ QT_FORMS_UI = \
   qt/forms/coincontroldialog.ui \
   qt/forms/editaddressdialog.ui \
   qt/forms/helpmessagedialog.ui \
-  qt/forms/menudialog.ui \
   qt/forms/intro.ui \
   qt/forms/modaloverlay.ui \
   qt/forms/masternodelist.ui \
@@ -51,20 +50,7 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
-  qt/forms/transactiondescdialog.ui \
-  qt/forms/chatdialog.ui \
-  qt/forms/proposaladddialog.ui \
-  qt/forms/nftadddialog.ui \
-  qt/forms/utxodialog.ui \
-  qt/forms/mailsenddialog.ui \
-  qt/forms/userdialog.ui \
-  qt/forms/memorizescripturedialog.ui \
-  qt/forms/proposals.ui \
-  qt/forms/secdialog.ui \
-  qt/forms/businessobjectlist.ui \
-  qt/forms/generictable.ui \
-  qt/forms/finalexamdialog.ui 
- 
+  qt/forms/transactiondescdialog.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -113,23 +99,9 @@ QT_MOC_CPP = \
   qt/moc_transactiontablemodel.cpp \
   qt/moc_transactionview.cpp \
   qt/moc_utilitydialog.cpp \
-  qt/moc_menudialog.cpp \
   qt/moc_walletframe.cpp \
   qt/moc_walletmodel.cpp \
-  qt/moc_walletview.cpp \
-  qt/moc_proposaladddialog.cpp \
-  qt/moc_nftadddialog.cpp \
-  qt/moc_utxodialog.cpp \
-  qt/moc_mailsenddialog.cpp \
-  qt/moc_userdialog.cpp \
-  qt/moc_memorizescripturedialog.cpp \
-  qt/moc_finalexamdialog.cpp \
-  qt/moc_businessobjectlist.cpp \
-  qt/moc_generictabledialog.cpp \
-  qt/moc_chatdialog.cpp \
-  qt/moc_secdialog.cpp \
-  qt/moc_proposals.cpp 
- 
+  qt/moc_walletview.cpp
 
 BITCOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -206,37 +178,26 @@ BITCOIN_QT_H = \
   qt/transactiontablemodel.h \
   qt/transactionview.h \
   qt/utilitydialog.h \
-  qt/menudialog.h \
-  qt/proposaladddialog.h \
-  qt/nftadddialog.h \
-  qt/utxodialog.h \
-  qt/mailsenddialog.h \
-  qt/userdialog.h \
-  qt/memorizescripturedialog.h \
-  qt/finalexamdialog.h \
-  qt/chatdialog.h \
-  qt/proposals.h \
-  qt/secdialog.h \
   qt/walletframe.h \
   qt/walletmodel.h \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
-  qt/businessobjectlist.h \
-  qt/generictabledialog.h \
   qt/winshutdownmonitor.h
 
 RES_ICONS = \
-  qt/res/icons/bitcoin.ico \
-  qt/res/icons/bitcoin_testnet.ico \
-  qt/res/icons/bitcoin.png \
-  qt/res/icons/chevron.png \
+  qt/res/icons/biblepay.ico \
+  qt/res/icons/biblepay_testnet.ico \
+  qt/res/icons/biblepay.png \
   qt/res/icons/warning.png \
   qt/res/icons/address-book.png \
-  qt/res/icons/clock1.png \
-  qt/res/icons/clock2.png \
-  qt/res/icons/clock3.png \
-  qt/res/icons/clock4.png \
-  qt/res/icons/clock5.png \
+  qt/res/icons/transaction0.png \
+  qt/res/icons/transaction1.png \
+  qt/res/icons/transaction2.png \
+  qt/res/icons/transaction3.png \
+  qt/res/icons/transaction4.png \
+  qt/res/icons/transaction5.png \
+  qt/res/icons/transaction_abandoned.png \
+  qt/res/icons/transaction_locked.png \
   qt/res/icons/connect1_16.png \
   qt/res/icons/connect2_16.png \
   qt/res/icons/connect3_16.png \
@@ -251,11 +212,8 @@ RES_ICONS = \
   qt/res/icons/lock_open.png \
   qt/res/icons/remove.png \
   qt/res/icons/synced.png \
-  qt/res/icons/transaction0.png \
-  qt/res/icons/verify.png \
   qt/res/icons/fontbigger.png \
-  qt/res/icons/fontsmaller.png \
-  qt/res/icons/transaction_abandoned.png
+  qt/res/icons/fontsmaller.png
 
 BITCOIN_QT_BASE_CPP = \
   qt/appearancewidget.cpp \
@@ -280,7 +238,6 @@ BITCOIN_QT_BASE_CPP = \
   qt/splashscreen.cpp \
   qt/trafficgraphdata.cpp \
   qt/trafficgraphwidget.cpp \
-  qt/menudialog.cpp \
   qt/utilitydialog.cpp
 
 BITCOIN_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
@@ -313,20 +270,7 @@ BITCOIN_QT_WALLET_CPP = \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp \
-  qt/proposaladddialog.cpp \
-  qt/nftadddialog.cpp \
-  qt/utxodialog.cpp \
-  qt/mailsenddialog.cpp \
-  qt/userdialog.cpp \
-  qt/memorizescripturedialog.cpp \
-  qt/finalexamdialog.cpp \
-  qt/chatdialog.cpp \
-  qt/secdialog.cpp \
-  qt/businessobjectlist.cpp \
-  qt/generictabledialog.cpp \
-  qt/proposals.cpp 
-  
+  qt/walletview.cpp
 
 BITCOIN_QT_CPP = $(BITCOIN_QT_BASE_CPP)
 if TARGET_WINDOWS
@@ -457,7 +401,7 @@ if TARGET_WINDOWS
 endif
 qt_biblepay_qt_LDADD = qt/libbiblepayqt.a $(LIBBITCOIN_SERVER)
 if ENABLE_WALLET
-qt_biblepay_qt_LDADD += $(LIBBITCOIN_WALLET)
+qt_biblepay_qt_LDADD += $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET)
 endif
 if ENABLE_ZMQ
 qt_biblepay_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
@@ -466,20 +410,20 @@ qt_biblepay_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL
   $(BACKTRACE_LIB) $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(BLS_LIBS)
 qt_biblepay_qt_LDFLAGS = $(LDFLAGS_WRAP_EXCEPTIONS) $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
-qt_biblepay_qt_LIBTOOLFLAGS = --tag CXX
+qt_biblepay_qt_LIBTOOLFLAGS = $(AM_LIBTOOLFLAGS) --tag CXX
 
 #locale/foo.ts -> locale/foo.qm
 QT_QM=$(QT_TS:.ts=.qm)
 
 SECONDARY: $(QT_QM)
 
-$(srcdir)/qt/biblepaystrings.cpp: $(libbiblepay_server_a_SOURCES) $(libbiblepay_wallet_a_SOURCES) $(libbiblepay_common_a_SOURCES) $(libbiblepay_zmq_a_SOURCES) $(libbiblepay_consensus_a_SOURCES) $(libbiblepay_util_a_SOURCES)
+$(srcdir)/qt/biblepaystrings.cpp: FORCE
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
-	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $^
+	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $(libbiblepay_server_a_SOURCES) $(libbiblepay_wallet_a_SOURCES) $(libbiblepay_common_a_SOURCES) $(libbiblepay_zmq_a_SOURCES) $(libbiblepay_consensus_a_SOURCES) $(libbiblepay_util_a_SOURCES)
 
 translate: $(srcdir)/qt/biblepaystrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(BITCOIN_QT_BASE_CPP) qt/biblepay.cpp $(BITCOIN_QT_WINDOWS_CPP) $(BITCOIN_QT_WALLET_CPP) $(BITCOIN_QT_H) $(BITCOIN_MM)
 	@test -n $(LUPDATE) || echo "lupdate is required for updating translations"
-	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/biblepay_en.ts
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -I$(srcdir) -locations relative -no-obsolete -ts $(srcdir)/qt/locale/biblepay_en.ts
 
 $(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
 	@test -f $(RCC)

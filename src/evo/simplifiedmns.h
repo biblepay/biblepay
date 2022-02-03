@@ -1,9 +1,9 @@
-// Copyright (c) 2017-2020 The Däsh Core developers
+﻿// Copyright (c) 2017-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BIBLEPAY_SIMPLIFIEDMNS_H
-#define BIBLEPAY_SIMPLIFIEDMNS_H
+#ifndef BITCOIN_EVO_SIMPLIFIEDMNS_H
+#define BITCOIN_EVO_SIMPLIFIEDMNS_H
 
 #include <bls/bls.h>
 #include <merkleblock.h>
@@ -32,7 +32,7 @@ public:
     bool isValid;
 
 public:
-    CSimplifiedMNListEntry() {}
+    CSimplifiedMNListEntry() = default;
     explicit CSimplifiedMNListEntry(const CDeterministicMN& dmn);
 
     bool operator==(const CSimplifiedMNListEntry& rhs) const
@@ -77,7 +77,7 @@ public:
     std::vector<std::unique_ptr<CSimplifiedMNListEntry>> mnList;
 
 public:
-    CSimplifiedMNList() {}
+    CSimplifiedMNList() = default;
     explicit CSimplifiedMNList(const std::vector<CSimplifiedMNListEntry>& smlEntries);
     explicit CSimplifiedMNList(const CDeterministicMNList& dmnList);
 
@@ -147,4 +147,4 @@ public:
 
 bool BuildSimplifiedMNListDiff(const uint256& baseBlockHash, const uint256& blockHash, CSimplifiedMNListDiff& mnListDiffRet, std::string& errorRet);
 
-#endif //BIBLEPAY_SIMPLIFIEDMNS_H
+#endif // BITCOIN_EVO_SIMPLIFIEDMNS_H

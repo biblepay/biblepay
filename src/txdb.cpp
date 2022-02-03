@@ -15,9 +15,8 @@
 #include <init.h>
 
 #include <stdint.h>
-#include "validation.h"
+
 #include <boost/thread.hpp>
-#include "checkpoints.h"
 
 static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';
@@ -59,7 +58,7 @@ struct CoinEntry {
 
 }
 
-CCoinsViewDB::CCoinsViewDB(size_t nCacheSize, bool fMemory, bool fWipe) : db(GetDataDir() / "chainstate", nCacheSize, fMemory, fWipe, true) 
+CCoinsViewDB::CCoinsViewDB(size_t nCacheSize, bool fMemory, bool fWipe) : db(GetDataDir() / "chainstate", nCacheSize, fMemory, fWipe, true)
 {
 }
 
@@ -152,7 +151,7 @@ size_t CCoinsViewDB::EstimateSize() const
     return db.EstimateSize(DB_COIN, (char)(DB_COIN+1));
 }
 
-CBlockTreeDB::CBlockTreeDB(size_t nCacheSize, bool fMemory, bool fWipe) : CDBWrapper(GetDataDir() / "blocks" / "index", nCacheSize, fMemory, fWipe), mapHasTxIndexCache(10000, 20000) {
+CBlockTreeDB::CBlockTreeDB(size_t nCacheSize, bool fMemory, bool fWipe) : CDBWrapper(gArgs.IsArgSet("-blocksdir") ? GetDataDir() / "blocks" / "index" : GetBlocksDir() / "index", nCacheSize, fMemory, fWipe), mapHasTxIndexCache(10000, 20000) {
 }
 
 bool CBlockTreeDB::ReadBlockFileInfo(int nFile, CBlockFileInfo &info) {
@@ -416,18 +415,14 @@ bool CBlockTreeDB::ReadFlag(const std::string &name, bool &fValue) {
 
 bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
 {
+	// Time to seek the Lord
+
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
 
     pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, uint256()));
-	fLoadingIndex = true;
-
-	const CChainParams& chainparams = Params();
-	int nCheckpointHeight = Checkpoints::GetTotalBlocksEstimate(chainparams.Checkpoints());
-    LogPrintf(" Last Checkpoint Height %f ",nCheckpointHeight);
-  
+	int iPos = 0;
     // Load mapBlockIndex
     while (pcursor->Valid()) {
-        boost::this_thread::interruption_point();
         std::pair<char, uint256> key;
         if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX) {
             CDiskBlockIndex diskindex;
@@ -446,29 +441,31 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nNonce         = diskindex.nNonce;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
-
                	pindexNew->RandomXKey     = diskindex.RandomXKey;
-				pindexNew->RandomXData    = diskindex.RandomXData;
-
-				if (pindexNew->pprev && (diskindex.nHeight > nCheckpointHeight || diskindex.nHeight % 10 == 0))
+    			pindexNew->RandomXData    = diskindex.RandomXData;
+				iPos++;
+				if (iPos % 5000 == 0)
 				{
-					if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, Params().GetConsensus(), 
-						pindexNew->nTime,
-						pindexNew->pprev->nTime,
-						pindexNew->pprev->nHeight, pindexNew->nNonce, 
-						pindexNew->pprev, pindexNew->RandomXData, pindexNew->RandomXKey, 0, true))
-						return error("LoadBlockIndex(): CheckProofOfWork failed: %s", pindexNew->ToString());
+			        boost::this_thread::interruption_point();
+    			    std::string strMsg = strprintf(_("Loading Block Index (%f)"), iPos);
+					uiInterface.InitMessage(strMsg);
 				}
+				int64_t nElapsed = GetAdjustedTime() - diskindex.nTime;
+				if (nElapsed < (60 * 60 * 24 * 7))
+				{
+					if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams, pindexNew->nHeight, pindexNew->RandomXData, pindexNew->RandomXKey, 0, pindexNew->nTime))
+						return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
+				}
+				
                 pcursor->Next();
             } else {
-				fLoadingIndex = false;
                 return error("%s: failed to read value", __func__);
             }
         } else {
             break;
         }
     }
-	fLoadingIndex = false;
+
     return true;
 }
 
@@ -494,7 +491,7 @@ public:
     void Unserialize(Stream &s) {
         unsigned int nCode = 0;
         // version
-        int nVersionDummy;
+        unsigned int nVersionDummy;
         ::Unserialize(s, VARINT(nVersionDummy));
         // header code
         ::Unserialize(s, VARINT(nCode));
@@ -518,10 +515,10 @@ public:
         vout.assign(vAvail.size(), CTxOut());
         for (unsigned int i = 0; i < vAvail.size(); i++) {
             if (vAvail[i])
-                ::Unserialize(s, REF(CTxOutCompressor(vout[i])));
+                ::Unserialize(s, CTxOutCompressor(vout[i]));
         }
         // coinbase height
-        ::Unserialize(s, VARINT(nHeight));
+        ::Unserialize(s, VARINT(nHeight, VarIntMode::NONNEGATIVE_SIGNED));
     }
 };
 
@@ -540,7 +537,7 @@ bool CCoinsViewDB::Upgrade() {
 
     int64_t count = 0;
     LogPrintf("Upgrading utxo-set database...\n");
-    LogPrintf("[0%%]...");
+    LogPrintf("[0%%]..."); /* Continued */
     uiInterface.ShowProgress(_("Upgrading UTXO database"), 0, true);
     size_t batch_size = 1 << 24;
     CDBBatch batch(db);
@@ -559,7 +556,7 @@ bool CCoinsViewDB::Upgrade() {
                 uiInterface.ShowProgress(_("Upgrading UTXO database"), percentageDone, true);
                 if (reportDone < percentageDone/10) {
                     // report max. every 10% step
-                    LogPrintf("[%d%%]...", percentageDone);
+                    LogPrintf("[%d%%]...", percentageDone); /* Continued */
                     reportDone = percentageDone/10;
                 }
             }

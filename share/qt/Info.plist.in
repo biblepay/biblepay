@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
 <plist version="0.9">
 <dict>
   <key>LSMinimumSystemVersion</key>
-  <string>10.8.0</string>
+  <string>10.10.0</string>
 
   <key>LSArchitecturePriority</key>
   <array>
@@ -11,7 +11,7 @@
   </array>
 
   <key>CFBundleIconFile</key>
-  <string>bitcoin.icns</string>
+  <string>biblepay.icns</string>
 
   <key>CFBundlePackageType</key>
   <string>APPL</string>
@@ -35,7 +35,7 @@
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.biblepay-Qt</string>
+  <string>org.biblepay.BiblePay-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -43,7 +43,7 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>org.biblepay.BiblepayPayment</string>
+      <string>org.biblepay.BiblePayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
         <string>biblepay</string>
@@ -57,7 +57,7 @@
       <key>UTTypeIdentifier</key>
       <string>org.biblepay.paymentrequest</string>
       <key>UTTypeDescription</key>
-      <string>Biblepay payment request</string>
+      <string>BiblePay payment request</string>
       <key>UTTypeConformsTo</key>
       <array>
         <string>public.data</string>
@@ -68,7 +68,7 @@
         <string>application/x-biblepay-payment-request</string>
         <key>public.filename-extension</key>
         <array>
-          <string>biblepaypaymentrequest</string>
+          <string>biblepaymentrequest</string>
         </array>
       </dict>
     </dict>
@@ -81,7 +81,7 @@
       <string>Editor</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>org.biblepaypaymentrequest</string>
+        <string>org.biblepay.paymentrequest</string>
       </array>
       <key>LSHandlerRank</key>
       <string>Owner</string>

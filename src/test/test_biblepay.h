@@ -1,5 +1,5 @@
-// Copyright (c) 2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -51,6 +51,11 @@ struct BasicTestingSetup {
 
     explicit BasicTestingSetup(const std::string& chainName = CBaseChainParams::MAIN);
     ~BasicTestingSetup();
+
+    fs::path SetDataDir(const std::string& name);
+
+private:
+    const fs::path m_path_root;
 };
 
 /** Testing setup that configures a complete environment.
@@ -65,7 +70,6 @@ struct CConnmanTest {
 
 class PeerLogicValidation;
 struct TestingSetup: public BasicTestingSetup {
-    fs::path pathTemp;
     boost::thread_group threadGroup;
     CConnman* connman;
     CScheduler scheduler;

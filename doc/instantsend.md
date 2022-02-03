@@ -1,4 +1,4 @@
-## InstantSend Technical Information
+﻿## InstantSend Technical Information
 
 InstantSend has been integrated into the Core Daemon in two ways:
 * "push" notifications (ZMQ and `-instantsendnotify` cmd-line/config option);

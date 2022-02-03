@@ -1,12 +1,12 @@
-WINDOWS BUILD NOTES
+﻿WINDOWS BUILD NOTES
 ====================
 
-Below are some notes on how to build BiblePay Core for Windows.
+Below are some notes on how to build Biblepay Core for Windows.
 
-The options known to work for building BiblePay Core on Windows are:
+The options known to work for building Biblepay Core on Windows are:
 
 * On Linux, using the [Mingw-w64](https://mingw-w64.org/doku.php) cross compiler tool chain. Ubuntu Bionic 18.04 is required
-and is the platform used to build the BiblePay Core Windows release binaries.
+and is the platform used to build the Biblepay Core Windows release binaries.
 * On Windows, using [Windows
 Subsystem for Linux (WSL)](https://docs.microsoft.com/windows/wsl/about) and the Mingw-w64 cross compiler tool chain.
 * On Windows, using a native compiler tool chain such as [Visual Studio](https://www.visualstudio.com).

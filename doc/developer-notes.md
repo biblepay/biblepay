@@ -1,5 +1,44 @@
-Developer Notes
+﻿Developer Notes
 ===============
+
+<!-- markdown-toc start -->
+**Table of Contents**
+
+- [Developer Notes](#developer-notes)
+    - [Coding Style (General)](#coding-style-general)
+    - [Coding Style (C++)](#coding-style-c)
+    - [Doxygen comments](#doxygen-comments)
+    - [Coding Style (Python)](#coding-style-python)
+    - [Development tips and tricks](#development-tips-and-tricks)
+        - [Compiling for debugging](#compiling-for-debugging)
+        - [Compiling for gprof profiling](#compiling-for-gprof-profiling)
+        - [debug.log](#debuglog)
+        - [Testnet and Regtest modes](#testnet-and-regtest-modes)
+        - [DEBUG_LOCKORDER](#debug_lockorder)
+        - [Valgrind suppressions file](#valgrind-suppressions-file)
+        - [Compiling for test coverage](#compiling-for-test-coverage)
+    - [Locking/mutex usage notes](#lockingmutex-usage-notes)
+    - [Threads](#threads)
+    - [Ignoring IDE/editor files](#ignoring-ideeditor-files)
+- [Development guidelines](#development-guidelines)
+    - [General Biblepay Core](#general-biblepay-core)
+    - [Wallet](#wallet)
+    - [General C++](#general-c)
+    - [C++ data structures](#c-data-structures)
+    - [Strings and formatting](#strings-and-formatting)
+    - [Variable names](#variable-names)
+    - [Threads and synchronization](#threads-and-synchronization)
+    - [Source code organization](#source-code-organization)
+    - [GUI](#gui)
+    - [Subtrees](#subtrees)
+    - [Git and GitHub tips](#git-and-github-tips)
+    - [Scripted diffs](#scripted-diffs)
+    - [RPC interface guidelines](#rpc-interface-guidelines)
+
+<!-- markdown-toc end -->
+
+Coding Style (General)
+----------------------
 
 Various coding styles have been used during the history of the codebase,
 and the result is not very consistent. However, we're now trying to converge to
@@ -9,11 +48,14 @@ commits.
 
 Do not submit patches solely to modify the style of existing code.
 
+Coding Style (C++)
+------------------
+
 - **Indentation and whitespace rules** as specified in
 [src/.clang-format](/src/.clang-format). You can use the provided
 [clang-format-diff script](/contrib/devtools/README.md#clang-format-diffpy)
 tool to clean up patches automatically before submission.
-  - Braces on new lines for namespaces, classes, functions, methods.
+  - Braces on new lines for classes, functions, methods.
   - Braces on the same line for everything else.
   - 4 space indentation (no tabs) for every block except namespaces.
   - No indentation for `public`/`protected`/`private` or for `namespace`.
@@ -34,19 +76,22 @@ code.
   - Constant names are all uppercase, and use `_` to separate words.
   - Class names, function names and method names are UpperCamelCase
     (PascalCase). Do not prefix class names with `C`.
+  - Test suite naming convention: The Boost test suite in file
+    `src/test/foo_tests.cpp` should be named `foo_tests`. Test suite names
+    must be unique.
 
 - **Miscellaneous**
   - `++i` is preferred over `i++`.
   - `nullptr` is preferred over `NULL` or `(void*)0`.
   - `static_assert` is preferred over `assert` where possible. Generally; compile-time checking is preferred over run-time checking.
   - Align pointers and references to the left i.e. use `type& var` and not `type &var`.
+  - `enum class` is preferred over `enum` where possible. Scoped enumerations avoid two potential pitfalls/problems with traditional C++ enumerations: implicit conversions to int, and name clashes due to enumerators being exported to the surrounding scope.
 
 Block style example:
 ```c++
 int g_count = 0;
 
-namespace foo
-{
+namespace foo {
 class Class
 {
     std::string m_name;
@@ -133,42 +178,54 @@ Not OK (used plenty in the current source, but not picked up):
 A full list of comment syntaxes picked up by doxygen can be found at http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html,
 but if possible use one of the above styles.
 
+Documentation can be generated with `make docs` and cleaned up with `make clean-docs`.
+
+Coding Style (Python)
+---------------------
+
+Refer to [/test/functional/README.md#style-guidelines](/test/functional/README.md#style-guidelines).
+
 Development tips and tricks
 ---------------------------
 
-**compiling for debugging**
+### Compiling for debugging
 
-Run configure with the --enable-debug option, then make. Or run configure with
-CXXFLAGS="-g -ggdb -O0" or whatever debug flags you need.
+Run configure with `--enable-debug` to add additional compiler flags that
+produce better debugging builds.
 
-**debug.log**
+### Compiling for gprof profiling
+
+Run configure with the `--enable-gprof` option, then make.
+
+### debug.log
 
 If the code is behaving strangely, take a look in the debug.log file in the data directory;
 error and debugging messages are written there.
 
-The -debug=... command-line option controls debugging; running with just -debug or -debug=1 will turn
+The `-debug=...` command-line option controls debugging; running with just `-debug` or `-debug=1` will turn
 on all categories (and give you a very large debug.log file).
 
-The Qt code routes qDebug() output to debug.log under category "qt": run with -debug=qt
+The Qt code routes `qDebug()` output to debug.log under category "qt": run with `-debug=qt`
 to see it.
 
-**testnet and regtest modes**
+### Testnet and Regtest modes
 
-Run with the -testnet option to run with "play coins" on the test network, if you
+Run with the `-testnet` option to run with "play coins" on the test network, if you
 are testing multi-machine code that needs to operate across the internet.
 
-If you are testing something that can run on one machine, run with the -regtest option.
-In regression test mode, blocks can be created on-demand; see test/functional/ for tests
-that run in -regtest mode.
+If you are testing something that can run on one machine, run with the `-regtest` option.
+In regression test mode, blocks can be created on-demand; see [test/functional/](/test/functional) for tests
+that run in `-regtest` mode.
 
-**DEBUG_LOCKORDER**
+### DEBUG_LOCKORDER
 
-BiblePay Core is a multithreaded application, and deadlocks or other multithreading bugs
-can be very difficult to track down. Compiling with -DDEBUG_LOCKORDER (configure
-CXXFLAGS="-DDEBUG_LOCKORDER -g") inserts run-time checks to keep track of which locks
-are held, and adds warnings to the debug.log file if inconsistencies are detected.
+Biblepay Core is a multi-threaded application, and deadlocks or other
+multi-threading bugs can be very difficult to track down. The `--enable-debug`
+configure option adds `-DDEBUG_LOCKORDER` to the compiler flags. This inserts
+run-time checks to keep track of which locks are held, and adds warnings to the
+debug.log file if inconsistencies are detected.
 
-**Valgrind suppressions file**
+### Valgrind suppressions file
 
 Valgrind is a programming tool for memory debugging, memory leak detection, and
 profiling. The repo contains a Valgrind suppressions file
@@ -183,7 +240,7 @@ $ valgrind --suppressions=contrib/valgrind.supp --leak-check=full \
 $ valgrind -v --leak-check=full src/biblepayd -printtoconsole
 ```
 
-**compiling for test coverage**
+### Compiling for test coverage
 
 LCOV can be used to generate a test coverage report based upon `make check`
 execution. LCOV must be installed on your system (e.g. the `lcov` package
@@ -199,22 +256,73 @@ make cov
 # A coverage report will now be accessible at `./test_biblepay.coverage/index.html`.
 ```
 
+**Sanitizers**
+
+Biblepay Core can be compiled with various "sanitizers" enabled, which add
+instrumentation for issues regarding things like memory safety, thread race
+conditions, or undefined behavior. This is controlled with the
+`--with-sanitizers` configure flag, which should be a comma separated list of
+sanitizers to enable. The sanitizer list should correspond to supported
+`-fsanitize=` options in your compiler. These sanitizers have runtime overhead,
+so they are most useful when testing changes or producing debugging builds.
+
+Some examples:
+
+```bash
+# Enable both the address sanitizer and the undefined behavior sanitizer
+./configure --with-sanitizers=address,undefined
+
+# Enable the thread sanitizer
+./configure --with-sanitizers=thread
+```
+
+If you are compiling with GCC you will typically need to install corresponding
+"san" libraries to actually compile with these flags, e.g. libasan for the
+address sanitizer, libtsan for the thread sanitizer, and libubsan for the
+undefined sanitizer. If you are missing required libraries, the configure script
+will fail with a linker error when testing the sanitizer flags.
+
+The test suite should pass cleanly with the `thread` and `undefined` sanitizers,
+but there are a number of known problems when using the `address` sanitizer. The
+address sanitizer is known to fail in
+[sha256_sse4::Transform](/src/crypto/sha256_sse4.cpp) which makes it unusable
+unless you also use `--disable-asm` when running configure. We would like to fix
+sanitizer issues, so please send pull requests if you can fix any errors found
+by the address sanitizer (or any other sanitizer).
+
+Not all sanitizer options can be enabled at the same time, e.g. trying to build
+with `--with-sanitizers=address,thread` will fail in the configure script as
+these sanitizers are mutually incompatible. Refer to your compiler manual to
+learn more about these options and which sanitizers are supported by your
+compiler.
+
+Additional resources:
+
+ * [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)
+ * [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html)
+ * [MemorySanitizer](https://clang.llvm.org/docs/MemorySanitizer.html)
+ * [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html)
+ * [UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
+ * [GCC Instrumentation Options](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html)
+ * [Google Sanitizers Wiki](https://github.com/google/sanitizers/wiki)
+ * [Issue #12691: Enable -fsanitize flags in Travis](https://github.com/bitcoin/bitcoin/issues/12691)
+
 Locking/mutex usage notes
 -------------------------
 
 The code is multi-threaded, and uses mutexes and the
-LOCK/TRY_LOCK macros to protect data structures.
+`LOCK` and `TRY_LOCK` macros to protect data structures.
 
-Deadlocks due to inconsistent lock ordering (thread 1 locks cs_main
-and then cs_wallet, while thread 2 locks them in the opposite order:
-result, deadlock as each waits for the other to release its lock) are
-a problem. Compile with -DDEBUG_LOCKORDER to get lock order
-inconsistencies reported in the debug.log file.
+Deadlocks due to inconsistent lock ordering (thread 1 locks `cs_main` and then
+`cs_wallet`, while thread 2 locks them in the opposite order: result, deadlock
+as each waits for the other to release its lock) are a problem. Compile with
+`-DDEBUG_LOCKORDER` (or use `--enable-debug`) to get lock order inconsistencies
+reported in the debug.log file.
 
 Re-architecting the core code so there are better-defined interfaces
 between the various components is a goal, with any necessary locking
-done by the components (e.g. see the self-contained CKeyStore class
-and its cs_KeyStore lock for example).
+done by the components (e.g. see the self-contained `CBasicKeyStore` class
+and its `cs_KeyStore` lock for example).
 
 Threads
 -------
@@ -241,8 +349,6 @@ Threads
 
 - DumpAddresses : Dumps IP addresses of nodes to peers.dat.
 
-- ThreadFlushWalletDB : Close the wallet.dat file if it hasn't been used in 500ms.
-
 - ThreadRPCServer : Remote procedure call handler, listens on port 9998 for connections and services them.
 
 - Shutdown : Does an orderly shutdown of everything.
@@ -264,7 +370,7 @@ Ignoring IDE/editor files
 In closed-source environments in which everyone uses the same IDE it is common
 to add temporary files it produces to the project-wide `.gitignore` file.
 
-However, in open source software such as BiblePay Core, where everyone uses
+However, in open source software such as Biblepay Core, where everyone uses
 their own editors/IDE/tools, it is less common. Only you know what files your
 editor produces and this may change from version to version. The canonical way
 to do this is thus to create your local gitignore. Add this to `~/.gitconfig`:
@@ -294,9 +400,9 @@ Development guidelines
 ============================
 
 A few non-style-related recommendations for developers, as well as points to
-pay attention to for reviewers of BiblePay Core code.
+pay attention to for reviewers of Biblepay Core code.
 
-General BiblePay Core
+General Biblepay Core
 ----------------------
 
 - New features should be exposed on RPC first, then can be made available in the GUI
@@ -368,12 +474,21 @@ C++ data structures
 
 - Vector bounds checking is only enabled in debug mode. Do not rely on it
 
-- Make sure that constructors initialize all fields. If this is skipped for a
-  good reason (i.e., optimization on the critical path), add an explicit
-  comment about this
+- Initialize all non-static class members where they are defined.
+  If this is skipped for a good reason (i.e., optimization on the critical
+  path), add an explicit comment about this
 
   - *Rationale*: Ensure determinism by avoiding accidental use of uninitialized
     values. Also, static analyzers balk about this.
+    Initializing the members in the declaration makes it easy to
+    spot uninitialized ones.
+
+```cpp
+class A
+{
+    uint32_t m_count{0};
+}
+```
 
 - By default, declare single-argument constructors `explicit`.
 
@@ -391,6 +506,13 @@ C++ data structures
 
   - *Rationale*: Easier to understand what is happening, thus easier to spot mistakes, even for those
   that are not language lawyers
+ - Prefer signed ints and do not mix signed and unsigned integers. If an unsigned int is used, it should have a good
+   reason. The fact a value will never be negative is not a good reason. The most common reason will be that mod two
+   arithmetic is needed, such as in cryptographic primitives. If you need to make sure that some value is always
+   a non-negative one, use an assertion or exception instead.
+   - *Rationale*: When signed ints are mixed with unsigned ints, the signed int is converted to a unsigned
+   int. If the signed int is some negative `N`, it'll become `INT_MAX - N`  which might cause unexpected consequences.
+
 
 Strings and formatting
 ------------------------
@@ -408,11 +530,39 @@ Strings and formatting
 
 - Use `ParseInt32`, `ParseInt64`, `ParseUInt32`, `ParseUInt64`, `ParseDouble` from `utilstrencodings.h` for number parsing
 
-  - *Rationale*: These functions do overflow checking, and avoid pesky locale issues
+  - *Rationale*: These functions do overflow checking, and avoid pesky locale issues.
+
+- Avoid using locale dependent functions if possible. You can use the provided
+  [`lint-locale-dependence.sh`](/contrib/devtools/lint-locale-dependence.sh)
+  to check for accidental use of locale dependent functions.
+
+  - *Rationale*: Unnecessary locale dependence can cause bugs that are very tricky to isolate and fix.
+
+  - These functions are known to be locale dependent:
+    `alphasort`, `asctime`, `asprintf`, `atof`, `atoi`, `atol`, `atoll`, `atoq`,
+    `btowc`, `ctime`, `dprintf`, `fgetwc`, `fgetws`, `fprintf`, `fputwc`,
+    `fputws`, `fscanf`, `fwprintf`, `getdate`, `getwc`, `getwchar`, `isalnum`,
+    `isalpha`, `isblank`, `iscntrl`, `isdigit`, `isgraph`, `islower`, `isprint`,
+    `ispunct`, `isspace`, `isupper`, `iswalnum`, `iswalpha`, `iswblank`,
+    `iswcntrl`, `iswctype`, `iswdigit`, `iswgraph`, `iswlower`, `iswprint`,
+    `iswpunct`, `iswspace`, `iswupper`, `iswxdigit`, `isxdigit`, `mblen`,
+    `mbrlen`, `mbrtowc`, `mbsinit`, `mbsnrtowcs`, `mbsrtowcs`, `mbstowcs`,
+    `mbtowc`, `mktime`, `putwc`, `putwchar`, `scanf`, `snprintf`, `sprintf`,
+    `sscanf`, `stoi`, `stol`, `stoll`, `strcasecmp`, `strcasestr`, `strcoll`,
+    `strfmon`, `strftime`, `strncasecmp`, `strptime`, `strtod`, `strtof`,
+    `strtoimax`, `strtol`, `strtold`, `strtoll`, `strtoq`, `strtoul`,
+    `strtoull`, `strtoumax`, `strtouq`, `strxfrm`, `swprintf`, `tolower`,
+    `toupper`, `towctrans`, `towlower`, `towupper`, `ungetwc`, `vasprintf`,
+    `vdprintf`, `versionsort`, `vfprintf`, `vfscanf`, `vfwprintf`, `vprintf`,
+    `vscanf`, `vsnprintf`, `vsprintf`, `vsscanf`, `vswprintf`, `vwprintf`,
+    `wcrtomb`, `wcscasecmp`, `wcscoll`, `wcsftime`, `wcsncasecmp`, `wcsnrtombs`,
+    `wcsrtombs`, `wcstod`, `wcstof`, `wcstoimax`, `wcstol`, `wcstold`,
+    `wcstoll`, `wcstombs`, `wcstoul`, `wcstoull`, `wcstoumax`, `wcswidth`,
+    `wcsxfrm`, `wctob`, `wctomb`, `wctrans`, `wctype`, `wcwidth`, `wprintf`
 
 - For `strprintf`, `LogPrint`, `LogPrintf` formatting characters don't need size specifiers
 
-  - *Rationale*: BiblePay Core uses tinyformat, which is type safe. Leave them out to avoid confusion
+  - *Rationale*: Biblepay Core uses tinyformat, which is type safe. Leave them out to avoid confusion
 
 Variable names
 --------------
@@ -427,11 +577,11 @@ member name:
 ```c++
 class AddressBookPage
 {
-    Mode mode;
+    Mode m_mode;
 }
 
 AddressBookPage::AddressBookPage(Mode _mode) :
-      mode(_mode)
+      m_mode(_mode)
 ...
 ```
 
@@ -475,9 +625,14 @@ Source code organization
 
   - *Rationale*: Shorter and simpler header files are easier to read, and reduce compile time
 
+- Use only the lowercase alphanumerics (`a-z0-9`), underscore (`_`) and hyphen (`-`) in source code filenames.
+
+  - *Rationale*: `grep`:ing and auto-completing filenames is easier when using a consistent
+    naming pattern. Potential problems when building on case-insensitive filesystems are
+    avoided when using only lowercase characters in source code filenames.
+
 - Every `.cpp` and `.h` file should `#include` every header file it directly uses classes, functions or other
-  definitions from, even if those headers are already included indirectly through other headers. One exception
-  is that a `.cpp` file does not need to re-include the includes already included in its corresponding `.h` file.
+  definitions from, even if those headers are already included indirectly through other headers.
 
   - *Rationale*: Excluding headers because they are already indirectly included results in compilation
     failures when those indirect dependencies change. Furthermore, it obscures what the real code
@@ -493,23 +648,33 @@ Source code organization
 
 ```c++
 namespace mynamespace {
-    ...
+...
 } // namespace mynamespace
 
 namespace {
-    ...
+...
 } // namespace
 ```
 
   - *Rationale*: Avoids confusion about the namespace context
 
-- Prefer `#include <primitives/transaction.h>` bracket syntax instead of
-  `#include "primitives/transactions.h"` quote syntax when possible.
+- Use `#include <primitives/transaction.h>` bracket syntax instead of
+  `#include "primitives/transactions.h"` quote syntax.
 
   - *Rationale*: Bracket syntax is less ambiguous because the preprocessor
     searches a fixed list of include directories without taking location of the
     source file into account. This allows quoted includes to stand out more when
     the location of the source file actually is relevant.
+
+- Use include guards to avoid the problem of double inclusion. The header file
+  `foo/bar.h` should use the include guard identifier `BITCOIN_FOO_BAR_H`, e.g.
+
+```c++
+#ifndef BITCOIN_FOO_BAR_H
+#define BITCOIN_FOO_BAR_H
+...
+#endif // BITCOIN_FOO_BAR_H
+```
 
 GUI
 -----
@@ -519,6 +684,19 @@ GUI
   - *Rationale*: Model classes pass through events and data from the core, they
     should not interact with the user. That's where View classes come in. The converse also
     holds: try to not directly access core data structures from Views.
+
+- Avoid adding slow or blocking code in the GUI thread. In particular do not
+  add new `interfaces::Node` and `interfaces::Wallet` method calls, even if they
+  may be fast now, in case they are changed to lock or communicate across
+  processes in the future.
+
+  Prefer to offload work from the GUI thread to worker threads (see
+  `RPCExecutor` in console code as an example) or take other steps (see
+  https://doc.qt.io/archives/qq/qq27-responsive-guis.html) to keep the GUI
+  responsive.
+
+  - *Rationale*: Blocking the GUI thread can increase latency, and lead to
+    hangs and deadlocks.
 
 Subtrees
 ----------
@@ -530,16 +708,19 @@ directly upstream without being PRed directly against the project.  They will be
 subtree merge.
 
 Others are external projects without a tight relationship with our project.  Changes to these should also
-be sent upstream but bugfixes may also be prudent to PR against BiblePay Core so that they can be integrated
+be sent upstream but bugfixes may also be prudent to PR against Biblepay Core so that they can be integrated
 quickly.  Cosmetic changes should be purely taken upstream.
 
-There is a tool in contrib/devtools/git-subtree-check.sh to check a subtree directory for consistency with
+There is a tool in `test/lint/git-subtree-check.sh` to check a subtree directory for consistency with
 its upstream repository.
 
 Current subtrees include:
 
 - src/leveldb
-  - Upstream at https://github.com/google/leveldb ; Maintained by Google, but open important PRs to Core to avoid delay
+  - Upstream at https://github.com/google/leveldb ; Maintained by Google, but
+    open important PRs to Core to avoid delay.
+  - **Note**: Follow the instructions in [Upgrading LevelDB](#upgrading-leveldb) when
+    merging upstream changes to the leveldb subtree.
 
 - src/libsecp256k1
   - Upstream at https://github.com/bitcoin-core/secp256k1/ ; actively maintaned by Core contributors.
@@ -550,6 +731,52 @@ Current subtrees include:
 - src/univalue
   - Upstream at https://github.com/jgarzik/univalue ; report important PRs to Core to avoid delay.
 
+Upgrading LevelDB
+---------------------
+
+Extra care must be taken when upgrading LevelDB. This section explains issues
+you must be aware of.
+
+### File Descriptor Counts
+
+In most configurations we use the default LevelDB value for `max_open_files`,
+which is 1000 at the time of this writing. If LevelDB actually uses this many
+file descriptors it will cause problems with Bitcoin's `select()` loop, because
+it may cause new sockets to be created where the fd value is >= 1024. For this
+reason, on 64-bit Unix systems we rely on an internal LevelDB optimization that
+uses `mmap()` + `close()` to open table files without actually retaining
+references to the table file descriptors. If you are upgrading LevelDB, you must
+sanity check the changes to make sure that this assumption remains valid.
+
+In addition to reviewing the upstream changes in `env_posix.cc`, you can use `lsof` to
+check this. For example, on Linux this command will show open `.ldb` file counts:
+
+```bash
+$ lsof -p $(pidof biblepayd) |\
+    awk 'BEGIN { fd=0; mem=0; } /ldb$/ { if ($4 == "mem") mem++; else fd++ } END { printf "mem = %s, fd = %s\n", mem, fd}'
+mem = 119, fd = 0
+```
+
+The `mem` value shows how many files are mmap'ed, and the `fd` value shows you
+many file descriptors these files are using. You should check that `fd` is a
+small number (usually 0 on 64-bit hosts).
+
+See the notes in the `SetMaxOpenFiles()` function in `dbwrapper.cc` for more
+details.
+
+### Consensus Compatibility
+
+It is possible for LevelDB changes to inadvertently change consensus
+compatibility between nodes. This happened in Bitcoin 0.8 (when LevelDB was
+first introduced). When upgrading LevelDB you should review the upstream changes
+to check for issues affecting consensus compatibility.
+
+For example, if LevelDB had a bug that accidentally prevented a key from being
+returned in an edge case, and that bug was fixed upstream, the bug "fix" would
+be an incompatible consensus change. In this situation the correct behavior
+would be to revert the upstream fix before applying the updates to Bitcoin's
+copy of LevelDB. In general you should be wary of any upstream changes affecting
+what data is returned from LevelDB queries.
 
 Git and GitHub tips
 ---------------------
@@ -615,9 +842,9 @@ To create a scripted-diff:
     - `-BEGIN VERIFY SCRIPT-`
     - `-END VERIFY SCRIPT-`
 
-The scripted-diff is verified by the tool `contrib/devtools/commit-script-check.sh`
+The scripted-diff is verified by the tool `test/lint/commit-script-check.sh`
 
-Commit `bb81e173` is an example of a scripted-diff.
+Commit [`bb81e173`](https://github.com/bitcoin/bitcoin/commit/bb81e173) is an example of a scripted-diff.
 
 RPC interface guidelines
 --------------------------
@@ -700,10 +927,21 @@ A few guidelines for introducing and reviewing new RPC interfaces:
   RPCs whose behavior does *not* depend on the current chainstate may omit this
   call.
 
-  - *Rationale*: In previous versions of BiblePay Core, the wallet was always
+  - *Rationale*: In previous versions of Biblepay Core, the wallet was always
     in-sync with the chainstate (by virtue of them all being updated in the
     same cs_main lock). In order to maintain the behavior that wallet RPCs
     return results as of at least the highest best-known block an RPC
     client may be aware of prior to entering a wallet RPC call, we must block
     until the wallet is caught up to the chainstate as of the RPC call's entry.
     This also makes the API much easier for RPC clients to reason about.
+
+- Be aware of RPC method aliases and generally avoid registering the same
+  callback function pointer for different RPCs.
+
+  - *Rationale*: RPC methods registered with the same function pointer will be
+    considered aliases and only the first method name will show up in the
+    `help` rpc command list.
+
+  - *Exception*: Using RPC method aliases may be appropriate in cases where a
+    new RPC is replacing a deprecated RPC, to avoid both RPCs confusingly
+    showing up in the command list.

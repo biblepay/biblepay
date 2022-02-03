@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 #
 # Copyright (C) 2011  Patrick "p2k" Schneider <me@p2k-network.org>
 #
@@ -731,7 +731,6 @@ if config.dmg is not None:
                 hdiutil_args.append(str(value))
 
         return run(hdiutil_args, universal_newlines=True)
-
     if verbose >= 2:
         if fancy is None:
             print("+ Creating .dmg disk image +")

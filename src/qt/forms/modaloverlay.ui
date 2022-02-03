@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>ModalOverlay</class>
  <widget class="ModalOverlay" name="ModalOverlay">
@@ -111,7 +111,7 @@
              <item>
               <widget class="QLabel" name="infoText">
                <property name="text">
-                <string>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the BiblePay network, as detailed below.</string>
+                <string>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Biblepay network, as detailed below.</string>
                </property>
                <property name="textFormat">
                 <enum>Qt::RichText</enum>
@@ -298,6 +298,12 @@
             <widget class="QPushButton" name="closeButton">
              <property name="text">
               <string>Hide</string>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::StrongFocus</enum>
+             </property>
+             <property name="default">
+              <bool>true</bool>
              </property>
             </widget>
            </item>

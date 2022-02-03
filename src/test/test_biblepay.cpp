@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,19 +11,18 @@
 #include <validation.h>
 #include <miner.h>
 #include <net_processing.h>
+#include <pow.h>
 #include <ui_interface.h>
 #include <streams.h>
 #include <rpc/server.h>
 #include <rpc/register.h>
 #include <script/sigcache.h>
 
+#include <coinjoin/coinjoin.h>
 #include <evo/specialtx.h>
 #include <evo/deterministicmns.h>
 #include <evo/cbtx.h>
 #include <llmq/quorums_init.h>
-#include <privatesend/privatesend.h>
-
-#include <memory>
 
 void CConnmanTest::AddNode(CNode& node)
 {
@@ -35,6 +34,9 @@ void CConnmanTest::AddNode(CNode& node)
 void CConnmanTest::ClearNodes()
 {
     LOCK(g_connman->cs_vNodes);
+    for (CNode* node : g_connman->vNodes) {
+        delete node;
+    }
     g_connman->vNodes.clear();
     g_connman->mapSocketToNode.clear();
 
@@ -51,42 +53,50 @@ extern bool fPrintToConsole;
 extern void noui_connect();
 
 BasicTestingSetup::BasicTestingSetup(const std::string& chainName)
+    : m_path_root(fs::temp_directory_path() / "test_biblepay" / strprintf("%lu_%i", (unsigned long)GetTime(), (int)(InsecureRandRange(1 << 30))))
 {
-        SHA256AutoDetect();
-        RandomInit();
-        ECC_Start();
-        BLSInit();
-        SetupEnvironment();
-        SetupNetworking();
-        InitSignatureCache();
-        InitScriptExecutionCache();
-        CPrivateSend::InitStandardDenominations();
-        fPrintToDebugLog = false; // don't want to write to debug.log file
-        fCheckBlockIndex = true;
-        SelectParams(chainName);
-        evoDb.reset(new CEvoDB(1 << 20, true, true));
-        deterministicMNManager.reset(new CDeterministicMNManager(*evoDb));
-        noui_connect();
+    SHA256AutoDetect();
+    RandomInit();
+    ECC_Start();
+    BLSInit();
+    SetupEnvironment();
+    SetupNetworking();
+    InitSignatureCache();
+    InitScriptExecutionCache();
+    CCoinJoin::InitStandardDenominations();
+    fPrintToDebugLog = false; // don't want to write to debug.log file
+    fCheckBlockIndex = true;
+    SelectParams(chainName);
+    evoDb.reset(new CEvoDB(1 << 20, true, true));
+    deterministicMNManager.reset(new CDeterministicMNManager(*evoDb));
+    noui_connect();
 }
 
 BasicTestingSetup::~BasicTestingSetup()
 {
-        deterministicMNManager.reset();
-        evoDb.reset();
+    deterministicMNManager.reset();
+    evoDb.reset();
 
-        ECC_Stop();
+    fs::remove_all(m_path_root);
+    ECC_Stop();
+}
+
+fs::path BasicTestingSetup::SetDataDir(const std::string& name)
+{
+    fs::path ret = m_path_root / name;
+    fs::create_directories(ret);
+    gArgs.ForceSetArg("-datadir", ret.string());
+    return ret;
 }
 
 TestingSetup::TestingSetup(const std::string& chainName) : BasicTestingSetup(chainName)
 {
+    SetDataDir("tempdir");
     const CChainParams& chainparams = Params();
         // Ideally we'd move all the RPC tests to the functional testing framework
         // instead of unit tests, but for now we need these here.
         RegisterAllCoreRPCCommands(tableRPC);
         ClearDatadirCache();
-        pathTemp = fs::temp_directory_path() / strprintf("test_biblepay_%lu_%i", (unsigned long)GetTime(), (int)(InsecureRandRange(100000)));
-        fs::create_directories(pathTemp);
-        gArgs.ForceSetArg("-datadir", pathTemp.string());
 
         // We have to run a scheduler thread to prevent ActivateBestChain
         // from blocking due to queue overrun.
@@ -105,13 +115,13 @@ TestingSetup::TestingSetup(const std::string& chainName) : BasicTestingSetup(cha
         {
             CValidationState state;
             if (!ActivateBestChain(state, chainparams)) {
-                throw std::runtime_error("ActivateBestChain failed.");
+                throw std::runtime_error(strprintf("ActivateBestChain failed. (%s)", FormatStateMessage(state)));
             }
         }
         nScriptCheckThreads = 3;
         for (int i=0; i < nScriptCheckThreads-1; i++)
             threadGroup.create_thread(&ThreadScriptCheck);
-        peerLogic.reset(new PeerLogicValidation(connman, scheduler));
+        peerLogic.reset(new PeerLogicValidation(connman, scheduler, /*enable_bip61=*/true));
 }
 
 TestingSetup::~TestingSetup()
@@ -129,7 +139,6 @@ TestingSetup::~TestingSetup()
         llmq::DestroyLLMQSystem();
         pcoinsdbview.reset();
         pblocktree.reset();
-        fs::remove_all(pathTemp);
 }
 
 TestChainSetup::TestChainSetup(int blockCount) : TestingSetup(CBaseChainParams::REGTEST)
@@ -199,7 +208,7 @@ CBlock TestChainSetup::CreateBlock(const std::vector<CMutableTransaction>& txns,
             BOOST_ASSERT(false);
         }
         CValidationState state;
-        if (!CalcCbTxMerkleRootMNList(block, chainActive.Tip(), cbTx.merkleRootMNList, state)) {
+        if (!CalcCbTxMerkleRootMNList(block, chainActive.Tip(), cbTx.merkleRootMNList, state, *pcoinsTip.get())) {
             BOOST_ASSERT(false);
         }
         if (!CalcCbTxMerkleRootQuorums(block, chainActive.Tip(), cbTx.merkleRootQuorums, state)) {
@@ -211,13 +220,13 @@ CBlock TestChainSetup::CreateBlock(const std::vector<CMutableTransaction>& txns,
     }
 
     // IncrementExtraNonce creates a valid coinbase and merkleRoot
-    unsigned int extraNonce = 0;
     {
         LOCK(cs_main);
+        unsigned int extraNonce = 0;
         IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
     }
-	
-    //while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus(), 0, 0, 0, 0, NULL, "", uint256("0x0"), 1, false)) ++block.nNonce;
+
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus(), chainActive.Tip()->nHeight, block.GetHash().GetHex(), uint256S("0x0"), 2, block.nTime)) ++block.nNonce;
 
     CBlock result = block;
     return result;

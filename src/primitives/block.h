@@ -27,6 +27,7 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+	// BiblePay Data
 	uint256 RandomXKey;
 	std::string RandomXData;
 
@@ -45,11 +46,14 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+		// BIBLEPAY
 		if (this->nVersion >= 0x50000000UL && this->nVersion < 0x60000000UL)
 		{
 			READWRITE(RandomXKey);
 			READWRITE(RandomXData);
 		}
+
     }
 
     void SetNull()
@@ -62,6 +66,7 @@ public:
         nNonce = 0;
 		RandomXData = std::string();
 		RandomXKey.SetNull();
+
     }
 
     bool IsNull() const
@@ -124,7 +129,7 @@ public:
         block.nNonce         = nNonce;
 		block.RandomXData    = RandomXData;
 		block.RandomXKey     = RandomXKey;
-		return block;
+        return block;
     }
 
     std::string ToString() const;

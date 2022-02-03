@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019 The Däsh Core developers
+﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -63,7 +63,7 @@ void CBLSWorker::Start()
     int workerCount = std::thread::hardware_concurrency() / 2;
     workerCount = std::max(std::min(1, workerCount), 4);
     workerPool.resize(workerCount);
-    RenameThreadPool(workerPool, "biblepay-bls-worker");
+    RenameThreadPool(workerPool, "biblepay-bls-work");
 }
 
 void CBLSWorker::Stop()
@@ -72,11 +72,11 @@ void CBLSWorker::Stop()
     workerPool.stop(true);
 }
 
-bool CBLSWorker::GenerateContributions(int quorumThreshold, const BLSIdVector& ids, BLSVerificationVectorPtr& vvecRet, BLSSecretKeyVector& skShares)
+bool CBLSWorker::GenerateContributions(int quorumThreshold, const BLSIdVector& ids, BLSVerificationVectorPtr& vvecRet, BLSSecretKeyVector& skSharesRet)
 {
     BLSSecretKeyVectorPtr svec = std::make_shared<BLSSecretKeyVector>((size_t)quorumThreshold);
     vvecRet = std::make_shared<BLSVerificationVector>((size_t)quorumThreshold);
-    skShares.resize(ids.size());
+    skSharesRet.resize(ids.size());
 
     for (int i = 0; i < quorumThreshold; i++) {
         (*svec)[i].MakeNewKey();
@@ -101,7 +101,7 @@ bool CBLSWorker::GenerateContributions(int quorumThreshold, const BLSIdVector& i
         size_t count = std::min(batchSize, ids.size() - start);
         auto f = [&, start, count](int threadId) {
             for (size_t j = start; j < start + count; j++) {
-                if (!skShares[j].SecretKeyShare(*svec, ids[j])) {
+                if (!skSharesRet[j].SecretKeyShare(*svec, ids[j])) {
                     return false;
                 }
             }

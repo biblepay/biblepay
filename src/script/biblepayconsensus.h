@@ -1,10 +1,10 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_BITCOINCONSENSUS_H
-#define BITCOIN_BITCOINCONSENSUS_H
+#ifndef BITCOIN_SCRIPT_BIBLEPAYCONSENSUS_H
+#define BITCOIN_SCRIPT_BIBLEPAYCONSENSUS_H
 
 #include <stdint.h>
 
@@ -74,4 +74,4 @@ EXPORT_SYMBOL unsigned int biblepayconsensus_version();
 
 #undef EXPORT_SYMBOL
 
-#endif // BITCOIN_BITCOINCONSENSUS_H
+#endif // BITCOIN_SCRIPT_BIBLEPAYCONSENSUS_H

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SignVerifyMessageDialog</class>
  <widget class="QDialog" name="SignVerifyMessageDialog">
@@ -81,7 +81,7 @@
          <item>
           <widget class="QValidatedLineEdit" name="addressIn_SM">
            <property name="toolTip">
-            <string>The BiblePay address to sign the message with</string>
+            <string>The Biblepay address to sign the message with</string>
            </property>
           </widget>
          </item>
@@ -248,7 +248,7 @@
          <item>
           <widget class="QValidatedLineEdit" name="addressIn_VM">
            <property name="toolTip">
-            <string>The BiblePay address the message was signed with</string>
+            <string>The Biblepay address the message was signed with</string>
            </property>
           </widget>
          </item>

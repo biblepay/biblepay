@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The Däsh Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +13,7 @@ static const int MODEL_UPDATE_DELAY = 250;
 static const int MAX_PASSPHRASE_SIZE = 1024;
 
 /* BiblePayGUI -- Size of icons in status bar */
-static const int STATUSBAR_ICONSIZE = 16;
+static const int STATUSBAR_ICONSIZE = 18;
 
 /* BiblePayGUI -- Size of button icons e.g. in SendCoinEntry or SignVerifyMessageDialog */
 static const int BUTTON_ICONSIZE = 23;
@@ -43,8 +43,8 @@ static const int MAX_URI_LENGTH = 255;
 
 #define QAPP_ORG_NAME "BiblePay"
 #define QAPP_ORG_DOMAIN "biblepay.org"
-#define QAPP_APP_NAME_DEFAULT "Biblepay-Qt"
-#define QAPP_APP_NAME_TESTNET "Biblepay-Qt-testnet"
+#define QAPP_APP_NAME_DEFAULT "BiblePay-Qt"
+#define QAPP_APP_NAME_TESTNET "BiblePay-Qt-testnet"
 #define QAPP_APP_NAME_DEVNET "BiblePay-Qt-%s"
 #define QAPP_APP_NAME_REGTEST "BiblePay-Qt-regtest"
 

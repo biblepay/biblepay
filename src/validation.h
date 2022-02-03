@@ -1,6 +1,6 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The Däsh Core developers
+// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,7 +20,6 @@
 #include <sync.h>
 #include <versionbits.h>
 #include <spentindex.h>
-#include "rpcpog.h"
 
 #include <algorithm>
 #include <exception>
@@ -46,8 +45,8 @@ class CTxMemPool;
 class CValidationState;
 class PrecomputedTransactionData;
 struct ChainTxData;
-
 struct LockPoints;
+struct Sidechain;
 
 /** Default for -whitelistrelay. */
 static const bool DEFAULT_WHITELISTRELAY = true;
@@ -57,9 +56,9 @@ static const bool DEFAULT_WHITELISTFORCERELAY = true;
 static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 100007777;
 //! -maxtxfee default
 static const CAmount DEFAULT_TRANSACTION_MAXFEE = 777 * COIN;
-//! Discourage users to set fees higher than this amount (in pence) per kB
+//! Discourage users to set fees higher than this amount (in duffs) per kB
 static const CAmount HIGH_TX_FEE_PER_KB = 2 * COIN;
-//! -maxtxfee will warn if called with a higher fee than this amount (in pence)
+//! -maxtxfee will warn if called with a higher fee than this amount (in duffs)
 static const CAmount HIGH_MAX_TX_FEE = 700 * HIGH_TX_FEE_PER_KB;
 /** Default for -limitancestorcount, max number of in-mempool ancestors */
 static const unsigned int DEFAULT_ANCESTOR_LIMIT = 25;
@@ -150,6 +149,7 @@ extern CScript COINBASE_FLAGS;
 extern CCriticalSection cs_main;
 extern CBlockPolicyEstimator feeEstimator;
 extern CTxMemPool mempool;
+extern std::atomic_bool g_is_mempool_loaded;
 typedef std::unordered_map<uint256, CBlockIndex*, BlockHasher> BlockMap;
 typedef std::unordered_multimap<uint256, CBlockIndex*, BlockHasher> PrevBlockMap;
 extern BlockMap& mapBlockIndex;
@@ -175,99 +175,31 @@ extern bool fCheckpointsEnabled;
 extern size_t nCoinCacheUsage;
 /** A fee rate smaller than this is considered zero fee (for relaying, mining and transaction creation) */
 extern CFeeRate minRelayTxFee;
-/** Absolute maximum transaction fee (in pence) used by wallet and mempool (rejects high fee in sendrawtransaction) */
+/** Absolute maximum transaction fee (in duffs) used by wallet and mempool (rejects high fee in sendrawtransaction) */
 extern CAmount maxTxFee;
 /** If the tip is older than this (in seconds), the node is considered to be in initial block download. */
 extern int64_t nMaxTipAge;
+
+// BIBLEPAY AREA
+static const int BLOCKS_PER_DAY = 205;
+static const int MAX_BLOCK_SUBSIDY = 20000;
+static const int SANCTUARY_COLLATERAL = 4500001;
+extern int64_t nHPSTimerStart;
+extern std::map<std::string, int> mapPOOSStatus;
+extern std::map<std::string, Sidechain> mapSidechain;
+extern double nHashCounter;
+extern double dHashesPerSec;
+extern int iMinerThreadCount;
+extern bool fCoinControlUnlocked;
+static const int DEFAULT_GENERATE_THREADS = 1;
+static const int DEFAULT_GENERATE = 1;
+void KillBlockchainFiles();
+// END OF BIBLEPAY AREA
 
 extern bool fLargeWorkForkFound;
 extern bool fLargeWorkInvalidChainFound;
 
 extern std::atomic<bool> fDIP0001ActiveAtTip;
-
-
-/** BiblePay extern functions **/
-void SetOverviewStatus();
-void KillBlockchainFiles();
-bool LateBlock(const CBlock& block, const CBlockIndex* pindexPrev, int iMinutes);
-int64_t LateBlockIndex(const CBlockIndex* pindexPrev, int iMinutes);
-static const std::string BUSINESS_OBJECTS = "BUSINESS_OBJECTS";
-static const int SSL_PORT = 443;
-static const int APM_REWARD = 7;
-static const int APM2_REWARD = 2500;
-static const int APM3_REWARD = 250;
-static const int MINIMUM_EMAIL_LENGTH = 5; 
-static const int BLOCKS_PER_DAY = 205;
-static const int SANCTUARY_COLLATERAL = 4500001;
-static int64_t MAX_BLOCK_SUBSIDY = 20000;
-static const int UTXO_COST = 500;
-
-static const int SPORK8_HEIGHT = 23000;
-// The highest value in a daily superblock to trigger a daily payment icon
-static const int DEFAULT_GENERATE_THREADS = 1;
-static const int DEFAULT_GENERATE = 1;
-static const int F10000_CUTOVER_HEIGHT = 25910;
-static const int F11000_CUTOVER_HEIGHT = 33440;
-static const int TITHE_MODULUS = 10;
-static const int POBH_FACTOR = 10;
-static const int BIBLE_BOOKS_COUNT = 65;
-static const int BIBLE_VERSE_COUNT = 99;
-static const int GSC_MIN_CONFIRMS = 5;
-static const double GSC_DUST = .01;
-static const int MAX_EMAIL_AGE = 60 * 60 * 24 * 30;
-
-extern std::string msQuestion;
-extern std::string msQuestionAnswer;
-extern std::string msPagedFrom;
-extern int mlPaged;
-extern int mlPagedEncrypted;
-extern std::map<std::string, std::pair<std::string, int64_t>> mvApplicationCache;
-extern int PRAYER_MODULUS;
-extern int miGlobalPrayerIndex;
-extern int miGlobalDiaryIndex;
-extern std::string msEncryptedString;
-extern std::string sOS;
-extern bool fEnforceSanctuaryPort;
-extern bool fWarmBootFinished;
-extern bool fLoadingIndex;
-extern bool fProd;
-extern bool fUTXOSTested;
-extern std::string msGithubVersion;
-extern std::string msLanguage;
-extern std::string msSessionID;
-extern std::string msMyInternalEmailAddress;
-extern std::string msMasterNodeLegacyPrivKey;
-extern std::string msGlobalStatus;
-extern std::string msGlobalStatus2;
-extern std::string msGlobalStatus3;
-extern std::string sGlobalPoolURL;
-extern int nSideChainHeight;
-
-class CEmail;
-struct IPFSTransaction;
-struct QueuedProposal;
-struct SimpleUTXO;
-
-extern std::map<uint256, CEmail> mapEmails;
-extern std::map<std::string, int> mapPOOSStatus;
-extern std::map<std::string, std::vector<SimpleUTXO>> mapUTXOStatus;
-
-extern std::map<std::string, IPFSTransaction> mapSidechainTransactions;
-extern std::vector<QueuedProposal> mvQueuedProposals;
-
-extern std::string msURL;
-extern int64_t nBibleMinerPulse;
-extern int iMinerThreadCount;
-extern int64_t nLastDCContractSubmitted;
-extern int64_t nHPSTimerStart;
-extern double nHashCounter;
-extern double dHashesPerSec;
-extern double nHashPerSecondCalibration;
-extern bool fProposalNeedsSubmitted;
-
-// End of BiblePay Classic Settings
-
-
 
 /** Block hash whose ancestors we will assume to have valid scripts without checking them. */
 extern uint256 hashAssumeValid;
@@ -306,7 +238,7 @@ static const unsigned int DEFAULT_CHECKLEVEL = 3;
 // Setting the target to > than 945MB will make it likely we can respect the target.
 static const uint64_t MIN_DISK_SPACE_FOR_BLOCK_FILES = 945 * 1024 * 1024;
 
-/** 
+/**
  * Process an incoming block. This only returns after the best known valid
  * block is made active. Note that it does not, however, guarantee that the
  * specific block passed to it has been checked for validity!
@@ -318,19 +250,21 @@ static const uint64_t MIN_DISK_SPACE_FOR_BLOCK_FILES = 945 * 1024 * 1024;
  * Note that we guarantee that either the proof-of-work is valid on pblock, or
  * (and possibly also) BlockChecked will have been called.
  *
- * Call without cs_main held.
+ * May not be called in a
+ * validationinterface callback.
  *
  * @param[in]   pblock  The block we want to process.
  * @param[in]   fForceProcessing Process this block even if unrequested; used for non-network block sources and whitelisted peers.
  * @param[out]  fNewBlock A boolean which is set to indicate if the block was first received via this call
  * @return True if state.IsValid()
  */
-bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool* fNewBlock);
+bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool* fNewBlock) LOCKS_EXCLUDED(cs_main);
 
 /**
  * Process incoming block headers.
  *
- * Call without cs_main held.
+ * May not be called in a
+ * validationinterface callback.
  *
  * @param[in]  block The block headers themselves
  * @param[out] state This may be set to an Error state if any error occurred processing them
@@ -338,10 +272,10 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
  * @param[out] ppindex If set, the pointer will be set to point to the last new block index object for the given headers
  * @param[out] first_invalid First header that fails validation, if one exists
  */
-bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& block, CValidationState& state, const CChainParams& chainparams, const CBlockIndex** ppindex=nullptr, CBlockHeader *first_invalid=nullptr);
+bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& block, CValidationState& state, const CChainParams& chainparams, const CBlockIndex** ppindex = nullptr, CBlockHeader* first_invalid = nullptr) LOCKS_EXCLUDED(cs_main);
 
 /** Check whether enough disk space is available for an incoming block */
-bool CheckDiskSpace(uint64_t nAdditionalBytes = 0);
+bool CheckDiskSpace(uint64_t nAdditionalBytes = 0, bool blocks_dir = false);
 /** Open a block file (blk?????.dat) */
 FILE* OpenBlockFile(const CDiskBlockPos &pos, bool fReadOnly = false);
 /** Translation to a filesystem path */
@@ -352,7 +286,7 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
 bool LoadGenesisBlock(const CChainParams& chainparams);
 /** Load the block tree and coins database from disk,
  * initializing state if we're running with -reindex. */
-bool LoadBlockIndex(const CChainParams& chainparams);
+bool LoadBlockIndex(const CChainParams& chainparams) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 /** Update the chain tip based on database information. */
 bool LoadChainTip(const CChainParams& chainparams);
 /** Unload database information */
@@ -363,7 +297,12 @@ void ThreadScriptCheck();
 bool IsInitialBlockDownload();
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
 bool GetTransaction(const uint256& hash, CTransactionRef& tx, const Consensus::Params& params, uint256& hashBlock, bool fAllowSlow = false, CBlockIndex* blockIndex = nullptr);
-/** Find the best known block, and make it the tip of the block chain */
+/**
+ * Find the best known block, and make it the tip of the block chain
+ *
+ * May not be called with cs_main held. May not be called in a
+ * validationinterface callback.
+ */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
 
 double ConvertBitsToDouble(unsigned int nBits);
@@ -451,7 +390,7 @@ bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp = null
 
 /**
  * Closure representing one script verification
- * Note that this stores references to the spending transaction 
+ * Note that this stores references to the spending transaction
  */
 class CScriptCheck
 {
@@ -496,17 +435,16 @@ void InitScriptExecutionCache();
 
 
 /** Functions for disk access for blocks */
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams, bool fCheckPOW = true);
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams);
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams);
 
 /** Functions for validating blocks and updating the block tree */
 
 /** Context-independent validity checks */
-bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true, bool fCheckMerkleRoot = true, int64_t nBlockTime = 0, int64_t nPrevBlockTime = 0, int nPrevHeight = 0, CBlockIndex* pindexPrev = NULL);
+bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, int nHeight, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
 
-
-/** Check a block is completely valid from start to finish (only works on top of our current best block, with cs_main held) */
-bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
+/** Check a block is completely valid from start to finish (only works on top of our current best block) */
+bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW = true, bool fCheckMerkleRoot = true) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /** RAII wrapper for VerifyDB: Verify consistency of the block and coin databases */
 class CVerifyDB {
@@ -519,17 +457,31 @@ public:
 /** Replay blocks that aren't fully applied to the database. */
 bool ReplayBlocks(const CChainParams& params, CCoinsView* view);
 
+inline CBlockIndex* LookupBlockIndex(const uint256& hash)
+{
+    AssertLockHeld(cs_main);
+    BlockMap::const_iterator it = mapBlockIndex.find(hash);
+    return it == mapBlockIndex.end() ? nullptr : it->second;
+}
+
 /** Find the last common block between the parameter chain and a locator. */
 CBlockIndex* FindForkInGlobalIndex(const CChain& chain, const CBlockLocator& locator);
 
-/** Mark a block as precious and reorganize. */
-bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIndex *pindex);
+/** Mark a block as precious and reorganize.
+ *
+ * May not be called in a
+ * validationinterface callback.
+ */
+bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIndex *pindex) LOCKS_EXCLUDED(cs_main);
 
 /** Mark a block as invalid. */
-bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex);
+bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+
+/** Mark a block as conflicting. */
+bool MarkConflictingBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /** Remove invalidity status from a block and its descendants. */
-bool ResetBlockFailureFlags(CBlockIndex *pindex);
+bool ResetBlockFailureFlags(CBlockIndex* pindex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /** The currently-connected chain of blocks (protected by cs_main). */
 extern CChain& chainActive;
@@ -579,5 +531,11 @@ bool DumpMempool();
 
 /** Load the mempool from disk. */
 bool LoadMempool();
+
+//! Check whether the block associated with this index entry is pruned or not.
+inline bool IsBlockPruned(const CBlockIndex* pblockindex)
+{
+    return (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0);
+}
 
 #endif // BITCOIN_VALIDATION_H

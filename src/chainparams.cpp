@@ -1,6 +1,6 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+﻿// Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The Däsh Core developers
+// Copyright (c) 2014-2021 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,7 +14,8 @@
 #include <arith_uint256.h>
 
 #include <assert.h>
-#include <memory>
+#include "validation.h"
+
 #include <chainparamsseeds.h>
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
@@ -105,6 +106,11 @@ void CChainParams::UpdateDIP3Parameters(int nActivationHeight, int nEnforcementH
     consensus.DIP0003EnforcementHeight = nEnforcementHeight;
 }
 
+void CChainParams::UpdateDIP8Parameters(int nActivationHeight)
+{
+    consensus.DIP0008Height = nActivationHeight;
+}
+
 void CChainParams::UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
 {
     consensus.nMasternodePaymentsStartBlock = nMasternodePaymentsStartBlock;
@@ -121,6 +127,10 @@ void CChainParams::UpdateSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int 
 
 void CChainParams::UpdateLLMQChainLocks(Consensus::LLMQType llmqType) {
     consensus.llmqTypeChainLocks = llmqType;
+}
+
+void CChainParams::UpdateLLMQInstantSend(Consensus::LLMQType llmqType) {
+    consensus.llmqTypeInstantSend = llmqType;
 }
 
 void CChainParams::UpdateLLMQTestParams(int size, int threshold) {
@@ -185,8 +195,9 @@ static Consensus::LLMQParams llmq_devnet = {
         .recoveryMembers = 6,
 };
 
-
 // this one is for testing only
+
+// biblepay
 static Consensus::LLMQParams llmq_test = {
         .type = Consensus::LLMQ_TEST,
         .name = "llmq_test",
@@ -262,6 +273,27 @@ static Consensus::LLMQParams llmq400_85 = {
         .recoveryMembers = 10,
 };
 
+// end of biblepay
+// Used for Platform
+static Consensus::LLMQParams llmq100_67 = {
+        .type = Consensus::LLMQ_100_67,
+        .name = "llmq_100_67",
+        .size = 100,
+        .minSize = 80,
+        .threshold = 67,
+
+        .dkgInterval = 24, // one DKG per hour
+        .dkgPhaseBlocks = 2,
+        .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
+        .dkgMiningWindowEnd = 18,
+        .dkgBadVotesThreshold = 80,
+
+        .signingActiveQuorumCount = 24, // a full day worth of LLMQs
+
+        .keepOldConnections = 25,
+        .recoveryMembers = 50,
+};
+
 
 /**
  * Main network
@@ -279,101 +311,57 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-		//BiblePay
+		consensus.BARLEY_HARVEST_HEIGHT  = 320000;
+		consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
 
-		consensus.POOM_PHASEOUT_HEIGHT = 199000;     // June 2020
-		consensus.FPOG_CUTOVER_HEIGHT = 100001;      // Feb 7th, 2019 (100,001)
-		consensus.PODC2_CUTOVER_HEIGHT = 166075;     // Go live height for PODC 2.0, DWS (Christmas 2019) (166050=monthly superblock, 166070=daily GSC)
-		consensus.PODC_LAST_BLOCK = 107000;          // March 13th, 2019
-		consensus.EVOLUTION_CUTOVER_HEIGHT = 123200; // June 2nd, 2019 
-		consensus.F7000_CUTOVER_HEIGHT = 7000;
-		consensus.F8000_CUTOVER_HEIGHT = 21350;
-		consensus.F9000_CUTOVER_HEIGHT = 21550;
-		consensus.F11000_CUTOVER_HEIGHT = 33440;
-		consensus.F12000_CUTOVER_HEIGHT = 35110;
-		consensus.F13000_CUTOVER_HEIGHT = 57700; 
-		consensus.ANTI_GPU_HEIGHT = 170830;
 		consensus.RANDOMX_HEIGHT = 184675;
-		consensus.LAST_TITHE_BLOCK = 21565;
-		consensus.ABNHeight = 127000;
 
-		// End of BiblePay
+        consensus.nSubsidyHalvingInterval = 210240; // Note: actual number of blocks per calendar year with DGW v3 is ~200700 (for example 449750 - 249050)
 
-        consensus.nSubsidyHalvingInterval = 205 * 365; 
-        consensus.nMasternodePaymentsStartBlock = 21600; 
-		consensus.nMasternodePaymentsStartBlock = 21600;
-		consensus.nMasternodePaymentsIncreaseBlock = 21601;
-	
-    	consensus.nMasternodePaymentsIncreasePeriod = 205 * 30; 
-		consensus.nBudgetPaymentsStartBlock = 21551; // This is when we change our block distribution to include PR, P2P, IT expenses
-		
-		consensus.nInstantSendConfirmationsRequired = 6;
-        consensus.nInstantSendKeepLock = 12;
+		// BiblePay
+        consensus.nMasternodePaymentsStartBlock = 21600; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
+        consensus.nMasternodePaymentsIncreaseBlock = 21601; // actual historical value
+
+        consensus.nMasternodePaymentsIncreasePeriod = 205*30; // 17280 - actual historical value
+        consensus.nInstantSendConfirmationsRequired = 1;
+        consensus.nInstantSendKeepLock = 24;
+
         consensus.nBudgetPaymentsStartBlock = 21551; // actual historical value
-        
-		consensus.nRuleChangeActivationThreshold = 21600; // Same as Masternode Payments Start block
-		consensus.nBudgetPaymentsCycleBlocks = 205 * 30; // Monthly
+
+        consensus.nBudgetPaymentsCycleBlocks = 205*30; // Monthly
 		consensus.nBudgetPaymentsWindowBlocks = 100;
-	
-
-		consensus.nInstantSendConfirmationsRequired = 1;
-		consensus.nSuperblockStartBlock = 21710; // The first superblock
-		consensus.nSuperblockCycle = 205 * 30; // Monthly
-
-		consensus.nDCCSuperblockStartBlock = 33451; //F11000 CUTOVER HEIGHT + 11
-
-		consensus.nDCCSuperblockCycle = 205; // Daily
-
-		consensus.nGovernanceMinQuorum = 4;
-		consensus.nGovernanceFilterElements = 20000;
-
-		consensus.nSuperblockStartHash = uint256(); 
-		consensus.nMasternodeMinimumConfirmations = 7;
-		// BIP34, 65, 66 should match Evo cutover height
-		consensus.BIP65Height = 123200; // 00000000000076d8fcea02ec0963de4abfd01e771fec0863f960c2c64fe6f357
-		consensus.BIP66Height = 123200; // 00000000000b1fa2dfa312863570e13fae9ca7b5566cb27e55422620b469aefa
-
-		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 
-		// September 2020 Go-Live (POOS)
-		consensus.POOS_HEIGHT = 217000; // Sept 2020 Mandatory Upgrade height
-		consensus.TRIBULATION_HEIGHT = 255000;  // Go Live for BiblePay Mandatory 1.5.4.4 - March 1st, 2021
-	
-		// Harvest - Go Live for BiblePay Mandatory Upgrade (1.6.2.3) - July 1st, 2021
-		// BiblePay had this activated since 123200, but the BIP34+DIP3 rule (bad-cb-height) stops harvest from syncing in prod @ height 134041
-		consensus.DIP0001Height = 278014;  // Harvest Mandatory Cutover Height
-		consensus.BIP34Hash = uint256();
-		consensus.BIP34Height = 278014;    // Unable to create duplicate coinbases (tx-malleability protection)
-		consensus.DIP0003Height = 278014;
-		consensus.LLMQHeight = 278014;     // The first attempt at llmq quorums that conform to voting out bad quorum members
-		consensus.DIP0003EnforcementHeight = 278014;
-		consensus.HARVEST_HEIGHT = 278014;  // Go live height for BiblePay-Harvest
-		consensus.HARVEST_HEIGHT2 = 278014; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
-		// Chainlock enforcement:
-		consensus.DIP0008Height = 279407;
-		// ToDo : set this to the actual LLMQ go live height
-        consensus.DIP0003EnforcementHash = uint256S("0x0");
-
-		consensus.nSanctuaryPaymentsPhaseIIHeight = 166075; // Set this at the Go-Live height for .14 
-		consensus.QTHeight = 124000;  // Note to future forkers of DACs!  This height must be > (BLOCKS_PER_DAY * 32)!  Thank you for your support!
-		consensus.powLimit = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
-		consensus.FoundationAddress = "BB2BwSbDCqCqNsfc7FgWFJn4sRgnUt4tsM";
-		consensus.FoundationPODSAddress = "BScSypUZVEEY4TMz1ehyyPcS5wrnMM7WPB";
-		consensus.FoundationQTAddress = "BDcNYc8tGXmwD7QmLXbR1rk1qteTDVEjUD";
-		consensus.BurnAddress = "B4T5ciTCkWauSqVAcVKy88ofjcSasUkSYU";
-		consensus.BurnAddressOrphanDonations = "B4YNHuaXAgpbyP5QgM3H6S41AuKcsRCEaB";
-		consensus.BurnAddressWhaleMatches = "B4dey6hqas4JVvfekCkb4jJLcCCevtXcfC";
-
-		consensus.nPowTargetTimespan = 24 * 60 * 60; // 1 day
-		consensus.nPowTargetSpacing = 7 * 60; // 7 minutes
-		consensus.fPowAllowMinDifficultyBlocks = false;
-		consensus.fPowNoRetargeting = false;
-		consensus.nPowKGWHeight = 0;
-		consensus.nPowDGWHeight = 1;
-
-        consensus.nGovernanceFilterElements = 20000;
-        consensus.nMasternodeMinimumConfirmations = 15;
-        consensus.fPowAllowMinDifficultyBlocks = false;
         
+		consensus.nSuperblockStartBlock = 21710; // The block at which 12.1 goes live (end of final 12.0 budget cycle)
+        consensus.nSuperblockStartHash = uint256S("0x0");
+        consensus.nSuperblockCycle = 205*30; // Monhtly
+	    consensus.nGovernanceMinQuorum = 3;
+        consensus.nGovernanceFilterElements = 20000;
+        consensus.nMasternodeMinimumConfirmations = 7;
+        consensus.BIP34Height = 278014;
+
+        consensus.BIP34Hash = uint256S("0x0");
+        consensus.BIP65Height = 123200; // 
+        consensus.BIP66Height = 123200; // 
+        consensus.DIP0001Height = 278014;
+        consensus.DIP0003Height = 278014;
+		consensus.LLMQHeight = 278014;
+		// The below height should be the same as Barley_Harvest Height
+        consensus.DIP0003EnforcementHeight = 320000;
+        consensus.DIP0003EnforcementHash = uint256S("0x0");
+        consensus.DIP0008Height = 279407; // 
+        consensus.powLimit = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
+
+		consensus.FoundationAddress = "BB2BwSbDCqCqNsfc7FgWFJn4sRgnUt4tsM";
+		//consensus.FoundationPODSAddress = "BScSypUZVEEY4TMz1ehyyPcS5wrnMM7WPB";
+		//consensus.FoundationQTAddress = "BDcNYc8tGXmwD7QmLXbR1rk1qteTDVEjUD";
+		consensus.BurnAddress = "B4T5ciTCkWauSqVAcVKy88ofjcSasUkSYU";
+		
+        consensus.nPowTargetTimespan = 24 * 60 * 60; // BiblePay: 1 day
+        consensus.nPowTargetSpacing = 7 * 60; // BiblePay: 7 minutes
+        consensus.fPowAllowMinDifficultyBlocks = false;
+        consensus.fPowNoRetargeting = false;
+        consensus.nPowKGWHeight = 0;
+        consensus.nPowDGWHeight = 1;
         consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
@@ -413,7 +401,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 4032;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThresholdStart = 3226; // 80% of 4032
 
-		// Deployment of Block Reward Reallocation
+        // Deployment of Block Reward Reallocation
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].bit = 5;
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 1601510400; // Oct 1st, 2020
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 1633046400; // Oct 1st, 2021
@@ -422,7 +410,16 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdMin = 2420; // 60% of 4032
         consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nFalloffCoeff = 5; // this corresponds to 10 periods
 
-		// The best chain should have at least this much work.
+        // Deployment of DIP0020, DIP0021 and LLMQ_100_67 quorums
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 6;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1625097600; // July 1st, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1656633600; // July 1st, 2022
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 4032;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 3226; // 80% of 4032
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdMin = 2420; // 60% of 4032
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nFalloffCoeff = 5; // this corresponds to 10 periods
+
+        // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000806e93acd1bb"); 
 
         // By default assume that the signatures in ancestors of this block are valid.
@@ -437,19 +434,16 @@ public:
         pchMessageStart[1] = 0x0c;
         pchMessageStart[2] = 0x6b;
         pchMessageStart[3] = 0xbd;
-        vAlertPubKey = ParseHex("0x0432cb0fcd551eb206e80fa59cc7fd4038923ef3416f3e132637b8e9a4bcd2f8c9e6c4ee9f01c6f3cea7fb5d85b65b7c18ba30e6c133242bf0de488dd839c36001");
-
         nDefaultPort = 40000;
         nPruneAfterHeight = 450000;
-		
-        genesis = CreateGenesisBlock(1496347844, 12, 0x207fffff, 1, 50 * COIN);
+		genesis = CreateGenesisBlock(1496347844, 12, 0x207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x3b4431310395638c0ed65b40ede4b110d8da70fcc0c2ed4a729fb8e4d78b4452"));
         assert(genesis.hashMerkleRoot == uint256S("0x02b05f3b8a7168bcf83b888e0092446b248b2641bd9844b5d12a45eaa2765725"));
 
         // Note that of those which support the service bits prefix, most only support a subset of
         // possible options.
-        // This is fine at runtime as we'll fall back to using them as a oneshot if they dont support the
+        // This is fine at runtime as we'll fall back to using them as a oneshot if they don't support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
         vSeeds.emplace_back("dnsseed.biblepay.org");
@@ -472,12 +466,12 @@ public:
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         // long living quorum params
+
 	    consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
         consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
-        /* consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85; */
-		
         consensus.llmqTypeChainLocks = Consensus::LLMQ_400_60;
         consensus.llmqTypeInstantSend = Consensus::LLMQ_5_60;
+		consensus.llmqTypePlatform = Consensus::LLMQ_100_67;
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
@@ -487,19 +481,14 @@ public:
         fAllowMultiplePorts = true;
         nLLMQConnectionRetryTimeout = 60;
 
-        nPoolMinParticipants = 3;
-        nPoolNewMinParticipants = 3;
-        nPoolMaxParticipants = 5;
-        nPoolNewMaxParticipants = 20;
         nFulfilledRequestExpireTime = 60*60; // fulfilled requests expire in 1 hour
 
         vSporkAddresses = {"BB2BwSbDCqCqNsfc7FgWFJn4sRgnUt4tsM"};
-      
         nMinSporkKeys = 1;
         fBIP9CheckMasternodesUpgraded = true;
 
         checkpointData = {
-            {
+        {
                 {
 					{7, uint256S("0x00022b1be28b1deb9a51d4d69f3fa393f4ea36621039b6313a6c0796546621de")},
 					{120, uint256S("0x00002fc6c9e4889a8d1a9bd5919a6bd4a4b09091e55049480509da14571e5653")},
@@ -516,6 +505,7 @@ public:
 					{145000, uint256S("0xe830a524fc6a71aa0c3171db1ef592893f84de65fdcda57ddff8b378dcbda12f")},
 					{206000, uint256S("0xc5c6dfcc2b84fb48873b1fd45d2a693a183fbaef8c79673d6defb2b073ef09d2")},
                     {270000, uint256S("0x4cb48793f323d2252cfc9f5b233931e8a727a091532841379a375390d9e31e20")},
+					{315770, uint256S("0xe8fb51c409c9c2942e60e15d013efc475eacd0a4fa9df8d54eddfaa0c421146a")},
 				}
             }
         };
@@ -535,80 +525,48 @@ public:
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
-		strNetworkID = "test";
-        consensus.POOM_PHASEOUT_HEIGHT = 38000; 
-		consensus.POOS_HEIGHT = 55720; // Set the height for the September 2020 Mandatory Upgrade
+        strNetworkID = "test";
+		consensus.BARLEY_HARVEST_HEIGHT = 117233;
+		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
 
-		consensus.PODC_LAST_BLOCK = 100; // March 13th, 2019
-		consensus.PODC2_CUTOVER_HEIGHT = 21000;  // Go live height for PODC 2.0, DWS (Christmas 2019)
-		consensus.F7000_CUTOVER_HEIGHT = 100;
-		consensus.F12000_CUTOVER_HEIGHT = 100;
-		consensus.F13000_CUTOVER_HEIGHT = 100; 
-		consensus.ANTI_GPU_HEIGHT = 28010;
-		consensus.RANDOMX_HEIGHT = 28003;
-		int BLOCKS_PER_DAY = 205;
-		consensus.F9000_CUTOVER_HEIGHT= 100;
-		consensus.F11000_CUTOVER_HEIGHT= 1;
-		consensus.F8000_CUTOVER_HEIGHT = 1;
-		consensus.F9000_CUTOVER_HEIGHT = 10;
-		consensus.F13000_CUTOVER_HEIGHT = 1;
-		consensus.FPOG_CUTOVER_HEIGHT = 1;  // Dec. 23rd, 2018
-		consensus.F14000_CUTOVER_HEIGHT = 1; 
-		consensus.LAST_TITHE_BLOCK = 1;
-		consensus.EVOLUTION_CUTOVER_HEIGHT = 1000;
-		consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
-		consensus.nMasternodePaymentsStartBlock = 2001;
-		consensus.nMasternodePaymentsIncreaseBlock = 2001;
-		consensus.nMasternodePaymentsIncreasePeriod = BLOCKS_PER_DAY * 30;
-		consensus.nInstantSendConfirmationsRequired = 1;
-		consensus.nInstantSendKeepLock = 6;
-		consensus.nBudgetPaymentsStartBlock = 2002;
-		consensus.QTHeight = 5000;
-		consensus.TRIBULATION_HEIGHT = 58000;
-		
-		consensus.nBudgetPaymentsCycleBlocks = 50;
-		consensus.nBudgetPaymentsWindowBlocks = 10;
-		consensus.nSuperblockStartBlock = 4007; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPaymentsStartBlock
-		consensus.nSuperblockStartHash = uint256(); // Do not check this on testnet
-		consensus.nSuperblockCycle = BLOCKS_PER_DAY * 7; // Weekly in TestNet
-		consensus.nGovernanceMinQuorum = 1;
-		consensus.nGovernanceFilterElements = 500;
-		consensus.nMasternodeMinimumConfirmations = 1;
-		consensus.FoundationAddress = "yTrEKf8XQ7y7tychC2gWuGw1hsLqBybnEN";
-		consensus.FoundationPODSAddress = "yPrVdc1kFTC19Hx4NMnwEeLFifToUcQGMs";
-		consensus.FoundationQTAddress = "ygGKQR4bYwjGaEnX8KCyzEJhht4paYCiuo";
-		consensus.BurnAddress = "yLKSrCjLQFsfVgX8RjdctZ797d54atPjnV";
-		consensus.BurnAddressOrphanDonations = "yLQjXPrepS7N2E7NVbLvrrMUYux6d8kkD8";
-		consensus.BurnAddressWhaleMatches = "yLW2CayyEcM4YmhcZT4Eq9bozCq8griKNa";
-
-		consensus.nDCCSuperblockStartBlock = 4504; 
-        consensus.nDCCSuperblockCycle = BLOCKS_PER_DAY; // Daily
-        consensus.BIP65Height = 2431; 
-        consensus.BIP66Height = 2075; 
-        consensus.DIP0001Height = 7000;
-		consensus.nSanctuaryPaymentsPhaseIIHeight = 8400;
-
-		//LLMQ:
-		consensus.DIP0003EnforcementHash = uint256();
+        consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
+        consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
+        consensus.nMasternodePaymentsIncreaseBlock = 2001;
+        consensus.nMasternodePaymentsIncreasePeriod = BLOCKS_PER_DAY * 30;
+        consensus.nInstantSendConfirmationsRequired = 1;
+        consensus.nInstantSendKeepLock = 6;
+        consensus.nBudgetPaymentsStartBlock = 2002;
+        consensus.nBudgetPaymentsCycleBlocks = 50;
+        consensus.nBudgetPaymentsWindowBlocks = 10;
+        consensus.nSuperblockStartBlock = 4007; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPeymentsStartBlock
+        consensus.nSuperblockStartHash = uint256(); // do not check this on testnet
+        consensus.nSuperblockCycle = BLOCKS_PER_DAY*7; // Weekly
+        consensus.nGovernanceMinQuorum = 1;
+        consensus.nGovernanceFilterElements = 500;
+        consensus.nMasternodeMinimumConfirmations = 1;
         consensus.BIP34Hash = uint256S("0x0");
-		consensus.BIP34Height = 72860;
-		consensus.DIP0003Height = 72860; 
-		consensus.LLMQHeight = 72860;
-    	consensus.DIP0003EnforcementHeight = 72860;
-		consensus.HARVEST_HEIGHT = 72860;  // Go live height for BiblePay-Harvest
-		consensus.HARVEST_HEIGHT2 = 73500; // New payment %s for masternodes (20%), less for monthly budget (5%), more for UTXO (50%), RANDOMX (25%)
-		// Chainlock Enforcement:
-		consensus.DIP0008Height = 74000;
+        consensus.BIP65Height = 2431; // 
+        consensus.BIP66Height = 2075; // 
 
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); 
-        consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day
-        consensus.nPowTargetSpacing = 3 * 60; // 3 minutes in testnet (after harvest height) - for LLMQ
+		consensus.FoundationAddress = "yTrEKf8XQ7y7tychC2gWuGw1hsLqBybnEN";
+		consensus.BurnAddress = "yLKSrCjLQFsfVgX8RjdctZ797d54atPjnV";
+	
+        consensus.DIP0001Height = 7000;
+        consensus.BIP34Height = 72860;
+        consensus.DIP0003Height = 72860;
+        consensus.DIP0003EnforcementHeight = 72860;
+        consensus.DIP0003EnforcementHash = uint256S("0x0");
+		consensus.LLMQHeight = 72860;
+        consensus.DIP0008Height = 74000; // 
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
+        consensus.nPowTargetTimespan = 24 * 60 * 60; // BiblePay: 1 day
+        consensus.nPowTargetSpacing = 3 * 60; // BiblePay: 3mins
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
-        consensus.nPowKGWHeight = 1; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
-        consensus.nPowDGWHeight = 1;
+        consensus.nPowKGWHeight = 0; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
+        consensus.nPowDGWHeight = 1; // 
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 205; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
@@ -616,35 +574,53 @@ public:
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 1544655600; // Dec 13th, 2018
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 1576191600; // Dec 13th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
         // Deployment of DIP0001
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nStartTime = 1544655600; // Dec 13th, 2018
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nTimeout = 1576191600; // Dec 13th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nThresholdStart = 50; // 50% of 100
 
         // Deployment of BIP147
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].bit = 2;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nStartTime = 1544655600; // Dec 13th, 2018
-        consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nTimeout = 1576191600; // Dec 13th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThresholdStart = 50; // 50% of 100
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 3;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1544655600; // Dec 13th, 2018
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1576191600; // Dec 13th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThresholdStart = 50; // 50% of 100
 
         // Deployment of DIP0008
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].bit = 4;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 1553126400; // Mar 21st, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 1584748800; // Mar 21st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThresholdStart = 50; // 50% of 100
+
+        // Deployment of Block Reward Reallocation
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].bit = 5;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 1598918400; // Sep 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdStart = 80; // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdMin = 60; // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nFalloffCoeff = 5; // this corresponds to 10 periods
+
+        // Deployment of DIP0020, DIP0021 and LLMQ_100_67 quorums
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 6;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1606780800; // December 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1638316800; // December 1st, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 80; // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdMin = 60; // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nFalloffCoeff = 5; // this corresponds to 10 periods
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000000000000000"); // 4000
@@ -656,12 +632,10 @@ public:
         pchMessageStart[1] = 0xe2;
         pchMessageStart[2] = 0xca;
         pchMessageStart[3] = 0xff;
-        vAlertPubKey = ParseHex("0x03239f430d6025348e971896d6f2ab6226e04a56ab798ae8b5efe3c5cf056d0609");
         nDefaultPort = 40001;
-        nPruneAfterHeight = 100000;
+        nPruneAfterHeight = 200000;
 
         genesis = CreateGenesisBlock(1496347850, 15, 0x207fffff, 1, 50 * COIN);
-	
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x122f423f0912850a871c58f1533dd80be62154bb0c56dfb8cb9ae2b957d1ac10"));
         assert(genesis.hashMerkleRoot == uint256S("0x02b05f3b8a7168bcf83b888e0092446b248b2641bd9844b5d12a45eaa2765725"));
@@ -671,19 +645,20 @@ public:
 
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
+        vSeeds.emplace_back("testnet-seed.biblepaydot.io"); // Just a static list of stable node(s), only supports x9
 
-        // Testnet DAC addresses start with 'y'
+        // Testnet BiblePay addresses start with 'y'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
-        // Testnet DAC script addresses start with '8' or '9'
+        // Testnet BiblePay script addresses start with '8' or '9'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,19);
         // Testnet private keys start with '9' or 'c' (Bitcoin defaults)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
-        // Testnet DAC BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
-		base58Prefixes[EXT_PUBLIC_KEY] = {0x04,0x35,0x87,0xCF};
-	    // Testnet DAC BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
-		base58Prefixes[EXT_SECRET_KEY] = {0x04,0x35,0x83,0x94};
+        // Testnet BiblePay BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        // Testnet BiblePay BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
-        // Testnet DAC BIP44 coin type is '1' (All coin's testnet default)
+        // Testnet BiblePay BIP44 coin type is '1' (All coin's testnet default)
         nExtCoinType = 1;
 
         // long living quorum params
@@ -691,23 +666,23 @@ public:
         consensus.llmqs[Consensus::LLMQ_TEST] = llmq_test;
 		consensus.llmqTypeChainLocks = Consensus::LLMQ_TEST;
         consensus.llmqTypeInstantSend = Consensus::LLMQ_TEST;
+		consensus.llmqTypePlatform = Consensus::LLMQ_TEST;
 
-		fDefaultConsistencyChecks = false;
+        fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fRequireRoutableExternalIP = true;
         fMineBlocksOnDemand = false;
         fAllowMultipleAddressesFromGroup = true;
         fAllowMultiplePorts = true;
+        nLLMQConnectionRetryTimeout = 60;
 
-        nPoolMinParticipants = 3;
-        nPoolMaxParticipants = 5;
-        nFulfilledRequestExpireTime = 5 * 60; // fulfilled requests expire in 5 minutes
+        nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
         vSporkAddresses = {"yTrEKf8XQ7y7tychC2gWuGw1hsLqBybnEN"};
-        nMinSporkKeys = 1;
+		nMinSporkKeys = 1;
         fBIP9CheckMasternodesUpgraded = true;
 
-		checkpointData = (CCheckpointData) 
+   		checkpointData = (CCheckpointData) 
 		{
 			{
 				{1,     uint256S("0xde31388eddd9e0ea515353628a0ca1f167466f09c45b10354de10459c7c018f2")},
@@ -723,7 +698,6 @@ public:
                         //   (the tx=... number in the SetBestChain debug.log lines)
             0.01        // * estimated number of transactions per second after that timestamp
         };
-
     }
 };
 
@@ -732,82 +706,94 @@ public:
  */
 class CDevNetParams : public CChainParams {
 public:
-    CDevNetParams() {
+    CDevNetParams(bool fHelpOnly = false) {
         strNetworkID = "devnet";
-        int BLOCKS_PER_DAY = 205;
-
-		consensus.nSubsidyHalvingInterval = 210240;
-		consensus.PODC2_CUTOVER_HEIGHT = 19000;  // Go live height for PODC 2.0, DWS (Christmas 2019)
-	
-		consensus.nMasternodePaymentsStartBlock = 4010; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
-		consensus.nMasternodePaymentsIncreaseBlock = 4030;
-		consensus.nMasternodePaymentsIncreasePeriod = 10;
-		consensus.nInstantSendConfirmationsRequired = 2;
-		consensus.ABNHeight = 100;
-		consensus.nInstantSendKeepLock = 6;
-		consensus.nBudgetPaymentsStartBlock = 4100;
-		consensus.nBudgetPaymentsCycleBlocks = 50;
-		consensus.nBudgetPaymentsWindowBlocks = 10;
-		consensus.nSuperblockStartBlock = 4200; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPaymentsStartBlock
-		consensus.nSuperblockStartHash = uint256(); // do not check this on devnet
-		consensus.nSuperblockCycle = 24; // Superblocks can be issued hourly on devnet
-		consensus.nGovernanceMinQuorum = 1;
-		consensus.nGovernanceFilterElements = 500;
-		consensus.F9000_CUTOVER_HEIGHT = 10;
-		consensus.nDCCSuperblockStartBlock = 104; //F11000 CUTOVER HEIGHT + 11
-		consensus.nDCCSuperblockCycle = BLOCKS_PER_DAY; // Daily
-		consensus.nMasternodeMinimumConfirmations = 1;
-		consensus.BIP34Height = 1; // BIP34 activated immediately on devnet
-		consensus.BIP65Height = 1; // BIP65 activated immediately on devnet
-		consensus.BIP66Height = 1; // BIP66 activated immediately on devnet
-		consensus.DIP0001Height = 2; // DIP0001 activated immediately on devnet
-		consensus.DIP0003Height = 2;
-
-		consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
-		consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day
-		consensus.nPowTargetSpacing = 2.5 * 60; // DAC: 2.5 minutes
-		consensus.fPowAllowMinDifficultyBlocks = true;
-		consensus.fPowNoRetargeting = false;
-		consensus.nPowKGWHeight = 1; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
-		consensus.nPowDGWHeight = 1;
-		consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
-		consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
-		consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-		consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
-		consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
+        consensus.nSubsidyHalvingInterval = 210240;
+        consensus.nMasternodePaymentsStartBlock = 4010; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
+        consensus.nMasternodePaymentsIncreaseBlock = 4030;
+        consensus.nMasternodePaymentsIncreasePeriod = 10;
+        consensus.nInstantSendConfirmationsRequired = 2;
+        consensus.nInstantSendKeepLock = 6;
+        consensus.nBudgetPaymentsStartBlock = 4100;
+        consensus.nBudgetPaymentsCycleBlocks = 50;
+        consensus.nBudgetPaymentsWindowBlocks = 10;
+        consensus.nSuperblockStartBlock = 4200; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPeymentsStartBlock
+        consensus.nSuperblockStartHash = uint256(); // do not check this on devnet
+        consensus.nSuperblockCycle = 24; // Superblocks can be issued hourly on devnet
+        consensus.nGovernanceMinQuorum = 1;
+        consensus.nGovernanceFilterElements = 500;
+        consensus.nMasternodeMinimumConfirmations = 1;
+        consensus.BIP34Height = 1; // BIP34 activated immediately on devnet
+        consensus.BIP65Height = 1; // BIP65 activated immediately on devnet
+        consensus.BIP66Height = 1; // BIP66 activated immediately on devnet
+        consensus.DIP0001Height = 2; // DIP0001 activated immediately on devnet
+        consensus.DIP0003Height = 2; // DIP0003 activated immediately on devnet
+        consensus.DIP0003EnforcementHeight = 2; // DIP0003 activated immediately on devnet
+        consensus.DIP0003EnforcementHash = uint256();
+        consensus.DIP0008Height = 2; // DIP0008 activated immediately on devnet
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
+        consensus.nPowTargetTimespan = 24 * 60 * 60; // BiblePay: 1 day
+        consensus.nPowTargetSpacing = 2.5 * 60; // BiblePay: 2.5 minutes
+        consensus.fPowAllowMinDifficultyBlocks = true;
+        consensus.fPowNoRetargeting = false;
+        consensus.nPowKGWHeight = 1; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
+        consensus.nPowDGWHeight = 1;
+        consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
+        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 1506556800; // September 28th, 2017
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 1538092800; // September 28th, 2018
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
 
         // Deployment of DIP0001
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nStartTime = 1505692800; // Sep 18th, 2017
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nTimeout = 1537228800; // Sep 18th, 2018
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0001].nThresholdStart = 50; // 50% of 100
 
         // Deployment of BIP147
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].bit = 2;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nStartTime = 1517792400; // Feb 5th, 2018
-        consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nTimeout = 1549328400; // Feb 5th, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_BIP147].nThresholdStart = 50; // 50% of 100
 
         // Deployment of DIP0003
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].bit = 3;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nStartTime = 1535752800; // Sep 1st, 2018
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 1567288800; // Sep 1st, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0003].nThresholdStart = 50; // 50% of 100
 
         // Deployment of DIP0008
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].bit = 4;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 1553126400; // Mar 21st, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 1584748800; // Mar 21st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 999999999999ULL;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nWindowSize = 100;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nThresholdStart = 50; // 50% of 100
+
+        // Deployment of Block Reward Reallocation
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].bit = 5;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 1598918400; // Sep 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdStart = 80; // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdMin = 60; // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nFalloffCoeff = 5; // this corresponds to 10 periods
+
+        // Deployment of DIP0020, DIP0021 and LLMQ_100_67 quorums
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 6;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 1604188800; // November 1st, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 1635724800; // November 1st, 2021
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 80; // 80% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdMin = 60; // 60% of 100
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nFalloffCoeff = 5; // this corresponds to 10 periods
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000000000000000");
@@ -819,50 +805,59 @@ public:
         pchMessageStart[1] = 0xca;
         pchMessageStart[2] = 0xff;
         pchMessageStart[3] = 0xce;
-        vAlertPubKey = ParseHex("04517d8a699cb43d3938d7b24faaff7cda448ca4ea267723ba614784de661949bf632d6304316b244646dea079735b9a6fc4af804efb4752075b9fe2245e14e412");
         nDefaultPort = 40002;
         nPruneAfterHeight = 1000;
 
         genesis = CreateGenesisBlock(1417713337, 1096447, 0x207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e"));
-        assert(genesis.hashMerkleRoot == uint256S("0xe0028eb9648db56b1ac77cf090b99048a8007e2bb64b68f092c03c7f56a662c7"));
 
-        devnetGenesis = FindDevNetGenesisBlock(genesis, 50 * COIN);
-        consensus.hashDevnetGenesisBlock = devnetGenesis.GetHash();
+		
+		
+        assert(consensus.hashGenesisBlock == uint256S("0x8b2dec091b22b56b47c7e857bb54a9fe0efd379f0d400b7c69260c7e7e93fdcc"));
+        assert(genesis.hashMerkleRoot == uint256S("0x02b05f3b8a7168bcf83b888e0092446b248b2641bd9844b5d12a45eaa2765725"));
+
+        if (!fHelpOnly) {
+            devnetGenesis = FindDevNetGenesisBlock(genesis, 50 * COIN);
+            consensus.hashDevnetGenesisBlock = devnetGenesis.GetHash();
+        }
 
         vFixedSeeds.clear();
         vSeeds.clear();
+        //vSeeds.push_back(CDNSSeedData("biblepayevo.org",  "devnet-seed.biblepayevo.org"));
 
-        // Testnet DAC addresses start with 'y'
+        // Testnet BiblePay addresses start with 'y'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
-        // Testnet DAC script addresses start with '8' or '9'
+        // Testnet BiblePay script addresses start with '8' or '9'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,19);
         // Testnet private keys start with '9' or 'c' (Bitcoin defaults)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
-        // Testnet DAC BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
-		base58Prefixes[EXT_PUBLIC_KEY] = {0x04,0x35,0x87,0xCF};
-		// Testnet DAC BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
-		base58Prefixes[EXT_SECRET_KEY] = {0x04,0x35,0x83,0x94};
-		
-        // Testnet DAC BIP44 coin type is '1' (All coin's testnet default)
+        // Testnet BiblePay BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        // Testnet BiblePay BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+
+        // Testnet BiblePay BIP44 coin type is '1' (All coin's testnet default)
         nExtCoinType = 1;
 
         // long living quorum params
+        consensus.llmqs[Consensus::LLMQ_DEVNET] = llmq_devnet;
         consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
+
         consensus.llmqs[Consensus::LLMQ_400_60] = llmq400_60;
         consensus.llmqs[Consensus::LLMQ_400_85] = llmq400_85;
+        consensus.llmqs[Consensus::LLMQ_100_67] = llmq100_67;
         consensus.llmqTypeChainLocks = Consensus::LLMQ_5_60;
         consensus.llmqTypeInstantSend = Consensus::LLMQ_5_60;
+        consensus.llmqTypePlatform = Consensus::LLMQ_100_67;
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
+        fRequireRoutableExternalIP = true;
         fMineBlocksOnDemand = false;
         fAllowMultipleAddressesFromGroup = true;
         fAllowMultiplePorts = true;
+        nLLMQConnectionRetryTimeout = 60;
 
-        nPoolMinParticipants = 3;
-        nPoolMaxParticipants = 5;
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
         vSporkAddresses = {"yjPtiKh2uwk3bDutTEA2q9mCtXyiZRWn55"};
@@ -871,10 +866,10 @@ public:
         fBIP9CheckMasternodesUpgraded = false;
 
         checkpointData = (CCheckpointData) {
-			{
-				{      0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e")},
+            {
+   				{      0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e")},
 				{      1, devnetGenesis.GetHash()},
-			}
+		    }
         };
 
         chainTxData = ChainTxData{
@@ -882,17 +877,6 @@ public:
             2,                            // * we only have 2 coinbase transactions when a devnet is started up
             0.01                          // * estimated number of transactions per second
         };
-    }
-
-    void UpdateSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int nHighSubsidyBlocks, int nHighSubsidyFactor)
-    {
-        consensus.nMinimumDifficultyBlocks = nMinimumDifficultyBlocks;
-        consensus.nHighSubsidyBlocks = nHighSubsidyBlocks;
-        consensus.nHighSubsidyFactor = nHighSubsidyFactor;
-    }
-
-    void UpdateLLMQChainLocks(Consensus::LLMQType llmqType) {
-        consensus.llmqTypeChainLocks = llmqType;
     }
 };
 
@@ -908,8 +892,7 @@ public:
         consensus.nMasternodePaymentsIncreaseBlock = 350;
         consensus.nMasternodePaymentsIncreasePeriod = 10;
         consensus.nInstantSendConfirmationsRequired = 2;
-		consensus.F9000_CUTOVER_HEIGHT = 10;
-	    consensus.nInstantSendKeepLock = 6;
+        consensus.nInstantSendKeepLock = 6;
         consensus.nBudgetPaymentsStartBlock = 1000;
         consensus.nBudgetPaymentsCycleBlocks = 50;
         consensus.nBudgetPaymentsWindowBlocks = 10;
@@ -927,13 +910,14 @@ public:
         consensus.DIP0003Height = 432;
         consensus.DIP0003EnforcementHeight = 500;
         consensus.DIP0003EnforcementHash = uint256();
+        consensus.DIP0008Height = 432;
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // ~uint256(0) >> 1
-        consensus.nPowTargetTimespan = 24 * 60 * 60; // DAC: 1 day
-        consensus.nPowTargetSpacing = 2.5 * 60; // DAC: 2.5 minutes
+        consensus.nPowTargetTimespan = 24 * 60 * 60; // BiblePay: 1 day
+        consensus.nPowTargetSpacing = 2.5 * 60; // BiblePay: 2.5 minutes
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
-        consensus.nPowKGWHeight = 1; // same as mainnet
-        consensus.nPowDGWHeight = 1; // same as mainnet
+        consensus.nPowKGWHeight = 15200; // same as mainnet
+        consensus.nPowDGWHeight = 34140; // same as mainnet
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
@@ -954,6 +938,20 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].bit = 4;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_DIP0008].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].bit = 5;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nWindowSize = 500;
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdStart = 400; // 80%
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nThresholdMin = 300; // 60%
+        consensus.vDeployments[Consensus::DEPLOYMENT_REALLOC].nFalloffCoeff = 5;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].bit = 6;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nWindowSize = 100;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdStart = 80;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nThresholdMin = 60;
+        consensus.vDeployments[Consensus::DEPLOYMENT_DIP0020].nFalloffCoeff = 5;
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
@@ -965,38 +963,38 @@ public:
         pchMessageStart[1] = 0xc1;
         pchMessageStart[2] = 0xb7;
         pchMessageStart[3] = 0xdc;
-        nDefaultPort = 19994;
+        nDefaultPort = 19899;
         nPruneAfterHeight = 1000;
 
 		genesis = CreateGenesisBlock(1496347864, 18, 0x207fffff, 1, 50 * COIN);
-	
         consensus.hashGenesisBlock = genesis.GetHash();
+
         assert(consensus.hashGenesisBlock == uint256S("0x2a2a5f2fd4648f7d72b41f076567d143ed67db051dfda746c9cfba616c6a49d6"));
         assert(genesis.hashMerkleRoot == uint256S("0x02b05f3b8a7168bcf83b888e0092446b248b2641bd9844b5d12a45eaa2765725"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
 
-        //fMiningRequiresPeers = false;
         fDefaultConsistencyChecks = true;
         fRequireStandard = false;
         fRequireRoutableExternalIP = false;
         fMineBlocksOnDemand = true;
         fAllowMultipleAddressesFromGroup = true;
         fAllowMultiplePorts = true;
+        nLLMQConnectionRetryTimeout = 1; // must be lower then the LLMQ signing session timeout so that tests have control over failing behavior
 
         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
 
+        // privKey: cP4EKFyJsHT39LDqgdcB43Y3YXjNyjb5Fuas1GQSeAtjnZWmZEQK
         vSporkAddresses = {"yj949n1UH6fDhw6HtVE5VMj2iSTaSWBMcW"};
         nMinSporkKeys = 1;
         // regtest usually has no masternodes in most tests, so don't check for upgraged MNs
         fBIP9CheckMasternodesUpgraded = false;
 
-        checkpointData = (CCheckpointData)
-		{
-			{
-				{0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e")},
-			}
+        checkpointData = {
+            {
+                {0, uint256S("0x000008ca1832a4baf228eb1553c03d3a2c8e02399550dd6ea8d65cec3ef23d2e")},
+            }
         };
 
         chainTxData = ChainTxData{
@@ -1005,28 +1003,27 @@ public:
             0
         };
 
-        // Regtest DAC addresses start with 'y'
+        // Regtest BiblePay addresses start with 'y'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
-        // Regtest DAC script addresses start with '8' or '9'
+        // Regtest BiblePay script addresses start with '8' or '9'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,19);
-        // Regtest DAC keys start with '9' or 'c' (Bitcoin defaults)
+        // Regtest private keys start with '9' or 'c' (Bitcoin defaults)
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
-        // Regtest DAC BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
-		base58Prefixes[EXT_PUBLIC_KEY] = {0x04,0x35,0x87,0xCF};
-		// Regtest DAC BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
-		base58Prefixes[EXT_SECRET_KEY] = {0x04,0x35,0x83,0x94};
-		
-        // Regtest DAC BIP44 coin type is '1' (All coin's testnet default)
+        // Regtest BiblePay BIP32 pubkeys start with 'tpub' (Bitcoin defaults)
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        // Regtest BiblePay BIP32 prvkeys start with 'tprv' (Bitcoin defaults)
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+
+        // Regtest BiblePay BIP44 coin type is '1' (All coin's testnet default)
         nExtCoinType = 1;
 
         // long living quorum params
-        consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
-        consensus.llmqs[Consensus::LLMQ_5_60] = llmq5_60;
-        consensus.llmqTypeChainLocks = Consensus::LLMQ_5_60;
-        consensus.llmqTypeInstantSend = Consensus::LLMQ_5_60;
+        consensus.llmqs[Consensus::LLMQ_TEST] = llmq_test;
+        //consensus.llmqs[Consensus::LLMQ_TEST_V17] = llmq_test_v17;
+        consensus.llmqTypeChainLocks = Consensus::LLMQ_TEST;
+        consensus.llmqTypeInstantSend = Consensus::LLMQ_TEST;
+        consensus.llmqTypePlatform = Consensus::LLMQ_TEST;
     }
-
-    
 };
 
 static std::unique_ptr<CChainParams> globalChainParams;
@@ -1036,14 +1033,14 @@ const CChainParams &Params() {
     return *globalChainParams;
 }
 
-std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain)
+std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain, bool fHelpOnly)
 {
     if (chain == CBaseChainParams::MAIN)
         return std::unique_ptr<CChainParams>(new CMainParams());
     else if (chain == CBaseChainParams::TESTNET)
         return std::unique_ptr<CChainParams>(new CTestNetParams());
     else if (chain == CBaseChainParams::DEVNET) {
-        return std::unique_ptr<CChainParams>(new CDevNetParams());
+        return std::unique_ptr<CChainParams>(new CDevNetParams(fHelpOnly));
     } else if (chain == CBaseChainParams::REGTEST)
         return std::unique_ptr<CChainParams>(new CRegTestParams());
     throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
@@ -1065,6 +1062,11 @@ void UpdateDIP3Parameters(int nActivationHeight, int nEnforcementHeight)
     globalChainParams->UpdateDIP3Parameters(nActivationHeight, nEnforcementHeight);
 }
 
+void UpdateDIP8Parameters(int nActivationHeight)
+{
+    globalChainParams->UpdateDIP8Parameters(nActivationHeight);
+}
+
 void UpdateBudgetParameters(int nMasternodePaymentsStartBlock, int nBudgetPaymentsStartBlock, int nSuperblockStartBlock)
 {
     globalChainParams->UpdateBudgetParameters(nMasternodePaymentsStartBlock, nBudgetPaymentsStartBlock, nSuperblockStartBlock);
@@ -1078,6 +1080,11 @@ void UpdateDevnetSubsidyAndDiffParams(int nMinimumDifficultyBlocks, int nHighSub
 void UpdateDevnetLLMQChainLocks(Consensus::LLMQType llmqType)
 {
     globalChainParams->UpdateLLMQChainLocks(llmqType);
+}
+
+void UpdateDevnetLLMQInstantSend(Consensus::LLMQType llmqType)
+{
+    globalChainParams->UpdateLLMQInstantSend(llmqType);
 }
 
 void UpdateLLMQTestParams(int size, int threshold)

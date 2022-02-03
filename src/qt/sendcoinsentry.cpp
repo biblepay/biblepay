@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2014-2019 The Däsh Core developers
+﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2014-2020 The DÃSH Core Developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,6 +10,7 @@
 #include <qt/addresstablemodel.h>
 #include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
+#include <chainparams.h>
 
 #include <QApplication>
 #include <QClipboard>
@@ -25,9 +26,7 @@ SendCoinsEntry::SendCoinsEntry(QWidget* parent) :
 
     setCurrentWidget(ui->SendCoins);
 
-#if QT_VERSION >= 0x040700
     ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book"));
-#endif
 
     setButtonIcons();
 
@@ -44,76 +43,34 @@ SendCoinsEntry::SendCoinsEntry(QWidget* parent) :
     // Connect signals
     connect(ui->payAmount, SIGNAL(valueChanged()), this, SIGNAL(payAmountChanged()));
     connect(ui->checkboxSubtractFeeFromAmount, SIGNAL(toggled(bool)), this, SIGNAL(subtractFeeFromAmountChanged()));
+	connect(ui->checkboxDonateToFoundation, SIGNAL(toggled(bool)), this, SLOT(donateToFoundation()));
     connect(ui->deleteButton, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_is, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_s, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->useAvailableBalanceButton, SIGNAL(clicked()), this, SLOT(useAvailableBalanceClicked()));
-
-	connect(ui->chkDonate, SIGNAL(toggled(bool)), this, SLOT(updateFoundationAddress()));
-	connect(ui->chkDiary, SIGNAL(toggled(bool)), this, SLOT(diaryEntry()));
-	// Anti-Censorship Features (ACF)
-	// connect(ui->btnAttach, SIGNAL(clicked()), this, SLOT(attachFile()));
-	ui->btnAttach->setVisible(false);
-	ui->lblIPFSFee->setVisible(false);
-	ui->txtFile->setVisible(false);
-	ui->lblatt->setVisible(false);
-	
 }
-
-void SendCoinsEntry::diaryEntry()
-{
-	const CChainParams& chainparams = Params();
-	bool bChecked = (ui->chkDiary->checkState() == Qt::Checked);
-	if (bChecked)
-	{
-		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().FoundationPODSAddress));
-		ui->payAmount->setValue(1*COIN);
-	}
-}
-
-void SendCoinsEntry::updateFoundationAddress()
-{
-	const CChainParams& chainparams = Params();
-	bool bCheckedF = (ui->chkDonate->checkState() == Qt::Checked);
-
-	if (bCheckedF)
-	{
-		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().FoundationPODSAddress));
-	    ui->payAmount->setFocus();
-	}
-	else
-	{
-		ui->payTo->setText("");
-		ui->payAmount->clear();
-        ui->payAmount->setFocus();
-	}
-}
-
-/*
-void SendCoinsEntry::updateBurnAddress()
-{
-	const CChainParams& chainparams = Params();
-	bool bCheckedF = (ui->chkDWS->checkState() == Qt::Checked);
-
-	if (bCheckedF)
-	{
-		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().BurnAddress));
-	    ui->payAmount->setFocus();
-	}
-	else
-	{
-		// Clear the to address, so people dont accidentally burn bbp without a utxo-stake (recommended by https://forum.biblepay.org/index.php?topic=517.msg10227#msg10227)
-		ui->payTo->setText("");
-		ui->payAmount->clear();
-        ui->payAmount->setFocus();
-	}
-}
-*/
-
 
 SendCoinsEntry::~SendCoinsEntry()
 {
     delete ui;
+}
+
+void SendCoinsEntry::donateToFoundation()
+{
+	const CChainParams& chainparams = Params();
+	bool bCheckedF = (ui->checkboxDonateToFoundation->checkState() == Qt::Checked);
+
+	if (bCheckedF)
+	{
+		ui->payTo->setText(GUIUtil::TOQS(chainparams.GetConsensus().FoundationAddress));
+	    ui->payAmount->setFocus();
+	}
+	else
+	{
+		ui->payTo->setText("");
+		ui->payAmount->clear();
+        ui->payAmount->setFocus();
+	}
 }
 
 void SendCoinsEntry::on_pasteButton_clicked()
@@ -164,6 +121,7 @@ void SendCoinsEntry::clear()
     ui->addAsLabel->clear();
     ui->payAmount->clear();
     ui->checkboxSubtractFeeFromAmount->setCheckState(Qt::Unchecked);
+	ui->checkboxDonateToFoundation->setCheckState(Qt::Unchecked);
     ui->messageTextLabel->clear();
     ui->messageTextLabel->hide();
     ui->messageLabel->hide();
@@ -195,7 +153,7 @@ void SendCoinsEntry::useAvailableBalanceClicked()
     Q_EMIT useAvailableBalance(this);
 }
 
-bool SendCoinsEntry::validate()
+bool SendCoinsEntry::validate(interfaces::Node& node)
 {
     if (!model)
         return false;
@@ -226,7 +184,7 @@ bool SendCoinsEntry::validate()
     }
 
     // Reject dust outputs:
-    if (retval && GUIUtil::isDust(ui->payTo->text(), ui->payAmount->value())) {
+    if (retval && GUIUtil::isDust(node, ui->payTo->text(), ui->payAmount->value())) {
         ui->payAmount->setValid(false);
         retval = false;
     }
@@ -246,14 +204,7 @@ SendCoinsRecipient SendCoinsEntry::getValue()
     recipient.amount = ui->payAmount->value();
     recipient.message = ui->messageTextLabel->text();
     recipient.fSubtractFeeFromAmount = (ui->checkboxSubtractFeeFromAmount->checkState() == Qt::Checked);
-	// BBP: Messages and Prayers:
-	recipient.txtMessage = ui->txtMessage->text();
-	recipient.fDonate = (ui->chkDonate->checkState() == Qt::Checked);
-	recipient.fTithe = (ui->chkTithe->checkState() == Qt::Checked);
-	recipient.fPrayer = (ui->chkPrayer->checkState() == Qt::Checked);
-	recipient.fDiary = (ui->chkDiary->checkState() == Qt::Checked);
-	recipient.fDWS = false;
-	// End of BBP
+
     return recipient;
 }
 
@@ -327,27 +278,6 @@ void SendCoinsEntry::setFocus()
 {
     ui->payTo->setFocus();
 }
-
-/*
-void SendCoinsEntry::attachFile()
-{
-    QString filename = GUIUtil::getOpenFileName(this, tr("Select a file to attach to this transaction"), "", "", NULL);
-    if(filename.isEmpty()) return;
-    QUrl fileUri = QUrl::fromLocalFile(filename);
-	std::string sFN = GUIUtil::FROMQS(fileUri.toString());
-	bool bFromWindows = Contains(sFN, "file:///C:") || Contains(sFN, "file:///D:") || Contains(sFN, "file:///E:");
-	if (!bFromWindows)
-	{
-		sFN = strReplace(sFN, "file://", "");  // This leaves the full unix path
-	}
-	else
-	{
-		sFN = strReplace(sFN, "file:///", "");  // This leaves the windows drive letter
-	}
-	
-    ui->txtFile->setText(GUIUtil::TOQS(sFN));
-}
-*/
 
 void SendCoinsEntry::updateDisplayUnit()
 {

@@ -1,6 +1,6 @@
-#!/bin/bash
+﻿#!/usr/bin/env bash
 #
-#  biblepayd The BiblePay Core server.
+#  biblepayd The Biblepay Core server.
 #
 #
 # chkconfig: 345 80 20

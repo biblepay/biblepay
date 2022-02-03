@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -10,10 +10,9 @@
 #include <chainparams.h>
 #include <primitives/block.h>
 #include <uint256.h>
-#include "rpcpog.h"
-#include "kjv.h"
-
+#include "util.h"
 #include <math.h>
+#include "randomx_bbp.h"
 
 unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const Consensus::Params& params) {
     const CBlockIndex *BlockLastSolved = pindexLast;
@@ -81,127 +80,56 @@ unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const Conse
     return bnNew.GetCompact();
 }
 
-unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params) {
-    /* current difficulty formula, DarkGravity v3, written by Evan Duffield */
-    const CBlockIndex *BlockLastSolved = pindexLast;
-    const CBlockIndex *BlockReading = pindexLast;
-    int64_t nActualTimespan = 0;
-    int64_t LastBlockTime = 0;
-    int64_t PastBlocksMin = 4; 
-    int64_t PastBlocksMax = 4; 
-    int64_t CountBlocks = 0;
-    arith_uint256 PastDifficultyAverage;
-    arith_uint256 PastDifficultyAveragePrev;
-	static int64_t BPL_TRIGGER_SIZE = 500000;
+unsigned int static DarkGravityWave(const CBlockIndex* pindexLast, const Consensus::Params& params) {
+    /* current difficulty formula, biblepay - DarkGravity v3, written by Evan Duffield - evan@biblepay.org */
+    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
+    int64_t nPastBlocks = 24;
 
-	bool fProdChain = Params().NetworkIDString() == "main" ? true : false;
-	int64_t nTotalBlockSize = 0;
-	int64_t nAvgBlockSize = 0;
-
-	if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) 
-	{
-        return UintToArith256(params.powLimit).GetCompact();
+    // make sure we have at least (nPastBlocks + 1) blocks, otherwise just return powLimit
+    if (!pindexLast || pindexLast->nHeight < nPastBlocks) {
+        return bnPowLimit.GetCompact();
     }
 
-    for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) 
-	{
-        if (PastBlocksMax > 0 && i > PastBlocksMax) { break; }
-        CountBlocks++;
+    const CBlockIndex *pindex = pindexLast;
+    arith_uint256 bnPastTargetAvg;
 
-        if(CountBlocks <= PastBlocksMin) 
-		{
-            if (CountBlocks == 1) { PastDifficultyAverage.SetCompact(BlockReading->nBits); }
-              else { PastDifficultyAverage = ((PastDifficultyAveragePrev * CountBlocks) + (arith_uint256().SetCompact(BlockReading->nBits))) / (CountBlocks + 1); }
-            PastDifficultyAveragePrev = PastDifficultyAverage;
+    for (unsigned int nCountBlocks = 1; nCountBlocks <= nPastBlocks; nCountBlocks++) {
+        arith_uint256 bnTarget = arith_uint256().SetCompact(pindex->nBits);
+        if (nCountBlocks == 1) {
+            bnPastTargetAvg = bnTarget;
+        } else {
+            // NOTE: that's not an average really...
+            bnPastTargetAvg = (bnPastTargetAvg * nCountBlocks + bnTarget) / (nCountBlocks + 1);
         }
-		nTotalBlockSize += ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION);
-	    if(LastBlockTime > 0)
-		{
-            int64_t Diff = (LastBlockTime - BlockReading->GetBlockTime());
-            nActualTimespan += Diff;
-        }
-        LastBlockTime = BlockReading->GetBlockTime();
 
-        if (BlockReading->pprev == NULL) { assert(BlockReading); break; }
-        BlockReading = BlockReading->pprev;
+        if(nCountBlocks != nPastBlocks) {
+            assert(pindex->pprev); // should never fail
+            pindex = pindex->pprev;
+        }
     }
 
-	if (CountBlocks < 1)
+    arith_uint256 bnNew(bnPastTargetAvg);
+
+    int64_t nActualTimespan = pindexLast->GetBlockTime() - pindex->GetBlockTime();
+    // NOTE: is this accurate? nActualTimespan counts it for (nPastBlocks - 1) blocks only...
+    int64_t nTargetTimespan = nPastBlocks * params.nPowTargetSpacing;
+	// BIBLEPAY
+	if (pindexLast->nHeight >= params.BARLEY_HARVEST_HEIGHT)
 	{
-		nAvgBlockSize = nTotalBlockSize;
-	}
-	else
-	{
-		nAvgBlockSize = nTotalBlockSize / CountBlocks;
+		nTargetTimespan = nPastBlocks * 360;  // Six minute blocks while we catch up...
 	}
 
-	// BPL
-	// Rule 1. When the average block size over the last 4 blocks exceeds 500K (50% of 1meg), we target 20 second blocks.  Since we have chainlocks, this is safe.
-	// End of BPL
-    arith_uint256 bnNew(PastDifficultyAverage);
-    int64_t _nTargetTimespan = CountBlocks * params.nPowTargetSpacing; 
-	// Note that BBP has 7 minute block spacing.
-	
-	if (pindexLast->nHeight >= params.F11000_CUTOVER_HEIGHT && pindexLast->nHeight < params.F12000_CUTOVER_HEIGHT)
-	{
-		_nTargetTimespan = CountBlocks * 390;
-	}
-	else if (pindexLast->nHeight >= params.F12000_CUTOVER_HEIGHT && pindexLast->nHeight < params.F13000_CUTOVER_HEIGHT)
-	{
-		_nTargetTimespan = CountBlocks * 310;
-	}
-	else if (pindexLast->nHeight >= params.F13000_CUTOVER_HEIGHT && pindexLast->nHeight < params.HARVEST_HEIGHT)
-	{
-		_nTargetTimespan = CountBlocks * 296;
-	}
-	else if (pindexLast->nHeight >= params.HARVEST_HEIGHT)
-	{
-		_nTargetTimespan = CountBlocks * 370;
-	}
-	
-	if (!fProdChain)
-	{
-		if (pindexLast->nHeight < 250)
-		{
-			_nTargetTimespan = CountBlocks; // One second blocks in testnet
-		}
-		else if (pindexLast->nHeight >= 250 && pindexLast->nHeight < 5000)
-		{
-			_nTargetTimespan = 30; // 30 second blocks 
-		}
-		else if (pindexLast->nHeight >= 5000 && pindexLast->nHeight < (params.HARVEST_HEIGHT + 200))
-		{
-			_nTargetTimespan = CountBlocks * 300;  // 7 minute blocks in testnet
-		}
-		else if (pindexLast->nHeight >= (params.HARVEST_HEIGHT + 65))
-		{
-			// We had to do this because we found that LLMQ actually requires a relatively accurate clock, due to the signing process (and the sleep estimator and the timeouts).
-			_nTargetTimespan = CountBlocks * (3 * 60);  // 3 minute blocks in testnet
-		}
-	}
-	// BPL
-	/*
-	if (pindexLast->nHeight > params.POOM_PHASEOUT_HEIGHT)
-	{
-		if (nAvgBlockSize > BPL_TRIGGER_SIZE)
-			_nTargetTimespan = CountBlocks * 20;
-	}
-	*/
-	
-
-    if (nActualTimespan < _nTargetTimespan / 2)
-        nActualTimespan = _nTargetTimespan / 2;
-
-    if (nActualTimespan > _nTargetTimespan * 2)
-        nActualTimespan = _nTargetTimespan * 2;
+    if (nActualTimespan < nTargetTimespan/3)
+        nActualTimespan = nTargetTimespan/3;
+    if (nActualTimespan > nTargetTimespan*3)
+        nActualTimespan = nTargetTimespan*3;
 
     // Retarget
     bnNew *= nActualTimespan;
-    bnNew /= _nTargetTimespan;
+    bnNew /= nTargetTimespan;
 
-    if (bnNew > UintToArith256(params.powLimit))
-	{
-        bnNew = UintToArith256(params.powLimit);
+    if (bnNew > bnPowLimit) {
+        bnNew = bnPowLimit;
     }
 
     return bnNew.GetCompact();
@@ -247,11 +175,6 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 {
     assert(pindexLast != nullptr);
     assert(pblock != nullptr);
-
-	// BiblePay only uses DGW
-	return DarkGravityWave(pindexLast, pblock, params);
-
-	/*
     const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
 
     // this is only active on devnets
@@ -285,8 +208,6 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
     }
 
     return DarkGravityWave(pindexLast, params);
-	*/
-
 }
 
 // for DIFF_BTC only!
@@ -315,78 +236,43 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, 
-	int64_t nBlockTime, int64_t nPrevBlockTime, int nPrevHeight, unsigned int nNonce, 
-	const CBlockIndex* pindexPrev, std::string sHeaderHex, uint256 uRXKey, int iThreadID, bool bLoadingBlockIndex)
+bool CheckTimeForSyncImpact(int64_t nTime)
+{
+	if (nTime == 0)
+		return false;
+
+	// Old RX blocks older than 1 month may cause significant performance impact when syncing:
+	int64_t nElapsed = GetAdjustedTime() - nTime;
+	if (nElapsed > (60 * 60 * 24 * 30))
+		return true;
+	return false;
+}
+
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, int nHeight, std::string sHeaderHex, uint256 uRXKey, int iThreadID, int64_t nTime)
 {
     bool fNegative;
     bool fOverflow;
     arith_uint256 bnTarget;
+
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
+
     // Check range
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
         return false;
-	// RandomX performance:
-	int64_t nElapsed = GetAdjustedTime() - nPrevBlockTime;
-	if ((nElapsed > (60 * 60 * 8) && bLoadingBlockIndex) || (nElapsed > (60 * 60 * 24)))
+
+	if (CheckTimeForSyncImpact(nTime))
 		return true;
 
-    if (nPrevHeight < params.EVOLUTION_CUTOVER_HEIGHT)
+	// RandomX - After Barley Harvest Height
+	if (nHeight > Params().GetConsensus().BARLEY_HARVEST_HEIGHT)
 	{
-		bool f_7000;
-		bool f_8000;
-		bool f_9000; 
-		bool fTitheBlocksActive;
-		GetMiningParams(nPrevHeight, f_7000, f_8000, f_9000, fTitheBlocksActive);
-		uint256 uBibleHashClassic = BibleHashClassic(hash, nBlockTime, nPrevBlockTime, true, nPrevHeight, NULL, false, f_7000, f_8000, f_9000, fTitheBlocksActive, nNonce, params);
-		if (UintToArith256(uBibleHashClassic) > bnTarget && nPrevBlockTime > 0) 
+		uint256 rxhash = GetRandomXHash3(sHeaderHex, uRXKey, iThreadID);
+		if (UintToArith256(rxhash) > bnTarget) 
 		{
-			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[0] height %f, nonce %f", nPrevHeight, nNonce);
+			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[4] height %f , headerhex %s, key %s, hash %s ", nHeight, sHeaderHex, uRXKey.GetHex(), rxhash.GetHex());
 			return false;
-		}
-	}
-	else if (nPrevHeight >= params.EVOLUTION_CUTOVER_HEIGHT && nPrevHeight < params.RANDOMX_HEIGHT)
-	{
-		// Anti-GPU check:
-		bool fNonce = CheckNonce(true, nNonce, nPrevHeight, nPrevBlockTime, nBlockTime, params);
-		if (!fNonce)
-		{
-				LogPrintf("\nCheckBlockHeader::ERROR-FAILED[3] height %f, nonce %f", nPrevHeight, nNonce);
-  
-			return error("CheckProofOfWork: ERROR: High Nonce, PrevTime %f, Time %f, Nonce %f ", (double)nPrevBlockTime, (double)nBlockTime, (double)nNonce);
-		}
-		
-		
-		uint256 uBibleHash = BibleHashV2(hash, nBlockTime, nPrevBlockTime, true, nPrevHeight, sHeaderHex, uRXKey, pindexPrev->GetBlockHash(), iThreadID);
-		if (UintToArith256(uBibleHash) > bnTarget && nPrevBlockTime > 0) 
-		{
-			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[1] height %f, nonce %f", nPrevHeight, nNonce);
- 			return false;
-		}
-	}
-	else if (nPrevHeight >= params.RANDOMX_HEIGHT && nPrevHeight <= params.POOM_PHASEOUT_HEIGHT)
-	{
-		// RandomX Era:
-		uint256 rxhash = GetRandomXHash(sHeaderHex, uRXKey, pindexPrev->GetBlockHash(), iThreadID);
-		if (UintToArith256(ComputeRandomXTarget(rxhash, nPrevBlockTime, nBlockTime)) > bnTarget) 
-		{
-			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[2] height %f, nonce %f", nPrevHeight, nNonce);
-			return error("CheckProofOfWork Failed:ERROR: RandomX high-hash, Height %f, PrevTime %f, Time %f, Nonce %f ", (double)nPrevHeight, 
-				(double)nPrevBlockTime, (double)nBlockTime, (double)nNonce);
-		}
-	}
-	else if (nPrevHeight > params.POOM_PHASEOUT_HEIGHT)
-	{
-		// RandomX Era (Phase II):
-		uint256 rxhash = GetRandomXHash2(sHeaderHex, uRXKey, pindexPrev->GetBlockHash(), iThreadID);
-		if (UintToArith256(ComputeRandomXTarget(rxhash, nPrevBlockTime, nBlockTime)) > bnTarget) 
-		{
-			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[4] height %f, nonce %f", nPrevHeight, nNonce);
-     		return error("CheckProofOfWork Failed:ERROR: RandomX high-hash, Height %f, PrevTime %f, Time %f, Nonce %f ", (double)nPrevHeight, 
-				(double)nPrevBlockTime, (double)nBlockTime, (double)nNonce);
 		}
 	}
 	
     return true;
 }
-

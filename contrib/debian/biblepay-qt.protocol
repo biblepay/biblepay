@@ -1,4 +1,4 @@
-[Protocol]
+﻿[Protocol]
 exec=biblepay-qt '%u'
 protocol=biblepay
 input=none

@@ -1,4 +1,4 @@
-This docker image is built and pushed from travis. It does not contain any default configs or any
+﻿This docker image is built and pushed from travis. It does not contain any default configs or any
 special startup scripts. This is to keep it simple and to not copy too much logic from the
 official/supported Docker Images found at https://hub.docker.com/r/biblepay/biblepayd/
 

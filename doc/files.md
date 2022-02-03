@@ -1,4 +1,4 @@
-
+﻿
 * banlist.dat: stores the IPs/Subnets of banned nodes
 * blocks/blk000??.dat: block data (custom, 128 MiB per file)
 * blocks/rev000??.dat; block undo data (custom)

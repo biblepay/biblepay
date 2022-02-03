@@ -1,4 +1,4 @@
-<!DOCTYPE RCC><RCC version="1.0">
+﻿<!DOCTYPE RCC><RCC version="1.0">
     <qresource prefix="/translations">
         <file alias="ar">locale/biblepay_ar.qm</file>
         <file alias="bg">locale/biblepay_bg.qm</file>
