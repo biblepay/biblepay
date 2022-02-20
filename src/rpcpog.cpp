@@ -1821,7 +1821,15 @@ bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout)
 {
     std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sSanctuaryPubKey);
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 25, 1);
-    std::string sOK = ExtractXML(sResponse, "Status:", "\r\n");
+    std::string sOK = ExtractXML(sResponse, "Status:", "\n");
+	
+	/*
+	if (Contains(sSanctuaryPubKey, "95e"))
+	{
+		LogPrintf("\r\nChecking %s, receiving %s [%s] [%s] \r\n", sSanctuaryPubKey, sResponse, sOK, sOK2);
+	}
+	*/
+
     bool fOK = Contains(sOK, "OK");
     return fOK;
 }
