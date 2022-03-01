@@ -1176,18 +1176,27 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
     if (nSubsidyBase > 20000) nSubsidyBase = 20000;
         else if (nSubsidyBase < 10) nSubsidyBase = 10;
 
+    CAmount nStartSubsidyBase = nSubsidyBase * COIN;
     CAmount nSubsidy = nSubsidyBase * COIN;
     // Yearly decline of production by ~20.5% per year, projected ~5.2 Billion coins max by year 2050+.
 	// http://wiki.bible[pay].org/Emission_Schedule
 
 	int iSubsidyDecreaseInterval = BLOCKS_PER_DAY * 30;
 	double iDeflationRate = .0216;
+	// 2-28-2022 - Wrong deflation rate on mandatory upgrade... Adjusting back to .015:
+	iDeflationRate = .015; // this is where we left off
+
 	CAmount nTotalDeflation = 0;
 	
     for (int i = iSubsidyDecreaseInterval; i <= nPrevHeight; i += iSubsidyDecreaseInterval) 
 	{
         nTotalDeflation += (nSubsidy * iDeflationRate);
 	}
+	
+	// Prevent the total deflation from exceeding the entire block value (prevent negative vouts):
+	if (nTotalDeflation > MAX_BLOCK_SUBSIDY * COIN * .90)
+		nTotalDeflation = MAX_BLOCK_SUBSIDY * COIN * .90;
+
 	nSubsidy -= nTotalDeflation;
 
     // Monthly Budget: 
@@ -1198,6 +1207,9 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 	double dGovernancePercent = .50;
 	CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy * dGovernancePercent : 0;
 	CAmount nNetSubsidy = nSubsidy - nSuperblockPart;
+
+	if (false)
+		LogPrintf("BBP::GetBlockSubsidy::SuperblockPart %f, NetSub %f, SubsidyBase %f, TotalDeflation [%f],%f ", nSuperblockPart/COIN, nNetSubsidy/COIN, nStartSubsidyBase/COIN, nTotalDeflation/COIN, nTotalDeflation);
 
 	return fSuperblockPartOnly ? nSuperblockPart : nNetSubsidy;
 }
