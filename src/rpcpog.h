@@ -137,5 +137,6 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot);
 int DeserializeSidechainFromFile();
 void SerializeSidechainToFile(int nHeight);
 std::string Mid(std::string data, int nStart, int nLength);
+CAmount ARM64();
 
 #endif

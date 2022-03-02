@@ -1986,3 +1986,13 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
         }
     }
 }
+
+CAmount ARM64()
+{
+    // If biblepay is compiled for ARM64, there is a floating point math problem that results in the block.vtx[0]->GetValueOut() being 1/10000000 satoshi higher than the block subsidy limit (for example actual=596050766864 vs limit=596050766863)
+    // To deal with this we are looking in biblepay.conf for the 'arm64=1' setting.
+    // If set, we pass a value back that is added to the blockReward for consensus purposes.
+    // We are passing back 1 * COIN to allow the Subsidy max to be greater than the value out.
+    CAmount nARM = 1 * COIN;
+    return nARM;
+}
