@@ -313,6 +313,7 @@ public:
         strNetworkID = "main";
 		consensus.BARLEY_HARVEST_HEIGHT  = 320000;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
+        consensus.EXODUS_HEIGHT = 500000;
 
 		consensus.RANDOMX_HEIGHT = 184675;
 
@@ -329,7 +330,7 @@ public:
         consensus.nBudgetPaymentsStartBlock = 21551; // actual historical value
 
         consensus.nBudgetPaymentsCycleBlocks = 205*30; // Monthly
-		consensus.nBudgetPaymentsWindowBlocks = 100;
+		consensus.nBudgetPaymentsWindowBlocks = 100; 
         
 		consensus.nSuperblockStartBlock = 21710; // The block at which 12.1 goes live (end of final 12.0 budget cycle)
         consensus.nSuperblockStartHash = uint256S("0x0");
@@ -528,6 +529,7 @@ public:
         strNetworkID = "test";
 		consensus.BARLEY_HARVEST_HEIGHT = 117233;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
+        consensus.EXODUS_HEIGHT = 500000;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock

@@ -2486,6 +2486,14 @@ UniValue exec(const JSONRPCRequest& request)
 		bool fSent = RPCSendMoney(sError, sToAddress, 1 * COIN, sTXID, sXML);
 		results.push_back(Pair("TXID", sTXID));
 	}
+    else if (sItem == "tlt")
+    {
+    	std::string sAddr = request.params[1].get_str();
+        uint64_t n = IsHODLAddress(sAddr);
+        std::string s = TimestampToHRDate(n);
+        results.push_back(Pair("tlt", n));
+        results.push_back(Pair("dt", s));
+    }
 	else if (sItem == "listsc")
 	{
 		results.push_back(Pair("scsz", mapSidechain.size()));

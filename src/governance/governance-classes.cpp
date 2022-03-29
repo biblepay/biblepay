@@ -473,7 +473,9 @@ CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight)
     }
 
     // min subsidy for high diff networks and vice versa
-    int nBits = consensusParams.fPowAllowMinDifficultyBlocks ? UintToArith256(consensusParams.powLimit).GetCompact() : 1;
+    // Old Logic: consensusParams.fPowAllowMinDifficultyBlocks ? UintToArith256(consensusParams.powLimit).GetCompact() : 1;
+    int nBits = 486585255;  // This ensures our monthly superblock is a consistent 10% to orphan charity.
+
     // some part of all blocks issued during the cycle goes to superblock, see GetBlockSubsidy
     CAmount nSuperblockPartOfSubsidy = GetBlockSubsidy(nBits, nBlockHeight - 1, consensusParams, true);
     CAmount nPaymentsLimit = nSuperblockPartOfSubsidy * consensusParams.nSuperblockCycle;

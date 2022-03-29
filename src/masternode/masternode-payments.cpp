@@ -17,7 +17,7 @@ CMasternodePayments mnpayments;
 
 bool IsOldBudgetBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockReward, std::string& strErrorRet) {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= blockReward);
+    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= (blockReward + ARM64()));
 
     if (nBlockHeight < consensusParams.nBudgetPaymentsStartBlock) {
         strErrorRet = strprintf("Incorrect block %d, old budgets are not activated yet", nBlockHeight);
@@ -83,8 +83,8 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
 	}
 	// End of Biblepay
 
-    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= blockReward);
-	
+    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= (blockReward + ARM64()));
+
     strErrorRet = "";
 
     if (nBlockHeight < consensusParams.nBudgetPaymentsStartBlock) {
@@ -109,6 +109,7 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
     if (!CSuperblock::IsValidBlockHeight(nBlockHeight)) {
         // can't possibly be a superblock, so lets just check for block reward limits
         if (!isBlockRewardValueMet) {
+			// 3-2-2022 ARM:
             strErrorRet = strprintf("coinbase pays too much at height %d (actual=%d vs limit=%d), exceeded block reward, only regular blocks are allowed at this height",
                                     nBlockHeight, block.vtx[0]->GetValueOut(), blockReward);
         }

@@ -137,5 +137,8 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot);
 int DeserializeSidechainFromFile();
 void SerializeSidechainToFile(int nHeight);
 std::string Mid(std::string data, int nStart, int nLength);
+CAmount ARM64();
+uint64_t IsHODLAddress(std::string sAddress);
+bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view);
 
 #endif

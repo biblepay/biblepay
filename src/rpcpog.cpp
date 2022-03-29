@@ -1776,7 +1776,6 @@ double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
     // Why a 5 digit pin?  This reduces the price impact biblepay consumes in expensive utxo stakes.
 }
 
-
 void LockStakes()
 {
 	std::string sUA = gArgs.GetArg("-unchainedaddress", "");
@@ -1821,7 +1820,16 @@ bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout)
 {
     std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sSanctuaryPubKey);
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 25, 1);
-    std::string sOK = ExtractXML(sResponse, "Status:", "\r\n");
+    std::string sOK = ExtractXML(sResponse, "Status:", "\n");
+
+	/*
+	if (Contains(sSanctuaryPubKey, "95e"))
+	{
+		LogPrintf("\r\nChecking %s, receiving %s [%s] \n", sSanctuaryPubKey, sResponse, sOK);
+	}
+	*/
+
+
     bool fOK = Contains(sOK, "OK");
     return fOK;
 }
@@ -1977,4 +1985,80 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
             SerializeSidechainToFile(nMaxDepth - 1);
         }
     }
+}
+
+CAmount ARM64()
+{
+    // If biblepay is compiled for ARM64, there is a floating point math problem that results in the block.vtx[0]->GetValueOut() being 1/10000000 satoshi higher than the block subsidy limit (for example actual=596050766864 vs limit=596050766863)
+    // To deal with this we are looking in biblepay.conf for the 'arm64=1' setting.
+    // If set, we pass a value back that is added to the blockReward for consensus purposes.
+    // We are passing back 1 * COIN to allow the Subsidy max to be greater than the value out.
+    CAmount nARM = 1 * COIN;
+    return nARM;
+}
+
+int ConvertBase58ToInt(std::string sInput)
+{
+    std::string sBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    for (int i = 0; i < sBase58.length(); i++)
+    {
+        std::string sChar = sBase58.substr(i, 1);
+        if (sInput == sChar)
+           return i + 1;
+    }
+    return 0;
+}
+
+uint64_t ConvertDateToTimeStamp(int nMonth, int nYear)
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime ); 
+    timeinfo = localtime ( &rawtime ); 
+    timeinfo->tm_year   = nYear - 1900;
+    timeinfo->tm_mon    = nMonth - 1;    // months since January - [0,11]
+    timeinfo->tm_mday   = 1;             // day of the month - [1,31] 
+    timeinfo->tm_hour   = 1;             // hours since midnight - [0,23]
+    timeinfo->tm_min    = 1;             // minutes after the hour - [0,59]
+    timeinfo->tm_sec    = 1;             // seconds after the minute - [0,59]
+    int64_t nStamp = timegm(timeinfo);
+    return nStamp;
+}
+
+uint64_t IsHODLAddress(std::string sAddress)
+{
+    // If this is not a HODL, return 0
+    int nHODL = sAddress.find("HD");
+    if (nHODL == std::string::npos)
+        return 0;
+    if (nHODL + 3 > sAddress.length() -1)
+        return 0;
+    std::string sMM = sAddress.substr(nHODL+2, 1);
+    std::string sYY = sAddress.substr(nHODL+3, 1);
+    int nMM = ConvertBase58ToInt(sMM);
+    int nYY = ConvertBase58ToInt(sYY) + 2020;
+    if (nMM < 1 || nMM > 12)
+       return 0;
+    // This is a HODL wallet address, convert the timestamp to a unix timestamp (the MaturityDate)
+    int64_t nMaturityDate = ConvertDateToTimeStamp(nMM, nYY);
+    return nMaturityDate;
+}
+
+bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view)
+{
+    // If this is a Time Locked Trust Wallet, reject early spends
+    for (unsigned int k = 0; k < tx.vin.size(); k++) 
+    {
+         const Coin &coin = view.AccessCoin(tx.vin[k].prevout);
+         const CTxOut &txOutPrevOut = coin.out;
+         std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
+         double nTime = IsHODLAddress(sFromAddress);
+         if (nTime > 0 && nTime > GetAdjustedTime())
+         {
+             std::string sMaturity = TimestampToHRDate(nTime);
+             LogPrintf("AccptToMemoryPool::CheckTLTTx::Tx Rejected; Maturity %f, Amount %f, Address %s, MaturityDate %s ", (double)nTime, (double)txOutPrevOut.nValue/COIN, sFromAddress, sMaturity);
+             return false;
+         }
+    }
+    return true;
 }

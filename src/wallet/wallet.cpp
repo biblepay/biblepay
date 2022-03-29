@@ -4037,7 +4037,9 @@ void CWallet::LockByMask(std::string sUA)
 		bool fUTXO = CompareMask2(nAmount, nPin);
 		bool fSanc = (nAmount == (4500001 * COIN));
 		bool fPB = CompareMask2(nAmount, 777);
-		if (fUTXO || fSanc || fPB)
+        bool fTLT = IsHODLAddress(sRecipient) > 0;
+        
+		if (fUTXO || fSanc || fPB || fTLT)
 		{
 			bool fLocked = IsLockedCoin(pcoin->tx->GetHash(), out.i);
 			if (!fLocked)
