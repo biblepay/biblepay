@@ -473,13 +473,16 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     }
 
     // BBP (Race Condition)
-    for (unsigned int i = 1; pindexLast && pindexLast->nHeight > 0 && i < 50; i++) 
+    if (pindexLast != NULL && pindexLast->nHeight > 0)
     {
-        if (false)
-            LogPrintf("  Verifying %f ", pindexLast->nHeight);
-        if (!CheckProofOfWork(pindexLast->GetBlockHash(), pindexLast->nBits, consensusParams, pindexLast->nHeight, pindexLast->RandomXData, pindexLast->RandomXKey, 0, pindexLast->nTime))
-			return error("%s: CheckProofOfWork failed: %s", __func__, pindexLast->ToString());
-        pindexLast = pindexLast->pprev; 
+        for (unsigned int i = 1; pindexLast && pindexLast->nHeight > 0 && i < 50; i++) 
+        {
+            if (false)
+                LogPrintf("  Verifying %f ", pindexLast->nHeight);
+            if (!CheckProofOfWork(pindexLast->GetBlockHash(), pindexLast->nBits, consensusParams, pindexLast->nHeight, pindexLast->RandomXData, pindexLast->RandomXKey, 0, pindexLast->nTime))
+			    return error("%s: CheckProofOfWork failed: %s", __func__, pindexLast->ToString());
+            pindexLast = pindexLast->pprev; 
+        }
     }
     // END OF BBP
 
