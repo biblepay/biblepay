@@ -421,7 +421,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
     const CChainParams& chainparams = Params();
 	int nCheckpointHeight = Checkpoints::GetTotalBlocksEstimate(chainparams.Checkpoints());
-    CBlockIndex* pindexLast;
+    CBlockIndex* pindexLast = NULL;
     
     LogPrintf("LoadBlockIndex::BBP::Last Checkpoint Height %f ", nCheckpointHeight);
 
@@ -473,7 +473,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     }
 
     // BBP (Race Condition)
-    if (pindexLast != NULL && pindexLast->nHeight > 0)
+    if (pindexLast != NULL)
     {
         for (unsigned int i = 1; pindexLast && pindexLast->nHeight > 0 && i < 50; i++) 
         {
