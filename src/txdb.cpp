@@ -15,6 +15,7 @@
 #include <init.h>
 
 #include <stdint.h>
+#include "checkpoints.h"
 
 #include <boost/thread.hpp>
 
@@ -418,9 +419,15 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 	// Time to seek the Lord
 
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
+    const CChainParams& chainparams = Params();
+	int nCheckpointHeight = Checkpoints::GetTotalBlocksEstimate(chainparams.Checkpoints());
+    CBlockIndex* pindexLast;
+    
+    LogPrintf("LoadBlockIndex::BBP::Last Checkpoint Height %f ", nCheckpointHeight);
 
     pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, uint256()));
 	int iPos = 0;
+    int nMaxDepth = 0;
     // Load mapBlockIndex
     while (pcursor->Valid()) {
         std::pair<char, uint256> key;
@@ -450,13 +457,12 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     			    std::string strMsg = strprintf(_("Loading Block Index (%f)"), iPos);
 					uiInterface.InitMessage(strMsg);
 				}
-				int64_t nElapsed = GetAdjustedTime() - diskindex.nTime;
-				if (nElapsed < (60 * 60 * 24 * 7))
-				{
-					if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams, pindexNew->nHeight, pindexNew->RandomXData, pindexNew->RandomXKey, 0, pindexNew->nTime))
-						return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
-				}
-				
+                if (diskindex.nHeight > nMaxDepth)
+                {
+                    nMaxDepth = diskindex.nHeight;
+                    pindexLast = pindexNew;
+                }
+
                 pcursor->Next();
             } else {
                 return error("%s: failed to read value", __func__);
@@ -465,6 +471,17 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             break;
         }
     }
+
+    // BBP (Race Condition)
+    for (unsigned int i = 1; pindexLast && pindexLast->nHeight > 0 && i < 50; i++) 
+    {
+        if (false)
+            LogPrintf("  Verifying %f ", pindexLast->nHeight);
+        if (!CheckProofOfWork(pindexLast->GetBlockHash(), pindexLast->nBits, consensusParams, pindexLast->nHeight, pindexLast->RandomXData, pindexLast->RandomXKey, 0, pindexLast->nTime))
+			return error("%s: CheckProofOfWork failed: %s", __func__, pindexLast->ToString());
+        pindexLast = pindexLast->pprev; 
+    }
+    // END OF BBP
 
     return true;
 }

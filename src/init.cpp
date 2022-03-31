@@ -93,7 +93,7 @@
 #endif
 
 // BIBLEPAY
-extern void ThreadPOOS(CConnman& connman);
+extern void ThreadPOVS(CConnman& connman);
 // END OF BIBLEPAY
 
 bool fFeeEstimatesInitialized = false;
@@ -2498,7 +2498,7 @@ LogPrintf("step %f", 709);
 
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
-	threadGroup.create_thread(boost::bind(&ThreadPOOS, boost::ref(connman)));
+	threadGroup.create_thread(boost::bind(&ThreadPOVS, boost::ref(connman)));
 
     g_wallet_init_interface.Start(scheduler);
 

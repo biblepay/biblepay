@@ -129,8 +129,8 @@ double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
 void LockStakes();
 bool CompareMask2(CAmount nAmount, double nMask);
 const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
-std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey);
-bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout);
+std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctuaryPubKey, std::string sIP, int iType);
+bool POVSTest(std::string sSanctuaryPubKey, std::string sIP, int64_t nTimeout, int nType);
 int GetNextDailySuperblock(int nHeight);
 std::string AmountToString(const CAmount& amount);
 void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot);
@@ -140,5 +140,6 @@ std::string Mid(std::string data, int nStart, int nLength);
 CAmount ARM64();
 uint64_t IsHODLAddress(std::string sAddress);
 bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view);
+std::string GetElement(std::string sData, std::string sDelimiter, int iPos);
 
 #endif

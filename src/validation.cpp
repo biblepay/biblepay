@@ -249,7 +249,7 @@ double dHashesPerSec = 0;
 int64_t nHPSTimerStart = 0;
 bool fCoinControlUnlocked = false;
 int iMinerThreadCount = 0;
-std::map<std::string, int> mapPOOSStatus;
+std::map<std::string, int> mapPOVSStatus;
 std::map<std::string, Sidechain> mapSidechain;
 // END OF BIBLEPAY AREA
 
@@ -1192,7 +1192,7 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 	iDeflationRate = .015; // this is where we left off
     if (nPrevHeight >= consensusParams.EXODUS_HEIGHT)
     {
-        iDeflationRate = .01345;
+        iDeflationRate = .01317;
     }
 	CAmount nTotalDeflation = 0;
 	
@@ -1226,7 +1226,6 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
 {
     // https://wiki.bible[pay].org/Economics
 	// http://forum.bible[pay].org/index.php?topic=33.0
-	// Sanctuaries sponsor an orphan out of their own finances.
 	CAmount ret = .20 * blockValue;
     
 	if (nHeight > -1 && nHeight <= Params().GetConsensus().BARLEY_HARVEST_HEIGHT2)

@@ -746,14 +746,20 @@ int GetNextDailySuperblock(int nHeight)
 	return 0;
 }
 
-static double UTXO_BLOCK_PERCENTAGE = .30;
 CAmount GetDailyPaymentsLimit(int nHeight)
 {
 	const CChainParams& chainparams = Params();
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    
+    double UTXO_BLOCK_PERCENTAGE = .30;
+    if (nHeight >= consensusParams.EXODUS_HEIGHT)
+    {
+        UTXO_BLOCK_PERCENTAGE = .55;
+    }
 	int nDiff = 500000000;
 	double nSubsidy = (double)GetBlockSubsidy(nDiff, nHeight, chainparams.GetConsensus())/COIN;
 	double nLimit = nSubsidy * UTXO_BLOCK_PERCENTAGE * BLOCKS_PER_DAY;
-	LogPrintf("\nGetDailyPaymentsLimit Subsidy %f limit %f", nSubsidy, nLimit);
+	// LogPrintf("\nGetDailyPaymentsLimit Subsidy %f limit %f", nSubsidy, nLimit);
 	CAmount nPaymentsLimit = nLimit * COIN;
 	return nPaymentsLimit;
 }
@@ -1798,37 +1804,56 @@ const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
     return pindexHistorical;
 }
 
-std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey)
+std::string GetElement(std::string sData, std::string sDelimiter, int iPos)
+{
+    std::vector<std::string> vData = Split(sData.c_str(), sDelimiter);
+    if (vData.size()-1 < iPos)
+        return sData;
+    return vData[iPos];
+}
+
+std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctuaryPubKey, std::string sSanctuaryIPIN, int iType)
 {
     std::string sURL = "https://";
     std::string sDomain = "";
 	const CChainParams& chainparams = Params();
     std::string sNetworkID = chainparams.NetworkIDString();
+    std::string sPortSuffix = ":5000";
+    std::string sSanctuaryIP = GetElement(sSanctuaryIPIN, ":", 0);
+
     if (sDomain.empty())
 	{
-		sDomain = sNetworkID == "test" ? "foundation.biblepay.org" : "biblepay.cameroonone.org";
+		sDomain = sNetworkID == "test" ? sSanctuaryIP + sPortSuffix : sSanctuaryIP + sPortSuffix;
 	}
     sURL += sDomain;
     if (sSanctuaryPubKey.empty())
         return std::make_tuple("", "", "");
     std::string sPrefix = sSanctuaryPubKey.substr(0, std::min((int)sSanctuaryPubKey.length(), 8));
-    std::string sPage = "bios/" + sPrefix + ".htm";
+    std::string sPage = "";
+    if (iType == 0)
+    { 
+      sPage =  "BMS/POSE";
+    }
+    else if (iType == 1)
+    {
+      sPage = "BMS/VideoList";
+    }
+    else if (iType==2)
+    {
+      sPage = "BMS/Status";
+    }
     return std::make_tuple(sURL, sPage, sPrefix);
 }
 
-bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout)
+bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout, int nType)
 {
-    std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sSanctuaryPubKey);
+    std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
+    std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 25, 1);
     std::string sOK = ExtractXML(sResponse, "Status:", "\n");
-
-	/*
-	if (Contains(sSanctuaryPubKey, "95e"))
-	{
-		LogPrintf("\r\nChecking %s, receiving %s [%s] \n", sSanctuaryPubKey, sResponse, sOK);
-	}
-	*/
-
+    
+    // Mission Critical todo
+    LogPrintf("POVSTEST::Response %s", sOK);
 
     bool fOK = Contains(sOK, "OK");
     return fOK;

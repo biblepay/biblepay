@@ -313,7 +313,7 @@ public:
         strNetworkID = "main";
 		consensus.BARLEY_HARVEST_HEIGHT  = 320000;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
-        consensus.EXODUS_HEIGHT = 500000;
+        consensus.EXODUS_HEIGHT = 421000;
 
 		consensus.RANDOMX_HEIGHT = 184675;
 

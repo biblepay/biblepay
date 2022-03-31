@@ -185,7 +185,7 @@ static const int BLOCKS_PER_DAY = 205;
 static const int MAX_BLOCK_SUBSIDY = 20000;
 static const int SANCTUARY_COLLATERAL = 4500001;
 extern int64_t nHPSTimerStart;
-extern std::map<std::string, int> mapPOOSStatus;
+extern std::map<std::string, int> mapPOVSStatus;
 extern std::map<std::string, Sidechain> mapSidechain;
 extern double nHashCounter;
 extern double dHashesPerSec;
