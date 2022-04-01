@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp> // for StringToUnixTime()
+
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
 
@@ -2047,8 +2048,9 @@ uint64_t ConvertDateToTimeStamp(int nMonth, int nYear)
     timeinfo->tm_hour   = 1;             // hours since midnight - [0,23]
     timeinfo->tm_min    = 1;             // minutes after the hour - [0,59]
     timeinfo->tm_sec    = 1;             // seconds after the minute - [0,59]
-    int64_t nStamp = timegm(timeinfo);
+    int64_t nStamp = mktime(timeinfo);
     return nStamp;
+    
 }
 
 uint64_t IsHODLAddress(std::string sAddress)

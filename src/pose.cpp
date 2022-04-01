@@ -5,6 +5,7 @@
 #include "net.h"
 #include "utilstrencodings.h"
 #include "utiltime.h"
+#include <boost/thread.hpp>
 
 static int64_t nPovsProcessTime = 0;
 static int64_t nSleepTime = 0;
