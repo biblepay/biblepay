@@ -63,7 +63,10 @@ void ThreadPOVS(CConnman& connman)
 
 						int iSancOrdinal = 0;
 						GetSanctuaryOrdinal(sIP, iSancOrdinal);
+						boost::this_thread::interruption_point();
+
 						bool fOK = POVSTest(sPubKey, sIP, 60 * 60, 0);
+						
 						if (iPos != iSancOrdinal)
 						{
 						     fOK = false; 
@@ -93,7 +96,7 @@ void ThreadPOVS(CConnman& connman)
 		{
 			LogPrintf("Error encountered in POVS main loop. %f \n", 0);
 		}
-		int nSleepLength = nIterations < 6 ? 60 * (nIterations + 1) : 60 * 30;
+		int nSleepLength = nIterations < 6 ? 60 * (nIterations + 1) : 60 * 20;
 		
 		for (int i = 0; i < nSleepLength; i++)
 		{

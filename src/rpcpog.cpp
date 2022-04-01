@@ -1849,11 +1849,12 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
 {
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
-    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 25, 1);
+    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 9, 1);
     std::string sOK = ExtractXML(sResponse, "Status:", "\n");
     
     // Mission Critical todo
-    LogPrintf("POVSTEST::Response %s", sOK);
+    if (false)
+     LogPrintf("POVSTEST::Response %s", sOK);
 
     bool fOK = Contains(sOK, "OK");
     return fOK;
