@@ -787,6 +787,7 @@ std::vector<Portfolio> GetDailySuperblock(int nHeight)
 			p.AmountUSDForeign = StringToDouble(vCols[6], 4);
 			p.AmountUSD = StringToDouble(vCols[7], 4);
 			p.Coverage = StringToDouble(vCols[8], 4);
+       
 			p.Strength = StringToDouble(vCols[9], 4);
 			p.Owed = p.Strength * nSuperblockLimit;
 			nTotal += p.Strength;
@@ -836,16 +837,19 @@ double AmountToDouble(const CAmount& amount)
     return nAmount;
 }
 
-bool IsBetween(CAmount n1, CAmount n2, double nFudgeFactor)
+bool IsBetween(CAmount n1, CAmount n2)
 {
-	// Allows for floating point rounding errors which we have observed on arm64.
+	// Allows for floating point rounding differences which we have observed on arm64.
 	if (n1 == n2)
 		return true;
-	double d1 = AmountToDouble(n1);
-	double d2 = AmountToDouble(n2);
- 	double d3 = std::abs(d1-d2);
-	bool fPass = (d3 <= nFudgeFactor);
-	return fPass;
+
+    if (n1 >= n2-ARM64() && n1 <= n2+ARM64())
+        return true;
+
+    if (n2 >= n1-ARM64() && n2 <= n1+ARM64())
+        return true;
+
+	return false;
 }
 
 bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_t nBlockTime)
@@ -874,10 +878,14 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 		{
 			std::string sRecipient2 = PubKeyToAddress(txout2.scriptPubKey);
 			CAmount nAmount2 = txout2.nValue;
-            if (sRecipient1 == sRecipient2 && IsBetween(nAmount1, nAmount2, 1.0))
+            if (sRecipient1 == sRecipient2 && IsBetween(nAmount1, nAmount2))
             {
                  found = true;
                  break;
+            }
+            else if (sRecipient1 == sRecipient2)
+            {
+                LogPrintf("\nValidateDailySuperblock::ERROR Recip %s matches, but amounts %s and %s do not match.", sRecipient1, AmountToString(nAmount1), AmountToString(nAmount2));
             }
 		}
 	    if (!found) 

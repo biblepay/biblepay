@@ -333,7 +333,7 @@ public:
         
 		consensus.nSuperblockStartBlock = 21710; // The block at which 12.1 goes live (end of final 12.0 budget cycle)
         consensus.nSuperblockStartHash = uint256S("0x0");
-        consensus.nSuperblockCycle = 205*30; // Monhtly
+        consensus.nSuperblockCycle = 205*30; // Monthly
 	    consensus.nGovernanceMinQuorum = 3;
         consensus.nGovernanceFilterElements = 20000;
         consensus.nMasternodeMinimumConfirmations = 7;
@@ -450,11 +450,11 @@ public:
         vSeeds.emplace_back("dnsseed.biblepaydot.io");
 
         // BBP addresses start with 'B'
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 25);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 25);  //&h19
         // BBP script addresses start with '7'
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 16);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 16);  //&h10
         // BBP private keys start with '7' or 'X'
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1, 182);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1, 182); //&hb6
         // BBP BIP32 pubkeys start with 'xpub' (Bitcoin defaults)
 		base58Prefixes[EXT_PUBLIC_KEY] = {0x04,0x88,0xB2,0x1E};
 	    // BBP BIP32 prvkeys start with 'xprv' (Bitcoin defaults)
