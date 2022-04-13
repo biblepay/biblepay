@@ -843,10 +843,10 @@ bool IsBetween(CAmount n1, CAmount n2)
 	if (n1 == n2)
 		return true;
 
-    if (n1 >= n2-ARM64() && n1 <= n2+ARM64())
+    if (n1 >= n2 - (ARM64() * 100) && n1 <= n2 + (ARM64() * 100))
         return true;
 
-    if (n2 >= n1-ARM64() && n2 <= n1+ARM64())
+    if (n2 >= n1 - (ARM64() * 100) && n2 <= n1 + (ARM64() * 100))
         return true;
 
 	return false;
