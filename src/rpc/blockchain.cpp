@@ -2344,7 +2344,7 @@ UniValue exec(const JSONRPCRequest& request)
 	if (sItem.empty()) throw std::runtime_error("Command argument invalid.");
 
     UniValue results(UniValue::VOBJ);
-	results.push_back(Pair("Command",sItem));
+	results.pushKV("Command",sItem);
 	if (sItem == "subsidy")
 	{
 		// Used by the Pools
@@ -2361,17 +2361,17 @@ UniValue exec(const JSONRPCRequest& request)
 				CBlock block;
 				if (ReadBlockFromDisk(block, pindex, consensusParams)) 
 				{
-        			results.push_back(Pair("subsidy", block.vtx[0]->vout[0].nValue/COIN));
+        			results.pushKV("subsidy", block.vtx[0]->vout[0].nValue/COIN);
 					std::string sRecipient = PubKeyToAddress(block.vtx[0]->vout[0].scriptPubKey);
-					results.push_back(Pair("recipient", sRecipient));
-					results.push_back(Pair("blockinfo", block.vtx[0]->vout[0].sTxOutMessage));
-					results.push_back(Pair("minerguid", ExtractXML(block.vtx[0]->vout[0].sTxOutMessage,"<MINERGUID>","</MINERGUID>")));
+					results.pushKV("recipient", sRecipient);
+					results.pushKV("blockinfo", block.vtx[0]->vout[0].sTxOutMessage);
+					results.pushKV("minerguid", ExtractXML(block.vtx[0]->vout[0].sTxOutMessage,"<MINERGUID>","</MINERGUID>"));
 				}
 			}
 		}
 		else
 		{
-			results.push_back(Pair("error","block not found"));
+			results.pushKV("error","block not found");
 		}
 	}
 	else if (sItem == "blocktohex")
@@ -2385,8 +2385,8 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sBlockHex1 = HexStr(ssBlock.begin(), ssBlock.end());
 		CTransaction txCoinbase;
 		std::string sTxCoinbaseHex1 = EncodeHexTx(*block.vtx[0]);
-		results.push_back(Pair("blockhex", sBlockHex1));
-		results.push_back(Pair("txhex", sTxCoinbaseHex1));
+		results.pushKV("blockhex", sBlockHex1);
+		results.pushKV("txhex", sTxCoinbaseHex1);
 	}
 	else if (sItem == "sendmanyxml")
 	{
@@ -2398,7 +2398,7 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sXML = request.params[2].get_str();
 		std::string sTXID;
 		SendManyXML(sXML, sTXID);
-		results.push_back(Pair("txid", sTXID));
+		results.pushKV("txid", sTXID);
 	}
 	else if (sItem == "masterclock")
 	{
@@ -2412,13 +2412,13 @@ UniValue exec(const JSONRPCRequest& request)
 				int64_t nNow = chainActive.Tip()->GetMedianTimePast();
 				int64_t nElapsed = nNow - nEpoch;
 				int64_t nTargetBlockCount = nElapsed / nBlockSpacing;
-				results.push_back(Pair("Elapsed Time (Seconds)", nElapsed));
-				results.push_back(Pair("Actual Blocks", chainActive.Tip()->nHeight));
-				results.push_back(Pair("Target Block Count", nTargetBlockCount));
+				results.pushKV("Elapsed Time (Seconds)", nElapsed);
+				results.pushKV("Actual Blocks", chainActive.Tip()->nHeight);
+				results.pushKV("Target Block Count", nTargetBlockCount);
 				double nClockAdjustment = 1.00 - ((double)chainActive.Tip()->nHeight / (double)nTargetBlockCount + .01);
 				std::string sLTNarr = nClockAdjustment > 0 ? "Slow" : "Fast";
-				results.push_back(Pair("Long Term Target DGW adjustment", nClockAdjustment));
-				results.push_back(Pair("Long Term Trend Narr", sLTNarr));
+				results.pushKV("Long Term Target DGW adjustment", nClockAdjustment);
+				results.pushKV("Long Term Trend Narr", sLTNarr);
 				CBlockIndex* pblockindexRecent = FindBlockByHeight(chainActive.Tip()->nHeight * .90);
 				CBlock blockRecent;
 				if (ReadBlockFromDisk(blockRecent, pblockindexRecent, consensusParams))
@@ -2428,10 +2428,10 @@ UniValue exec(const JSONRPCRequest& request)
 					int64_t nProjectedBlockCount = nTimeSpan / nBlockSpacing;
 					double nRecentTrend = 1.00 - ((double)nBlockSpan / (double)nProjectedBlockCount + .01);
 					std::string sNarr = nRecentTrend > 0 ? "Slow" : "Fast";
-					results.push_back(Pair("Recent Trend", nRecentTrend));
-					results.push_back(Pair("Recent Trend Narr", sNarr));
+					results.pushKV("Recent Trend", nRecentTrend);
+					results.pushKV("Recent Trend Narr", sNarr);
 					double nGrandAdjustment = nClockAdjustment + nRecentTrend;
-					results.push_back(Pair("Recommended Next DGW adjustment", nGrandAdjustment));
+					results.pushKV("Recommended Next DGW adjustment", nGrandAdjustment);
 				}
 		}
 	}
@@ -2461,7 +2461,7 @@ UniValue exec(const JSONRPCRequest& request)
 		LogPrintf("\nCreating ProTx_Update_service %s for Sanc [%s].\n", sSummary, sSanc);
 
 		std::string sError;
-		results.push_back(Pair("Summary", sSummary));
+		results.pushKV("Summary", sSummary);
 	    JSONRPCRequest newRequest;
 		newRequest.params.setArray();
 		newRequest.params.push_back("update_service");
@@ -2475,7 +2475,7 @@ UniValue exec(const JSONRPCRequest& request)
 		UniValue rProReg = protx(newRequest);
 		results.push_back(rProReg);
 		// If we made it this far and an error was not thrown:
-		results.push_back(Pair("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes."));
+		results.pushKV("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes.");
 	}
 	else if (sItem == "testsc")
 	{
@@ -2484,17 +2484,17 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sError;
 		std::string sXML = "<sc><objtype>test</objtype><url>https://test.com/</url></sc>";
 		bool fSent = RPCSendMoney(sError, sToAddress, 1 * COIN, sTXID, sXML);
-		results.push_back(Pair("TXID", sTXID));
+		results.pushKV("TXID", sTXID);
 	}
 	else if (sItem == "listsc")
 	{
-		results.push_back(Pair("scsz", mapSidechain.size()));
+		results.pushKV("scsz", (int64_t)mapSidechain.size());
 		for (auto ii : mapSidechain) 
 		{
 			Sidechain s = mapSidechain[ii.first];
 		    UniValue o;
             s.ToJson(o);
-    		results.push_back(Pair(ii.first, o));
+    		results.pushKV(ii.first, o);
 		}
 	}
 	else if (sItem == "upgradesanc")
@@ -2539,7 +2539,7 @@ UniValue exec(const JSONRPCRequest& request)
 		if (!sError.empty() || !fSent)
 			throw std::runtime_error("Unable to fund protx_register fee: " + sError);
 
-		results.push_back(Pair("Summary", sSummary));
+		results.pushKV("Summary", sSummary);
 		// Generate BLS keypair (This is the keypair for the sanctuary - the BLS public key goes in the chain, the private key goes into the Sanctuaries .conf file like this: masternodeblsprivkey=nnnnn
 		JSONRPCRequest myBLS;
 		myBLS.params.setArray();
@@ -2609,13 +2609,13 @@ UniValue exec(const JSONRPCRequest& request)
 			sSentTxId = rProReg.getValStr();
 		}
 		// Step 3: Report this info back to the user
-		results.push_back(Pair("bls_public_key", myBLSPublic));
-		results.push_back(Pair("bls_private_key", myBLSPrivate));
-		results.push_back(Pair("pro_reg_txid", sProRegTxId));
-		results.push_back(Pair("pro_reg_collateral_address", sProCollAddr));
-		results.push_back(Pair("pro_reg_signed_message", sProSignMessage));
-		results.push_back(Pair("pro_reg_signature", sProSignature));
-		results.push_back(Pair("sent_txid", sSentTxId));
+		results.pushKV("bls_public_key", myBLSPublic);
+		results.pushKV("bls_private_key", myBLSPrivate);
+		results.pushKV("pro_reg_txid", sProRegTxId);
+		results.pushKV("pro_reg_collateral_address", sProCollAddr);
+		results.pushKV("pro_reg_signed_message", sProSignMessage);
+		results.pushKV("pro_reg_signature", sProSignature);
+		results.pushKV("sent_txid", sSentTxId);
 	    // Step 4: Store the new deterministic sanctuary in deterministicsanc.conf
 		std::string sDSD = sSancName + " " + sSancIP + " " + myBLSPublic + " " + myBLSPrivate + " " + sCollateralTXID + " " + sCollateralTXIDOrdinal + " " + sProRegTxId + " " + sProCollAddr + " " + sSentTxId + "\n";
 		if (iDryRun == 1)
@@ -2629,10 +2629,10 @@ UniValue exec(const JSONRPCRequest& request)
 		uint256 uKey = uint256S("0x" + sRevKey);
 		std::vector<unsigned char> v = ParseHex(sHeader);
 		uint256 uRX3 = RandomX_Hash(v, uKey, 99);
-		results.push_back(Pair("hash2", uRX3.GetHex()));
+		results.pushKV("hash2", uRX3.GetHex());
 		std::string sFakeHeader = "<rxheader>" + sHeader + "</rxheader>";
 		uint256 rxhash3 = GetRandomXHash3(sFakeHeader, uKey, 2);
-		results.push_back(Pair("hash3", rxhash3.GetHex()));
+		results.pushKV("hash3", rxhash3.GetHex());
 
 	}
 	else if (sItem == "getgovlimit")
@@ -2644,10 +2644,10 @@ UniValue exec(const JSONRPCRequest& request)
 		CAmount nReward = GetBlockSubsidy(nBits, nHeight, consensusParams, false);
 		CAmount nRewardGov = GetBlockSubsidy(nBits, nHeight, consensusParams, true);
 		CAmount nSanc = GetMasternodePayment(nHeight, nReward);
-        results.push_back(Pair("Limit", (double)nLimit/COIN));
-		results.push_back(Pair("Subsidy", (double)nReward/COIN));
-		results.push_back(Pair("Sanc", (double)nSanc/COIN));
-		results.push_back(Pair("GovernanceSubsidy", (double)nRewardGov/COIN));
+        results.pushKV("Limit", (double)nLimit/COIN);
+		results.pushKV("Subsidy", (double)nReward/COIN);
+		results.pushKV("Sanc", (double)nSanc/COIN);
+		results.pushKV("GovernanceSubsidy", (double)nRewardGov/COIN);
 	}
 	else if (sItem == "hexblocktojson")
 	{
@@ -2684,8 +2684,8 @@ UniValue exec(const JSONRPCRequest& request)
 		}
 
 		std::string s = ScanChainForData(nNextDailyHeight);
-		results.push_back(Pair("nextdailysuperblock", nNextDailyHeight));
-		results.push_back(Pair("nextcontract", s));
+		results.pushKV("nextdailysuperblock", nNextDailyHeight);
+		results.pushKV("nextcontract", s);
 		std::vector<Portfolio> vPortfolio = GetDailySuperblock(nNextDailyHeight);
 		CAmount nTotalPayments = 0;
 		for (int i = 0; i < vPortfolio.size(); i++)
@@ -2693,11 +2693,11 @@ UniValue exec(const JSONRPCRequest& request)
 			std::string sRecipient1 = vPortfolio[i].OwnerAddress;
 			CAmount nAmount1 = vPortfolio[i].Owed * COIN;
 			nTotalPayments += nAmount1;
-			results.push_back(Pair("Recipient" + DoubleToString(i, 0), sRecipient1));
-			results.push_back(Pair("Amount" + DoubleToString(i,0) , AmountToString(nAmount1)));
+			results.pushKV("Recipient" + DoubleToString(i, 0), sRecipient1);
+			results.pushKV("Amount" + DoubleToString(i,0) , AmountToString(nAmount1));
 		
 		}
-		results.push_back(Pair("Total", AmountToString(nTotalPayments)));
+		results.pushKV("Total", AmountToString(nTotalPayments));
 	}
 	else if (sItem == "blocktohex")
 	{
@@ -2716,12 +2716,12 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sBlockHex = HexStr(ssBlock.begin(), ssBlock.end());
 		CTransaction txCoinbase;
 		std::string sTxCoinbaseHex = EncodeHexTx(*block.vtx[0]);
-		results.push_back(Pair("blockhex", sBlockHex));
-		results.push_back(Pair("txhex", sTxCoinbaseHex));
+		results.pushKV("blockhex", sBlockHex);
+		results.pushKV("txhex", sTxCoinbaseHex);
 	}
 	else
 	{
-		results.push_back(Pair("Error", "Command not found"));
+		results.pushKV("Error", "Command not found");
 	}
 
 	return results;
