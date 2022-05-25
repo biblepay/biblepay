@@ -2569,9 +2569,23 @@ UniValue exec(const JSONRPCRequest& request)
             throw std::runtime_error(sError);
         }
 
-        std::string sDSD = sSancName + " " + sSancIP + " mnp " + sTXID + " " + DoubleToString(nVoutPosition, 0);
+        std::string sDSD = sSancName + " " + sSancIP + " mnp " + sTXID + " " + DoubleToString(nVoutPosition, 0) + " \r\n";
         results.pushKV("Creating", sDSD);
 		AppendMasternodeFile("masternode.conf", sDSD);
+    }
+    else if (sItem == "getscratch")
+    {
+    	if (request.params.size() != 2)
+			throw std::runtime_error("You must specify exec getscratch scratchid. ");
+		std::string sID1 = request.params[1].get_str();
+	    int nBMS_PORT = 8443;
+        std::string sBaseDomain = "https://globalcdn.biblepay.org";
+        std::string sRandom = DoubleToString(GetAdjustedTime(),0);
+        std::string sPage = "BMS/Scratch/" + sID1 + "?rand=" + sRandom;
+        std::string sResponse = Uplink(false, "", sBaseDomain, sPage, nBMS_PORT, 15, 1);
+        LogPrintf("\r\nChecking %s - response [%s]", sPage, sResponse);
+        std::string sScratch = ExtractXML(sResponse, "<scratch>", "</scratch>");
+        results.pushKV("Scratch", sScratch);
     }
 	else if (sItem == "upgradesanc" || sItem=="createsanc")
 	{
