@@ -27,6 +27,7 @@
 #include <QDebug>
 #include <QSet>
 #include <QTimer>
+#include <rpcpog.h>
 
 
 WalletModel::WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces::Node& node, OptionsModel *_optionsModel, QObject *parent) :
@@ -253,6 +254,17 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         {
             return SendCoinsReturn(AmountWithFeeExceedsBalance);
         }
+        Q_EMIT message(tr("Send Coins"), QString::fromStdString(strFailReason),
+                     CClientUIInterface::MSG_ERROR);
+        return TransactionCreationFailed;
+    }
+    // BIBLEPAY - Verify transaction does not spend TLT Coins
+    CTransaction txCopy = transaction.getWtx()->get();
+
+    bool fTLT = CheckTLTTx(txCopy, pcoinsTip.get());
+    if (!fTLT)
+    {
+        strFailReason = "Coins are locked in a time-locked-trust wallet.";
         Q_EMIT message(tr("Send Coins"), QString::fromStdString(strFailReason),
                      CClientUIInterface::MSG_ERROR);
         return TransactionCreationFailed;

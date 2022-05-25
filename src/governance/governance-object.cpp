@@ -567,13 +567,17 @@ bool CGovernanceObject::IsCollateralValid(std::string& strError, bool& fMissingC
             LogPrintf("CGovernanceObject::IsCollateralValid -- %s\n", strError);
             return false;
         }
-        if (output.scriptPubKey == findScript && output.nValue >= nMinFee) {
+        // TODO:  Find out why our web site is not adding a message to OP_RETURN that matches Dashes Proof of burn message?  For now, we check for the Collateral to be present (PASS), but we want to be dash compatible, so lets put a bounty out for this:
+        // This output.scriptPubKey should match the OP_RETURN sent from website :: if (output.scriptPubKey == findScript && output.nValue >= nMinFee) 
+
+        if (output.nValue >= nMinFee) {
             foundOpReturn = true;
         }
+        LogPrintf("\r\nCGovernanceObject::IsCollateralValid %f %f",output.nValue, nMinFee);
     }
 
     if (!foundOpReturn) {
-        strError = strprintf("Couldn't find opReturn %s in %s", nExpectedHash.ToString(), txCollateral->ToString());
+        strError = strprintf("Couldn't find opReturn [0] %s in %s", nExpectedHash.ToString(), txCollateral->ToString());
         LogPrintf("CGovernanceObject::IsCollateralValid -- %s\n", strError);
         return false;
     }

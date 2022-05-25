@@ -178,8 +178,17 @@ std::string ReverseHex(std::string const& src)
     return result;
 }
 
+CAmount GetWalletBalance()
+{
+	JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false))
+        return 0;
+    return wallet->GetBalance();
+}
 
-bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData)
+bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition)
 {
 	JSONRPCRequest r;
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
@@ -228,6 +237,15 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
         sError = "Error: The transaction was rejected!";
         return false;
     }
+
+    for (unsigned int i = 0; i < tx->vout.size(); i++) 
+    {
+        if (tx->vout[i].nValue == nValue)
+        {
+           nVoutPosition = i;
+        }
+    }
+
     sTXID = tx->GetHash().GetHex();
 	return true;
 }
@@ -843,16 +861,19 @@ double AmountToDouble(const CAmount& amount)
     return nAmount;
 }
 
-bool IsBetween(CAmount n1, CAmount n2, double nFudgeFactor)
+bool IsBetween(CAmount n1, CAmount n2)
 {
-	// Allows for floating point rounding errors which we have observed on arm64.
+	// Allows for floating point rounding differences which we have observed on arm64.
 	if (n1 == n2)
 		return true;
-	double d1 = AmountToDouble(n1);
-	double d2 = AmountToDouble(n2);
- 	double d3 = std::abs(d1-d2);
-	bool fPass = (d3 <= nFudgeFactor);
-	return fPass;
+
+    if (n1 >= n2 - (ARM64() * 100) && n1 <= n2 + (ARM64() * 100))
+        return true;
+
+    if (n2 >= n1 - (ARM64() * 100) && n2 <= n1 + (ARM64() * 100))
+        return true;
+
+	return false;
 }
 
 bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_t nBlockTime)
@@ -881,10 +902,14 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 		{
 			std::string sRecipient2 = PubKeyToAddress(txout2.scriptPubKey);
 			CAmount nAmount2 = txout2.nValue;
-            if (sRecipient1 == sRecipient2 && IsBetween(nAmount1, nAmount2, 1.0))
+            if (sRecipient1 == sRecipient2 && IsBetween(nAmount1, nAmount2))
             {
                  found = true;
                  break;
+            }
+            else if (sRecipient1 == sRecipient2)
+            {
+                LogPrintf("\nValidateDailySuperblock::ERROR Recip %s matches, but amounts %s and %s do not match.", sRecipient1, AmountToString(nAmount1), AmountToString(nAmount2));
             }
 		}
 	    if (!found) 
@@ -1819,12 +1844,13 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
     std::string sDomain = "";
 	const CChainParams& chainparams = Params();
     std::string sNetworkID = chainparams.NetworkIDString();
-    std::string sPortSuffix = ":5000";
+    //std::string sPortSuffix = ":8443";
     std::string sSanctuaryIP = GetElement(sSanctuaryIPIN, ":", 0);
 
     if (sDomain.empty())
 	{
-		sDomain = sNetworkID == "test" ? sSanctuaryIP + sPortSuffix : sSanctuaryIP + sPortSuffix;
+		//sDomain = sNetworkID == "test" ? sSanctuaryIP + sPortSuffix : sSanctuaryIP + sPortSuffix;
+        sDomain = sSanctuaryIP;
 	}
     sURL += sDomain;
     if (sSanctuaryPubKey.empty())
@@ -1848,13 +1874,14 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
 
 bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout, int nType)
 {
+    int nBMS_PORT = 8443;
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
-    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 9, 1);
+    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
     std::string sOK = ExtractXML(sResponse, "Status:", "\n");
     
     // Mission Critical todo
-    if (false)
+    if (true)
      LogPrintf("POVSTEST::Response %s", sOK);
 
     bool fOK = Contains(sOK, "OK");
@@ -2084,7 +2111,8 @@ bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view)
          if (nTime > 0 && nTime > GetAdjustedTime())
          {
              std::string sMaturity = TimestampToHRDate(nTime);
-             LogPrintf("AccptToMemoryPool::CheckTLTTx::Tx Rejected; Maturity %f, Amount %f, Address %s, MaturityDate %s ", (double)nTime, (double)txOutPrevOut.nValue/COIN, sFromAddress, sMaturity);
+             LogPrintf("AccptToMemoryPool::CheckTLTTx::Tx Rejected; Maturity %f, Amount %f, Address %s, MaturityDate %s ", 
+             (double)nTime, (double)txOutPrevOut.nValue/COIN, sFromAddress, sMaturity);
              return false;
          }
     }

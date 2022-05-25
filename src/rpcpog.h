@@ -98,7 +98,7 @@ std::string ReverseHex(std::string const& src);
 std::string DefaultRecAddress(std::string sType);
 CBlockIndex* FindBlockByHeight(int nHeight);
 std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::string& sError);
-bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData = "");
+bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition);
 std::vector<std::string> Split(std::string s, std::string delim);
 bool SendManyXML(std::string XML, std::string& sTXID);
 std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
@@ -141,5 +141,6 @@ CAmount ARM64();
 uint64_t IsHODLAddress(std::string sAddress);
 bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view);
 std::string GetElement(std::string sData, std::string sDelimiter, int iPos);
+CAmount GetWalletBalance();
 
 #endif
