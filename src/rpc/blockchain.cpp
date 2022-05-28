@@ -2746,11 +2746,11 @@ UniValue exec(const JSONRPCRequest& request)
 	    if (s.length() > 0)
         {
             const Consensus::Params& consensusParams = Params().GetConsensus();
-            std::string sPayAddress  = consensusParams.FoundationAddress;
+            std::string sPayAddress = consensusParams.FoundationAddress;
             std::string sError;
             std::string sTXID;
             int nOut = 0;
-          	bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, "", nOut);
+          	bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, s, nOut);
             results.pushKV("txid", sTXID);
         }
         else
