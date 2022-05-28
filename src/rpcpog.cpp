@@ -193,8 +193,6 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
     std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
 
-
-
 	// BiblePay - Handle extremely large data transactions:
     if (sOptionalData.length() > 2999 && nValue > 0) {
         double nReq = ceil(sOptionalData.length() / 10000);

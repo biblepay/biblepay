@@ -2659,7 +2659,25 @@ UniValue exec(const JSONRPCRequest& request)
 		obj = blockToJSON(block, NULL, true);
 		results.push_back(obj);
 	}
-	else if (sItem == "hextxtojson")
+    else if (sItem == "bmstransaction")
+    {
+    	std::string s = request.params[1].get_str();
+	    if (s.length() > 0)
+        {
+            const Consensus::Params& consensusParams = Params().GetConsensus();
+            std::string sPayAddress = consensusParams.FoundationAddress;
+            std::string sError;
+            std::string sTXID;
+            int nOut = 0;
+          	bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, s);
+            results.pushKV("txid", sTXID);
+        }
+        else
+        {
+            results.pushKV("error", "data not specified");
+        }
+    }
+    else if (sItem == "hextxtojson")
 	{
 		std::string sHex = request.params[1].get_str();
 		
