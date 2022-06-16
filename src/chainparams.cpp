@@ -313,7 +313,7 @@ public:
         strNetworkID = "main";
 		consensus.BARLEY_HARVEST_HEIGHT  = 320000;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
-        consensus.EXODUS_HEIGHT = 421000;
+        consensus.EXODUS_HEIGHT = 346500;
 
 		consensus.RANDOMX_HEIGHT = 184675;
 
@@ -334,7 +334,7 @@ public:
         
 		consensus.nSuperblockStartBlock = 21710; // The block at which 12.1 goes live (end of final 12.0 budget cycle)
         consensus.nSuperblockStartHash = uint256S("0x0");
-        consensus.nSuperblockCycle = 205*30; // Monhtly
+        consensus.nSuperblockCycle = 205*30; // Monthly
 	    consensus.nGovernanceMinQuorum = 3;
         consensus.nGovernanceFilterElements = 20000;
         consensus.nMasternodeMinimumConfirmations = 7;
@@ -436,7 +436,7 @@ public:
         pchMessageStart[2] = 0x6b;
         pchMessageStart[3] = 0xbd;
         nDefaultPort = 40000;
-        nPruneAfterHeight = 450000;
+        nPruneAfterHeight = 650000;
 		genesis = CreateGenesisBlock(1496347844, 12, 0x207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x3b4431310395638c0ed65b40ede4b110d8da70fcc0c2ed4a729fb8e4d78b4452"));
@@ -451,11 +451,11 @@ public:
         vSeeds.emplace_back("dnsseed.biblepaydot.io");
 
         // BBP addresses start with 'B'
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 25);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 25);  // &h19
         // BBP script addresses start with '7'
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 16);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 16);  // &h10
         // BBP private keys start with '7' or 'X'
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1, 182);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1, 182); // &hb6
         // BBP BIP32 pubkeys start with 'xpub' (Bitcoin defaults)
 		base58Prefixes[EXT_PUBLIC_KEY] = {0x04,0x88,0xB2,0x1E};
 	    // BBP BIP32 prvkeys start with 'xprv' (Bitcoin defaults)
@@ -507,6 +507,7 @@ public:
 					{206000, uint256S("0xc5c6dfcc2b84fb48873b1fd45d2a693a183fbaef8c79673d6defb2b073ef09d2")},
                     {270000, uint256S("0x4cb48793f323d2252cfc9f5b233931e8a727a091532841379a375390d9e31e20")},
 					{315770, uint256S("0xe8fb51c409c9c2942e60e15d013efc475eacd0a4fa9df8d54eddfaa0c421146a")},
+                    {344000, uint256S("0x7c3e13950bdb25ea8ff11bd091be5bede5241dfa87ca149a75a2103c1041468a")},
 				}
             }
         };

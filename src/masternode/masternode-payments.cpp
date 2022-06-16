@@ -400,6 +400,13 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 				LogPrintf("\nCMasternodePayments::IsTransactionValid Recipient1 %s, Recipient2 %s, Amount1 %f, Amount2 %f", 
 					sRecipient1, sRecipient2, nAmount1/COIN, nAmount2/COIN);
 					*/
+
+                // Proof-of-concept (Video Mining)
+                // Can we enforce video-mined-by-sanc here:
+                // Check vout[0], verify the masternode who is set for payment mined the block.
+
+
+
 			}
         }
         if (!found) {

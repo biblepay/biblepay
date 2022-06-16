@@ -204,7 +204,6 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
     int nChangePosRet = -1;
 
 
-
 	// BiblePay - Handle extremely large data transactions:
     if (sOptionalData.length() > 2999 && nValue > 0) {
         double nReq = ceil(sOptionalData.length() / 10000);
@@ -1876,6 +1875,14 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
 {
     int nBMS_PORT = 8443;
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
+    int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
+    // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004
+    bool fPortPassed = false;
+    if (nPort == 40000 || nPort==40001 || nPort == 10001 || nPort==10002 || nPort==10003 || nPort==10004)
+        fPortPassed=true;
+    if (!fPortPassed)
+        return false;
+
     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
     std::string sOK = ExtractXML(sResponse, "Status", "\n");
