@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp> // for StringToUnixTime()
+
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
 
@@ -177,8 +178,17 @@ std::string ReverseHex(std::string const& src)
     return result;
 }
 
+CAmount GetWalletBalance()
+{
+	JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false))
+        return 0;
+    return wallet->GetBalance();
+}
 
-bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData)
+bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition)
 {
 	JSONRPCRequest r;
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
@@ -192,6 +202,7 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
     std::string strError;
     std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
+
 
 	// BiblePay - Handle extremely large data transactions:
     if (sOptionalData.length() > 2999 && nValue > 0) {
@@ -225,6 +236,15 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
         sError = "Error: The transaction was rejected!";
         return false;
     }
+
+    for (unsigned int i = 0; i < tx->vout.size(); i++) 
+    {
+        if (tx->vout[i].nValue == nValue)
+        {
+           nVoutPosition = i;
+        }
+    }
+
     sTXID = tx->GetHash().GetHex();
 	return true;
 }
@@ -744,14 +764,20 @@ int GetNextDailySuperblock(int nHeight)
 	return 0;
 }
 
-static double UTXO_BLOCK_PERCENTAGE = .30;
 CAmount GetDailyPaymentsLimit(int nHeight)
 {
 	const CChainParams& chainparams = Params();
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    
+    double UTXO_BLOCK_PERCENTAGE = .30;
+    if (nHeight >= consensusParams.EXODUS_HEIGHT)
+    {
+        UTXO_BLOCK_PERCENTAGE = .55;
+    }
 	int nDiff = 500000000;
 	double nSubsidy = (double)GetBlockSubsidy(nDiff, nHeight, chainparams.GetConsensus())/COIN;
 	double nLimit = nSubsidy * UTXO_BLOCK_PERCENTAGE * BLOCKS_PER_DAY;
-	LogPrintf("\nGetDailyPaymentsLimit Subsidy %f limit %f", nSubsidy, nLimit);
+	// LogPrintf("\nGetDailyPaymentsLimit Subsidy %f limit %f", nSubsidy, nLimit);
 	CAmount nPaymentsLimit = nLimit * COIN;
 	return nPaymentsLimit;
 }
@@ -785,7 +811,6 @@ std::vector<Portfolio> GetDailySuperblock(int nHeight)
 			p.AmountUSDForeign = StringToDouble(vCols[6], 4);
 			p.AmountUSD = StringToDouble(vCols[7], 4);
 			p.Coverage = StringToDouble(vCols[8], 4);
-       
 			p.Strength = StringToDouble(vCols[9], 4);
 			p.Owed = p.Strength * nSuperblockLimit;
 			nTotal += p.Strength;
@@ -1782,7 +1807,6 @@ double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
     // Why a 5 digit pin?  This reduces the price impact biblepay consumes in expensive utxo stakes.
 }
 
-
 void LockStakes()
 {
 	std::string sUA = gArgs.GetArg("-unchainedaddress", "");
@@ -1805,38 +1829,69 @@ const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
     return pindexHistorical;
 }
 
-std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey)
+std::string GetElement(std::string sData, std::string sDelimiter, int iPos)
+{
+    std::vector<std::string> vData = Split(sData.c_str(), sDelimiter);
+    if (vData.size()-1 < iPos)
+        return sData;
+    return vData[iPos];
+}
+
+std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctuaryPubKey, std::string sSanctuaryIPIN, int iType)
 {
     std::string sURL = "https://";
     std::string sDomain = "";
 	const CChainParams& chainparams = Params();
     std::string sNetworkID = chainparams.NetworkIDString();
+    //std::string sPortSuffix = ":8443";
+    std::string sSanctuaryIP = GetElement(sSanctuaryIPIN, ":", 0);
+
     if (sDomain.empty())
 	{
-		sDomain = sNetworkID == "test" ? "foundation.biblepay.org" : "biblepay.cameroonone.org";
+		//sDomain = sNetworkID == "test" ? sSanctuaryIP + sPortSuffix : sSanctuaryIP + sPortSuffix;
+        sDomain = sSanctuaryIP;
 	}
     sURL += sDomain;
     if (sSanctuaryPubKey.empty())
         return std::make_tuple("", "", "");
     std::string sPrefix = sSanctuaryPubKey.substr(0, std::min((int)sSanctuaryPubKey.length(), 8));
-    std::string sPage = "bios/" + sPrefix + ".htm";
+    std::string sPage = "";
+    if (iType == 0)
+    { 
+      sPage =  "BMS/POSE";
+    }
+    else if (iType == 1)
+    {
+      sPage = "BMS/VideoList";
+    }
+    else if (iType==2)
+    {
+      sPage = "BMS/Status";
+    }
     return std::make_tuple(sURL, sPage, sPrefix);
 }
 
-bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout)
+bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout, int nType)
 {
-    std::tuple<std::string, std::string, std::string> t = GetOrphanPOOSURL(sSanctuaryPubKey);
-    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), SSL_PORT, 25, 1);
-    std::string sOK = ExtractXML(sResponse, "Status:", "\n");
-	
-	/*
-	if (Contains(sSanctuaryPubKey, "95e"))
-	{
-		LogPrintf("\r\nChecking %s, receiving %s [%s] [%s] \r\n", sSanctuaryPubKey, sResponse, sOK, sOK2);
-	}
-	*/
+    int nBMS_PORT = 8443;
+    std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
+    int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
+    // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004
+    bool fPortPassed = false;
+    if (nPort == 40000 || nPort==40001 || nPort == 10001 || nPort==10002 || nPort==10003 || nPort==10004)
+        fPortPassed=true;
+    if (!fPortPassed)
+        return false;
 
-    bool fOK = Contains(sOK, "OK");
+    std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
+    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
+    std::string sOK = ExtractXML(sResponse, "Status", "\n");
+    
+    // Mission Critical todo
+    if (false)
+     LogPrintf("\nPOVSTEST2::Response for IP %s=[%s]\r\n", sIPIN, sOK);
+
+    bool fOK = Contains(sOK, "SUFFICIENT");
     return fOK;
 }
 
@@ -2001,4 +2056,72 @@ CAmount ARM64()
     // We are passing back 1 * COIN to allow the Subsidy max to be greater than the value out.
     CAmount nARM = 1 * COIN;
     return nARM;
+}
+
+int ConvertBase58ToInt(std::string sInput)
+{
+    std::string sBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    for (int i = 0; i < sBase58.length(); i++)
+    {
+        std::string sChar = sBase58.substr(i, 1);
+        if (sInput == sChar)
+           return i + 1;
+    }
+    return 0;
+}
+
+uint64_t ConvertDateToTimeStamp(int nMonth, int nYear)
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime ); 
+    timeinfo = localtime ( &rawtime ); 
+    timeinfo->tm_year   = nYear - 1900;
+    timeinfo->tm_mon    = nMonth - 1;    // months since January - [0,11]
+    timeinfo->tm_mday   = 1;             // day of the month - [1,31] 
+    timeinfo->tm_hour   = 1;             // hours since midnight - [0,23]
+    timeinfo->tm_min    = 1;             // minutes after the hour - [0,59]
+    timeinfo->tm_sec    = 1;             // seconds after the minute - [0,59]
+    int64_t nStamp = mktime(timeinfo);
+    return nStamp;
+    
+}
+
+uint64_t IsHODLAddress(std::string sAddress)
+{
+    // If this is not a HODL, return 0
+    int nHODL = sAddress.find("HD");
+    if (nHODL == std::string::npos)
+        return 0;
+    if (nHODL + 3 > sAddress.length() -1)
+        return 0;
+    std::string sMM = sAddress.substr(nHODL+2, 1);
+    std::string sYY = sAddress.substr(nHODL+3, 1);
+    int nMM = ConvertBase58ToInt(sMM);
+    int nYY = ConvertBase58ToInt(sYY) + 2020;
+    if (nMM < 1 || nMM > 12)
+       return 0;
+    // This is a HODL wallet address, convert the timestamp to a unix timestamp (the MaturityDate)
+    int64_t nMaturityDate = ConvertDateToTimeStamp(nMM, nYY);
+    return nMaturityDate;
+}
+
+bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view)
+{
+    // If this is a Time Locked Trust Wallet, reject early spends
+    for (unsigned int k = 0; k < tx.vin.size(); k++) 
+    {
+         const Coin &coin = view.AccessCoin(tx.vin[k].prevout);
+         const CTxOut &txOutPrevOut = coin.out;
+         std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
+         double nTime = IsHODLAddress(sFromAddress);
+         if (nTime > 0 && nTime > GetAdjustedTime())
+         {
+             std::string sMaturity = TimestampToHRDate(nTime);
+             LogPrintf("AccptToMemoryPool::CheckTLTTx::Tx Rejected; Maturity %f, Amount %f, Address %s, MaturityDate %s ", 
+             (double)nTime, (double)txOutPrevOut.nValue/COIN, sFromAddress, sMaturity);
+             return false;
+         }
+    }
+    return true;
 }

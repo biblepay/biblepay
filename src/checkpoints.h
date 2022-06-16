@@ -23,7 +23,6 @@ namespace Checkpoints
 CBlockIndex* GetLastCheckpoint(const CCheckpointData& data);
 int GetTotalBlocksEstimate(const CCheckpointData& data);
 
-
 } //namespace Checkpoints
 
 #endif // BITCOIN_CHECKPOINTS_H

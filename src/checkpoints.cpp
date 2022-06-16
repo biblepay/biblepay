@@ -14,7 +14,6 @@
 
 
 namespace Checkpoints {
-
     int GetTotalBlocksEstimate(const CCheckpointData& data)
     {
         const MapCheckpoints& checkpoints = data.mapCheckpoints;

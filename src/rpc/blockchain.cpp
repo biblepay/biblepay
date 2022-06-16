@@ -2329,6 +2329,26 @@ void AppendSanctuaryFile(std::string sFile, std::string sData)
     fclose(configFile);
 }
 
+void AppendMasternodeFile(std::string sFile, std::string sData)
+{
+    boost::filesystem::path pathDeterministicConfigFile = GetGenericFilePath(sFile);
+    boost::filesystem::ifstream streamConfig(pathDeterministicConfigFile);
+	bool fReadable = streamConfig.good();
+	if (fReadable)
+		streamConfig.close();
+    FILE* configFile = fopen(pathDeterministicConfigFile.string().c_str(), "a");
+    if (configFile != nullptr) 
+	{
+	    if (!fReadable) 
+		{
+            std::string strHeader = "# Format: alias IP:bbp_port_not_rpc_port masternodeprivkey collateral_output_txid collateral_output_index";
+            fwrite(strHeader.c_str(), std::strlen(strHeader.c_str()), 1, configFile);
+        }
+    }
+	fwrite(sData.c_str(), std::strlen(sData.c_str()), 1, configFile);
+    fclose(configFile);
+}
+
 
 UniValue exec(const JSONRPCRequest& request)
 {
@@ -2344,7 +2364,7 @@ UniValue exec(const JSONRPCRequest& request)
 	if (sItem.empty()) throw std::runtime_error("Command argument invalid.");
 
     UniValue results(UniValue::VOBJ);
-	results.pushKV("Command",sItem);
+	results.pushKV("Command", sItem);
 	if (sItem == "subsidy")
 	{
 		// Used by the Pools
@@ -2371,7 +2391,7 @@ UniValue exec(const JSONRPCRequest& request)
 		}
 		else
 		{
-			results.pushKV("error","block not found");
+			results.pushKV("error", "block not found");
 		}
 	}
 	else if (sItem == "blocktohex")
@@ -2435,7 +2455,7 @@ UniValue exec(const JSONRPCRequest& request)
 				}
 		}
 	}
-	else if (sItem == "revivesanc")
+	else if (sItem == "revivesanc" || sItem=="startsanc")
 	{
 		// Sanctuary Revival
 		// The purpose of this command is to make it easy to Revive a POSE-banned deterministic sanctuary.  (In contrast to knowing how to create and send the protx update_service command).
@@ -2483,9 +2503,18 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sTXID;
 		std::string sError;
 		std::string sXML = "<sc><objtype>test</objtype><url>https://test.com/</url></sc>";
-		bool fSent = RPCSendMoney(sError, sToAddress, 1 * COIN, sTXID, sXML);
+        int nOut = 0;
+		bool fSent = RPCSendMoney(sError, sToAddress, 1 * COIN, sTXID, sXML, nOut);
 		results.pushKV("TXID", sTXID);
 	}
+    else if (sItem == "tlt")
+    {
+    	std::string sAddr = request.params[1].get_str();
+        uint64_t n = IsHODLAddress(sAddr);
+        std::string s = TimestampToHRDate(n);
+        results.pushKV("tlt", n);
+        results.pushKV("dt", s);
+    }
 	else if (sItem == "listsc")
 	{
 		results.pushKV("scsz", (int64_t)mapSidechain.size());
@@ -2497,10 +2526,71 @@ UniValue exec(const JSONRPCRequest& request)
     		results.pushKV(ii.first, o);
 		}
 	}
-	else if (sItem == "upgradesanc")
+    else if (sItem == "fundsanc")
+    {
+        if (request.params.size() != 3)
+        {
+            throw std::runtime_error("You must specify the sanctuary_name sanctuary_ip.");
+        }
+
+        std::string sSancName = request.params[1].get_str();
+        std::string sIP = request.params[2].get_str();
+
+        if (sSancName == "" || sIP == "")
+        {
+            throw std::runtime_error("You must specify sanc name");
+        }
+
+        if (Contains(sIP, ":"))
+        {
+            throw std::runtime_error("You must not specify the port.");
+        }
+
+       	const CChainParams& chainparams = Params();
+        std::string sNetworkID = chainparams.NetworkIDString();
+        int nPort = sNetworkID == "test" ? 40001 : 40000;
+        std::string sSancIP = sIP + ":" + DoubleToString(nPort, 0);
+        CAmount nBalance = GetWalletBalance();
+        if (nBalance/COIN < 4500002)
+        {
+            throw std::runtime_error("You must have at least 4.5MM available to fund a new sanctuary.  Also, please ensure your wallet is unlocked. ");
+        }
+        
+        std::string sError = "";
+        std::string sTXID ="";
+        int nVoutPosition = 0;
+        CAmount nAmount = 4500001 * COIN;
+        std::string sMySancAddress = DefaultRecAddress(sSancName + "-sanc");  // Keeps this name from clashing with "-v" (voting address)
+        bool f = RPCSendMoney(sError, sMySancAddress, nAmount, sTXID, "", nVoutPosition);
+
+        // # Format: alias IP:bbp_port_not_rpc_port masternodeprivkey collateral_output_txid collateral_output_index
+        if (!f)
+        {
+            throw std::runtime_error(sError);
+        }
+
+        std::string sDSD = sSancName + " " + sSancIP + " mnp " + sTXID + " " + DoubleToString(nVoutPosition, 0) + " \r\n";
+        results.pushKV("Creating", sDSD);
+		AppendMasternodeFile("masternode.conf", sDSD);
+    }
+    else if (sItem == "getscratch")
+    {
+    	if (request.params.size() != 2)
+			throw std::runtime_error("You must specify exec getscratch scratchid. ");
+		std::string sID1 = request.params[1].get_str();
+	    int nBMS_PORT = 8443;
+        std::string sBaseDomain = "https://globalcdn.biblepay.org";
+        std::string sRandom = DoubleToString(GetAdjustedTime(),0);
+        std::string sPage = "BMS/Scratch/" + sID1 + "?rand=" + sRandom;
+        std::string sResponse = Uplink(false, "", sBaseDomain, sPage, nBMS_PORT, 15, 1);
+        LogPrintf("\r\nChecking %s - response [%s]", sPage, sResponse);
+        std::string sScratch = ExtractXML(sResponse, "<scratch>", "</scratch>");
+        results.pushKV("Scratch", sScratch);
+    }
+	else if (sItem == "upgradesanc" || sItem=="createsanc")
 	{
 		if (request.params.size() != 3)
-			throw std::runtime_error("You must specify exec upgradesanc sanctuary_name (where the sanctuary_name matches the name in the masternode.conf file) 0/1 (where 0=dry-run, 1=real).   NOTE:  Please be sure your masternode.conf has a carriage return after the end of every sanctuary entry (otherwise we can't parse each entry correctly). ");
+			throw std::runtime_error("You must specify exec upgradesanc/createsanc sanctuary_name (where the sanctuary_name matches the name in the masternode.conf file) 0/1 (where 0=dry-run, 1=real).   NOTE:  Please be sure your masternode.conf has a carriage return after the end of every sanctuary entry (otherwise we can't parse each entry correctly). ");
 
 		std::string sSearch = request.params[1].get_str();
 		int iDryRun = StringToDouble(request.params[2].get_str(), 0);
@@ -2534,7 +2624,8 @@ UniValue exec(const JSONRPCRequest& request)
 		bool fInstantSend = false;
 		// 1b. We must send 1 COIN to ourself first here, as the deterministic sanctuaries future fund receiving address must be prefunded with enough funds to cover the non-financial transaction transmission below
 		std::string sTXID;
-		bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID);
+        int nOut = 0;
+		bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, "", nOut);
 
 		if (!sError.empty() || !fSent)
 			throw std::runtime_error("Unable to fund protx_register fee: " + sError);
@@ -2576,7 +2667,7 @@ UniValue exec(const JSONRPCRequest& request)
 		newRequest.params.push_back("0");             // Pct of rewards to share with Operator (This is the amount of reward we want to share with a Sanc Operator - IE a hosting company)
 		newRequest.params.push_back(sPayAddress);     // [8] = Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
 		// Fee Source Address (prevents Fee 404)
-		// 		std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+		// std::string sCPK = DefaultRecAddress("Christian-Public-Key");
 		newRequest.params.push_back(sPayAddress);
 
 		// 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
@@ -2649,16 +2740,6 @@ UniValue exec(const JSONRPCRequest& request)
 		results.pushKV("Sanc", (double)nSanc/COIN);
 		results.pushKV("GovernanceSubsidy", (double)nRewardGov/COIN);
 	}
-	else if (sItem == "hexblocktojson")
-	{
-		std::string sHex = request.params[1].get_str();
-		CBlock block;
-        if (!DecodeHexBlk(block, sHex))
-                throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
-		UniValue obj(UniValue::VOBJ);
-		obj = blockToJSON(block, NULL, true);
-		results.push_back(obj);
-	}
     else if (sItem == "bmstransaction")
     {
     	std::string s = request.params[1].get_str();
@@ -2669,7 +2750,7 @@ UniValue exec(const JSONRPCRequest& request)
             std::string sError;
             std::string sTXID;
             int nOut = 0;
-          	bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, s);
+          	bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, s, nOut);
             results.pushKV("txid", sTXID);
         }
         else
@@ -2677,7 +2758,17 @@ UniValue exec(const JSONRPCRequest& request)
             results.pushKV("error", "data not specified");
         }
     }
-    else if (sItem == "hextxtojson")
+	else if (sItem == "hexblocktojson")
+	{
+		std::string sHex = request.params[1].get_str();
+		CBlock block;
+        if (!DecodeHexBlk(block, sHex))
+                throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
+		UniValue obj(UniValue::VOBJ);
+		obj = blockToJSON(block, NULL, true);
+		results.push_back(obj);
+	}
+	else if (sItem == "hextxtojson")
 	{
 		std::string sHex = request.params[1].get_str();
 		
@@ -2713,7 +2804,6 @@ UniValue exec(const JSONRPCRequest& request)
 			nTotalPayments += nAmount1;
 			results.pushKV("Recipient" + DoubleToString(i, 0), sRecipient1);
 			results.pushKV("Amount" + DoubleToString(i,0) , AmountToString(nAmount1));
-		
 		}
 		results.pushKV("Total", AmountToString(nTotalPayments));
 	}

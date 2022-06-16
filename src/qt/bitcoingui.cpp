@@ -692,7 +692,7 @@ void BitcoinGUI::createToolBars()
 		forumAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		forumAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 		tabGroup->addButton(forumAction);
-		connect(prayerRequestAction, SIGNAL(clicked()), this, SLOT(showForum()));
+		connect(forumAction, SIGNAL(clicked()), this, SLOT(showForum()));
 
 	    // END OF BIBLEPAY
 
@@ -1127,7 +1127,7 @@ void BitcoinGUI::showUnchained()
 
 void BitcoinGUI::showPrayerRequests()
 {
-	std::string sURL = "https://unchained.biblepay.org/PrayerBlog";
+	std::string sURL = "https://social.biblepay.org/prayer";
 	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
 }
 

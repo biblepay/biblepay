@@ -180,7 +180,7 @@ Changes between 1.6.0.1b - 1.6.2.1
 - Add Query button to utxodialog
 
 
-Changes between 1.6.2.1 and 0.17.1.2:
+Changes between 1.6.2.1 and 0.17.1.2 (Mandatory Upgrade @320,000):
 
 - Rebase to dash 0.1703.17.3a / Aug. 2021 (https://github.com/biblepay/biblepay/commit/e366733116f162fb4f226c8b4ad5c67cd73465e9)
 - 0.17.0.4c - Port in 'exec upgradesanc' command
@@ -197,3 +197,6 @@ Changes between 1.6.2.1 and 0.17.1.2:
 - Add exec listsc RPC function for sha256 sidechain hashes and referenced URLs
 
 
+Changes between 0.17.1.3 and 0.17.2.5 (Mandatory upgrade @346,500):
+
+- Add POVS (proof-of-video-streaming); requires sanctuaries to run the BMS software (biblepay video streaming server)

@@ -1125,7 +1125,6 @@ UniValue getgovernanceinfo(const JSONRPCRequest& request)
 	CAmount nNextDailyLimit = GetDailyPaymentsLimit(nNextSuperblock + 20);
 	obj.pushKV("nextdailylimit", nNextDailyLimit/COIN);
     obj.pushKV("nextmonthlylimit", CSuperblock::GetPaymentsLimit(nNextSuperblock)/COIN);
-    
     return obj;
 }
 

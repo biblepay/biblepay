@@ -190,6 +190,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
 
 	// RandomX Pool Support
+    // Mission Critical Todo:  POVS, 2) Enable setgenerate true=1 by default (for masternode mode), 3) In ContextualCheckBlock, we need to compare [0].scriptpubkey==[1].scriptpubkey for POVS
 	if (!sPoolMiningPublicKey.empty())
 	{
 		CScript spkPoolScript = GetScriptForDestination(DecodeDestination(sPoolMiningPublicKey));
@@ -239,6 +240,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // Update coinbase transaction with additional info about masternode and governance payments,
     // get some info back to pass to getblocktemplate
     FillBlockPayments(coinbaseTx, nHeight, blockReward, pblocktemplate->voutMasternodePayments, pblocktemplate->voutSuperblockPayments);
+    // Mission Critical Todo:  POVS:  Copy  vout[1] scriptPubKey out to vout[0] scriptPubKey here.
 
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vTxFees[0] = -nFees;

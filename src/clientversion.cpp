@@ -17,7 +17,7 @@ const std::string CLIENT_NAME("Biblepay Core");
 /**
  * Client version number
  */
-#define CLIENT_VERSION_SUFFIX "Barley-Harvest"
+#define CLIENT_VERSION_SUFFIX "Exodus"
 
 
 /**

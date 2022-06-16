@@ -249,7 +249,7 @@ double dHashesPerSec = 0;
 int64_t nHPSTimerStart = 0;
 bool fCoinControlUnlocked = false;
 int iMinerThreadCount = 0;
-std::map<std::string, int> mapPOOSStatus;
+std::map<std::string, int> mapPOVSStatus;
 std::map<std::string, Sidechain> mapSidechain;
 // END OF BIBLEPAY AREA
 
@@ -819,6 +819,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         // NOTE: we use UTXO here and do NOT allow mempool txes as masternode collaterals
         if (!CheckSpecialTx(tx, chainActive.Tip(), state, *pcoinsTip.get()))
             return false;
+        // BIBLEPAY
+		if (!CheckTLTTx(tx, *pcoinsTip.get()))
+            return false;
+        // End of BIBLEPAY
+
 
         if (pool.existsProviderTxConflict(tx)) {
             return state.DoS(0, false, REJECT_DUPLICATE, "protx-dup");
@@ -1183,17 +1188,20 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 
 	int iSubsidyDecreaseInterval = BLOCKS_PER_DAY * 30;
 	double iDeflationRate = .0216;
-	// 2-28-2022 - Wrong deflation rate on mandatory upgrade... Adjusting back to .015:
+    // 2-28-2022 - Wrong deflation rate on mandatory upgrade... Adjusting back to .015:
 	iDeflationRate = .015; // this is where we left off
-
+    if (nPrevHeight >= consensusParams.EXODUS_HEIGHT)
+    {
+        iDeflationRate = .01317;
+    }
 	CAmount nTotalDeflation = 0;
 	
     for (int i = iSubsidyDecreaseInterval; i <= nPrevHeight; i += iSubsidyDecreaseInterval) 
 	{
         nTotalDeflation += (nSubsidy * iDeflationRate);
 	}
-	
-	// Prevent the total deflation from exceeding the entire block value (prevent negative vouts):
+
+    // Prevent the total deflation from exceeding the entire block value (prevent negative vouts):
 	if (nTotalDeflation > MAX_BLOCK_SUBSIDY * COIN * .90)
 		nTotalDeflation = MAX_BLOCK_SUBSIDY * COIN * .90;
 
@@ -1208,7 +1216,7 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 	CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy * dGovernancePercent : 0;
 	CAmount nNetSubsidy = nSubsidy - nSuperblockPart;
 
-	if (false)
+    if (false)
 		LogPrintf("BBP::GetBlockSubsidy::SuperblockPart %f, NetSub %f, SubsidyBase %f, TotalDeflation [%f],%f ", nSuperblockPart/COIN, nNetSubsidy/COIN, nStartSubsidyBase/COIN, nTotalDeflation/COIN, nTotalDeflation);
 
 	return fSuperblockPartOnly ? nSuperblockPart : nNetSubsidy;
@@ -1218,7 +1226,6 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
 {
     // https://wiki.bible[pay].org/Economics
 	// http://forum.bible[pay].org/index.php?topic=33.0
-	// Sanctuaries sponsor an orphan out of their own finances.
 	CAmount ret = .20 * blockValue;
     
 	if (nHeight > -1 && nHeight <= Params().GetConsensus().BARLEY_HARVEST_HEIGHT2)
@@ -3801,7 +3808,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-type", false, "coinbase is not a CbTx");
         }
     }
-
+    
     return true;
 }
 

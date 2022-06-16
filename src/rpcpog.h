@@ -98,7 +98,7 @@ std::string ReverseHex(std::string const& src);
 std::string DefaultRecAddress(std::string sType);
 CBlockIndex* FindBlockByHeight(int nHeight);
 std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::string& sError);
-bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData = "");
+bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition);
 std::vector<std::string> Split(std::string s, std::string delim);
 bool SendManyXML(std::string XML, std::string& sTXID);
 std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end);
@@ -129,8 +129,8 @@ double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
 void LockStakes();
 bool CompareMask2(CAmount nAmount, double nMask);
 const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
-std::tuple<std::string, std::string, std::string> GetOrphanPOOSURL(std::string sSanctuaryPubKey);
-bool POOSOrphanTest(std::string sSanctuaryPubKey, int64_t nTimeout);
+std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctuaryPubKey, std::string sIP, int iType);
+bool POVSTest(std::string sSanctuaryPubKey, std::string sIP, int64_t nTimeout, int nType);
 int GetNextDailySuperblock(int nHeight);
 std::string AmountToString(const CAmount& amount);
 void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot);
@@ -138,5 +138,9 @@ int DeserializeSidechainFromFile();
 void SerializeSidechainToFile(int nHeight);
 std::string Mid(std::string data, int nStart, int nLength);
 CAmount ARM64();
+uint64_t IsHODLAddress(std::string sAddress);
+bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view);
+std::string GetElement(std::string sData, std::string sDelimiter, int iPos);
+CAmount GetWalletBalance();
 
 #endif

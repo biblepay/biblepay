@@ -325,22 +325,25 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
         return false;
     }
 
-	// POOS - R ANDREWS - 7-18-2020
+	// POVS (Proof-of-video-streaming) - R ANDREWS - 3-29-2022
 	if (pindex != NULL)
 	{
 		// mission critical todo: should we add one bitsstate to current spork to allow emergency off for this?
-		double nOrphanBanning = 1;
+		double nBanning = 1;
 		int64_t nElapsed = GetAdjustedTime() - pindex->GetBlockTime();
-		if (nElapsed < (60 * 60 * 24) && nOrphanBanning == 1)
+		if (nElapsed < (60 * 60 * 24) && nBanning == 1)
 		{
-			bool fPoosValid = POOSOrphanTest(dmnPayee->pdmnState->pubKeyOperator.Get().ToString(), 30);
-			if (!fPoosValid)
+            std::string sKey = dmnPayee->pdmnState->pubKeyOperator.Get().ToString();
+
+        	int nStatus = mapPOVSStatus[sKey];
+
+			if (nStatus == 255)
 			{
 				masternodeReward = 100 * COIN;
 			}
 		}
 	}
-	// End of POOS
+	// End of POVS
 
     CAmount operatorReward = 0;
     if (dmnPayee->nOperatorReward != 0 && dmnPayee->pdmnState->scriptOperatorPayout != CScript()) {
@@ -382,7 +385,7 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
             }
 			else
 			{
-				// POOS (Proof-of-orphan-sponsorship)
+				// POVS (Proof-of-video-streaming)
 				std::string sRecipient1 = PubKeyToAddress(txout.scriptPubKey);
 				std::string sRecipient2 = PubKeyToAddress(txout2.scriptPubKey);
 				// txout2 contains the 'purported' values (from the network); txout contains the sanctuaries calculated values
@@ -397,6 +400,13 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 				LogPrintf("\nCMasternodePayments::IsTransactionValid Recipient1 %s, Recipient2 %s, Amount1 %f, Amount2 %f", 
 					sRecipient1, sRecipient2, nAmount1/COIN, nAmount2/COIN);
 					*/
+
+                // Proof-of-concept (Video Mining)
+                // Can we enforce video-mined-by-sanc here:
+                // Check vout[0], verify the masternode who is set for payment mined the block.
+
+
+
 			}
         }
         if (!found) {
