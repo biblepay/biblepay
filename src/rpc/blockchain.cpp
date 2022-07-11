@@ -2743,6 +2743,16 @@ UniValue exec(const JSONRPCRequest& request)
     else if (sItem == "bmstransaction")
     {
     	std::string s = request.params[1].get_str();
+        if (request.params.size() > 2)
+        {
+            results.pushKV("optparam", request.params[2].get_str().length());
+            s = s + request.params[2].get_str();
+        }
+        if (request.params.size() > 3)
+        {
+            s = s + request.params[3].get_str();
+        }
+
 	    if (s.length() > 0)
         {
             const Consensus::Params& consensusParams = Params().GetConsensus();
