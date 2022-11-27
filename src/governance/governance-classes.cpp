@@ -483,11 +483,14 @@ CAmount CSuperblock::GetPaymentsLimit(int nBlockHeight)
     // some part of all blocks issued during the cycle goes to superblock, see GetBlockSubsidy
     double nMonthlyAllocationPercentage = 1.0;
     CAmount nSuperblockPartOfSubsidy = GetBlockSubsidy(nBits, nBlockHeight - 1, consensusParams, true);
-    if (nBlockHeight >= consensusParams.EXODUS_HEIGHT)
+    if (nBlockHeight >= consensusParams.EXODUS_HEIGHT && nBlockHeight <= consensusParams.REDSEA_HEIGHT)
     {
         double nMonthlyAllocationPercentage = .365;
     }
-    
+    else if (nBlockHeight > consensusParams.REDSEA_HEIGHT)
+    {
+        nMonthlyAllocationPercentage = 1.0;
+    }
     CAmount nPaymentsLimit = nSuperblockPartOfSubsidy * (nMonthlyAllocationPercentage * consensusParams.nSuperblockCycle);
     LogPrint(BCLog::GOBJECT, "CSuperblock::GetPaymentsLimit -- Valid superblock height %d, payments max %lld\n", nBlockHeight, nPaymentsLimit);
 

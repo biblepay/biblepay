@@ -158,6 +158,33 @@ CDeterministicMNCPtr CDeterministicMNList::GetMNByOperatorKey(const CBLSPublicKe
     return nullptr;
 }
 
+CDeterministicMNCPtr CDeterministicMNList::GetMNByPayoutAddress(std::string sPubKey)
+{
+    for (const auto& p : mnMap) 
+    {
+         CTxDestination dest;
+         if (ExtractDestination(p.second->pdmnState->scriptPayout, dest)) 
+         {
+            if (EncodeDestination(dest) == sPubKey) 
+                return p.second;
+         }
+    }
+    return nullptr;
+}
+
+std::string CDeterministicMNList::GetFirstMNPayoutAddress()
+{
+    for (const auto& p : mnMap) 
+    {
+         CTxDestination dest;
+         if (ExtractDestination(p.second->pdmnState->scriptPayout, dest)) 
+         {
+            return EncodeDestination(dest);
+         }
+    }
+    return std::string();
+}
+
 CDeterministicMNCPtr CDeterministicMNList::GetMNByCollateral(const COutPoint& collateralOutpoint) const
 {
     return GetUniquePropertyMN(collateralOutpoint);

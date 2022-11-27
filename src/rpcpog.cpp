@@ -561,6 +561,7 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
     bool fContentLengthFound = false;
     try {
         double dDebugLevel = StringToDouble(gArgs.GetArg("-devdebuglevel", "0"), 0);
+
         if (dDebugLevel == 1)
             LogPrintf("\r\nUplink::Connecting to %s [/] %s ", sBaseURL, sPage);
 
@@ -749,6 +750,14 @@ std::shared_ptr<CReserveScript> GetScriptForMining()
 
 bool IsDailySuperblock(int nHeight)
 {
+
+	const CChainParams& chainparams = Params();
+    if (nHeight >= chainparams.GetConsensus().REDSEA_HEIGHT)
+    {
+        // No more daily superblocks after redsea_height
+        return false;
+    }
+
 	bool fDaily = (nHeight % 205 == 20);
 	return fDaily;
 }
@@ -2125,3 +2134,32 @@ bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view)
     }
     return true;
 }
+
+std::string GetSanctuaryMiningAddress()
+{
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    if (fMasternodeMode)
+    {
+        auto dmn = mnList.GetMNByCollateral(activeMasternodeInfo.outpoint);
+        if (dmn) 
+        {
+            CTxDestination dest;
+            if (ExtractDestination(dmn->pdmnState->scriptPayout, dest)) 
+            {
+                return EncodeDestination(dest);
+            }
+        }
+    }
+    else
+    {
+        std::string sPayout = mnList.GetFirstMNPayoutAddress();
+        if (!sPayout.empty())
+        {
+            return sPayout;
+        }
+    }
+    // No sancs found
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+	return consensusParams.FoundationAddress;
+}
+

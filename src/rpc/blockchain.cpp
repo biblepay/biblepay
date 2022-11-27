@@ -42,6 +42,7 @@
 #include "rpcpog.h"
 #include "governance/governance-classes.h"
 #include "randomx_bbp.h"
+#include <masternode/activemasternode.h> // Need for POVS
 
 
 struct CUpdatedBlock

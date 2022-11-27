@@ -1207,12 +1207,19 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 
 	nSubsidy -= nTotalDeflation;
 
-    // Monthly Budget: 
+    // Monthly Budget as of 2021:
 	// 10% to Charity budget, 5% for the IT budget, 2.5% PR, 2.5% P2P (this is 20% for Governance).  An additional 30% is held back for the generic superblock contract.  This equals 50% being escrowed.
 	// The remaining 50% is split between the miner and the sanctuary.
 	// https://wiki.bible[pay].org/Economics
 
+    // Budget for 2023: https://forum.biblepay.org/index.php?topic=917.0
+    // 10% to Charity, 5% for IT (15% for Governance).  The remaining 85% is given to the sanctuary.
+
 	double dGovernancePercent = .50;
+    if (nPrevHeight >= consensusParams.REDSEA_HEIGHT)
+    {
+        dGovernancePercent = .15;
+    }
 	CAmount nSuperblockPart = (nPrevHeight > consensusParams.nBudgetPaymentsStartBlock) ? nSubsidy * dGovernancePercent : 0;
 	CAmount nNetSubsidy = nSubsidy - nSuperblockPart;
 
@@ -1232,10 +1239,14 @@ CAmount GetMasternodePayment(int nHeight, CAmount blockValue, int nReallocActiva
 	{
 		ret = .20 * blockValue;
 	}
-	else if (nHeight > Params().GetConsensus().BARLEY_HARVEST_HEIGHT2)
+	else if (nHeight > Params().GetConsensus().BARLEY_HARVEST_HEIGHT2 && nHeight <= Params().GetConsensus().REDSEA_HEIGHT)
 	{
 		ret = .50 * blockValue;
 	}
+    else if (nHeight > Params().GetConsensus().REDSEA_HEIGHT)
+    {
+        ret = .99 * blockValue;
+    }
 	return ret;
 }
 

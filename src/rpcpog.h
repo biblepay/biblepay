@@ -142,5 +142,6 @@ uint64_t IsHODLAddress(std::string sAddress);
 bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view);
 std::string GetElement(std::string sData, std::string sDelimiter, int iPos);
 CAmount GetWalletBalance();
+std::string GetSanctuaryMiningAddress();
 
 #endif

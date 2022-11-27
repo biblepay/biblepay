@@ -17,6 +17,7 @@
 #include <rpc/blockchain.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
+#include "rpcpog.h"
 #include <timedata.h>
 #include <txmempool.h>
 #include <util.h>
@@ -115,6 +116,65 @@ UniValue mnsync(const JSONRPCRequest& request)
     }
     return "failure";
 }
+
+UniValue generatestoragetoken(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw std::runtime_error(
+            "generatestoragetoken\n"
+            "Generates a new storage token keypair and access key.\n"
+            "The keypair is used to fund the storage container.\n"
+            "The access key is used to read files from the network.\n"
+        );
+        UniValue results(UniValue::VOBJ);
+        int nBMS_PORT = 8443;
+        std::string sBaseDomain = "https://globalcdn.biblepay.org";
+        std::string sPage = "BMS/GenerateToken";
+        std::string sResponse = Uplink(false, "", sBaseDomain, sPage, nBMS_PORT, 15, 4);
+        std::string sPub = ExtractXML(sResponse, "<bbppubkey>","</bbppubkey>");
+        std::string sPriv = ExtractXML(sResponse, "<bbpprivkey>","</bbpprivkey>");
+        std::string sAccess = ExtractXML(sResponse, "<access>","</access>");
+        results.pushKV("BBP Public Key", sPub);
+        results.pushKV("BBP Priv Key", sPriv);
+        results.pushKV("Access Token", sAccess);
+    return results;    
+}
+
+UniValue getstoragebalance(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "getstoragebalance bbpaddress\n"
+            "Returns the monthly assessed charge owed for storage.\n"
+        );
+
+    std::string sAddress = request.params[0].get_str();
+    CTxDestination dest = DecodeDestination(sAddress);
+    bool isValid = IsValidDestination(dest);
+    if (!isValid)
+    {
+        throw std::runtime_error("Invalid bbp address.");
+    }
+    UniValue results(UniValue::VOBJ);
+
+    int nBMS_PORT = 8443;
+    std::string sBaseDomain = "https://globalcdn.biblepay.org";
+    std::string sPage = "BMS/GetStorageBalance";
+    std::string sResponse = Uplink(false, sAddress, sBaseDomain, sPage, nBMS_PORT, 15, 4);
+    std::string sTI = ExtractXML(sResponse, "<totalitems>","</totalitems>");
+    std::string sTS = ExtractXML(sResponse, "<totalsize>","</totalsize>");
+    std::string sUpdated = ExtractXML(sResponse, "<updated>","</updated>");
+    std::string sCharge = ExtractXML(sResponse, "<charge>","</charge>");
+
+    results.pushKV("BBP Public Key", sAddress);
+    results.pushKV("Total Items Stored", sTI);
+    results.pushKV("Total Size Stored", sTS);
+    results.pushKV("Assessed Date Time", sUpdated);
+    results.pushKV("Monthly Charge", sCharge);
+
+    return results;
+}
+
 
 /*
     Used for updating/reading spork settings on the network
@@ -1171,6 +1231,8 @@ static const CRPCCommand commands[] =
 
     /* BiblePay features */
     { "biblepay",               "mnsync",                 &mnsync,                 {} },
+    { "biblepay",               "generatestoragetoken",   &generatestoragetoken,   {} },
+    { "biblepay",               "getstoragebalance",      &getstoragebalance,      {"arg0","value"} },
     { "biblepay",               "spork",                  &spork,                  {"arg0","value"} },
 
     /* Not shown in help */
