@@ -130,13 +130,23 @@ UniValue generatestoragetoken(const JSONRPCRequest& request)
         int nBMS_PORT = 8443;
         std::string sBaseDomain = "https://globalcdn.biblepay.org";
         std::string sPage = "BMS/GenerateToken";
-        std::string sResponse = Uplink(false, "", sBaseDomain, sPage, nBMS_PORT, 15, 4);
+        std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+        std::string sResponse = Uplink(false, sCPK, sBaseDomain, sPage, nBMS_PORT, 15, 4);
         std::string sPub = ExtractXML(sResponse, "<bbppubkey>","</bbppubkey>");
         std::string sPriv = ExtractXML(sResponse, "<bbpprivkey>","</bbpprivkey>");
         std::string sAccess = ExtractXML(sResponse, "<access>","</access>");
-        results.pushKV("BBP Public Key", sPub);
-        results.pushKV("BBP Priv Key", sPriv);
-        results.pushKV("Access Token", sAccess);
+   		
+        std::string sError = ExtractXML(sResponse, "<error>", "</error>");
+        if (!sError.empty())
+        {
+            results.pushKV("Error", sError);
+        }
+        else
+        {
+            results.pushKV("BBP Public Key", sPub);
+            results.pushKV("BBP Priv Key", sPriv);
+            results.pushKV("Access Token", sAccess);
+        }
     return results;    
 }
 
@@ -165,13 +175,99 @@ UniValue getstoragebalance(const JSONRPCRequest& request)
     std::string sTS = ExtractXML(sResponse, "<totalsize>","</totalsize>");
     std::string sUpdated = ExtractXML(sResponse, "<updated>","</updated>");
     std::string sCharge = ExtractXML(sResponse, "<charge>","</charge>");
-
     results.pushKV("BBP Public Key", sAddress);
     results.pushKV("Total Items Stored", sTI);
     results.pushKV("Total Size Stored", sTS);
     results.pushKV("Assessed Date Time", sUpdated);
     results.pushKV("Monthly Charge", sCharge);
+    return results;
+}
 
+UniValue getdatabasevalue(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 3)
+        throw std::runtime_error(
+            "getdatabasevalue bbpprivkey table key\n"
+            "Returns the value for the specified database table and key (for the database associated with the privkey).\n"
+        );
+
+    std::string sPrivKey = request.params[0].get_str();
+    std::string sTable = request.params[1].get_str();
+    std::string sKey = request.params[2].get_str();
+    UniValue results(UniValue::VOBJ);
+    int nBMS_PORT = 8443;
+    std::string sBaseDomain = "https://globalcdn.biblepay.org";
+    std::string sPage = "BMS/GetDatabaseValue";
+    std::string sAction = "<bbpprivkey>" + sPrivKey + "</bbpprivkey><table>" + sTable + "</table><key>" + sKey + "</key>";
+    std::string sResponse = Uplink(false, sAction, sBaseDomain, sPage, nBMS_PORT, 15, 4);
+    std::string sError = ExtractXML(sResponse, "<error>","</error>");
+    std::string sValue = ExtractXML(sResponse, "<message>","</message>");
+    results.pushKV("Error", sError);
+    results.pushKV("Value", sValue);
+    return results;
+}
+
+
+UniValue gethistoricalstoragecharges(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "gethistoricalstoragecharges bbpaddress\n"
+            "Returns the historical charges for storage.\n"
+        );
+
+    std::string sAddress = request.params[0].get_str();
+    CTxDestination dest = DecodeDestination(sAddress);
+    bool isValid = IsValidDestination(dest);
+    if (!isValid)
+    {
+        throw std::runtime_error("Invalid bbp address.");
+    }
+    UniValue results(UniValue::VOBJ);
+
+    int nBMS_PORT = 8443;
+    std::string sBaseDomain = "https://globalcdn.biblepay.org";
+    std::string sPage = "BMS/GetBillingHistory";
+    std::string sResponse = Uplink(false, sAddress, sBaseDomain, sPage, nBMS_PORT, 15, 4);
+    std::string sInner = ExtractXML(sResponse, "<payload>", "</payload>");
+    std::vector<std::string> vRows = Split(sInner.c_str(), "<row>");
+    std::string sHeader="ID|DATE|TYPE|SIZE|ITEMCOUNT|CHG|TXID|ERR";
+    results.pushKV("H", sHeader);
+    for (int i = 0; i < vRows.size(); i++)
+    {
+        std::string sRow = vRows[i];
+        sRow = strReplace(sRow, "\r\n", "");
+        sRow = strReplace(sRow, "<col>", "     ");
+        sRow = strReplace(sRow, "<row>", "");
+        results.pushKV(DoubleToString(i, 0), sRow);
+    }
+    return results;
+}
+
+
+UniValue setdatabasevalue(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 4)
+        throw std::runtime_error(
+            "setdatabasevalue bbpprivkey tablename keyname value\n"
+            "Sets the specified value in specified table for the specified keyname using the specified bbpprivkey for access.\n"
+        );
+
+    std::string sPrivKey = request.params[0].get_str();
+    std::string sTable = request.params[1].get_str();
+    std::string sKey = request.params[2].get_str();
+    std::string sValue = request.params[3].get_str();
+    UniValue results(UniValue::VOBJ);
+    int nBMS_PORT = 8443;
+    std::string sBaseDomain = "https://globalcdn.biblepay.org";
+    std::string sPage = "BMS/SetDatabaseValue";
+    std::string sAction = "<bbpprivkey>" + sPrivKey + "</bbpprivkey><table>" + sTable + "</table><key>" + sKey + "</key><value>" + sValue + "</value>";
+    std::string sResponse = Uplink(false, sAction, sBaseDomain, sPage, nBMS_PORT, 15, 4);
+    std::string sMessage = ExtractXML(sResponse, "<message>","</message>");
+    std::string sError = ExtractXML(sResponse, "<error>","</error>");
+    
+    results.pushKV("Message", sMessage);
+    results.pushKV("Error", sError);
     return results;
 }
 
@@ -1230,10 +1326,13 @@ static const CRPCCommand commands[] =
     { "addressindex",       "getaddressbalance",      &getaddressbalance,      {"addresses"} },
 
     /* BiblePay features */
-    { "biblepay",               "mnsync",                 &mnsync,                 {} },
-    { "biblepay",               "generatestoragetoken",   &generatestoragetoken,   {} },
-    { "biblepay",               "getstoragebalance",      &getstoragebalance,      {"arg0","value"} },
-    { "biblepay",               "spork",                  &spork,                  {"arg0","value"} },
+    { "biblepay",               "mnsync",                      &mnsync,                     {} },
+    { "biblepay",               "generatestoragetoken",        &generatestoragetoken,       {} },
+    { "biblepay",               "getstoragebalance",           &getstoragebalance,          {"arg0","value"} },
+    { "biblepay",               "gethistoricalstoragecharges", &gethistoricalstoragecharges,{"arg0","value"} },
+    { "biblepay",               "setdatabasevalue",            &setdatabasevalue,           {"arg0","arg1","arg2","arg3"}},
+    { "biblepay",               "getdatabasevalue",            &getdatabasevalue,           {"argo","arg1","arg2"}},
+    { "biblepay",               "spork",                       &spork,                      {"arg0","value"} },
 
     /* Not shown in help */
     { "hidden",             "setmocktime",            &setmocktime,            {"timestamp"}},

@@ -38,7 +38,7 @@ void ThreadPOVS(CConnman& connman)
 		try
 		{
 			double nBanning = 1;
-			bool fConnectivity = POVSTest("Status", "sanc1.biblepay.org", 60 * 60, 2);
+			bool fConnectivity = POVSTest("Status", "sanc1.biblepay.org:40000", 15, 2);
 			LogPrintf("POVS::Sanctuary Connectivity Test::%f", fConnectivity);
 			bool fPOVSEnabled = nBanning == 1 && fConnectivity;
 			int64_t nElapsed = GetAdjustedTime() - nPovsProcessTime;
@@ -60,22 +60,10 @@ void ThreadPOVS(CConnman& connman)
 					{
 						std::string sPubKey = dmn->pdmnState->pubKeyOperator.Get().ToString();
 						std::string sIP1 = dmn->pdmnState->addr.ToString();
-						std::string	sIP = GetElement(sIP1, ":", 0);
-
-						int iSancOrdinal = 0;
-						GetSanctuaryOrdinal(sIP, iSancOrdinal);
 						boost::this_thread::interruption_point();
-
-						bool fOK = POVSTest(sPubKey, sIP, 60 * 60, 0);
-						
-						if (iPos != iSancOrdinal)
-						{
-						     fOK = false; 
-						}
-
+						bool fOK = POVSTest(sPubKey, sIP1, 30, 0);
+						int iSancOrdinal = 0;
 						int nStatus = fOK ? 1 : 255;
-						if (false)
-							LogPrintf("POSE::RECORDING %f for Position %f and ordinal %f for SANC %s, %s", iPos, iSancOrdinal, nStatus, sPubKey, sIP);
 						mapPOVSStatus[sPubKey] = nStatus;
 						if (!fOK)
 						{

@@ -532,8 +532,8 @@ public:
         strNetworkID = "test";
 		consensus.BARLEY_HARVEST_HEIGHT = 117233;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
-        consensus.EXODUS_HEIGHT = 500000;
-        consensus.REDSEA_HEIGHT = 700000;
+        consensus.EXODUS_HEIGHT = 183000;
+        consensus.REDSEA_HEIGHT = 183000;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock

@@ -546,7 +546,8 @@ std::string PrepareReq(bool bPost, std::string sPage, std::string sHostHeader, c
 }
 
 static double HTTP_PROTO_VERSION = 2.0;
-std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, int iTimeoutSecs, int iBOE, std::map<std::string, std::string> mapRequestHeaders, std::string TargetFileName, bool fJson)
+std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, 
+        int iTimeoutSecs, int iBOE, std::map<std::string, std::string> mapRequestHeaders, std::string TargetFileName, bool fJson)
 {
     std::string sData;
     int iRead = 0;
@@ -559,9 +560,10 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         iMaxSize = 300000000;
     }
     bool fContentLengthFound = false;
-    try {
+    try 
+    {
         double dDebugLevel = StringToDouble(gArgs.GetArg("-devdebuglevel", "0"), 0);
-
+    
         if (dDebugLevel == 1)
             LogPrintf("\r\nUplink::Connecting to %s [/] %s ", sBaseURL, sPage);
 
@@ -569,7 +571,7 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         // Supported pool Network Chain modes: main, test, regtest
         const CChainParams& chainparams = Params();
         mapRequestHeaders["NetworkID"] = chainparams.NetworkIDString();
-        if (sPayload.length() < 7777)
+        if (sPayload.length() < 7000)
             mapRequestHeaders["Action"] = sPayload;
         mapRequestHeaders["HTTP_PROTO_VERSION"] = DoubleToString(HTTP_PROTO_VERSION, 0);
         if (bPost)
@@ -606,23 +608,63 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
         if (dDebugLevel == 1)
             LogPrintf("Connecting to %s", sDomainWithPort.c_str());
-        int nRet = 0;
         if (sDomain.empty()) {
             BIO_free_all(bio);
             return "<ERROR>DOMAIN_MISSING</ERROR>";
         }
 
-        nRet = BIO_do_connect(bio);
+        // **** SET TO NON BLOCKING IO ****
+        BIO_set_nbio(bio, 1);
+
+        // Refactor Do Connect here
+        int nRet = 0;
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Connect %f",GetAdjustedTime());
+
+        for (int x = 0; x < iTimeoutSecs*10; x++)
+        {
+            nRet = BIO_do_connect(bio);
+            if (nRet <= 0 && BIO_should_retry(bio))
+            {
+                MilliSleep(100);
+            }
+        }
+
         if (nRet <= 0) {
             if (dDebugLevel == 1)
                 LogPrintf("Failed connection to %s ", sDomainWithPort);
             if (!TargetFileName.empty())
                 OutFile.close();
             BIO_free_all(bio);
+            return "<ERROR>Failed connection to " + sDomainWithPort + "</ERROR>";
+        }
+        // Refactor Do Handshake here
+        if (dDebugLevel == 1)
+              LogPrintf("\r\nDo Handshake %f",GetAdjustedTime());
 
+        int nHandshake = 0;
+        for (int x = 0; x < iTimeoutSecs*10; x++)
+        {
+            nHandshake = BIO_do_handshake(bio);
+            if (nHandshake <= 0 && BIO_should_retry(bio))
+            {
+                MilliSleep(100);
+            }
+        }
+
+        if (nHandshake <= 0) {
+            if (dDebugLevel == 1)
+                LogPrintf("Failed handshake for %s ", sDomainWithPort);
+            if (!TargetFileName.empty())
+                OutFile.close();
+            BIO_free_all(bio);
             return "<ERROR>Failed connection to " + sDomainWithPort + "</ERROR>";
         }
 
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Write %f",GetAdjustedTime());
+
+        // Write the output Post buffer here
         std::string sPost = PrepareReq(bPost, sPage, sDomain, sPayload, mapRequestHeaders);
         const char* write_buf = sPost.c_str();
         if (dDebugLevel == 1)
@@ -634,6 +676,9 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
             return "<ERROR>FAILED_HTTPS_POST</ERROR>";
         }
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Read %f",GetAdjustedTime());
+
         //  Variables used to read the response from the server
         int size;
         clock_t begin = clock();
@@ -643,9 +688,10 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
                 LogPrintf("BioRead %f", 803);
 
             size = BIO_read(bio, buf, 16384);
-            if (size <= 0) {
+            if (size <= 0 && !BIO_should_retry(bio)) {
                 break;
             }
+
             iRead += (int)size;
             buf[size] = 0;
             std::string MyData(buf);
@@ -661,7 +707,6 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
                         }
                     }
                 }
-
                 OutFile.write(&buf[iOffset], size);
             } else {
                 sData += MyData;
@@ -688,7 +733,11 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
             if (iRead >= iMaxSize)
                 break;
+            MilliSleep(100);
         }
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Exit %f",GetAdjustedTime());
+
         // Free bio resources
         BIO_free_all(bio);
         if (!TargetFileName.empty())
@@ -701,6 +750,18 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         return "<ERROR>GENERAL_READ_EXCEPTION</ERROR>";
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 static int SSL_PORT = 443;
 BBPResult UnchainedQuery(std::string sXMLSource, std::string sAPI)
@@ -1841,8 +1902,10 @@ const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
 std::string GetElement(std::string sData, std::string sDelimiter, int iPos)
 {
     std::vector<std::string> vData = Split(sData.c_str(), sDelimiter);
-    if (vData.size()-1 < iPos)
-        return sData;
+    if (iPos > vData.size()-1)
+    {
+        return "";
+    }
     return vData[iPos];
 }
 
@@ -1852,12 +1915,10 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
     std::string sDomain = "";
 	const CChainParams& chainparams = Params();
     std::string sNetworkID = chainparams.NetworkIDString();
-    //std::string sPortSuffix = ":8443";
     std::string sSanctuaryIP = GetElement(sSanctuaryIPIN, ":", 0);
 
     if (sDomain.empty())
 	{
-		//sDomain = sNetworkID == "test" ? sSanctuaryIP + sPortSuffix : sSanctuaryIP + sPortSuffix;
         sDomain = sSanctuaryIP;
 	}
     sURL += sDomain;
@@ -1867,7 +1928,7 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
     std::string sPage = "";
     if (iType == 0)
     { 
-      sPage =  "BMS/POSE";
+      sPage = "BMS/POSE";
     }
     else if (iType == 1)
     {
@@ -1880,6 +1941,7 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
     return std::make_tuple(sURL, sPage, sPrefix);
 }
 
+static std::string msChecksumKey;
 bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout, int nType)
 {
     int nBMS_PORT = 8443;
@@ -1887,18 +1949,29 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
     int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
     // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004
     bool fPortPassed = false;
-    if (nPort == 40000 || nPort==40001 || nPort == 10001 || nPort==10002 || nPort==10003 || nPort==10004)
+    if (nPort == 40000 || nPort==40001 || (nPort >= 10000 && nPort <= 10100))
         fPortPassed=true;
     if (!fPortPassed)
         return false;
-
     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
     std::string sOK = ExtractXML(sResponse, "Status", "\n");
-    
     // Mission Critical todo
     if (false)
-     LogPrintf("\nPOVSTEST2::Response for IP %s=[%s]\r\n", sIPIN, sOK);
+    {
+         LogPrintf("\nPOVSTEST2::Response for IP %s=[%s]\r\n", sIPIN, sOK);
+    }
+    std::string sChecksumKey = ExtractXML(sResponse,"<checksumkey>", "</checksumkey>");
+    std::string sChecksumValue = ExtractXML(sResponse, "<checksumvalue>", "</checksumvalue>");
+    if (nType == 2 && !sChecksumKey.empty())
+    {
+        msChecksumKey = sChecksumKey;
+    }
+    if (nType != 2 && !msChecksumKey.empty())
+    {
+        bool fOK2 = (sChecksumValue == sChecksumKey);
+        return fOK2;
+    }
 
     bool fOK = Contains(sOK, "SUFFICIENT");
     return fOK;

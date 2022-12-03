@@ -425,16 +425,12 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 			return false;
         }
     }
-        // (POVS) Verify the Sanc mined the block too:
-        // It is not necessary to turn this on, since the mining block reward has been decreased by 99% and Sancs are now in vout[0] anyway.
-        /*
-        const CChainParams& chainparams = Params();
-
-        if (nBlockHeight >= chainparams.GetConsensus().REDSEA_HEIGHT)
-        {
+    // (POVS) Verify the Sanc mined the block too:
+    const CChainParams& chainparams = Params();
+    if (nBlockHeight >= chainparams.GetConsensus().REDSEA_HEIGHT)
+    {
             if (txNew.vout.size() >= 2)
             {
-        
                 std::string sRecip1 = PubKeyToAddress(txNew.vout[0].scriptPubKey);
 	    	    std::string sRecip2 = PubKeyToAddress(txNew.vout[1].scriptPubKey);
                 bool fOK1 = VectorContainsAddress(voutMasternodePayments, sRecip1);
@@ -450,8 +446,7 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
                 LogPrintf("IsTransactionValid::ERROR::Error at height %f due to bad coinbase length\n", nBlockHeight);
                 return false;
             }
-		}
-        */
+    }
     
     return true;
 }

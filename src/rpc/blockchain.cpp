@@ -2588,6 +2588,17 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sScratch = ExtractXML(sResponse, "<scratch>", "</scratch>");
         results.pushKV("Scratch", sScratch);
     }
+    else if (sItem == "test11")
+    {
+        
+       int nBMS_PORT = 8443;
+        std::string sBaseDomain = "https://globalcdn.biblepay.org";
+            std::string sPage = "BMS/GetStorageBalance2";
+                std::string sResponse = Uplink(false, "", sBaseDomain, sPage, nBMS_PORT, 15, 4);
+                    std::string sTI = ExtractXML(sResponse, "<totalitems>","</totalitems>");
+               results.pushKV("BBP Public Key", sTI);
+
+    }
 	else if (sItem == "upgradesanc" || sItem=="createsanc")
 	{
 		if (request.params.size() != 3)
@@ -2744,6 +2755,15 @@ UniValue exec(const JSONRPCRequest& request)
     else if (sItem == "bmstransaction")
     {
     	std::string s = request.params[1].get_str();
+        if (request.params.size() > 2)
+        {
+            results.pushKV("optparam", request.params[2].get_str().length());
+            s = s + request.params[2].get_str();
+        }
+        if (request.params.size() > 3)
+        {
+            s = s + request.params[3].get_str();
+        }
 	    if (s.length() > 0)
         {
             const Consensus::Params& consensusParams = Params().GetConsensus();
