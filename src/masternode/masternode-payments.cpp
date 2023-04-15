@@ -347,7 +347,8 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
 
 			if (nStatus == 255)
 			{
-				masternodeReward = 100 * COIN;
+                // Investors get 50%, sancs get 100%
+                masternodeReward = (masternodeReward * 5000) / 10000;
 			}
 		}
 	}

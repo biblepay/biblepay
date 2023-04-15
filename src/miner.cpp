@@ -678,7 +678,6 @@ bool fAllowedToMine = true;
 			{
 				while (fAllowedToMine)
 				{
-
 					pblock->nNonce += 1;
 					uint256 rxHeader = uint256S("0x" + DoubleToString(GetAdjustedTime(), 0) + DoubleToString(iThreadID, 0) + DoubleToString(pblock->nNonce, 0));
 					pblock->RandomXData = "<rxheader>" + rxHeader.GetHex() + "</rxheader>";
@@ -727,7 +726,12 @@ bool fAllowedToMine = true;
 							break;
 						}
 					}
-				}
+
+                    if (chainActive.Tip()->nHeight > chainparams.GetConsensus().REDSEA_HEIGHT) 
+                    {
+                        MilliSleep(10);
+                    }
+    			}
 
 				UpdateHashesPerSec(nHashesDone);
 				// Check for stop or if block needs to be rebuilt
@@ -760,6 +764,7 @@ bool fAllowedToMine = true;
 					// Changing pblock->nTime can change work required on testnet:
 					hashTarget.SetCompact(pblock->nBits);
 				}
+
 			}
         }
     }
@@ -784,8 +789,10 @@ void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams
 {
     static boost::thread_group* minerThreads = NULL;
 
-    if (nThreads < 1)
-        nThreads = GetNumCores();
+    if (nThreads < 1) 
+    {
+        nThreads = 1;  // GetNumCores() - Reserved for a change to heat mining
+    }
 
     if (minerThreads != NULL)
     {

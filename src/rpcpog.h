@@ -143,5 +143,9 @@ bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view);
 std::string GetElement(std::string sData, std::string sDelimiter, int iPos);
 CAmount GetWalletBalance();
 std::string GetSanctuaryMiningAddress();
+std::string GetPrivKey(std::string sPubKey);
+void WriteUnchainedConfigFile(std::string sPub, std::string sPriv);
+void ReadUnchainedConfigFile(std::string& sPub, std::string& sPriv);
+std::string url_encode(std::string value);
 
 #endif

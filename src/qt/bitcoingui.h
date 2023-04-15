@@ -61,7 +61,6 @@ class BitcoinGUI : public QMainWindow
 
 public:
     static const std::string DEFAULT_UIPLATFORM;
-
     explicit BitcoinGUI(interfaces::Node& node, const NetworkStyle* networkStyle, QWidget* parent = 0);
     ~BitcoinGUI();
 
@@ -110,7 +109,7 @@ private:
     QToolButton *overviewButton;
 	QToolButton *unchainedAction;
 	QToolButton *forumAction;
-	QToolButton *prayerRequestAction;
+    QToolButton *prayerRequestAction;
     QToolButton *sendCoinsButton;
     QToolButton *coinJoinCoinsButton;
     QToolButton *receiveCoinsButton;
@@ -163,10 +162,17 @@ private:
 
     /** Timer to update the spinner animation in the status bar periodically */
     QTimer* timerSpinner;
+
     /** Start the spinner animation in the status bar if it's not running and if labelBlocksIcon is visible. */
     void startSpinner();
     /** Stop the spinner animation in the status bar */
+    
     void stopSpinner();
+    // BIBLEPAY CUSTOM CODE
+    QTimer* bbpTimer;
+    bool StartUnchained();
+
+    // END OF BIBLEPAY
 
     /** Timer to update the connection icon during connecting phase */
     QTimer* timerConnecting;
@@ -354,6 +360,9 @@ private Q_SLOTS:
     void updateCoinJoinVisibility();
 
     void updateWidth();
+
+    // BIBLEPAY custom code
+    void BBPTimer();
 };
 
 class UnitDisplayStatusBarControl : public QLabel

@@ -188,6 +188,28 @@ CAmount GetWalletBalance()
     return wallet->GetBalance();
 }
 
+std::string GetPrivKey(std::string sPubKey)
+{
+    CTxDestination dest = DecodeDestination(sPubKey);
+    JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Wallet needs to be unlocked");
+    }
+
+    const CKeyID* keyID = boost::get<CKeyID>(&dest);
+    if (!keyID) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
+    }
+    CKey vchSecret;
+    if (!pwallet->GetKey(*keyID, vchSecret)) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address is not known");
+    }
+    std::string sPK = EncodeSecret(vchSecret);
+    return sPK;
+}
+
 bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition)
 {
 	JSONRPCRequest r;
@@ -373,6 +395,48 @@ boost::filesystem::path GetMasternodeConfigFile()
         pathConfigFile = GetDataDir() / pathConfigFile;
     return pathConfigFile;
 }
+
+boost::filesystem::path GetUnchainedConfigFile()
+{
+    boost::filesystem::path pathConfigFile(gArgs.GetArg("-unchainedconf", "unchained.conf"));
+    if (!pathConfigFile.is_complete())
+        pathConfigFile = GetDataDir() / pathConfigFile;
+    return pathConfigFile;
+}
+
+void WriteUnchainedConfigFile(std::string sPub, std::string sPriv)
+{
+    boost::filesystem::path unchainedConfigFile = GetUnchainedConfigFile();
+    boost::filesystem::ifstream streamConfig(unchainedConfigFile);
+    bool fReadable = streamConfig.good();
+    if (fReadable)
+        streamConfig.close();
+    FILE* configFile = fopen(unchainedConfigFile.string().c_str(), "wt");
+    std::string s1 = "unchained_mainnet_pubkey=" + sPub + "\r\n";
+    std::string s2 = "unchained_mainnet_privkey=" + sPriv + "\r\n";
+    fwrite(s1.c_str(), std::strlen(sPub.c_str()), 1, configFile);
+    fwrite(s2.c_str(), std::strlen(sPriv.c_str()), 1, configFile);
+    fclose(configFile);
+}
+
+void ReadUnchainedConfigFile(std::string& sPub, std::string& sPriv)
+{
+    boost::filesystem::path pathUnchainedFile = GetUnchainedConfigFile();
+    boost::filesystem::ifstream streamConfig(pathUnchainedFile);
+    if (!streamConfig.good())
+        return;
+    std::getline(streamConfig, sPub);
+    std::getline(streamConfig, sPriv);
+    sPub = strReplace(sPub, "\r", "");
+    sPub = strReplace(sPub, "\n", "");
+    sPriv = strReplace(sPriv, "\r", "");
+    sPriv = strReplace(sPriv, "\n", "");
+    sPub = strReplace(sPub, "unchained_mainnet_pubkey=", "");
+    sPriv = strReplace(sPriv, "unchained_mainnet_privkey=", "");
+    streamConfig.close();
+    return;
+}
+
 
 boost::filesystem::path GetGenericFilePath(std::string sPath)
 {
@@ -1947,9 +2011,9 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
     int nBMS_PORT = 8443;
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
     int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
-    // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004
+    // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004...
     bool fPortPassed = false;
-    if (nPort == 40000 || nPort==40001 || (nPort >= 10000 && nPort <= 10100))
+    if (nPort == 40000 || nPort == 40001 || (nPort >= 10000 && nPort <= 10100))
         fPortPassed=true;
     if (!fPortPassed)
         return false;
@@ -2236,3 +2300,24 @@ std::string GetSanctuaryMiningAddress()
 	return consensusParams.FoundationAddress;
 }
 
+
+std::string url_encode(std::string value)
+{
+    std::ostringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+    int n = 0;
+    for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+        std::string::value_type c = (*i);
+        // Keep alphanumeric and other accepted characters intact
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+            escaped << c;
+            continue;
+        }
+        // Any other characters are percent-encoded
+        escaped << std::uppercase;
+        escaped << '%' << std::setw(2) << int((unsigned char)c);
+        escaped << std::nouppercase;
+    }
+    return escaped.str();
+}
