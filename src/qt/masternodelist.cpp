@@ -249,11 +249,15 @@ void MasternodeList::updateDIP3List()
 		// BIBLEPAY - POVS
 		int64_t nAdditionalPenalty = 0;
 		bool fOK = mapPOVSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()] != 255;
-		if (!fOK)
+		if (!fOK && false)
 		{
 			statusItem = new QTableWidgetItem(tr("POVS_BANNED"));
 			nAdditionalPenalty = 700;
 		}
+        if (dmn->pdmnState->nPoSePenalty > 0) 
+        {
+            statusItem = new QTableWidgetItem(tr("INVESTOR"));
+        }
 
 		// END OF POVS
 

@@ -143,9 +143,15 @@ bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view);
 std::string GetElement(std::string sData, std::string sDelimiter, int iPos);
 CAmount GetWalletBalance();
 std::string GetSanctuaryMiningAddress();
-std::string GetPrivKey(std::string sPubKey);
 void WriteUnchainedConfigFile(std::string sPub, std::string sPriv);
 void ReadUnchainedConfigFile(std::string& sPub, std::string& sPriv);
 std::string url_encode(std::string value);
+bool IsMyAddress(const std::string& sAddress);
+bool ReviveSanctuaryEnhanced(std::string sSancSearch, std::string& sError, UniValue& uSuccess);
+std::string ScanDeterministicConfigFile(std::string sSearch);
+std::string ProvisionUnchained2(std::string& sError);
+std::string GetPrivKey2(std::string sPubKey, std::string& sError);
+std::string ReceiveIPC();
+void WriteIPC(std::string sData);
 
 #endif

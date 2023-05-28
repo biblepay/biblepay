@@ -150,42 +150,6 @@ UniValue generatestoragetoken(const JSONRPCRequest& request)
     return results;    
 }
 
-UniValue provisionunchained(const JSONRPCRequest& request)
-{
-    if (request.fHelp)
-        throw std::runtime_error(
-            "provisionunchained\n"
-            "Provisions BiblePay Unchained to your wallet.  This allows you to spend in BiblePay Unchained Desktop. \n");
-
-      UniValue results(UniValue::VOBJ);
-
-      // BIBLEPAY UNCHAINED
-      std::string sUnchainedAddress = DefaultRecAddress("Unchained");
-      std::string sPK = GetPrivKey(sUnchainedAddress);
-      results.pushKV("Unchained Public Key", sUnchainedAddress);
-      bool fDebug;
-      if (request.params.size() > 0) {
-          fDebug = (request.params[0].get_str() == "1");
-      }
-      if (fDebug) {
-          results.pushKV("priv", sPK);
-      }
-
-      // The following steps allow us to know if the provisioning file exists already.
-      std::string s1;
-      std::string s2;
-      ReadUnchainedConfigFile(s1, s2);
-
-      if (!s2.empty()) {
-          results.pushKV("Unchained is already provisioned.", 1);
-          return results;
-      }
-
-      WriteUnchainedConfigFile(sUnchainedAddress, sPK);
-      std::string sNarr = "Unchained keypair created.  Next Step: Launch unchained from the left menu.";
-      results.pushKV("Note", sNarr);
-      return results;
-}
 
 UniValue getstoragebalance(const JSONRPCRequest& request)
 {
@@ -1315,9 +1279,7 @@ static const CRPCCommand commands[] =
     { "biblepay",               "mnsync",                      &mnsync,                     {} },
     { "biblepay",               "generatestoragetoken",        &generatestoragetoken,       {} },
     { "biblepay",               "getstoragebalance",           &getstoragebalance,          {"arg0","value"} },
-
     { "biblepay",               "gethistoricalstoragecharges", &gethistoricalstoragecharges,{"arg0","value"} },
-    { "biblepay",               "provisionunchained",          &provisionunchained,         {"arg0"}},
     { "biblepay",               "spork",                       &spork,                      {"arg0","value"} },
 
     /* Not shown in help */

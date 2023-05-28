@@ -2249,36 +2249,6 @@ UniValue getspecialtxes(const JSONRPCRequest& request)
     return result;
 }
 
-std::string ScanDeterministicConfigFile(std::string sName)
-{
-    int linenumber = 1;
-    boost::filesystem::path pathDeterministicFile = GetDeterministicConfigFile();
-    boost::filesystem::ifstream streamConfig(pathDeterministicFile);
-    if (!streamConfig.good()) 
-		return std::string();
-	//Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Se$
-
-	for(std::string line; std::getline(streamConfig, line); linenumber++)
-    {
-        if(line.empty()) continue;
-        std::istringstream iss(line);
-        std::string sanctuary_name, ip, blsPubKey, BlsPrivKey, colOutputTxId, colOutputIndex, ProRegTxId, ProRegCollAddress, ProRegCollAddFundSentTxId;
-        if (iss >> sanctuary_name) 
-		{
-            if(sanctuary_name.at(0) == '#') continue;
-            iss.str(line);
-            iss.clear();
-        }
-
-		if (sanctuary_name == sName)
-		{
-			streamConfig.close();
-			return line;
-		}
-    }
-    streamConfig.close();
-    return std::string();
-}
 
 std::string ScanSanctuaryConfigFile(std::string sName)
 {
@@ -2456,14 +2426,17 @@ UniValue exec(const JSONRPCRequest& request)
 				}
 		}
 	}
-	else if (sItem == "revivesanc" || sItem=="startsanc")
+	else if (sItem == "xrevivesanc" || sItem=="xstartsanc")
 	{
+            /*
 		// Sanctuary Revival
 		// The purpose of this command is to make it easy to Revive a POSE-banned deterministic sanctuary.  (In contrast to knowing how to create and send the protx update_service command).
 		std::string sExtraHelp = "NOTE:  If you do not have a deterministic.conf file, you can still revive your sanctuary this way: protx update_service proreg_txID sanctuaryIP:Port sanctuary_blsPrivateKey\n\n NOTE: You can right click on the sanctuary in the Sanctuaries Tab in QT and obtain the proreg_txID, and, you can write the IP down from the list.  You still need to find your sanctuaryBLSPrivKey.\n";
 		if (request.params.size() != 2)
 			throw std::runtime_error("revivesanc v1.1: You must specify exec revivesanc sanctuary_name (where the sanctuary_name matches the name in the deterministic.conf file).\n\n" + sExtraHelp);
+
 		std::string sSearch = request.params[1].get_str();
+
 		std::string sSanc = ScanDeterministicConfigFile(sSearch);
 		if (sSanc.empty())
 			throw std::runtime_error("Unable to find sanctuary " + sSearch + " in deterministic.conf file.");
@@ -2497,7 +2470,35 @@ UniValue exec(const JSONRPCRequest& request)
 		results.push_back(rProReg);
 		// If we made it this far and an error was not thrown:
 		results.pushKV("Results", "Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes.");
-	}
+        */
+	} 
+	else if (sItem == "revivesanc" || sItem == "startsanc") 
+    {
+                // Sanctuary Revival v1.2
+                // The purpose of this command is to make it easy to Revive a POSE-banned deterministic sanctuary.  (In contrast to knowing how to create and send the protx update_service command).
+                std::string sExtraHelp = "NOTE:  If you do not have a deterministic.conf file, you can still revive your sanctuary this way: protx update_service proreg_txID sanctuaryIP:Port sanctuary_blsPrivateKey\n\n NOTE: You can right click on the sanctuary in the Sanctuaries Tab in QT and obtain the proreg_txID, and, you can write the IP down from the list.  You still need to find your sanctuaryBLSPrivKey.\n";
+                if (request.params.size() != 2)
+                    throw std::runtime_error("revivesanc v1.2: You must specify exec revivesanc sanctuary_name (where the sanctuary_name matches the name in the deterministic.conf file).\r\n**Note, you may alternatively specify the ProTxHash instead of the sanc name.**\n\n" + sExtraHelp);
+                std::string sSearch = request.params[1].get_str();
+                std::string sError = std::string();
+                UniValue uProReg;
+                bool fSuccess = ReviveSanctuaryEnhanced(sSearch, sError, uProReg);
+                if (!fSuccess) 
+                {
+                    results.pushKV("Error", sError);
+                }
+                else 
+                {
+                    results.push_back(uProReg);
+                }
+    }
+    else if (sItem == "testipc") 
+    {
+         std::string sData = "Now is the time to come...";
+         WriteIPC(sData);
+         std::string sData2 = ReceiveIPC();
+         results.pushKV("ipc2", sData2);
+    }
 	else if (sItem == "testsc")
 	{
 		std::string sToAddress = DefaultRecAddress("sc");
@@ -2757,7 +2758,7 @@ UniValue exec(const JSONRPCRequest& request)
     	std::string s = request.params[1].get_str();
         if (request.params.size() > 2)
         {
-            results.pushKV("optparam", request.params[2].get_str().length());
+            results.pushKV("optparam", (int)request.params[2].get_str().length());
             s = s + request.params[2].get_str();
         }
         if (request.params.size() > 3)

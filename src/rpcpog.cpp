@@ -63,6 +63,12 @@
 #include <wallet/walletutil.h>
 
 
+UniValue protx_register(const JSONRPCRequest& request);
+UniValue protx(const JSONRPCRequest& request);
+UniValue _bls(const JSONRPCRequest& request);
+
+
+
 UniValue VoteWithMasternodes(const std::map<uint256, CKey>& keys,
     const uint256& hash,
     vote_signal_enum_t eVoteSignal,
@@ -188,23 +194,26 @@ CAmount GetWalletBalance()
     return wallet->GetBalance();
 }
 
-std::string GetPrivKey(std::string sPubKey)
+std::string GetPrivKey2(std::string sPubKey, std::string& sError)
 {
     CTxDestination dest = DecodeDestination(sPubKey);
     JSONRPCRequest r;
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
     CWallet* const pwallet = wallet.get();
     if (!EnsureWalletIsAvailable(pwallet, false)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Wallet needs to be unlocked");
+        sError = "WALLET_NEEDS_UNLOCKED";
+        return "";
     }
 
     const CKeyID* keyID = boost::get<CKeyID>(&dest);
     if (!keyID) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
+        sError = "Address does not refer to a key";
+        return "";
     }
     CKey vchSecret;
     if (!pwallet->GetKey(*keyID, vchSecret)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address is not known");
+        sError = "Private key for address is not known";
+        return "";
     }
     std::string sPK = EncodeSecret(vchSecret);
     return sPK;
@@ -271,6 +280,19 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
 	return true;
 }
 
+
+bool IsMyAddress(const std::string& sAddress)
+{
+    JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false)) {
+        return false;
+    }
+    CTxDestination dAddress = DecodeDestination(sAddress);
+    bool fMine = IsMine(*pwallet, dAddress);
+    return fMine;
+}
 
 std::string DefaultRecAddress(std::string sNamedEntry)
 {
@@ -2320,4 +2342,133 @@ std::string url_encode(std::string value)
         escaped << std::nouppercase;
     }
     return escaped.str();
+}
+
+std::string ScanDeterministicConfigFile(std::string sSearch)
+{
+    // Scans by friendly sanc name, or ProTxHash
+    int linenumber = 1;
+    boost::filesystem::path pathDeterministicFile = GetDeterministicConfigFile();
+    boost::filesystem::ifstream streamConfig(pathDeterministicFile);
+    if (!streamConfig.good())
+        return std::string();
+    //Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Se$
+    
+    for (std::string line; std::getline(streamConfig, line); linenumber++) 
+    {
+        if (line.empty()) continue;
+        std::vector<std::string> vSanc = Split(line.c_str(), " ");
+        if (vSanc.size() >= 9) 
+        {
+            std::string sanctuary_name = vSanc[0];
+            std::string sProRegTxId = vSanc[8];
+            if (sanctuary_name.at(0) == '#') continue;
+            if (sanctuary_name == sSearch) {
+                streamConfig.close();
+                return line;
+            }
+
+            if (sProRegTxId == sSearch) {
+               streamConfig.close();
+               return line;
+            }
+            LogPrintf("\r\nEnumberiating %s %s", sanctuary_name, sProRegTxId);
+        }
+    }
+    streamConfig.close();
+    return std::string();
+}
+
+bool ReviveSanctuaryEnhanced(std::string sSancSearch, std::string& sError, UniValue& uSuccess)
+{
+    sError = std::string();
+    std::string sSanc = ScanDeterministicConfigFile(sSancSearch);
+    if (sSanc.empty()) {
+        sError = "Unable to find sanctuary " + sSancSearch + " in deterministic.conf file.";
+        return false;
+    }
+
+    std::vector<std::string> vSanc = Split(sSanc.c_str(), " ");
+    if (vSanc.size() < 9) 
+    {
+        sError = "Sanctuary entry in deterministic.conf corrupted (does not contain at least 9 parts.) Format should be: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-funding-sent-txid.";
+        return false;
+    }
+    std::string sSancName = vSanc[0];
+    std::string sSancIP = vSanc[1];
+    std::string sBLSPrivKey = vSanc[3];
+    std::string sProRegTxId = vSanc[8];
+
+    std::string sSummary = "Creating protx update_service command for Sanctuary " + sSancName + " with IP " + sSancIP + " with origin pro-reg-txid=" + sProRegTxId;
+    sSummary += "(protx update_service " + sProRegTxId + " " + sSancIP + " " + sBLSPrivKey + ").";
+    LogPrintf("\nCreating ProTx_Update_service %s for Sanc [%s].\n", sSummary, sSanc);
+    //results.pushKV("Summary", sSummary);
+    JSONRPCRequest newRequest;
+    newRequest.params.setArray();
+    newRequest.params.push_back("update_service");
+    newRequest.params.push_back(sProRegTxId);
+    newRequest.params.push_back(sSancIP);
+    newRequest.params.push_back(sBLSPrivKey);
+    // Fee source address
+    newRequest.params.push_back("");
+    std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+    newRequest.params.push_back(sCPK);
+    uSuccess = protx(newRequest);
+    //results.push_back(rProReg);
+    // If we made it this far and an error was not thrown:
+    LogPrintf("Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes.%f",1);
+    return true;
+}
+
+std::string ProvisionUnchained2(std::string& sError)
+{
+    // BIBLEPAY UNCHAINED
+    std::string sUnchainedAddress = DefaultRecAddress("Unchained");
+    std::string sPK = GetPrivKey2(sUnchainedAddress, sError);
+    if (!sError.empty()) {
+        return "";
+    }
+    std::string s1;
+    std::string s2;
+    ReadUnchainedConfigFile(s1, s2);
+
+    if (!s2.empty()) {
+        // Already provisioned
+        return "";
+    }
+
+    WriteUnchainedConfigFile(sUnchainedAddress, sPK);
+    return "";
+}
+
+/*
+void ClearIPC()
+{
+    boost::filesystem::path pathIPC("ipc.dat");
+    boost::filesystem::remove(pathIPC);
+}
+*/
+
+
+void WriteIPC(std::string sData)
+{
+    std::ofstream OutFile("ipc.dat");
+    OutFile.write(sData.c_str(), std::strlen(sData.c_str())); 
+    OutFile.close();
+}
+
+std::string ReceiveIPC()
+{
+    boost::filesystem::path pathIPC("ipc.dat");
+    boost::filesystem::ifstream streamIPC(pathIPC);
+    if (!streamIPC.good())
+            return std::string();
+    std::string sData;
+    int linenumber = 0;
+    for (std::string line; std::getline(streamIPC, line); linenumber++) {
+        if (line.empty()) continue;
+        sData += line + "\r\n";
+    }
+    streamIPC.close();
+    return sData;
 }

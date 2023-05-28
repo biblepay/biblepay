@@ -336,16 +336,15 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
 	// POVS (Proof-of-video-streaming) - R ANDREWS - 3-29-2022
 	if (pindex != NULL)
 	{
-		// mission critical todo: should we add one bitsstate to current spork to allow emergency off for this?
 		double nBanning = 1;
 		int64_t nElapsed = GetAdjustedTime() - pindex->GetBlockTime();
 		if (nElapsed < (60 * 60 * 24) && nBanning == 1)
 		{
             std::string sKey = dmnPayee->pdmnState->pubKeyOperator.Get().ToString();
-
         	int nStatus = mapPOVSStatus[sKey];
-
-			if (nStatus == 255)
+            int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
+            // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
+			if (nPoseScore > 0)
 			{
                 // Investors get 50%, sancs get 100%
                 masternodeReward = (masternodeReward * 5000) / 10000;
