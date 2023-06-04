@@ -16,18 +16,13 @@ free #check - should be 1G
 */
 
 
-#Building for Ubuntu 18, 17 on Linux:
+#Building for Ubuntu 20, 18, 17, 16 on Linux:
 First install Ubuntu dependencies:
 
-sudo apt install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git libdb4.8-dev libdb4.8++-dev curl
-sudo apt install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev libzmq3-dev
-sudo apt install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
-apt-get install git
-apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
-
-sudo add-apt-repository ppa:bitcoin/bitcoin
-sudo apt-get update
-sudo apt-get install libdb4.8-dev libdb4.8++-dev
+sudo apt install build-essential libtool autotools-dev automake pkg-config git curl
+sudo apt install libboost-system-dev libboost-filesystem-dev libboost-thread-dev
+sudo apt install 
+sudo apt install python3 bsdmainutils cmake
 
 ** These instructions have been updated for RandomX!  Please see below: **
 
@@ -41,14 +36,17 @@ cmake -DARCH=native ..
 make
 cd ../../../../..
 # end of RandomX Part
-prefix=x86_64-pc-linux-gnu
+
 cd biblepay/depends
+
 make -j 4 # Choose a good -j value, depending on the number of CPU cores available
 cd ..
 ./autogen.sh
-#Note: if echo `pwd` does not return your current working directory, replace it with your working directory such as /biblepay/
+
+#Note: echo `pwd` should point to the directory you are in 
 ./configure --prefix `pwd`/depends/x86_64-pc-linux-gnu
 make
+
 See more here:
 https://github.com/biblepay/biblepay/blob/master/doc/build-unix.md
 
@@ -72,7 +70,11 @@ find . -name \*.ac|xargs dos2unix
 find . -name \*.am|xargs dos2unix
 find . -name \*.sh|xargs dos2unix
 
-
+** How to clone BiblePay Develop **
+mkdir ~/biblepaytest
+cd ~/biblepaytest
+git clone -b develop http://github.com/biblepay/biblepay
+git pull origin develop
 
 
 **** DEVELOPER SECTION - FOR DEV USE ****
@@ -130,7 +132,7 @@ make -C depends HOST=x86_64-apple-darwin14
 make
 
 
-*** (Optional) Install Berkeley DB 4.8 locally without bitcoin ppa - do not use these instructions unless you really need this ***
+*** LEGACY -- (Optional) Install Berkeley DB 4.8 locally without bitcoin ppa - do not use these instructions unless you really need this ***
 
 wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
 echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-
@@ -145,4 +147,5 @@ sudo make install -B -i -k
 export BDB_INCLUDE_PATH="/usr/local/BerkeleyDB.4.8/include"
 export BDB_LIB_PATH="/usr/local/BerkeleyDB.4.8/lib"
 ln -s /usr/local/BerkeleyDB.4.8/lib/libdb-4.8.so /usr/lib/libdb-4.8.so
+
 

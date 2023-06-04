@@ -75,6 +75,17 @@ const std::string BitcoinGUI::DEFAULT_UIPLATFORM =
 #endif
         ;
 
+const std::string BitcoinGUI::DEFAULT_OSPLATFORM =
+#if defined(Q_OS_MAC)
+    "macosx"
+#elif defined(WIN32)
+    "windows"
+#else
+    "linux"
+#endif
+    ;
+
+
 static bool fUnchainedStarted = false;
 static QProcess mqpUnchained;
 static qint64 mqiUnchainedPID = 0;
@@ -2083,7 +2094,7 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
 
 std::string GetPlatformRID()
 {
-    if (BitcoinGUI::DEFAULT_UIPLATFORM == "windows") {
+    if (BitcoinGUI::DEFAULT_OSPLATFORM == "windows") {
         return "win-x64";
     } else if (BitcoinGUI::DEFAULT_UIPLATFORM == "linux") {
         return "linux-x64";
@@ -2101,8 +2112,9 @@ bool BitcoinGUI::StartUnchained()
     std::string sResult = ProvisionUnchained2(sError);
     if (!sError.empty()) {
         // Needs Associated
-        QString msg = "Unable to provision unchained: " + GUIUtil::TOQS(sError);
-        message(tr("Unable to Provision Unchained"), msg, CClientUIInterface::MSG_INFORMATION);
+        QString msg = "Unable to provision unchained: " + GUIUtil::TOQS(sError) 
+            + ".  You may have to unlock your wallet. ";
+        QMessageBox::warning(0, QObject::tr("Unable to Provision Unchained"), msg);
         return false;
     }
 
@@ -2110,28 +2122,46 @@ bool BitcoinGUI::StartUnchained()
     // This new process auto-upgrades unchained as well.
     // Then we launch a browser to view unchained.
 
-    LogPrintf("9009");
+    LogPrintf("9009 LegPlatformRID %s=", BitcoinGUI::DEFAULT_OSPLATFORM);
+
     std::string sRID = GetPlatformRID();
 
-    if (sRID != "win_x64") {
-        // On any type of Linux/MAC, set the dotnet unzip dir
-        QProcess::startDetached("export DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/tmp");
-    }
-
-    QString sAppWorkingDir = (sRID=="win_x64") ? "c:\\inetpub\\biblepay" : "~/biblepay";
+    QString sAppWorkingDir = QDir::homePath();
+    //(sRID == "64") ? "c:\\inetpub\\biblepay" : "~/biblepay";
     QString myHomeDir = QDir::homePath();
     std::string sHomeDir = myHomeDir.toStdString();
+    std::string sAppWithHomeDir = (sRID == "win-x64") 
+        ? sHomeDir + "\\BMS\\bmsd.exe" : sHomeDir + "/biblepay/BiblePay.BMSD";
+    //QString myWorkingDir = QDir::currentPath();
+    QString myWorkingDir = QCoreApplication::applicationFilePath();
 
-    std::string sApp0 = (sRID=="win_x64") ? "c:\\inetpub\\biblepay\\BiblePay.BMSD.exe" 
-        : sHomeDir + "/biblepay/BiblePay.BMSD";
+    std::string sWorkingDir = myWorkingDir.toStdString();
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt.exe", "");
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt", "");
+
+    std::string sApp0 = (sRID=="win-x64") ? 
+        sWorkingDir + "\\bmsd.exe" : sWorkingDir + "/BiblePay.BMSD";
+    if (sRID == "win-x64") {
+        sApp0 = strReplace(sApp0, "/", "\\");
+    }
+    LogPrintf("9051:: qcoreapp=%s, final=%s\r\n", sWorkingDir, sApp0);
+
     QString sApp = GUIUtil::TOQS(sApp0);
+
+    // Prepare file for first use
+    if (sRID != "win-x64") 
+    {
+        // On any type of Linux/MAC, set the dotnet unzip dir
+        QProcess::startDetached("export DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/tmp");
+        QProcess::startDetached("chmod 777 " + sApp);
+    }
 
     /* std::string sHTML = "<html><body><script>window.moveTo(580,240);window.resizeTo(500,690);" 
         + "window.location ='https://unchained.biblepay.org/phone/phoneservice?" 
         + sParams + "';</script></body></html>";
         std::string sAppArgsChrome = "--app=data:text/html," + sHTML;
         QString sAppChrome = fWindows ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" : "google-chrome";
-        std::string sApp0 = (sRID=="win_x64") ? "C:\\inetpub\\biblepay\\BMSD_" + sRID + ".exe" : "/inetpub/biblepay/BMSD_" + sRID;
+        std::string sApp0 = (sRID=="64") ? "C:\\inetpub\\biblepay\\BMSD_" + sRID + ".exe" : "/inetpub/biblepay/BMSD_" + sRID;
     */
     // Clear the IPC
     WriteIPC("");
@@ -2141,15 +2171,20 @@ bool BitcoinGUI::StartUnchained()
     QStringList sArgs = {};
     sArgs << qsArgs;
     mqpUnchained.startDetached(sApp, sArgs, sAppWorkingDir, &mqiUnchainedPID);
-    MilliSleep(1000);
+    // Give plenty of time to check the external hash
+    MilliSleep(5000);
 
     std::string sReply = ReceiveIPC();
-    if (!sReply.empty() && sReply.length() > 5) {
+
+    if (!sReply.empty() && sReply.length() > 5) 
+    {
         QString msg = GUIUtil::TOQS(sReply);
-        message(tr("Unchained Note"), msg, CClientUIInterface::MSG_INFORMATION);
+        QMessageBox::warning(0, QObject::tr("Unchained Note"), msg);
     }
 
-    LogPrintf("Started Unchained PID  app=%s  Args=%s    pid=%f   msg=%s", sApp0,
+    LogPrintf("Started Unchained PID  platform=%s, app=%s  Args=%s    pid=%f   msg=%s", 
+        sRID,
+        sApp0,
         sAppArgs, (long)mqiUnchainedPID, sReply);
     // Phase III : Launch the browser (Done by BMSD).
     return true;

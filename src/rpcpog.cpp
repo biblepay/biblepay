@@ -431,14 +431,15 @@ void WriteUnchainedConfigFile(std::string sPub, std::string sPriv)
     boost::filesystem::path unchainedConfigFile = GetUnchainedConfigFile();
     boost::filesystem::ifstream streamConfig(unchainedConfigFile);
     bool fReadable = streamConfig.good();
-    if (fReadable)
-        streamConfig.close();
+    if (fReadable)        streamConfig.close();
     FILE* configFile = fopen(unchainedConfigFile.string().c_str(), "wt");
     std::string s1 = "unchained_mainnet_pubkey=" + sPub + "\r\n";
+    fwrite(s1.c_str(), std::strlen(s1.c_str()), 1, configFile);
+
     std::string s2 = "unchained_mainnet_privkey=" + sPriv + "\r\n";
-    fwrite(s1.c_str(), std::strlen(sPub.c_str()), 1, configFile);
-    fwrite(s2.c_str(), std::strlen(sPriv.c_str()), 1, configFile);
+    fwrite(s2.c_str(), std::strlen(s2.c_str()), 1, configFile);
     fclose(configFile);
+    LogPrintf("Writing unchained conf file pubkey=%s\r\n", s1);
 }
 
 void ReadUnchainedConfigFile(std::string& sPub, std::string& sPriv)
@@ -2423,17 +2424,18 @@ bool ReviveSanctuaryEnhanced(std::string sSancSearch, std::string& sError, UniVa
 std::string ProvisionUnchained2(std::string& sError)
 {
     // BIBLEPAY UNCHAINED
-    std::string sUnchainedAddress = DefaultRecAddress("Unchained");
-    std::string sPK = GetPrivKey2(sUnchainedAddress, sError);
-    if (!sError.empty()) {
-        return "";
-    }
     std::string s1;
     std::string s2;
     ReadUnchainedConfigFile(s1, s2);
 
-    if (!s2.empty()) {
+    if (!s1.empty() && !s2.empty()) {
         // Already provisioned
+        return "";
+    }
+
+    std::string sUnchainedAddress = DefaultRecAddress("Unchained");
+    std::string sPK = GetPrivKey2(sUnchainedAddress, sError);
+    if (!sError.empty()) {
         return "";
     }
 
@@ -2441,25 +2443,18 @@ std::string ProvisionUnchained2(std::string& sError)
     return "";
 }
 
-/*
-void ClearIPC()
-{
-    boost::filesystem::path pathIPC("ipc.dat");
-    boost::filesystem::remove(pathIPC);
-}
-*/
-
 
 void WriteIPC(std::string sData)
 {
-    std::ofstream OutFile("ipc.dat");
+    boost::filesystem::path pathIPC = GetGenericFilePath("ipc.dat");
+    std::ofstream OutFile(pathIPC.string());
     OutFile.write(sData.c_str(), std::strlen(sData.c_str())); 
     OutFile.close();
 }
 
 std::string ReceiveIPC()
 {
-    boost::filesystem::path pathIPC("ipc.dat");
+    boost::filesystem::path pathIPC = GetGenericFilePath("ipc.dat");
     boost::filesystem::ifstream streamIPC(pathIPC);
     if (!streamIPC.good())
             return std::string();
