@@ -106,13 +106,14 @@ MasternodeList::MasternodeList(QWidget* parent) :
     contextMenuDIP3->addAction(copyProTxHashAction);
     contextMenuDIP3->addAction(copyCollateralOutpointAction);
 	// POVS
-	contextMenuDIP3->addAction(navigateToSancAction);
+	// (disabled) contextMenuDIP3->addAction(navigateToSancAction);
 
     connect(ui->tableWidgetMasternodesDIP3, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenuDIP3(const QPoint&)));
     connect(ui->tableWidgetMasternodesDIP3, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(extraInfoDIP3_clicked()));
     connect(copyProTxHashAction, SIGNAL(triggered()), this, SLOT(copyProTxHash_clicked()));
     connect(copyCollateralOutpointAction, SIGNAL(triggered()), this, SLOT(copyCollateralOutpoint_clicked()));
-	connect(navigateToSancAction, SIGNAL(triggered()), this, SLOT(navigateToSac_clicked()));
+
+	//  (disabled) connect(navigateToSancAction, SIGNAL(triggered()), this, SLOT(navigateToSac_clicked()));
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateDIP3ListScheduled()));
@@ -249,11 +250,15 @@ void MasternodeList::updateDIP3List()
 		// BIBLEPAY - POVS
 		int64_t nAdditionalPenalty = 0;
 		bool fOK = mapPOVSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()] != 255;
-		if (!fOK)
+		if (!fOK && false)
 		{
 			statusItem = new QTableWidgetItem(tr("POVS_BANNED"));
 			nAdditionalPenalty = 700;
 		}
+        if (dmn->pdmnState->nPoSePenalty > 0) 
+        {
+            statusItem = new QTableWidgetItem(tr("INVESTOR"));
+        }
 
 		// END OF POVS
 
@@ -311,7 +316,8 @@ void MasternodeList::updateDIP3List()
 		std::string sOp = dmn->pdmnState->pubKeyOperator.Get().ToString();
         std::string sIP = dmn->pdmnState->addr.ToString();
 		std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sOp, sIP, 1);
-		QTableWidgetItem* urlItem = new QTableWidgetItem(QString::fromStdString(std::get<0>(t) + "/" + std::get<1>(t)));
+		// (disabled) QTableWidgetItem* urlItem = new QTableWidgetItem(QString::fromStdString(std::get<0>(t) + "/" + std::get<1>(t)));
+        QTableWidgetItem* urlItem = new QTableWidgetItem(QString::fromStdString(""));
         // END OF POVS
         if (strCurrentFilterDIP3 != "") {
             strToFilter = addressItem->text() + " " +

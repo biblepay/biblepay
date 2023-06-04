@@ -25,6 +25,7 @@ SetCompressor /SOLID lzma
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP "@abs_top_srcdir@/share/pixmaps/nsis-wizard.bmp"
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
+!define ROAMING_BBP "${APPDATA}\BiblePay"
 
 # Included files
 !include Sections.nsh
@@ -75,6 +76,7 @@ Section -Main SEC0000
     SetOutPath $INSTDIR
     SetOverwrite on
     File @abs_top_srcdir@/release/@BITCOIN_GUI_NAME@@EXEEXT@
+    File @abs_top_srcdir@/release/bmsd@EXEEXT@
     File /oname=COPYING.txt @abs_top_srcdir@/COPYING
     File /oname=readme.txt @abs_top_srcdir@/doc/README_windows.txt
     SetOutPath $INSTDIR\daemon
@@ -84,6 +86,11 @@ Section -Main SEC0000
     File /r /x Makefile* @abs_top_srcdir@/doc\*.*
     SetOutPath $INSTDIR
     WriteRegStr HKCU "${REGKEY}\Components" Main 1
+    
+    #SetOutPath @ROAMING_BBP@/BiblePay/BMS
+    #SetOverwrite on
+    #File @abs_top_srcdir@/release/bmsd@EXEEXT@
+    
 SectionEnd
 
 Section -post SEC0001

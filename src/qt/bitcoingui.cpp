@@ -17,7 +17,7 @@
 #include <qt/optionsmodel.h>
 #include <qt/rpcconsole.h>
 #include <qt/utilitydialog.h>
-
+#include <QDir>
 #ifdef ENABLE_WALLET
 #include <qt/walletframe.h>
 #include <qt/walletmodel.h>
@@ -49,6 +49,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QProcess>
 #include <QProgressDialog>
 #include <QSettings>
 #include <QShortcut>
@@ -62,6 +63,8 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QDesktopServices>
+#include <rpcpog.h>
+
 const std::string BitcoinGUI::DEFAULT_UIPLATFORM =
 #if defined(Q_OS_MAC)
         "macosx"
@@ -71,6 +74,21 @@ const std::string BitcoinGUI::DEFAULT_UIPLATFORM =
         "other"
 #endif
         ;
+
+const std::string BitcoinGUI::DEFAULT_OSPLATFORM =
+#if defined(Q_OS_MAC)
+    "macosx"
+#elif defined(WIN32)
+    "windows"
+#else
+    "linux"
+#endif
+    ;
+
+
+static bool fUnchainedStarted = false;
+static QProcess mqpUnchained;
+static qint64 mqiUnchainedPID = 0;
 
 BitcoinGUI::BitcoinGUI(interfaces::Node& node, const NetworkStyle* networkStyle, QWidget* parent) :
     QMainWindow(parent),
@@ -280,8 +298,12 @@ BitcoinGUI::BitcoinGUI(interfaces::Node& node, const NetworkStyle* networkStyle,
                 GUIUtil::loadStyleSheet();
             }
         });
-        timerCustomCss->start(200);
+        timerCustomCss->start(5000);
     }
+    // BIBLEPAY
+    bbpTimer = new QTimer(this);
+    connect(bbpTimer, SIGNAL(timeout()), SLOT(BBPTimer()));
+    bbpTimer->start(250);
 }
 
 BitcoinGUI::~BitcoinGUI()
@@ -1121,8 +1143,7 @@ void BitcoinGUI::highlightTabButton(QAbstractButton *button, bool checked)
 
 void BitcoinGUI::showUnchained()
 {
-	std::string sURL = "https://unchained.biblepay.org";
-	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
+    StartUnchained();
 }
 
 void BitcoinGUI::showPrayerRequests()
@@ -1136,6 +1157,53 @@ void BitcoinGUI::showForum()
 	std::string sURL = "https://forum.biblepay.org/index.php?topic=517.0";
 	QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
 }
+
+void KillUnchained()
+{
+    if (mqiUnchainedPID > 0) {
+        LogPrintf("80012");
+        mqpUnchained.kill();
+        LogPrintf("80013");
+    }
+}
+
+/*
+#ifdef Q_OS_WIN
+    enum { ExitCode = 0 };
+    int thePID = ainedPID;
+    ::TerminateProcess(thePID, ExitCode);
+#else
+    qint64 pid = ainedPID;
+    QProcess::startDetached("kill " + QString::number(pid));
+#endif // Q_OS_WIN
+}
+*/
+
+    /*
+    if (BitcoinGUI::DEFAULT_UIPLATFORM == "windows") {
+        // do something different here...
+        QProcess::execute("taskkill", {"/pid", QString::number(process->processId()), "/t", "/f"});
+        fStarted = false;
+    } else {
+        qint64 pid = mlPID;
+        QProcess::startDetached("kill " + QString::number(pid));
+        fStarted = false;
+    }
+    qint64 pid = mlPID;
+    QProcess::kill(pid, SIGINT);
+
+
+void BitcoinGUI::showUnchained()
+{
+    KillUnchained();
+    bool fGot = ained();
+    if (!fGot) {
+        QString msg = "Unable to launch Unchained.  Have you provisioned unchained yet?  From the rpc type.";
+        message(tr("Unchained Launch Error"),
+            msg, CClientUIInterface::MSG_INFORMATION);
+    }
+}
+    */
 
 
 void BitcoinGUI::gotoOverviewPage()
@@ -1608,13 +1676,15 @@ void BitcoinGUI::changeEvent(QEvent *e)
 void BitcoinGUI::closeEvent(QCloseEvent *event)
 {
 #ifndef Q_OS_MAC // Ignored on Mac
+    // BIBLEPAY
+    KillUnchained();
+
     if(clientModel && clientModel->getOptionsModel())
     {
         if(!clientModel->getOptionsModel()->getMinimizeOnClose())
         {
             // close rpcConsole in case it was open to make some space for the shutdown window
             rpcConsole->close();
-
             QApplication::quit();
         }
         else
@@ -1623,6 +1693,7 @@ void BitcoinGUI::closeEvent(QCloseEvent *event)
             event->ignore();
         }
     }
+
 #else
     QMainWindow::closeEvent(event);
 #endif
@@ -2020,3 +2091,131 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
         optionsModel->setDisplayUnit(action->data());
     }
 }
+
+std::string GetPlatformRID()
+{
+    if (BitcoinGUI::DEFAULT_OSPLATFORM == "windows") {
+        return "win-x64";
+    } else if (BitcoinGUI::DEFAULT_UIPLATFORM == "linux") {
+        return "linux-x64";
+    } else if (BitcoinGUI::DEFAULT_UIPLATFORM == "osx") {
+        return "osx-x64";
+    }
+    else {
+        return "?";
+    }
+}
+
+bool BitcoinGUI::StartUnchained()
+{
+    std::string sError = "";
+    std::string sResult = ProvisionUnchained2(sError);
+    if (!sError.empty()) {
+        // Needs Associated
+        QString msg = "Unable to provision unchained: " + GUIUtil::TOQS(sError) 
+            + ".  You may have to unlock your wallet. ";
+        QMessageBox::warning(0, QObject::tr("Unable to Provision Unchained"), msg);
+        return false;
+    }
+
+    // We start a new instance of unchained (which will die off if its already running).
+    // This new process auto-upgrades unchained as well.
+    // Then we launch a browser to view unchained.
+
+    LogPrintf("9009 LegPlatformRID %s=", BitcoinGUI::DEFAULT_OSPLATFORM);
+
+    std::string sRID = GetPlatformRID();
+
+    QString sAppWorkingDir = QDir::homePath();
+    //(sRID == "64") ? "c:\\inetpub\\biblepay" : "~/biblepay";
+    QString myHomeDir = QDir::homePath();
+    std::string sHomeDir = myHomeDir.toStdString();
+    std::string sAppWithHomeDir = (sRID == "win-x64") 
+        ? sHomeDir + "\\BMS\\bmsd.exe" : sHomeDir + "/biblepay/BiblePay.BMSD";
+    //QString myWorkingDir = QDir::currentPath();
+    QString myWorkingDir = QCoreApplication::applicationFilePath();
+
+    std::string sWorkingDir = myWorkingDir.toStdString();
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt.exe", "");
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt", "");
+
+    std::string sApp0 = (sRID=="win-x64") ? 
+        sWorkingDir + "\\bmsd.exe" : sWorkingDir + "/BiblePay.BMSD";
+    if (sRID == "win-x64") {
+        sApp0 = strReplace(sApp0, "/", "\\");
+    }
+    LogPrintf("9051:: qcoreapp=%s, final=%s\r\n", sWorkingDir, sApp0);
+
+    QString sApp = GUIUtil::TOQS(sApp0);
+
+    // Prepare file for first use
+    if (sRID != "win-x64") 
+    {
+        // On any type of Linux/MAC, set the dotnet unzip dir
+        QProcess::startDetached("export DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/tmp");
+        QProcess::startDetached("chmod 777 " + sApp);
+    }
+
+    /* std::string sHTML = "<html><body><script>window.moveTo(580,240);window.resizeTo(500,690);" 
+        + "window.location ='https://unchained.biblepay.org/phone/phoneservice?" 
+        + sParams + "';</script></body></html>";
+        std::string sAppArgsChrome = "--app=data:text/html," + sHTML;
+        QString sAppChrome = fWindows ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" : "google-chrome";
+        std::string sApp0 = (sRID=="64") ? "C:\\inetpub\\biblepay\\BMSD_" + sRID + ".exe" : "/inetpub/biblepay/BMSD_" + sRID;
+    */
+    // Clear the IPC
+    WriteIPC("");
+
+    std::string sAppArgs = "";
+    QString qsArgs = GUIUtil::TOQS(sAppArgs);
+    QStringList sArgs = {};
+    sArgs << qsArgs;
+    mqpUnchained.startDetached(sApp, sArgs, sAppWorkingDir, &mqiUnchainedPID);
+    // Give plenty of time to check the external hash
+    MilliSleep(5000);
+
+    std::string sReply = ReceiveIPC();
+
+    if (!sReply.empty() && sReply.length() > 5) 
+    {
+        QString msg = GUIUtil::TOQS(sReply);
+        QMessageBox::warning(0, QObject::tr("Unchained Note"), msg);
+    }
+
+    LogPrintf("Started Unchained PID  platform=%s, app=%s  Args=%s    pid=%f   msg=%s", 
+        sRID,
+        sApp0,
+        sAppArgs, (long)mqiUnchainedPID, sReply);
+    // Phase III : Launch the browser (Done by BMSD).
+    return true;
+}
+
+static int nLastInvestorSanc = 0;
+void BitcoinGUI::BBPTimer()
+{
+    // Feature 1: Phone.
+    // When the user wants to use the phone and unchained is in the tray, restore unchained.
+    // When the phone is in the tray and ringing, restore unchained and display the ring msgbox.
+    // If unchained is not provisioned, ignore this area.
+    // If the user has autoupgrade=false, honor it.
+    /*
+    if (ShutdownRequested()) {
+        KillUnchained();
+    }
+    */
+    // Feature 2:  Investor Sancs.
+    if (nLastInvestorSanc == 0) {
+        nLastInvestorSanc = GetAdjustedTime();
+    }
+
+    int nElapsed = GetAdjustedTime() - nLastInvestorSanc;
+    if (nElapsed > (60 * 60 * 12) && m_node.masternodeSync().isSynced()) 
+    {
+        nLastInvestorSanc = GetAdjustedTime();
+        ReviveSanctuariesJob();
+    }
+
+}
+
+
+

@@ -314,19 +314,16 @@ public:
 		consensus.BARLEY_HARVEST_HEIGHT  = 320000;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
         consensus.EXODUS_HEIGHT = 346500;
-
+        consensus.REDSEA_HEIGHT = 428000;
 		consensus.RANDOMX_HEIGHT = 184675;
-
         consensus.nSubsidyHalvingInterval = 210240; // Note: actual number of blocks per calendar year with DGW v3 is ~200700 (for example 449750 - 249050)
 
 		// BiblePay
         consensus.nMasternodePaymentsStartBlock = 21600; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
         consensus.nMasternodePaymentsIncreaseBlock = 21601; // actual historical value
-
         consensus.nMasternodePaymentsIncreasePeriod = 205*30; // 17280 - actual historical value
         consensus.nInstantSendConfirmationsRequired = 1;
         consensus.nInstantSendKeepLock = 24;
-
         consensus.nBudgetPaymentsStartBlock = 21551; // actual historical value
 
         consensus.nBudgetPaymentsCycleBlocks = 205*30; // Monthly
@@ -530,7 +527,8 @@ public:
         strNetworkID = "test";
 		consensus.BARLEY_HARVEST_HEIGHT = 117233;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
-        consensus.EXODUS_HEIGHT = 500000;
+        consensus.EXODUS_HEIGHT = 183000;
+        consensus.REDSEA_HEIGHT = 183000;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock

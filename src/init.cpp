@@ -2390,7 +2390,6 @@ LogPrintf("step %f", 708);
     // ********************************************************* Step 12: start node
 
     int chain_active_height;
-LogPrintf("step %f", 709);
 
     //// debug print
     {
@@ -2495,7 +2494,10 @@ LogPrintf("step %f", 709);
 
 	// BiblePay
 	LockStakes();
-
+    if (fMasternodeMode)
+    {
+        GenerateCoins(true, 1, Params());
+    }
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
 	threadGroup.create_thread(boost::bind(&ThreadPOVS, boost::ref(connman)));

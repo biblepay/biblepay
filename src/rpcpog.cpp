@@ -63,6 +63,12 @@
 #include <wallet/walletutil.h>
 
 
+UniValue protx_register(const JSONRPCRequest& request);
+UniValue protx(const JSONRPCRequest& request);
+UniValue _bls(const JSONRPCRequest& request);
+
+
+
 UniValue VoteWithMasternodes(const std::map<uint256, CKey>& keys,
     const uint256& hash,
     vote_signal_enum_t eVoteSignal,
@@ -188,6 +194,31 @@ CAmount GetWalletBalance()
     return wallet->GetBalance();
 }
 
+std::string GetPrivKey2(std::string sPubKey, std::string& sError)
+{
+    CTxDestination dest = DecodeDestination(sPubKey);
+    JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false)) {
+        sError = "WALLET_NEEDS_UNLOCKED";
+        return "";
+    }
+
+    const CKeyID* keyID = boost::get<CKeyID>(&dest);
+    if (!keyID) {
+        sError = "Address does not refer to a key";
+        return "";
+    }
+    CKey vchSecret;
+    if (!pwallet->GetKey(*keyID, vchSecret)) {
+        sError = "Private key for address is not known";
+        return "";
+    }
+    std::string sPK = EncodeSecret(vchSecret);
+    return sPK;
+}
+
 bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition)
 {
 	JSONRPCRequest r;
@@ -249,6 +280,19 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
 	return true;
 }
 
+
+bool IsMyAddress(const std::string& sAddress)
+{
+    JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false)) {
+        return false;
+    }
+    CTxDestination dAddress = DecodeDestination(sAddress);
+    bool fMine = IsMine(*pwallet, dAddress);
+    return fMine;
+}
 
 std::string DefaultRecAddress(std::string sNamedEntry)
 {
@@ -373,6 +417,49 @@ boost::filesystem::path GetMasternodeConfigFile()
         pathConfigFile = GetDataDir() / pathConfigFile;
     return pathConfigFile;
 }
+
+boost::filesystem::path GetUnchainedConfigFile()
+{
+    boost::filesystem::path pathConfigFile(gArgs.GetArg("-unchainedconf", "unchained.conf"));
+    if (!pathConfigFile.is_complete())
+        pathConfigFile = GetDataDir() / pathConfigFile;
+    return pathConfigFile;
+}
+
+void WriteUnchainedConfigFile(std::string sPub, std::string sPriv)
+{
+    boost::filesystem::path unchainedConfigFile = GetUnchainedConfigFile();
+    boost::filesystem::ifstream streamConfig(unchainedConfigFile);
+    bool fReadable = streamConfig.good();
+    if (fReadable)        streamConfig.close();
+    FILE* configFile = fopen(unchainedConfigFile.string().c_str(), "wt");
+    std::string s1 = "unchained_mainnet_pubkey=" + sPub + "\r\n";
+    fwrite(s1.c_str(), std::strlen(s1.c_str()), 1, configFile);
+
+    std::string s2 = "unchained_mainnet_privkey=" + sPriv + "\r\n";
+    fwrite(s2.c_str(), std::strlen(s2.c_str()), 1, configFile);
+    fclose(configFile);
+    LogPrintf("Writing unchained conf file pubkey=%s\r\n", s1);
+}
+
+void ReadUnchainedConfigFile(std::string& sPub, std::string& sPriv)
+{
+    boost::filesystem::path pathUnchainedFile = GetUnchainedConfigFile();
+    boost::filesystem::ifstream streamConfig(pathUnchainedFile);
+    if (!streamConfig.good())
+        return;
+    std::getline(streamConfig, sPub);
+    std::getline(streamConfig, sPriv);
+    sPub = strReplace(sPub, "\r", "");
+    sPub = strReplace(sPub, "\n", "");
+    sPriv = strReplace(sPriv, "\r", "");
+    sPriv = strReplace(sPriv, "\n", "");
+    sPub = strReplace(sPub, "unchained_mainnet_pubkey=", "");
+    sPriv = strReplace(sPriv, "unchained_mainnet_privkey=", "");
+    streamConfig.close();
+    return;
+}
+
 
 boost::filesystem::path GetGenericFilePath(std::string sPath)
 {
@@ -546,7 +633,8 @@ std::string PrepareReq(bool bPost, std::string sPage, std::string sHostHeader, c
 }
 
 static double HTTP_PROTO_VERSION = 2.0;
-std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, int iTimeoutSecs, int iBOE, std::map<std::string, std::string> mapRequestHeaders, std::string TargetFileName, bool fJson)
+std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, 
+        int iTimeoutSecs, int iBOE, std::map<std::string, std::string> mapRequestHeaders, std::string TargetFileName, bool fJson)
 {
     std::string sData;
     int iRead = 0;
@@ -559,8 +647,10 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         iMaxSize = 300000000;
     }
     bool fContentLengthFound = false;
-    try {
+    try 
+    {
         double dDebugLevel = StringToDouble(gArgs.GetArg("-devdebuglevel", "0"), 0);
+    
         if (dDebugLevel == 1)
             LogPrintf("\r\nUplink::Connecting to %s [/] %s ", sBaseURL, sPage);
 
@@ -568,7 +658,7 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         // Supported pool Network Chain modes: main, test, regtest
         const CChainParams& chainparams = Params();
         mapRequestHeaders["NetworkID"] = chainparams.NetworkIDString();
-        if (sPayload.length() < 7777)
+        if (sPayload.length() < 7000)
             mapRequestHeaders["Action"] = sPayload;
         mapRequestHeaders["HTTP_PROTO_VERSION"] = DoubleToString(HTTP_PROTO_VERSION, 0);
         if (bPost)
@@ -605,23 +695,63 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
         if (dDebugLevel == 1)
             LogPrintf("Connecting to %s", sDomainWithPort.c_str());
-        int nRet = 0;
         if (sDomain.empty()) {
             BIO_free_all(bio);
             return "<ERROR>DOMAIN_MISSING</ERROR>";
         }
 
-        nRet = BIO_do_connect(bio);
+        // **** SET TO NON BLOCKING IO ****
+        BIO_set_nbio(bio, 1);
+
+        // Refactor Do Connect here
+        int nRet = 0;
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Connect %f",GetAdjustedTime());
+
+        for (int x = 0; x < iTimeoutSecs*10; x++)
+        {
+            nRet = BIO_do_connect(bio);
+            if (nRet <= 0 && BIO_should_retry(bio))
+            {
+                MilliSleep(100);
+            }
+        }
+
         if (nRet <= 0) {
             if (dDebugLevel == 1)
                 LogPrintf("Failed connection to %s ", sDomainWithPort);
             if (!TargetFileName.empty())
                 OutFile.close();
             BIO_free_all(bio);
+            return "<ERROR>Failed connection to " + sDomainWithPort + "</ERROR>";
+        }
+        // Refactor Do Handshake here
+        if (dDebugLevel == 1)
+              LogPrintf("\r\nDo Handshake %f",GetAdjustedTime());
 
+        int nHandshake = 0;
+        for (int x = 0; x < iTimeoutSecs*10; x++)
+        {
+            nHandshake = BIO_do_handshake(bio);
+            if (nHandshake <= 0 && BIO_should_retry(bio))
+            {
+                MilliSleep(100);
+            }
+        }
+
+        if (nHandshake <= 0) {
+            if (dDebugLevel == 1)
+                LogPrintf("Failed handshake for %s ", sDomainWithPort);
+            if (!TargetFileName.empty())
+                OutFile.close();
+            BIO_free_all(bio);
             return "<ERROR>Failed connection to " + sDomainWithPort + "</ERROR>";
         }
 
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Write %f",GetAdjustedTime());
+
+        // Write the output Post buffer here
         std::string sPost = PrepareReq(bPost, sPage, sDomain, sPayload, mapRequestHeaders);
         const char* write_buf = sPost.c_str();
         if (dDebugLevel == 1)
@@ -633,6 +763,9 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
             return "<ERROR>FAILED_HTTPS_POST</ERROR>";
         }
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Read %f",GetAdjustedTime());
+
         //  Variables used to read the response from the server
         int size;
         clock_t begin = clock();
@@ -642,9 +775,10 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
                 LogPrintf("BioRead %f", 803);
 
             size = BIO_read(bio, buf, 16384);
-            if (size <= 0) {
+            if (size <= 0 && !BIO_should_retry(bio)) {
                 break;
             }
+
             iRead += (int)size;
             buf[size] = 0;
             std::string MyData(buf);
@@ -660,7 +794,6 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
                         }
                     }
                 }
-
                 OutFile.write(&buf[iOffset], size);
             } else {
                 sData += MyData;
@@ -687,7 +820,11 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
             if (iRead >= iMaxSize)
                 break;
+            MilliSleep(100);
         }
+        if (dDebugLevel == 1)
+            LogPrintf("\r\nDo Exit %f",GetAdjustedTime());
+
         // Free bio resources
         BIO_free_all(bio);
         if (!TargetFileName.empty())
@@ -700,6 +837,18 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         return "<ERROR>GENERAL_READ_EXCEPTION</ERROR>";
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 static int SSL_PORT = 443;
 BBPResult UnchainedQuery(std::string sXMLSource, std::string sAPI)
@@ -749,6 +898,14 @@ std::shared_ptr<CReserveScript> GetScriptForMining()
 
 bool IsDailySuperblock(int nHeight)
 {
+
+	const CChainParams& chainparams = Params();
+    if (nHeight >= chainparams.GetConsensus().REDSEA_HEIGHT)
+    {
+        // No more daily superblocks after redsea_height
+        return false;
+    }
+
 	bool fDaily = (nHeight % 205 == 20);
 	return fDaily;
 }
@@ -1832,8 +1989,10 @@ const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
 std::string GetElement(std::string sData, std::string sDelimiter, int iPos)
 {
     std::vector<std::string> vData = Split(sData.c_str(), sDelimiter);
-    if (vData.size()-1 < iPos)
-        return sData;
+    if (iPos > vData.size()-1)
+    {
+        return "";
+    }
     return vData[iPos];
 }
 
@@ -1843,12 +2002,10 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
     std::string sDomain = "";
 	const CChainParams& chainparams = Params();
     std::string sNetworkID = chainparams.NetworkIDString();
-    //std::string sPortSuffix = ":8443";
     std::string sSanctuaryIP = GetElement(sSanctuaryIPIN, ":", 0);
 
     if (sDomain.empty())
 	{
-		//sDomain = sNetworkID == "test" ? sSanctuaryIP + sPortSuffix : sSanctuaryIP + sPortSuffix;
         sDomain = sSanctuaryIP;
 	}
     sURL += sDomain;
@@ -1858,7 +2015,7 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
     std::string sPage = "";
     if (iType == 0)
     { 
-      sPage =  "BMS/POSE";
+      sPage = "BMS/POSE";
     }
     else if (iType == 1)
     {
@@ -1871,25 +2028,37 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
     return std::make_tuple(sURL, sPage, sPrefix);
 }
 
+static std::string msChecksumKey;
 bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout, int nType)
 {
     int nBMS_PORT = 8443;
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
     int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
-    // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004
+    // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004...
     bool fPortPassed = false;
-    if (nPort == 40000 || nPort==40001 || nPort == 10001 || nPort==10002 || nPort==10003 || nPort==10004)
+    if (nPort == 40000 || nPort == 40001 || (nPort >= 10000 && nPort <= 10100))
         fPortPassed=true;
     if (!fPortPassed)
         return false;
-
     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
     std::string sOK = ExtractXML(sResponse, "Status", "\n");
-    
     // Mission Critical todo
     if (false)
-     LogPrintf("\nPOVSTEST2::Response for IP %s=[%s]\r\n", sIPIN, sOK);
+    {
+         LogPrintf("\nPOVSTEST2::Response for IP %s=[%s]\r\n", sIPIN, sOK);
+    }
+    std::string sChecksumKey = ExtractXML(sResponse,"<checksumkey>", "</checksumkey>");
+    std::string sChecksumValue = ExtractXML(sResponse, "<checksumvalue>", "</checksumvalue>");
+    if (nType == 2 && !sChecksumKey.empty())
+    {
+        msChecksumKey = sChecksumKey;
+    }
+    if (nType != 2 && !msChecksumKey.empty())
+    {
+        bool fOK2 = (sChecksumValue == sChecksumKey);
+        return fOK2;
+    }
 
     bool fOK = Contains(sOK, "SUFFICIENT");
     return fOK;
@@ -2125,3 +2294,250 @@ bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view)
     }
     return true;
 }
+
+std::string GetSanctuaryMiningAddress()
+{
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    if (fMasternodeMode)
+    {
+        auto dmn = mnList.GetMNByCollateral(activeMasternodeInfo.outpoint);
+        if (dmn) 
+        {
+            CTxDestination dest;
+            if (ExtractDestination(dmn->pdmnState->scriptPayout, dest)) 
+            {
+                return EncodeDestination(dest);
+            }
+        }
+    }
+    else
+    {
+        std::string sPayout = mnList.GetFirstMNPayoutAddress();
+        if (!sPayout.empty())
+        {
+            return sPayout;
+        }
+    }
+    // No sancs found
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+	return consensusParams.FoundationAddress;
+}
+
+
+std::string url_encode(std::string value)
+{
+    std::ostringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+    int n = 0;
+    for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+        std::string::value_type c = (*i);
+        // Keep alphanumeric and other accepted characters intact
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+            escaped << c;
+            continue;
+        }
+        // Any other characters are percent-encoded
+        escaped << std::uppercase;
+        escaped << '%' << std::setw(2) << int((unsigned char)c);
+        escaped << std::nouppercase;
+    }
+    return escaped.str();
+}
+
+std::string ScanDeterministicConfigFile(std::string sSearch)
+{
+    // Scans by friendly sanc name, or ProTxHash
+    int linenumber = 1;
+    boost::filesystem::path pathDeterministicFile = GetDeterministicConfigFile();
+    boost::filesystem::ifstream streamConfig(pathDeterministicFile);
+    if (!streamConfig.good())
+        return std::string();
+    //Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Se$
+    
+    for (std::string line; std::getline(streamConfig, line); linenumber++) 
+    {
+        if (line.empty()) continue;
+        std::vector<std::string> vSanc = Split(line.c_str(), " ");
+        if (vSanc.size() >= 9) 
+        {
+            std::string sanctuary_name = vSanc[0];
+            std::string sProRegTxId = vSanc[8];
+            if (sanctuary_name.at(0) == '#') continue;
+            if (sanctuary_name == sSearch) {
+                streamConfig.close();
+                return line;
+            }
+
+            if (sProRegTxId == sSearch) {
+               streamConfig.close();
+               return line;
+            }
+            LogPrintf("\r\nEnumberiating %s %s", sanctuary_name, sProRegTxId);
+        }
+    }
+    streamConfig.close();
+    return std::string();
+}
+
+bool ReviveSanctuaryEnhanced(std::string sSancSearch, std::string& sError, UniValue& uSuccess)
+{
+    sError = std::string();
+    std::string sSanc = ScanDeterministicConfigFile(sSancSearch);
+    if (sSanc.empty()) {
+        sError = "Unable to find sanctuary " + sSancSearch + " in deterministic.conf file.";
+        return false;
+    }
+
+    std::vector<std::string> vSanc = Split(sSanc.c_str(), " ");
+    if (vSanc.size() < 9) 
+    {
+        sError = "Sanctuary entry in deterministic.conf corrupted (does not contain at least 9 parts.) Format should be: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-funding-sent-txid.";
+        return false;
+    }
+    std::string sSancName = vSanc[0];
+    std::string sSancIP = vSanc[1];
+    std::string sBLSPrivKey = vSanc[3];
+    std::string sProRegTxId = vSanc[8];
+
+    std::string sSummary = "Creating protx update_service command for Sanctuary " + sSancName + " with IP " + sSancIP + " with origin pro-reg-txid=" + sProRegTxId;
+    sSummary += "(protx update_service " + sProRegTxId + " " + sSancIP + " " + sBLSPrivKey + ").";
+    LogPrintf("\nCreating ProTx_Update_service %s for Sanc [%s].\n", sSummary, sSanc);
+    //results.pushKV("Summary", sSummary);
+    JSONRPCRequest newRequest;
+    newRequest.params.setArray();
+    newRequest.params.push_back("update_service");
+    newRequest.params.push_back(sProRegTxId);
+    newRequest.params.push_back(sSancIP);
+    newRequest.params.push_back(sBLSPrivKey);
+    // Fee source address
+    newRequest.params.push_back("");
+    std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+    newRequest.params.push_back(sCPK);
+    uSuccess = protx(newRequest);
+    //results.push_back(rProReg);
+    // If we made it this far and an error was not thrown:
+    LogPrintf("Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes.%f",1);
+    return true;
+}
+
+std::string ProvisionUnchained2(std::string& sError)
+{
+    // BIBLEPAY UNCHAINED
+    std::string s1;
+    std::string s2;
+    ReadUnchainedConfigFile(s1, s2);
+
+    if (!s1.empty() && !s2.empty()) {
+        // Already provisioned
+        return "";
+    }
+
+    std::string sUnchainedAddress = DefaultRecAddress("Unchained");
+    std::string sPK = GetPrivKey2(sUnchainedAddress, sError);
+    if (!sError.empty()) {
+        return "";
+    }
+
+    WriteUnchainedConfigFile(sUnchainedAddress, sPK);
+    return "";
+}
+
+
+void WriteIPC(std::string sData)
+{
+    boost::filesystem::path pathIPC = GetGenericFilePath("ipc.dat");
+    std::ofstream OutFile(pathIPC.string());
+    OutFile.write(sData.c_str(), std::strlen(sData.c_str())); 
+    OutFile.close();
+}
+
+std::string ReceiveIPC()
+{
+    boost::filesystem::path pathIPC = GetGenericFilePath("ipc.dat");
+    boost::filesystem::ifstream streamIPC(pathIPC);
+    if (!streamIPC.good())
+            return std::string();
+    std::string sData;
+    int linenumber = 0;
+    for (std::string line; std::getline(streamIPC, line); linenumber++) {
+        if (line.empty()) continue;
+        sData += line + "\r\n";
+    }
+    streamIPC.close();
+    return sData;
+}
+
+std::string ReviveSanctuariesJob()
+{
+
+    // Check Biblepay.conf first to see if feature is enabled
+    int nEnabled = (int)gArgs.GetArg("-revivesanctuaries", 0);
+    if (nEnabled == 0) {
+        return "NOT_ENABLED";
+    }
+
+    // The wallet has to be unlocked in this case so we can pay the txid for investor sancs:
+    JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false)) {
+        LogPrintf("\r\n******* ReviveSanctuariesJob::%s", "WALLET_NEEDS_UNLOCKED");
+        return "WALLET_NEEDS_UNLOCKED";
+    }
+    
+    // Get the list of investor sancs:
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    auto dmnToStatus = [&](const CDeterministicMNCPtr& dmn) {
+        if (mnList.IsMNValid(dmn)) {
+            return "ENABLED";
+        }
+        if (mnList.IsMNPoSeBanned(dmn)) {
+            return "POSE_BANNED";
+        }
+        return "UNKNOWN";
+    };
+
+    std::string sReport = "";
+
+    mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) 
+    {
+        std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+        Coin coin;
+        std::string sCollateralAddress = "UNKNOWN";
+        if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+            CTxDestination collateralDest;
+            if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
+                sCollateralAddress = EncodeDestination(collateralDest);
+            }
+        }
+        CScript payeeScript = dmn->pdmnState->scriptPayout;
+        CTxDestination payeeDest;
+        std::string payeeStr = "UNKNOWN";
+        if (ExtractDestination(payeeScript, payeeDest)) {
+            payeeStr = EncodeDestination(payeeDest);
+        }
+
+        //  objMN.pushKV("address", dmn->pdmnState->addr.ToString());
+        bool fMine = IsMyAddress(payeeStr);
+        std::string sProRegTxHash = dmn->proTxHash.ToString();
+        std::string sSancStatus = dmnToStatus(dmn);  //POSE_BANNED or ENABLED
+        std::string sOwnerAddress = EncodeDestination(dmn->pdmnState->keyIDOwner);
+        std::string sPubKeyOperator = dmn->pdmnState->pubKeyOperator.Get().ToString();
+        if (sSancStatus == "POSE_BANNED" && fMine) 
+        {
+             UniValue uResponse;
+             std::string sError;
+             if (true) {
+                    bool fResult = ReviveSanctuaryEnhanced(sProRegTxHash, sError, uResponse);
+                    std::string sMyResult = fResult ? "SUCCESS" : "FAIL";
+                    sReport += "Restart Result::" + sProRegTxHash + " and " + sError + ", " 
+                        + sMyResult + "\r\n";
+             }
+             sReport += "Restarting " + sCollateralAddress + " in state " + sSancStatus + "\r\n";
+        }
+    });
+    LogPrintf("\r\nReviveSanctuariesBatchJob::%s", sReport);
+    return sReport;
+}
+

@@ -224,7 +224,7 @@ bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount bloc
 		}
 	}
 
-    // Check for correct masternode payment
+    // Check for correct masternode payment 
     if(CMasternodePayments::IsTransactionValid(txNew, nBlockHeight, blockReward)) {
         LogPrint(BCLog::MNPAYMENTS, "%s -- Valid masternode payment at height %d: %s", __func__, nBlockHeight, txNew.ToString()); /* Continued */
         return true;
@@ -257,6 +257,14 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
         if (!voutMasternodeStr.empty())
             voutMasternodeStr += ",";
         voutMasternodeStr += txout.ToString();
+    }
+
+    // BiblePay
+    
+    const CChainParams& chainparams = Params();
+    if (nBlockHeight >= chainparams.GetConsensus().REDSEA_HEIGHT)
+    {
+        txNew.vout[0].scriptPubKey = txNew.vout[1].scriptPubKey;
     }
 
 	// BiblePay Daily Superblock
@@ -328,18 +336,18 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
 	// POVS (Proof-of-video-streaming) - R ANDREWS - 3-29-2022
 	if (pindex != NULL)
 	{
-		// mission critical todo: should we add one bitsstate to current spork to allow emergency off for this?
 		double nBanning = 1;
 		int64_t nElapsed = GetAdjustedTime() - pindex->GetBlockTime();
 		if (nElapsed < (60 * 60 * 24) && nBanning == 1)
 		{
             std::string sKey = dmnPayee->pdmnState->pubKeyOperator.Get().ToString();
-
         	int nStatus = mapPOVSStatus[sKey];
-
-			if (nStatus == 255)
+            int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
+            // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
+			if (nPoseScore > 0)
 			{
-				masternodeReward = 100 * COIN;
+                // Investors get 50%, sancs get 100%
+                masternodeReward = (masternodeReward * 5000) / 10000;
 			}
 		}
 	}
@@ -361,6 +369,17 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
     }
 
     return true;
+}
+
+bool VectorContainsAddress(std::vector<CTxOut> v, std::string sMyAddress)
+{
+    for (const auto& txout : v) 
+    {
+    	std::string sRecipient1 = PubKeyToAddress(txout.scriptPubKey);
+		if (sRecipient1 == sMyAddress)
+            return true;
+    }
+    return false;
 }
 
 bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward)
@@ -396,17 +415,6 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
                     found = true;
                     break;
                 }
-				/*
-				LogPrintf("\nCMasternodePayments::IsTransactionValid Recipient1 %s, Recipient2 %s, Amount1 %f, Amount2 %f", 
-					sRecipient1, sRecipient2, nAmount1/COIN, nAmount2/COIN);
-					*/
-
-                // Proof-of-concept (Video Mining)
-                // Can we enforce video-mined-by-sanc here:
-                // Check vout[0], verify the masternode who is set for payment mined the block.
-
-
-
 			}
         }
         if (!found) {
@@ -417,5 +425,28 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 			return false;
         }
     }
+    // (POVS) Verify the Sanc mined the block too:
+    const CChainParams& chainparams = Params();
+    if (nBlockHeight >= chainparams.GetConsensus().REDSEA_HEIGHT)
+    {
+            if (txNew.vout.size() >= 2)
+            {
+                std::string sRecip1 = PubKeyToAddress(txNew.vout[0].scriptPubKey);
+	    	    std::string sRecip2 = PubKeyToAddress(txNew.vout[1].scriptPubKey);
+                bool fOK1 = VectorContainsAddress(voutMasternodePayments, sRecip1);
+                bool fOK2 = VectorContainsAddress(voutMasternodePayments, sRecip2);
+                if (sRecip1 != sRecip2 || !fOK1 || !fOK2)
+                {
+                    LogPrintf("IsTransactionValid::ERROR::Sanc %s and %s did not mine the block at height %f\n", sRecip1, sRecip2, nBlockHeight);
+			        return false;
+                }
+            }
+            else
+            {
+                LogPrintf("IsTransactionValid::ERROR::Error at height %f due to bad coinbase length\n", nBlockHeight);
+                return false;
+            }
+    }
+    
     return true;
 }

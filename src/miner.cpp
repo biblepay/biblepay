@@ -189,9 +189,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     coinbaseTx.vout.resize(1);
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
 
-	// RandomX Pool Support
-    // Mission Critical Todo:  POVS, 2) Enable setgenerate true=1 by default (for masternode mode), 3) In ContextualCheckBlock, we need to compare [0].scriptpubkey==[1].scriptpubkey for POVS
-	if (!sPoolMiningPublicKey.empty())
+    // POVS Support
+    if (!sPoolMiningPublicKey.empty())
 	{
 		CScript spkPoolScript = GetScriptForDestination(DecodeDestination(sPoolMiningPublicKey));
 		coinbaseTx.vout[0].scriptPubKey = spkPoolScript;
@@ -679,7 +678,6 @@ bool fAllowedToMine = true;
 			{
 				while (fAllowedToMine)
 				{
-
 					pblock->nNonce += 1;
 					uint256 rxHeader = uint256S("0x" + DoubleToString(GetAdjustedTime(), 0) + DoubleToString(iThreadID, 0) + DoubleToString(pblock->nNonce, 0));
 					pblock->RandomXData = "<rxheader>" + rxHeader.GetHex() + "</rxheader>";
@@ -728,7 +726,12 @@ bool fAllowedToMine = true;
 							break;
 						}
 					}
-				}
+
+                    if (chainActive.Tip()->nHeight > chainparams.GetConsensus().REDSEA_HEIGHT) 
+                    {
+                        MilliSleep(10);
+                    }
+    			}
 
 				UpdateHashesPerSec(nHashesDone);
 				// Check for stop or if block needs to be rebuilt
@@ -761,6 +764,7 @@ bool fAllowedToMine = true;
 					// Changing pblock->nTime can change work required on testnet:
 					hashTarget.SetCompact(pblock->nBits);
 				}
+
 			}
         }
     }
@@ -785,28 +789,26 @@ void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams
 {
     static boost::thread_group* minerThreads = NULL;
 
-    if (nThreads < 0)
-        nThreads = GetNumCores();
+    if (nThreads < 1) 
+    {
+        nThreads = 1;  // GetNumCores() - Reserved for a change to heat mining
+    }
 
     if (minerThreads != NULL)
     {
         minerThreads->interrupt_all();
 		LogPrintf("Destroying all miner threads %f", GetAdjustedTime());
-
 		minerThreads->join_all();
         delete minerThreads;
         minerThreads = NULL;
 		LogPrintf("Destroyed all miner threads %f", GetAdjustedTime());
-
 		// We must be very careful here with RandomX, as we have one VM running per mining thread, so we need to let these threads exit
-
     }
 
     if (nThreads == 0 || !fGenerate)
         return;
 
     minerThreads = new boost::thread_group();
-	
 	int iBibleHashNumber = 0;			
     for (int i = 0; i < nThreads; i++)
 	{
@@ -814,7 +816,6 @@ void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams
 	    MilliSleep(100); 
 	}
 	iMinerThreadCount = nThreads;
-
 	// Maintain the HashPS
 	nHPSTimerStart = GetTimeMillis();
 	nHashCounter = 0;

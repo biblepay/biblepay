@@ -11,9 +11,9 @@
 #include <util.h>
 #include <utilmoneystr.h>
 #include <txmempool.h>
-
 #include <evo/specialtx.h>
 #include <evo/deterministicmns.h>
+#include <rpcpog.h>
 
 #include <governance/governance-classes.h>
 
@@ -658,6 +658,11 @@ UniValue masternodelist(const JSONRPCRequest& request)
             objMN.pushKV("proTxHash", dmn->proTxHash.ToString());
             objMN.pushKV("address", dmn->pdmnState->addr.ToString());
             objMN.pushKV("payee", payeeStr);
+            // BIBLEPAY
+            bool fMine = IsMyAddress(payeeStr);
+            objMN.pushKV("IsMine", fMine);
+            // End of BiblePay
+            
             objMN.pushKV("status", dmnToStatus(dmn));
             objMN.pushKV("lastpaidtime", dmnToLastPaidTime(dmn));
             objMN.pushKV("lastpaidblock", dmn->pdmnState->nLastPaidHeight);
