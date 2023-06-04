@@ -2724,7 +2724,10 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sDSD = sSancName + " " + sSancIP + " " + myBLSPublic + " " + myBLSPrivate + " " + sCollateralTXID + " " + sCollateralTXIDOrdinal + " " + sProRegTxId + " " + sProCollAddr + " " + sSentTxId + "\n";
 		if (iDryRun == 1)
 			AppendSanctuaryFile("deterministic.conf", sDSD);
-	}
+    } else if (sItem == "revivesanctuaries") {
+        std::string sResult = ReviveSanctuariesJob();
+        results.pushKV("result", sResult);
+    }
 	else if (sItem == "randomx")
 	{
 		std::string sHeader = request.params[1].get_str();

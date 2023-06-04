@@ -181,7 +181,7 @@
          </column>
          <column>
           <property name="text">
-           <string>Streaming URL</string>
+           <string>.</string>
           </property>
          </column>
         </widget>

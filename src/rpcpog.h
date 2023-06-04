@@ -153,5 +153,6 @@ std::string ProvisionUnchained2(std::string& sError);
 std::string GetPrivKey2(std::string sPubKey, std::string& sError);
 std::string ReceiveIPC();
 void WriteIPC(std::string sData);
+std::string ReviveSanctuariesJob();
 
 #endif

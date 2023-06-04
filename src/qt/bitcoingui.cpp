@@ -2190,6 +2190,7 @@ bool BitcoinGUI::StartUnchained()
     return true;
 }
 
+static int nLastInvestorSanc = 0;
 void BitcoinGUI::BBPTimer()
 {
     // Feature 1: Phone.
@@ -2198,15 +2199,21 @@ void BitcoinGUI::BBPTimer()
     // If unchained is not provisioned, ignore this area.
     // If the user has autoupgrade=false, honor it.
     /*
-    if (!fUnchainedStarted) {
-        fUnchainedStarted=true;
-        StartUnchained();
-    }
-
     if (ShutdownRequested()) {
         KillUnchained();
     }
     */
+    // Feature 2:  Investor Sancs.
+    if (nLastInvestorSanc == 0) {
+        nLastInvestorSanc = GetAdjustedTime();
+    }
+
+    int nElapsed = GetAdjustedTime() - nLastInvestorSanc;
+    if (nElapsed > (60 * 60 * 12) && m_node.masternodeSync().isSynced()) 
+    {
+        nLastInvestorSanc = GetAdjustedTime();
+        ReviveSanctuariesJob();
+    }
 
 }
 

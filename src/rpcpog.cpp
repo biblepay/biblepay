@@ -2467,3 +2467,77 @@ std::string ReceiveIPC()
     streamIPC.close();
     return sData;
 }
+
+std::string ReviveSanctuariesJob()
+{
+
+    // Check Biblepay.conf first to see if feature is enabled
+    int nEnabled = (int)gArgs.GetArg("-revivesanctuaries", 0);
+    if (nEnabled == 0) {
+        return "NOT_ENABLED";
+    }
+
+    // The wallet has to be unlocked in this case so we can pay the txid for investor sancs:
+    JSONRPCRequest r;
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    if (!EnsureWalletIsAvailable(pwallet, false)) {
+        LogPrintf("\r\n******* ReviveSanctuariesJob::%s", "WALLET_NEEDS_UNLOCKED");
+        return "WALLET_NEEDS_UNLOCKED";
+    }
+    
+    // Get the list of investor sancs:
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    auto dmnToStatus = [&](const CDeterministicMNCPtr& dmn) {
+        if (mnList.IsMNValid(dmn)) {
+            return "ENABLED";
+        }
+        if (mnList.IsMNPoSeBanned(dmn)) {
+            return "POSE_BANNED";
+        }
+        return "UNKNOWN";
+    };
+
+    std::string sReport = "";
+
+    mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) 
+    {
+        std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+        Coin coin;
+        std::string sCollateralAddress = "UNKNOWN";
+        if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+            CTxDestination collateralDest;
+            if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
+                sCollateralAddress = EncodeDestination(collateralDest);
+            }
+        }
+        CScript payeeScript = dmn->pdmnState->scriptPayout;
+        CTxDestination payeeDest;
+        std::string payeeStr = "UNKNOWN";
+        if (ExtractDestination(payeeScript, payeeDest)) {
+            payeeStr = EncodeDestination(payeeDest);
+        }
+
+        //  objMN.pushKV("address", dmn->pdmnState->addr.ToString());
+        bool fMine = IsMyAddress(payeeStr);
+        std::string sProRegTxHash = dmn->proTxHash.ToString();
+        std::string sSancStatus = dmnToStatus(dmn);  //POSE_BANNED or ENABLED
+        std::string sOwnerAddress = EncodeDestination(dmn->pdmnState->keyIDOwner);
+        std::string sPubKeyOperator = dmn->pdmnState->pubKeyOperator.Get().ToString();
+        if (sSancStatus == "POSE_BANNED" && fMine) 
+        {
+             UniValue uResponse;
+             std::string sError;
+             if (true) {
+                    bool fResult = ReviveSanctuaryEnhanced(sProRegTxHash, sError, uResponse);
+                    std::string sMyResult = fResult ? "SUCCESS" : "FAIL";
+                    sReport += "Restart Result::" + sProRegTxHash + " and " + sError + ", " 
+                        + sMyResult + "\r\n";
+             }
+             sReport += "Restarting " + sCollateralAddress + " in state " + sSancStatus + "\r\n";
+        }
+    });
+    LogPrintf("\r\nReviveSanctuariesBatchJob::%s", sReport);
+    return sReport;
+}
+
