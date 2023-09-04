@@ -632,6 +632,54 @@ std::string PrepareReq(bool bPost, std::string sPage, std::string sHostHeader, c
     return s.str();
 }
 
+
+static int nConnectSucceeded = 0;
+
+void private_connect_handler(const boost::system::error_code& error)
+{
+    if (!error) {
+        // Connect succeeded.
+        nConnectSucceeded = 1;
+    }
+    else
+    {
+        nConnectSucceeded = -1;
+    }
+}
+
+bool TcpTest(std::string sIP, int nPort, int nTimeout)
+{
+    try 
+    {
+        typedef boost::asio::ip::tcp tcp;
+        boost::shared_ptr<boost::asio::io_service> io_service(new boost::asio::io_service);
+        boost::shared_ptr<tcp::socket> socket(new tcp::socket(*io_service));
+        tcp::resolver resolver(*io_service);
+        tcp::resolver::query query(sIP, boost::lexical_cast<std::string>(nPort));
+        tcp::resolver::iterator myEP = resolver.resolve(query);
+        tcp::endpoint myEndpoint(boost::asio::ip::address::from_string(sIP), nPort);
+        boost::system::error_code connectEc;
+        nConnectSucceeded = 0;
+        socket->async_connect(myEndpoint, private_connect_handler);
+        for (int i = 0; i < nTimeout; i++)
+        {
+            io_service->poll();
+            if (nConnectSucceeded != 0)
+            {
+                 break;
+            }
+            boost::this_thread::interruption_point();
+            MilliSleep(1000);
+        }
+        return (nConnectSucceeded == 1) ? true : false;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+
 static double HTTP_PROTO_VERSION = 2.0;
 std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, 
         int iTimeoutSecs, int iBOE, std::map<std::string, std::string> mapRequestHeaders, std::string TargetFileName, bool fJson)
@@ -2031,16 +2079,26 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
 static std::string msChecksumKey;
 bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout, int nType)
 {
-    int nBMS_PORT = 8443;
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
     int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
+    // As of September 2023, first we verify the sanc is on an approved port
+
     // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004...
     bool fPortPassed = false;
     if (nPort == 40000 || nPort == 40001 || (nPort >= 10000 && nPort <= 10100))
         fPortPassed=true;
     if (!fPortPassed)
         return false;
-    std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
+    // Second, we verify the sanc is up and running
+    bool fOK = TcpTest(sIP, nPort, 9);
+    return fOK;
+
+    /*
+    * Reserved in case we need to check a cockroachdb node for activity
+    * 
+    *     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
+    int nBMS_PORT = 8443;
+
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
     std::string sOK = ExtractXML(sResponse, "Status", "\n");
     // Mission Critical todo
@@ -2062,6 +2120,8 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
 
     bool fOK = Contains(sOK, "SUFFICIENT");
     return fOK;
+    */
+
 }
 
 std::string GetSANDirectory1()

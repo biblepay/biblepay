@@ -117,7 +117,7 @@ MasternodeList::MasternodeList(QWidget* parent) :
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateDIP3ListScheduled()));
-    timer->start(1000);
+    timer->start(10000);
 
     GUIUtil::updateFonts();
 }
@@ -168,7 +168,7 @@ void MasternodeList::updateDIP3ListScheduled()
         int64_t nSecondsToWait = nTimeFilterUpdatedDIP3 - GetTime() + MASTERNODELIST_FILTER_COOLDOWN_SECONDS;
         ui->countLabelDIP3->setText(tr("Please wait...") + " " + QString::number(nSecondsToWait));
 
-        if (nSecondsToWait <= 0) {
+        if (nSecondsToWait <= 0 || true) {
             updateDIP3List();
             fFilterUpdatedDIP3 = false;
         }
@@ -176,7 +176,7 @@ void MasternodeList::updateDIP3ListScheduled()
         int64_t nMnListUpdateSecods = clientModel->masternodeSync().isBlockchainSynced() ? MASTERNODELIST_UPDATE_SECONDS : MASTERNODELIST_UPDATE_SECONDS * 10;
         int64_t nSecondsToWait = nTimeUpdatedDIP3 - GetTime() + nMnListUpdateSecods;
 
-        if (nSecondsToWait <= 0) {
+        if (nSecondsToWait <= 0 || true) {
             updateDIP3List();
             mnListChanged = false;
         }
@@ -250,15 +250,11 @@ void MasternodeList::updateDIP3List()
 		// BIBLEPAY - POVS
 		int64_t nAdditionalPenalty = 0;
 		bool fOK = mapPOVSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()] != 255;
-		if (!fOK && false)
+		if (!fOK)
 		{
-			statusItem = new QTableWidgetItem(tr("POVS_BANNED"));
-			nAdditionalPenalty = 700;
+			statusItem = new QTableWidgetItem(tr("INVESTOR"));
+			nAdditionalPenalty = 50;
 		}
-        if (dmn->pdmnState->nPoSePenalty > 0) 
-        {
-            statusItem = new QTableWidgetItem(tr("INVESTOR"));
-        }
 
 		// END OF POVS
 
@@ -416,6 +412,9 @@ void MasternodeList::extraInfoDIP3_clicked()
 
 	std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sOp, sIP, 1);
 	std::string sNarr = "\r\nSanctuary ID: " + std::get<2>(t);
+    int nPOV = mapPOVSStatus[sOp];
+    sNarr += "\r\nPOSE Subscore: " + DoubleToString(nPOV, 0);
+
 	strText += QString::fromStdString(sNarr);
 	// END OF POVS
 

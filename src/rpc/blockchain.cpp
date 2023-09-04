@@ -2378,7 +2378,7 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sTxCoinbaseHex1 = EncodeHexTx(*block.vtx[0]);
 		results.pushKV("blockhex", sBlockHex1);
 		results.pushKV("txhex", sTxCoinbaseHex1);
-	}
+    }
 	else if (sItem == "sendmanyxml")
 	{
 		// Pools: Allows pools to send a multi-output tx with ease
