@@ -2320,6 +2320,66 @@ void AppendMasternodeFile(std::string sFile, std::string sData)
     fclose(configFile);
 }
 
+double GetBlockVersion(std::string sXML)
+{
+    std::string sBlockVersion = ExtractXML(sXML, "<VER>", "</VER>");
+    sBlockVersion = strReplace(sBlockVersion, ".", "");
+    sBlockVersion = strReplace(sBlockVersion, "v", "");
+    sBlockVersion = strReplace(sBlockVersion, "-", "");
+
+    if (sBlockVersion.length() == 3) sBlockVersion += "0";
+    double dBlockVersion = StringToDouble(sBlockVersion, 0);
+    return dBlockVersion;
+}
+
+static std::map<std::string, double> mvBlockVersion;
+void ScanBlockChainVersion(int nLookback)
+{
+    mvBlockVersion.clear();
+    int nMaxDepth = chainActive.Tip()->nHeight;
+    int nMinDepth = (nMaxDepth - nLookback);
+    if (nMinDepth < 1) nMinDepth = 1;
+    CBlock block;
+    CBlockIndex* pblockindex = chainActive.Tip();
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    while (pblockindex->nHeight > nMinDepth) {
+        if (!pblockindex || !pblockindex->pprev) return;
+        pblockindex = pblockindex->pprev;
+        if (ReadBlockFromDisk(block, pblockindex, consensusParams)) {
+            std::string sVersion = DoubleToString(GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage), 0);
+            mvBlockVersion[sVersion]++;
+        }
+    }
+}
+
+UniValue GetVersionReport()
+{
+    UniValue ret(UniValue::VOBJ);
+    // Returns a report of the BiblePay version that has been solving blocks over the last N blocks
+    ScanBlockChainVersion(BLOCKS_PER_DAY);
+    std::string sBlockVersion;
+    std::string sReport = "Version, Popularity\r\n";
+    std::string sRow;
+    double dPct = 0;
+    ret.push_back(Pair("Version", "Popularity,Percent %"));
+    double Votes = 0;
+    for (auto ii : mvBlockVersion) {
+        double Popularity = mvBlockVersion[ii.first];
+        Votes += Popularity;
+    }
+    for (auto ii : mvBlockVersion) {
+        double Popularity = mvBlockVersion[ii.first];
+        sBlockVersion = ii.first;
+        if (Popularity > 0) {
+            sRow = sBlockVersion + "," + DoubleToString(Popularity, 0);
+            sReport += sRow + "\r\n";
+            dPct = Popularity / (Votes + .01) * 100;
+            ret.push_back(Pair(sBlockVersion, DoubleToString(Popularity, 0) + "; " + DoubleToString(dPct, 2) + "%"));
+        }
+    }
+    return ret;
+}
+
 
 UniValue exec(const JSONRPCRequest& request)
 {
@@ -2378,6 +2438,10 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sTxCoinbaseHex1 = EncodeHexTx(*block.vtx[0]);
 		results.pushKV("blockhex", sBlockHex1);
 		results.pushKV("txhex", sTxCoinbaseHex1);
+    } else if (sItem == "versionreport") 
+    {
+                UniValue r = GetVersionReport();
+                results.pushKV("version_report", r);
     }
 	else if (sItem == "sendmanyxml")
 	{

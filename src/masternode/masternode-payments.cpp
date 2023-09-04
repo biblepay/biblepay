@@ -344,7 +344,7 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
         	int nStatus = mapPOVSStatus[sKey];
             int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
             // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
-			if (nPoseScore > 0)
+			if (nPoseScore > 0 || nStatus == 255)
 			{
                 // Investors get 50%, sancs get 100%
                 masternodeReward = (masternodeReward * 5000) / 10000;
