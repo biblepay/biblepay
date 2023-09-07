@@ -243,7 +243,8 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
         CSuperblockManager::GetSuperblockPayments(nBlockHeight, voutSuperblockPaymentsRet);
     }
 
-    if (!CMasternodePayments::GetMasternodeTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet)) {
+    bool fOutInvestorBlock = false;
+    if (!CMasternodePayments::GetMasternodeTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet, fOutInvestorBlock)) {
         LogPrint(BCLog::MNPAYMENTS, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
     }
 
@@ -257,6 +258,12 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
         if (!voutMasternodeStr.empty())
             voutMasternodeStr += ",";
         voutMasternodeStr += txout.ToString();
+    }
+
+    if (fOutInvestorBlock)
+    {
+        // Investors get 50%, sancs get 100%
+        txNew.vout[0].nValue = (txNew.vout[0].nValue * 5000) / 10000;
     }
 
     // BiblePay
@@ -289,12 +296,13 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
 *   Get masternode payment tx outputs
 */
 
-bool CMasternodePayments::GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet)
+bool CMasternodePayments::GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, 
+    std::vector<CTxOut>& voutMasternodePaymentsRet, bool& fOutInvestorBlock)
 {
     // make sure it's not filled yet
     voutMasternodePaymentsRet.clear();
 
-    if(!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet)) {
+    if(!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet, fOutInvestorBlock)) {
         LogPrintf("CMasternodePayments::%s -- no payee (deterministic masternode list empty)\n", __func__);
         return false;
     }
@@ -309,7 +317,8 @@ bool CMasternodePayments::GetMasternodeTxOuts(int nBlockHeight, CAmount blockRew
     return true;
 }
 
-bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet)
+bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
+    std::vector<CTxOut>& voutMasternodePaymentsRet, bool& fOutInvestorBlock)
 {
     voutMasternodePaymentsRet.clear();
 
@@ -348,6 +357,7 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
 			{
                 // Investors get 50%, sancs get 100%
                 masternodeReward = (masternodeReward * 5000) / 10000;
+                fOutInvestorBlock = true;
 			}
 		}
 	}
@@ -390,7 +400,8 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
     }
 
     std::vector<CTxOut> voutMasternodePayments;
-    if (!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePayments)) {
+    bool fOutInvestorBlock = false;
+    if (!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePayments, fOutInvestorBlock)) {
         LogPrintf("CMasternodePayments::%s -- ERROR failed to get payees for block at height %s\n", __func__, nBlockHeight);
         return true;
     }

@@ -30,10 +30,10 @@ extern CMasternodePayments mnpayments;
 class CMasternodePayments
 {
 public:
-    static bool GetBlockTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet);
+    static bool GetBlockTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet, bool& fOutInvestorBlock);
     static bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight, CAmount blockReward);
 
-    static bool GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet);
+    static bool GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet, bool& fOutInvestorBlock);
 };
 
 #endif // BITCOIN_MASTERNODE_MASTERNODE_PAYMENTS_H

@@ -199,6 +199,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // NOTE: unlike in bitcoin, we need to pass PREVIOUS block height here
     CAmount blockReward = nFees + GetBlockSubsidy(pindexPrev->nBits, pindexPrev->nHeight, Params().GetConsensus());
 
+    // RANDREWS - BIBLEPAY - 9-5-2023 - IF this is an investor block, start at half here:
+
     // Compute regular coinbase transaction.
     coinbaseTx.vout[0].nValue = blockReward;
 
