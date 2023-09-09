@@ -262,8 +262,8 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
 
     if (fOutInvestorBlock)
     {
-        // Investors get 50%, sancs get 100%
-        txNew.vout[0].nValue = (txNew.vout[0].nValue * 5000) / 10000;
+        // Investors get 50%, active sancs get 100%, Investment block miners get 7 BBP.
+        txNew.vout[0].nValue = 7 * COIN;
     }
 
     // BiblePay
@@ -355,7 +355,7 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
             // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
 			if (nPoseScore > 0 || nStatus == 255)
 			{
-                // Investors get 50%, sancs get 100%
+                // Investors get 50% in txout1, active sancs get 100%, therefore mining txout[0] should be very low.
                 masternodeReward = (masternodeReward * 5000) / 10000;
                 fOutInvestorBlock = true;
 			}
