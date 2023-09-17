@@ -145,15 +145,17 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
     if (!ptx.collateralOutpoint.hash.IsNull()) {
         Coin coin;
-        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || !IsSanctuaryCollateral( coin.out.nValue )) {
-            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
+        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || !IsSanctuaryCollateral( coin.out.nValue )) 
+        {
+            LogPrintf("bad-protx-collateral-check-proreg-tx %f", (double)coin.out.nValue / COIN);
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-check-proreg-tx");
         }
 
         if (pindexPrev->nHeight < Params().GetConsensus().LATTER_RAIN_HEIGHT)
         {
             if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != SANCTUARY_COLLATERAL * COIN)
             {
-                return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
+                return state.DoS(10, false, REJECT_INVALID, "prematurely-bad-protx-collateral");
             }
         }
 
@@ -173,8 +175,19 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
         if (ptx.collateralOutpoint.n >= tx.vout.size()) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-index");
         }
-        if (tx.vout[ptx.collateralOutpoint.n].nValue != SANCTUARY_COLLATERAL * COIN) {
-            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
+
+
+        if (pindexPrev->nHeight < Params().GetConsensus().LATTER_RAIN_HEIGHT)
+        {
+            if (tx.vout[ptx.collateralOutpoint.n].nValue != SANCTUARY_COLLATERAL * COIN)
+            {
+                return state.DoS(10, false, REJECT_INVALID, "premature-bad-protx-collateral-000");
+            }
+        }
+        else if (!IsSanctuaryCollateral(tx.vout[ptx.collateralOutpoint.n].nValue)) 
+        {
+            LogPrintf("bad-protx-collateral-00 %f", (double)coin.out.nValue / COIN);
+            return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-00");
         }
 
         if (!ExtractDestination(tx.vout[ptx.collateralOutpoint.n].scriptPubKey, collateralTxDest)) {
