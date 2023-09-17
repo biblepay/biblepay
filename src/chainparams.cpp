@@ -195,9 +195,8 @@ static Consensus::LLMQParams llmq_devnet = {
         .recoveryMembers = 6,
 };
 
-// this one is for testing only
 
-// biblepay
+// BIBLEPAY - TESTNET
 static Consensus::LLMQParams llmq_test = {
         .type = Consensus::LLMQ_TEST,
         .name = "llmq_test",
@@ -209,13 +208,13 @@ static Consensus::LLMQParams llmq_test = {
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 3,
-
+        .dkgBadVotesThreshold = 7,
         .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
-
         .keepOldConnections = 3,
         .recoveryMembers = 3,
 };
+
+// BIBLEPAY - LLMQ for InstantSend:
 static Consensus::LLMQParams llmq5_60 = {
         .type = Consensus::LLMQ_5_60,
         .name = "llmq_5_60",
@@ -235,6 +234,7 @@ static Consensus::LLMQParams llmq5_60 = {
         .recoveryMembers = 3,
 };
 
+// BIBLEPAY - September 2023 - Temple Logic - LLMQ Chainlocks here:
 static Consensus::LLMQParams llmq400_60 = {
         .type = Consensus::LLMQ_400_60,
         .name = "llmq_400_60",
@@ -531,7 +531,7 @@ public:
 		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
         consensus.EXODUS_HEIGHT = 183000;
         consensus.REDSEA_HEIGHT = 183000;
-        consensus.LATTER_RAIN_HEIGHT = 499000;
+        consensus.LATTER_RAIN_HEIGHT = 192200;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock

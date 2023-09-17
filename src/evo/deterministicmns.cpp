@@ -83,6 +83,10 @@ std::string CDeterministicMN::Tribe() const
     uint64_t tribeHash = (CHashWriter(SER_GETHASH, 0) << proTxHash).GetHash().GetCheapHash();
     int nTribeModulus = tribeHash % 12;
     std::string sTribe = GetElement(TWELVE_TRIBES_OF_ISRAEL, ",", nTribeModulus);
+    if (GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE)
+    {
+        return std::string();
+    }
     return sTribe;
 }
 

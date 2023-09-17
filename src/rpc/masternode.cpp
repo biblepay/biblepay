@@ -661,7 +661,7 @@ UniValue masternodelist(const JSONRPCRequest& request)
             // BIBLEPAY
             bool fMine = IsMyAddress(payeeStr);
             objMN.pushKV("IsMine", fMine);
-            objMN.pushKV("collateral_amount", dmn->GetCollateralAmount());
+            objMN.pushKV("collateral_amount", (double)dmn->GetCollateralAmount()/COIN);
             objMN.pushKV("tribe", dmn->Tribe());
             int nPovs = mapPOVSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()];
             objMN.pushKV("pose_ban", nPovs);

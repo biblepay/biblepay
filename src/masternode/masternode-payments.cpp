@@ -332,7 +332,7 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
     std::vector<CTxOut>& voutMasternodePaymentsRet, int& nOutSanctuaryType)
 {
     voutMasternodePaymentsRet.clear();
-
+    const Consensus::Params& consensusParams = Params().GetConsensus();
     const CBlockIndex* pindex;
     int nReallocActivationHeight{std::numeric_limits<int>::max()};
 
@@ -340,7 +340,6 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
         LOCK(cs_main);
         pindex = chainActive[nBlockHeight - 1];
 
-        const Consensus::Params& consensusParams = Params().GetConsensus();
         if (VersionBitsState(pindex, consensusParams, Consensus::DEPLOYMENT_REALLOC, versionbitscache) == ThresholdState::ACTIVE) {
             nReallocActivationHeight = VersionBitsStateSinceHeight(pindex, consensusParams, Consensus::DEPLOYMENT_REALLOC, versionbitscache);
         }
@@ -354,9 +353,7 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
     }
 
     // R Andrews - BBP - 9-16-2023
-    
-
-	// POVS (Proof-of-video-streaming) - R ANDREWS - 3-29-2022
+	// POVS (Proof-of-video-streaming)
     bool fReduced = false;
 	if (pindex != NULL)
 	{
@@ -380,15 +377,20 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
 
 
     // Temple, Altar, and Sanctuary Payment logic
-         Coin coin;
-
-         if (GetUTXOCoin(dmnPayee->collateralOutpoint, coin)) 
-         {
+    if (nBlockHeight > consensusParams.LATTER_RAIN_HEIGHT)
+    {
+           Coin coin;
+           if (GetUTXOCoin(dmnPayee->collateralOutpoint, coin)) 
+           {
                 if (coin.out.nValue == SANCTUARY_COLLATERAL_TEMPLE * COIN) 
                 {
                     if (!fReduced) 
                     {
                         masternodeReward = (masternodeReward * 10);
+                        if (masternodeReward > MAX_BLOCK_SUBSIDY * COIN)
+                        {
+                            masternodeReward = MAX_BLOCK_SUBSIDY * COIN * .90;
+                        }
                     }
                     nOutSanctuaryType = 7;
                 }
@@ -401,8 +403,8 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
                 {
                     nOutSanctuaryType = 6;
                 }
-         }
-
+           }
+    }
 
     CAmount operatorReward = 0;
     if (dmnPayee->nOperatorReward != 0 && dmnPayee->pdmnState->scriptOperatorPayout != CScript()) {

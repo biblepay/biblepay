@@ -149,6 +149,14 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
         }
 
+        if (pindexPrev->nHeight < Params().GetConsensus().LATTER_RAIN_HEIGHT)
+        {
+            if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != SANCTUARY_COLLATERAL * COIN)
+            {
+                return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
+            }
+        }
+
         if (!ExtractDestination(coin.out.scriptPubKey, collateralTxDest)) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-dest");
         }
