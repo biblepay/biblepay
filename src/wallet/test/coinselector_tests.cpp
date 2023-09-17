@@ -9,6 +9,7 @@
 #include <random.h>
 #include <test/test_biblepay.h>
 #include <wallet/test/wallet_test_fixture.h>
+#include <validation.h>
 
 #include <boost/test/unit_test.hpp>
 #include <random>
@@ -504,7 +505,7 @@ BOOST_AUTO_TEST_CASE(ApproximateBestSubset)
 
     // Test vValue sort order
     for (int i = 0; i < 1000; i++)
-        add_coin(4500001 * COIN);
+        add_coin(SANCTUARY_COLLATERAL * COIN);
     add_coin(3 * COIN);
 
     BOOST_CHECK(testWallet.SelectCoinsMinConf(1003 * COIN, filter_standard, vCoins, setCoinsRet, nValueRet, coin_selection_params, bnb_used));

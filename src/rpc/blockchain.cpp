@@ -2320,6 +2320,66 @@ void AppendMasternodeFile(std::string sFile, std::string sData)
     fclose(configFile);
 }
 
+double GetBlockVersion(std::string sXML)
+{
+    std::string sBlockVersion = ExtractXML(sXML, "<VER>", "</VER>");
+    sBlockVersion = strReplace(sBlockVersion, ".", "");
+    sBlockVersion = strReplace(sBlockVersion, "v", "");
+    sBlockVersion = strReplace(sBlockVersion, "-", "");
+
+    if (sBlockVersion.length() == 3) sBlockVersion += "0";
+    double dBlockVersion = StringToDouble(sBlockVersion, 0);
+    return dBlockVersion;
+}
+
+static std::map<std::string, double> mvBlockVersion;
+void ScanBlockChainVersion(int nLookback)
+{
+    mvBlockVersion.clear();
+    int nMaxDepth = chainActive.Tip()->nHeight;
+    int nMinDepth = (nMaxDepth - nLookback);
+    if (nMinDepth < 1) nMinDepth = 1;
+    CBlock block;
+    CBlockIndex* pblockindex = chainActive.Tip();
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    while (pblockindex->nHeight > nMinDepth) {
+        if (!pblockindex || !pblockindex->pprev) return;
+        pblockindex = pblockindex->pprev;
+        if (ReadBlockFromDisk(block, pblockindex, consensusParams)) {
+            std::string sVersion = DoubleToString(GetBlockVersion(block.vtx[0]->vout[0].sTxOutMessage), 0);
+            mvBlockVersion[sVersion]++;
+        }
+    }
+}
+
+UniValue GetVersionReport()
+{
+    UniValue ret(UniValue::VOBJ);
+    // Returns a report of the BiblePay version that has been solving blocks over the last N blocks
+    ScanBlockChainVersion(BLOCKS_PER_DAY);
+    std::string sBlockVersion;
+    std::string sReport = "Version, Popularity\r\n";
+    std::string sRow;
+    double dPct = 0;
+    ret.push_back(Pair("Version", "Popularity,Percent %"));
+    double Votes = 0;
+    for (auto ii : mvBlockVersion) {
+        double Popularity = mvBlockVersion[ii.first];
+        Votes += Popularity;
+    }
+    for (auto ii : mvBlockVersion) {
+        double Popularity = mvBlockVersion[ii.first];
+        sBlockVersion = ii.first;
+        if (Popularity > 0) {
+            sRow = sBlockVersion + "," + DoubleToString(Popularity, 0);
+            sReport += sRow + "\r\n";
+            dPct = Popularity / (Votes + .01) * 100;
+            ret.push_back(Pair(sBlockVersion, DoubleToString(Popularity, 0) + "; " + DoubleToString(dPct, 2) + "%"));
+        }
+    }
+    return ret;
+}
+
 
 UniValue exec(const JSONRPCRequest& request)
 {
@@ -2364,7 +2424,88 @@ UniValue exec(const JSONRPCRequest& request)
 		{
 			results.pushKV("error", "block not found");
 		}
-	}
+    }
+    else if (sItem == "getvideolist")
+    {
+        BBPResult b = UnchainedGet("getvideolist");
+        if (b.ErrorCode.empty())
+        {
+           results.pushKV("Error", b.ErrorCode);
+        } else {
+           results.pushKV("VideoList", b.Response);
+        }
+    }
+    else if (sItem == "registertemple")
+    {
+        std::string sTempleList = request.params[1].get_str();
+        std::vector<std::string> vTemples = Split(sTempleList.c_str(), ";");
+        
+        if (vTemples.size() != 10) {
+              throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Temple list must contain 10 sanctuaries.");
+        }
+        // 9-10-2023
+        std::string sRegPacket = "";
+        std::string sConsumed = "";
+
+        results.pushKV("s1", "1");
+        
+        for (int i = 0; i < vTemples.size(); i++) 
+        {
+
+              std::string sSearch = vTemples[i];
+              LogPrintf("\nStep 999.%s", sSearch);
+
+              std::string sSanc = ScanDeterministicConfigFile(sSearch);
+              LogPrintf("\nStep 1000.%f", i);
+
+              if (sSanc.empty())
+                     throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Unable to find sanctuary " + sSearch + " in deterministic.conf file.");
+              std::vector<std::string> vSanc = Split(sSanc.c_str(), " ");
+              if (vSanc.size() < 9)
+                    throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Sanctuary entry in deterministic.conf corrupted for entry " + sSearch + "; (does not contain at least 9 parts.) Format should be: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-funding-sent-txid.");
+              LogPrintf("\nStep 1001.%f", i);
+
+              std::string sSancName = vSanc[0];
+              std::string sSancIP = vSanc[1];
+              std::string sBLSPrivKey = vSanc[3];
+              std::string sProReg = vSanc[6];
+              std::string sOpAddress = vSanc[7];
+              LogPrintf("Step 1002.%f", i);
+
+              // Ensure the Sanc is not POSE banned right now
+              int nStatus = mapPOVSStatus[sOpAddress];
+              LogPrintf("Step 1003.%f", i);
+
+              bool fIsMine = IsMySanc(sProReg); // This means the sanc is registered, collateral is good, and the sanc is owned by me
+              LogPrintf("Step 1004.%f", i);
+
+              if (!fIsMine)
+              {
+                      throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Sorry, but this sanc [" + sSearch + "] is either not registered with a ProRegTxId, is not owned by your wallet, or the collateral cannot be found on the chain.");
+              }
+              if (nStatus != 1)
+              {
+                      throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "This sanc [" + sSearch + "] is POSE banned; unable to create a Temple.");
+              }
+
+              if (Contains(sConsumed, sSearch))
+              {
+                      throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Each sanctuary [" + sSearch + "] must be distinct");
+              }
+
+              std::string sRow = "<sanc><proregtxid>" + sProReg + "</proregtxid><ip>" 
+                  + sSancIP + "</ip><name>" + sSancName + "</name></sanc>";
+              sRegPacket += sRow;
+              sConsumed += sSearch + ",";
+              LogPrintf("\nStep 1005.%f", i);
+
+        }
+        // Now we can try to register the Temple - everything looks good
+        LogPrintf("\nStep 1006.%f", 1);
+
+
+        results.pushKV("data", sRegPacket);
+    }
 	else if (sItem == "blocktohex")
 	{
 		std::string sBlockHex = request.params[1].get_str();
@@ -2378,7 +2519,11 @@ UniValue exec(const JSONRPCRequest& request)
 		std::string sTxCoinbaseHex1 = EncodeHexTx(*block.vtx[0]);
 		results.pushKV("blockhex", sBlockHex1);
 		results.pushKV("txhex", sTxCoinbaseHex1);
-	}
+    } else if (sItem == "versionreport") 
+    {
+                UniValue r = GetVersionReport();
+                results.pushKV("version_report", r);
+    }
 	else if (sItem == "sendmanyxml")
 	{
 		// Pools: Allows pools to send a multi-output tx with ease
@@ -2527,7 +2672,14 @@ UniValue exec(const JSONRPCRequest& request)
             s.ToJson(o);
     		results.pushKV(ii.first, o);
 		}
-	}
+    }
+    else if (sItem == "probesanc")
+    {
+        std::string sProReg = request.params[1].get_str();
+        CAmount n= GetSancCollateralAmount(sProReg);
+        double nAmt = n / COIN;
+        results.pushKV("amt", nAmt);
+    }
     else if (sItem == "fundsanc")
     {
         if (request.params.size() != 3)
@@ -2553,7 +2705,7 @@ UniValue exec(const JSONRPCRequest& request)
         int nPort = sNetworkID == "test" ? 40001 : 40000;
         std::string sSancIP = sIP + ":" + DoubleToString(nPort, 0);
         CAmount nBalance = GetWalletBalance();
-        if (nBalance/COIN < 4500002)
+        if (nBalance/COIN < SANCTUARY_COLLATERAL)
         {
             throw std::runtime_error("You must have at least 4.5MM available to fund a new sanctuary.  Also, please ensure your wallet is unlocked. ");
         }
@@ -2561,7 +2713,7 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sError = "";
         std::string sTXID ="";
         int nVoutPosition = 0;
-        CAmount nAmount = 4500001 * COIN;
+        CAmount nAmount = SANCTUARY_COLLATERAL * COIN;
         std::string sMySancAddress = DefaultRecAddress(sSancName + "-sanc");  // Keeps this name from clashing with "-v" (voting address)
         bool f = RPCSendMoney(sError, sMySancAddress, nAmount, sTXID, "", nVoutPosition);
 
@@ -2588,17 +2740,6 @@ UniValue exec(const JSONRPCRequest& request)
         LogPrintf("\r\nChecking %s - response [%s]", sPage, sResponse);
         std::string sScratch = ExtractXML(sResponse, "<scratch>", "</scratch>");
         results.pushKV("Scratch", sScratch);
-    }
-    else if (sItem == "test11")
-    {
-        
-       int nBMS_PORT = 8443;
-        std::string sBaseDomain = "https://globalcdn.biblepay.org";
-            std::string sPage = "BMS/GetStorageBalance2";
-                std::string sResponse = Uplink(false, "", sBaseDomain, sPage, nBMS_PORT, 15, 4);
-                    std::string sTI = ExtractXML(sResponse, "<totalitems>","</totalitems>");
-               results.pushKV("BBP Public Key", sTI);
-
     }
 	else if (sItem == "upgradesanc" || sItem=="createsanc")
 	{

@@ -81,7 +81,12 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
 	{
 		blockReward = GetDailyPaymentsLimit(nBlockHeight);
 	}
-	// End of Biblepay
+    // Biblepay - RAndrews - for Temples, we enforce the reward in IsTransactionValid, but here we need to allow more room for standard chain sync checks
+    if (block.vtx[0]->vout[0].nValue == 7 * COIN)
+    {
+         blockReward = MAX_BLOCK_SUBSIDY * COIN;
+    }
+    // End of Biblepay
 
     bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= (blockReward + ARM64()));
 
@@ -156,7 +161,7 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount blockRewar
     // this actually also checks for correct payees and not only amount
     if (!CSuperblockManager::IsValid(*block.vtx[0], nBlockHeight, blockReward)) {
         // triggered but invalid? that's weird
-        LogPrintf("%s -- ERROR: Invalid superblock detected at height %d: %s", __func__, nBlockHeight, block.vtx[0]->ToString()); /* Continued */
+        LogPrintf("%s -- ERROR: Invalid superblock detected at height %d: %s", __func__, nBlockHeight, block.vtx[0]->ToString()); 
         // should NOT allow invalid superblocks, when superblocks are enabled
         strErrorRet = strprintf("invalid superblock detected at height %d", nBlockHeight);
         return false;
@@ -234,7 +239,8 @@ bool IsBlockPayeeValid(const CTransaction& txNew, int nBlockHeight, CAmount bloc
     return false;
 }
 
-void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet, std::vector<CTxOut>& voutSuperblockPaymentsRet)
+void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blockReward, 
+    std::vector<CTxOut>& voutMasternodePaymentsRet, std::vector<CTxOut>& voutSuperblockPaymentsRet)
 {
     // only create superblocks if spork is enabled AND if superblock is actually triggered
     // (height should be validated inside)
@@ -243,7 +249,9 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
         CSuperblockManager::GetSuperblockPayments(nBlockHeight, voutSuperblockPaymentsRet);
     }
 
-    if (!CMasternodePayments::GetMasternodeTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet)) {
+    int nOutSanctuaryType = 0;
+    
+    if (!CMasternodePayments::GetMasternodeTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet, nOutSanctuaryType)) {
         LogPrint(BCLog::MNPAYMENTS, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
     }
 
@@ -253,12 +261,22 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
     std::string voutMasternodeStr;
     for (const auto& txout : voutMasternodePaymentsRet) {
         // subtract MN payment from miner reward
-        txNew.vout[0].nValue -= txout.nValue;
+        if (false) 
+        {
+            // BIBLEPAY sets the static value below depending on the sanctuary type.
+            txNew.vout[0].nValue -= txout.nValue;
+        }
         if (!voutMasternodeStr.empty())
             voutMasternodeStr += ",";
         voutMasternodeStr += txout.ToString();
     }
 
+    // RAndrews::We simply pay 7 to the miner since they are mining from the actual sanctuary.
+    // 9-16-2023
+
+    // Investors get 50%, active sancs get 100%, Investment block miners get 7 BBP.
+    txNew.vout[0].nValue = nOutSanctuaryType * COIN;
+ 
     // BiblePay
     
     const CChainParams& chainparams = Params();
@@ -289,12 +307,13 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
 *   Get masternode payment tx outputs
 */
 
-bool CMasternodePayments::GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet)
+bool CMasternodePayments::GetMasternodeTxOuts(int nBlockHeight, CAmount blockReward, 
+    std::vector<CTxOut>& voutMasternodePaymentsRet, int& nOutSanctuaryType)
 {
     // make sure it's not filled yet
     voutMasternodePaymentsRet.clear();
 
-    if(!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet)) {
+    if(!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePaymentsRet, nOutSanctuaryType)) {
         LogPrintf("CMasternodePayments::%s -- no payee (deterministic masternode list empty)\n", __func__);
         return false;
     }
@@ -309,7 +328,8 @@ bool CMasternodePayments::GetMasternodeTxOuts(int nBlockHeight, CAmount blockRew
     return true;
 }
 
-bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, std::vector<CTxOut>& voutMasternodePaymentsRet)
+bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward,
+    std::vector<CTxOut>& voutMasternodePaymentsRet, int& nOutSanctuaryType)
 {
     voutMasternodePaymentsRet.clear();
 
@@ -333,7 +353,11 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
         return false;
     }
 
+    // R Andrews - BBP - 9-16-2023
+    
+
 	// POVS (Proof-of-video-streaming) - R ANDREWS - 3-29-2022
+    bool fReduced = false;
 	if (pindex != NULL)
 	{
 		double nBanning = 1;
@@ -344,14 +368,41 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
         	int nStatus = mapPOVSStatus[sKey];
             int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
             // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
-			if (nPoseScore > 0)
+			if (nPoseScore > 0 || nStatus == 255)
 			{
-                // Investors get 50%, sancs get 100%
+                // Investors get 50% in txout1, active sancs get 100%, therefore mining txout[0] should be very low.
                 masternodeReward = (masternodeReward * 5000) / 10000;
+                fReduced = true;
 			}
 		}
 	}
 	// End of POVS
+
+
+    // Temple, Altar, and Sanctuary Payment logic
+         Coin coin;
+
+         if (GetUTXOCoin(dmnPayee->collateralOutpoint, coin)) 
+         {
+                if (coin.out.nValue == SANCTUARY_COLLATERAL_TEMPLE * COIN) 
+                {
+                    if (!fReduced) 
+                    {
+                        masternodeReward = (masternodeReward * 10);
+                    }
+                    nOutSanctuaryType = 7;
+                }
+                else if (coin.out.nValue == SANCTUARY_COLLATERAL_ALTAR * COIN) 
+                {
+                    masternodeReward = (masternodeReward * 1000) / 10000;
+                    nOutSanctuaryType = 5;
+                }
+                else if (coin.out.nValue == SANCTUARY_COLLATERAL * COIN) 
+                {
+                    nOutSanctuaryType = 6;
+                }
+         }
+
 
     CAmount operatorReward = 0;
     if (dmnPayee->nOperatorReward != 0 && dmnPayee->pdmnState->scriptOperatorPayout != CScript()) {
@@ -390,7 +441,8 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
     }
 
     std::vector<CTxOut> voutMasternodePayments;
-    if (!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePayments)) {
+    int nOutSanctuaryType = 0;
+    if (!GetBlockTxOuts(nBlockHeight, blockReward, voutMasternodePayments, nOutSanctuaryType)) {
         LogPrintf("CMasternodePayments::%s -- ERROR failed to get payees for block at height %s\n", __func__, nBlockHeight);
         return true;
     }
@@ -410,7 +462,13 @@ bool CMasternodePayments::IsTransactionValid(const CTransaction& txNew, int nBlo
 				// txout2 contains the 'purported' values (from the network); txout contains the sanctuaries calculated values
 				CAmount nAmount1 = txout.nValue;
 				CAmount nAmount2 = txout2.nValue;
-                if (sRecipient1 == sRecipient2) 
+                // Only Temples can receive more than the standard block reward in vout[1...n].
+                bool fSancPaymentVerified = true;
+                if (nAmount2 > blockReward && nOutSanctuaryType != 7)
+                {
+                    fSancPaymentVerified = false;
+                }
+                if (sRecipient1 == sRecipient2 && fSancPaymentVerified) 
                 {
                     found = true;
                     break;

@@ -11,6 +11,7 @@
 #include <coins.h>
 #include <hash.h>
 #include <messagesigner.h>
+#include <rpcpog.h>
 #include <script/standard.h>
 #include <validation.h>
 
@@ -144,7 +145,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 
     if (!ptx.collateralOutpoint.hash.IsNull()) {
         Coin coin;
-        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != SANCTUARY_COLLATERAL * COIN) {
+        if (!view.GetCoin(ptx.collateralOutpoint, coin) || coin.IsSpent() || !IsSanctuaryCollateral( coin.out.nValue )) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral");
         }
 

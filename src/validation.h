@@ -184,6 +184,10 @@ extern int64_t nMaxTipAge;
 static const int BLOCKS_PER_DAY = 205;
 static const int MAX_BLOCK_SUBSIDY = 20000;
 static const int SANCTUARY_COLLATERAL = 4500001;
+static const int SANCTUARY_COLLATERAL_TEMPLE = 45000001;
+static const int SANCTUARY_COLLATERAL_ALTAR = 450001;
+static const std::string TWELVE_TRIBES_OF_ISRAEL = "Reuben,Simeon,Levi,Judah,Dan,Naphtali,Gad,Asher,Issachar,Zebulun,Joseph,Benjamin";
+
 extern int64_t nHPSTimerStart;
 extern std::map<std::string, int> mapPOVSStatus;
 extern std::map<std::string, Sidechain> mapSidechain;

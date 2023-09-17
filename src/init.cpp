@@ -2493,10 +2493,8 @@ LogPrintf("step %f", 708);
     // ********************************************************* Step 13: finished
 
 	// BiblePay
-
 	LockStakes();
-    // mission critical remove  the  true
-    if (fMasternodeMode || true)
+    if (fMasternodeMode)
     {
         GenerateCoins(true, 1, Params());
     }

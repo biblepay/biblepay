@@ -263,6 +263,8 @@ public:
 
     std::string ToString() const;
     void ToJson(UniValue& obj) const;
+    CAmount GetCollateralAmount() const;
+    std::string Tribe() const;
 };
 typedef std::shared_ptr<const CDeterministicMN> CDeterministicMNCPtr;
 
@@ -457,7 +459,7 @@ public:
      */
     std::vector<CDeterministicMNCPtr> CalculateQuorum(size_t maxSize, const uint256& modifier) const;
     std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CalculateScores(const uint256& modifier) const;
-
+    
     /**
      * Calculates the maximum penalty which is allowed at the height of this MN list. It is dynamic and might change
      * for every block.

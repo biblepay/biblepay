@@ -661,8 +661,11 @@ UniValue masternodelist(const JSONRPCRequest& request)
             // BIBLEPAY
             bool fMine = IsMyAddress(payeeStr);
             objMN.pushKV("IsMine", fMine);
+            objMN.pushKV("collateral_amount", dmn->GetCollateralAmount());
+            objMN.pushKV("tribe", dmn->Tribe());
+            int nPovs = mapPOVSStatus[dmn->pdmnState->pubKeyOperator.Get().ToString()];
+            objMN.pushKV("pose_ban", nPovs);
             // End of BiblePay
-            
             objMN.pushKV("status", dmnToStatus(dmn));
             objMN.pushKV("lastpaidtime", dmnToLastPaidTime(dmn));
             objMN.pushKV("lastpaidblock", dmn->pdmnState->nLastPaidHeight);

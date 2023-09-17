@@ -199,6 +199,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // NOTE: unlike in bitcoin, we need to pass PREVIOUS block height here
     CAmount blockReward = nFees + GetBlockSubsidy(pindexPrev->nBits, pindexPrev->nHeight, Params().GetConsensus());
 
+    // RANDREWS - BIBLEPAY - 9-5-2023 - IF this is an investor block, start at half here:
+
     // Compute regular coinbase transaction.
     coinbaseTx.vout[0].nValue = blockReward;
 
@@ -695,7 +697,16 @@ bool fAllowedToMine = true;
 						{
 							LogPrintf("\nblock rejected.");
 							MilliSleep(15000);
-						}
+                        }
+                        else
+                        {
+                            // To prevent Chainlocks conflicts, allow the miner to sleep a while here
+                            // If we solve multiple blocks in a row, this node can end up with a chainlocks conflict
+                           if (chainparams.NetworkIDString() == CBaseChainParams::MAIN) 
+                           {
+                                MilliSleep(120000);
+                           }
+                        }
 						coinbaseScript->KeepScript();
 						// In regression test mode, stop mining after a block is found. This
 						// allows developers to controllably generate a block on demand.
@@ -726,8 +737,12 @@ bool fAllowedToMine = true;
 							break;
 						}
 					}
-
-                    if (chainActive.Tip()->nHeight > chainparams.GetConsensus().REDSEA_HEIGHT) 
+                    
+                    if (iThreadID == 0) 
+                    {
+                        MilliSleep(100);
+                    }
+                    else if (chainActive.Tip()->nHeight > chainparams.GetConsensus().REDSEA_HEIGHT)
                     {
                         MilliSleep(10);
                     }

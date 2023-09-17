@@ -632,6 +632,55 @@ std::string PrepareReq(bool bPost, std::string sPage, std::string sHostHeader, c
     return s.str();
 }
 
+
+static int nConnectSucceeded = 0;
+
+void private_connect_handler(const boost::system::error_code& error)
+{
+    if (!error) {
+        // Connect succeeded.
+        nConnectSucceeded = 1;
+    }
+    else
+    {
+        nConnectSucceeded = -1;
+    }
+}
+
+bool TcpTest(std::string sIP, int nPort, int nTimeout)
+{
+    try 
+    {
+        typedef boost::asio::ip::tcp tcp;
+        boost::shared_ptr<boost::asio::io_service> io_service(new boost::asio::io_service);
+        boost::shared_ptr<tcp::socket> socket(new tcp::socket(*io_service));
+        tcp::resolver resolver(*io_service);
+        tcp::resolver::query query(sIP, boost::lexical_cast<std::string>(nPort));
+        tcp::resolver::iterator myEP = resolver.resolve(query);
+        tcp::endpoint myEndpoint(boost::asio::ip::address::from_string(sIP), nPort);
+        boost::system::error_code connectEc;
+        nConnectSucceeded = 0;
+        socket->async_connect(myEndpoint, private_connect_handler);
+        for (int i = 0; i < nTimeout; i++)
+        {
+            io_service->poll();
+            if (nConnectSucceeded != 0)
+            {
+                 break;
+            }
+            boost::this_thread::interruption_point();
+            MilliSleep(1000);
+        }
+        return (nConnectSucceeded == 1) ? true : false;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+
+
 static double HTTP_PROTO_VERSION = 2.0;
 std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, 
         int iTimeoutSecs, int iBOE, std::map<std::string, std::string> mapRequestHeaders, std::string TargetFileName, bool fJson)
@@ -666,6 +715,20 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
         if (fJson)
             mapRequestHeaders["Content-Type"] = "application/json";
+        
+        /* UNCHAINED BEGIN */
+        // In this section, we provide the Public unchained key, and signature, so we can query cockroachdb
+        // for a report
+        std::string sPublicKey;
+        std::string sPrivKey;
+        ReadUnchainedConfigFile(sPublicKey, sPrivKey);
+        mapRequestHeaders["unchained-public-key"] = sPublicKey;
+        std::string sSignError;
+        std::string sSig = SignMessageEvo(sPublicKey, "authenticate", sSignError);
+        LogPrintf("\nUpink::BBPPub::%s,privlen%f,Signed::%s", sPublicKey, sPrivKey.length(), sSig);
+        mapRequestHeaders["unchained-auth-signature"] = sSig;
+        /* UNCHAINED END */
+
 
         BIO* bio;
         // Todo add connection timeout here to bio object
@@ -849,16 +912,30 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
 
 
+static std::string msBaseDomain = "https://unchained.biblepay.org";
 
 static int SSL_PORT = 443;
 BBPResult UnchainedQuery(std::string sXMLSource, std::string sAPI)
 {
-    std::string sDomain = "https://unchained.biblepay.org";
     int iTimeout = 30000;
     BBPResult b;
-    b.Response = Uplink(false, "", sDomain, sAPI, SSL_PORT, iTimeout, 4);
+    b.Response = Uplink(false, "", msBaseDomain, sAPI, SSL_PORT, iTimeout, 4);
     return b;
 }
+
+BBPResult UnchainedGet(std::string sAPIPath)
+{
+    std::string sRandom = DoubleToString(GetAdjustedTime(), 0);
+    std::string sPage = sAPIPath + "?rand=" + sRandom;
+    int nBMS_PORT = 443;
+    std::string sResponse = Uplink(false, sAPIPath, msBaseDomain, sPage, nBMS_PORT, 15, 1);
+    BBPResult b;
+    
+    b.Response = ExtractXML(sResponse, "<json>", "</json>");
+    b.ErrorCode = ExtractXML(sResponse, "<error>", "</error>");
+    b.Response = strReplace(b.Response, "\t", "     ");
+    return b;
+}       
 
 BBPResult SidechainQuery(std::string sXMLSource, std::string sAPI)
 {
@@ -2031,16 +2108,26 @@ std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctu
 static std::string msChecksumKey;
 bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout, int nType)
 {
-    int nBMS_PORT = 8443;
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
     int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
+    // As of September 2023, first we verify the sanc is on an approved port
+
     // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004...
     bool fPortPassed = false;
     if (nPort == 40000 || nPort == 40001 || (nPort >= 10000 && nPort <= 10100))
         fPortPassed=true;
     if (!fPortPassed)
         return false;
-    std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
+    // Second, we verify the sanc is up and running
+    bool fOK = TcpTest(sIP, nPort, 9);
+    return fOK;
+
+    /*
+    * Reserved in case we need to check a cockroachdb node for activity
+    * 
+    *     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
+    int nBMS_PORT = 8443;
+
     std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
     std::string sOK = ExtractXML(sResponse, "Status", "\n");
     // Mission Critical todo
@@ -2062,6 +2149,8 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
 
     bool fOK = Contains(sOK, "SUFFICIENT");
     return fOK;
+    */
+
 }
 
 std::string GetSANDirectory1()
@@ -2539,5 +2628,77 @@ std::string ReviveSanctuariesJob()
     });
     LogPrintf("\r\nReviveSanctuariesBatchJob::%s", sReport);
     return sReport;
+}
+
+bool IsMySanc(std::string sSearchProRegTxHash)
+{
+    bool fExists = false;
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    {
+        mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) {
+            std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+            Coin coin;
+            std::string sCollateralAddress = "UNKNOWN";
+            if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+                CTxDestination collateralDest;
+                if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
+                    sCollateralAddress = EncodeDestination(collateralDest);
+                }
+            }
+            CScript payeeScript = dmn->pdmnState->scriptPayout;
+            CTxDestination payeeDest;
+            std::string payeeStr = "UNKNOWN";
+            if (ExtractDestination(payeeScript, payeeDest)) {
+                payeeStr = EncodeDestination(payeeDest);
+            }
+            bool fMine = IsMyAddress(payeeStr);
+            std::string sProRegTxHash = dmn->proTxHash.ToString();
+            if (sSearchProRegTxHash == sProRegTxHash) {
+                fExists = fMine;
+            }
+        });
+    }
+    return fExists;
+}
+
+CAmount GetSancCollateralAmount(std::string sSearch)
+{
+    CAmount nAmount = 0;
+    
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    {
+        mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) {
+            std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+            Coin coin;
+            std::string sCollateralAddress = "UNKNOWN";
+            if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+                CTxDestination collateralDest;
+                if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
+                    sCollateralAddress = EncodeDestination(collateralDest);
+                }
+            }
+            CScript payeeScript = dmn->pdmnState->scriptPayout;
+            CTxDestination payeeDest;
+            std::string payeeStr = "UNKNOWN";
+            if (ExtractDestination(payeeScript, payeeDest)) {
+                payeeStr = EncodeDestination(payeeDest);
+            }
+            std::string sProRegTxHash = dmn->proTxHash.ToString();
+
+            if (sSearch == sProRegTxHash) {
+                nAmount = coin.out.nValue;
+            }
+        });
+        
+    }
+    return nAmount;
+}
+
+bool IsSanctuaryCollateral(CAmount nAmount)
+{
+    bool fCollateral = (nAmount == SANCTUARY_COLLATERAL * COIN 
+        || nAmount == SANCTUARY_COLLATERAL_TEMPLE * COIN 
+        || nAmount == SANCTUARY_COLLATERAL_ALTAR * COIN) ? true : false;
+    return fCollateral;
 }
 

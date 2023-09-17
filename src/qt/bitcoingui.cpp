@@ -2106,6 +2106,18 @@ std::string GetPlatformRID()
     }
 }
 
+std::string BusyWaitIPC(int nTimeout)
+{
+    for (int i = 0; i < nTimeout; i++) {
+        MilliSleep(1000);
+        std::string sReply = ReceiveIPC();
+        if (!sReply.empty()) {
+            return sReply;
+        }
+    }
+    return std::string();
+}
+
 bool BitcoinGUI::StartUnchained()
 {
     std::string sError = "";
@@ -2172,9 +2184,9 @@ bool BitcoinGUI::StartUnchained()
     sArgs << qsArgs;
     mqpUnchained.startDetached(sApp, sArgs, sAppWorkingDir, &mqiUnchainedPID);
     // Give plenty of time to check the external hash
-    MilliSleep(5000);
+    MilliSleep(1000);
 
-    std::string sReply = ReceiveIPC();
+    std::string sReply = BusyWaitIPC(24);
 
     if (!sReply.empty() && sReply.length() > 5) 
     {

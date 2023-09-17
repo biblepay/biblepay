@@ -138,6 +138,7 @@ struct Params {
 	int BARLEY_HARVEST_HEIGHT;
 	int BARLEY_HARVEST_HEIGHT2;
     int REDSEA_HEIGHT;
+    int LATTER_RAIN_HEIGHT;
     int EXODUS_HEIGHT;
 	int RANDOMX_HEIGHT;
 	int LLMQHeight;

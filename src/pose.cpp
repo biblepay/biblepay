@@ -38,8 +38,8 @@ void ThreadPOVS(CConnman& connman)
 		try
 		{
 			double nBanning = 1;
-			bool fConnectivity = POVSTest("Status", "sanc1.biblepay.org:40000", 15, 2);
-			LogPrintf("POVS::Sanctuary Connectivity Test::%f", fConnectivity);
+			bool fConnectivity = POVSTest("Status", "209.145.56.214:40000", 15, 2);
+			LogPrintf("\r\nPOVS::Sanctuary Connectivity Test::%f", fConnectivity);
 			bool fPOVSEnabled = nBanning == 1 && fConnectivity;
 			int64_t nElapsed = GetAdjustedTime() - nPovsProcessTime;
 			if (nElapsed > (60 * 60 * 24))
@@ -74,7 +74,8 @@ void ThreadPOVS(CConnman& connman)
 					}
 				});
 				// Ban 
-				for (const auto& proTxHash : toBan) {
+				for (const auto& proTxHash : toBan) 
+				{
 					mnList.PoSePunish(proTxHash, mnList.CalcPenalty(100), false);
 				}
 			}

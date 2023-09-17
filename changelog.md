@@ -200,3 +200,14 @@ Changes between 1.6.2.1 and 0.17.1.2 (Mandatory Upgrade @320,000):
 Changes between 0.17.1.3 and 0.17.2.5 (Mandatory upgrade @346,500):
 
 - Add POVS (proof-of-video-streaming); requires sanctuaries to run the BMS software (biblepay video streaming server)
+
+Changes between 0.17.2.6 and 0.17.3.7 (Mandatory upgrade @ 428,000):
+
+- Added revivesanctuaries feature that automatically revives investor sancs once per 24 hours giving them a passive reward
+- Added Sanctuary Mining meaning that Sanctuaries are the only nodes that can mine blocks.
+- Added Unchained Desktop, which allows our user to view streaming videos, view gospel content
+- Added the BiblePay Phone System, which allows our users to make long distance phone calls around the world, and provides a real US phone number
+for them to receive phone calls on
+- Removed Portfolio Builder and Turnkey Sanctuaries in favor of Active/Passive Sanctuaries
+- Adjusted the Block Reward percentages to allocate the entire reward to the sanctuary for the block
+- Removed RandomX heat mining (Kept RandomX hashes in the wallet for Sanctuary block checking)
