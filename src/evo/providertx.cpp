@@ -186,7 +186,6 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
         }
         else if (!IsSanctuaryCollateral(tx.vout[ptx.collateralOutpoint.n].nValue)) 
         {
-            LogPrintf("bad-protx-collateral-00 %f", (double)coin.out.nValue / COIN);
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-00");
         }
 
