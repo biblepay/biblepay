@@ -83,7 +83,7 @@ std::string CDeterministicMN::Tribe() const
     uint64_t tribeHash = (CHashWriter(SER_GETHASH, 0) << proTxHash).GetHash().GetCheapHash();
     int nTribeModulus = tribeHash % 12;
     std::string sTribe = GetElement(TWELVE_TRIBES_OF_ISRAEL, ",", nTribeModulus);
-    if (GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE)
+    if (GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
     {
         return std::string();
     }
@@ -342,7 +342,7 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
         if (chainActive.Tip()->nHeight > chainparams.GetConsensus().LATTER_RAIN_HEIGHT)
         {
             CAmount nAmt = dmn->GetCollateralAmount();
-            if (nAmt != SANCTUARY_COLLATERAL_TEMPLE)
+            if (nAmt != SANCTUARY_COLLATERAL_TEMPLE * COIN)
             {
                 return;
             }
