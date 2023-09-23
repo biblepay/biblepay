@@ -5,6 +5,7 @@
 #include <bench/bench.h>
 #include <wallet/wallet.h>
 #include <wallet/coinselection.h>
+#include <validation.h>
 
 #include <set>
 
@@ -40,12 +41,12 @@ static void CoinSelection(benchmark::State& state)
     while (state.KeepRunning()) {
         // Add coins.
         for (int i = 0; i < 1000; i++)
-            addCoin(4500001 * COIN, wallet, vCoins);
+            addCoin(SANCTUARY_COLLATERAL * COIN, wallet, vCoins);
         addCoin(3 * COIN, wallet, vCoins);
 
         std::set<CInputCoin> setCoinsRet;
         CAmount nValueRet;
-        bool bnb_used;
+        bool bnb_used; 
         CoinEligibilityFilter filter_standard(1, 6, 0);
         CoinSelectionParams coin_selection_params(false, 34, 148, CFeeRate(0), 0);
         bool success = wallet.SelectCoinsMinConf(1003 * COIN, filter_standard, vCoins, setCoinsRet, nValueRet, coin_selection_params, bnb_used)

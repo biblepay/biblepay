@@ -2224,7 +2224,10 @@ void BitcoinGUI::BBPTimer()
     if (nElapsed > (60 * 60 * 12) && m_node.masternodeSync().isSynced()) 
     {
         nLastInvestorSanc = GetAdjustedTime();
-        ReviveSanctuariesJob();
+        /*        ReviveSanctuariesJob();   
+        * Retiring this as I believe we do not need it now.
+        * 
+        * */
     }
 
 }

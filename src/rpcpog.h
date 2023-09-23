@@ -155,5 +155,9 @@ std::string ReceiveIPC();
 void WriteIPC(std::string sData);
 std::string ReviveSanctuariesJob();
 bool TcpTest(std::string sIP, int nPort, int nTimeout);
+bool IsMySanc(std::string sSearchProRegTxHash);
+BBPResult UnchainedGet(std::string sAPIPath);
+bool IsSanctuaryCollateral(CAmount nAmount);
+CAmount GetSancCollateralAmount(std::string sSearch);
 
 #endif

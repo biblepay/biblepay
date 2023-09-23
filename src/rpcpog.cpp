@@ -680,6 +680,7 @@ bool TcpTest(std::string sIP, int nPort, int nTimeout)
 }
 
 
+
 static double HTTP_PROTO_VERSION = 2.0;
 std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::string sPage, int iPort, 
         int iTimeoutSecs, int iBOE, std::map<std::string, std::string> mapRequestHeaders, std::string TargetFileName, bool fJson)
@@ -714,6 +715,20 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
         if (fJson)
             mapRequestHeaders["Content-Type"] = "application/json";
+        
+        /* UNCHAINED BEGIN */
+        // In this section, we provide the Public unchained key, and signature, so we can query cockroachdb
+        // for a report
+        std::string sPublicKey;
+        std::string sPrivKey;
+        ReadUnchainedConfigFile(sPublicKey, sPrivKey);
+        mapRequestHeaders["unchained-public-key"] = sPublicKey;
+        std::string sSignError;
+        std::string sSig = SignMessageEvo(sPublicKey, "authenticate", sSignError);
+        LogPrintf("\nUplink::BBPPub::%s,privlen%f,Signed::%s", sPublicKey, sPrivKey.length(), sSig);
+        mapRequestHeaders["unchained-auth-signature"] = sSig;
+        /* UNCHAINED END */
+
 
         BIO* bio;
         // Todo add connection timeout here to bio object
@@ -897,16 +912,30 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
 
 
+static std::string msBaseDomain = "https://unchained.biblepay.org";
 
 static int SSL_PORT = 443;
 BBPResult UnchainedQuery(std::string sXMLSource, std::string sAPI)
 {
-    std::string sDomain = "https://unchained.biblepay.org";
     int iTimeout = 30000;
     BBPResult b;
-    b.Response = Uplink(false, "", sDomain, sAPI, SSL_PORT, iTimeout, 4);
+    b.Response = Uplink(false, "", msBaseDomain, sAPI, SSL_PORT, iTimeout, 4);
     return b;
 }
+
+BBPResult UnchainedGet(std::string sAPIPath)
+{
+    std::string sRandom = DoubleToString(GetAdjustedTime(), 0);
+    std::string sPage = sAPIPath + "?rand=" + sRandom;
+    int nBMS_PORT = 443;
+    std::string sResponse = Uplink(false, sAPIPath, msBaseDomain, sPage, nBMS_PORT, 15, 1);
+    BBPResult b;
+    
+    b.Response = ExtractXML(sResponse, "<json>", "</json>");
+    b.ErrorCode = ExtractXML(sResponse, "<error>", "</error>");
+    b.Response = strReplace(b.Response, "\t", "     ");
+    return b;
+}       
 
 BBPResult SidechainQuery(std::string sXMLSource, std::string sAPI)
 {
@@ -2599,5 +2628,77 @@ std::string ReviveSanctuariesJob()
     });
     LogPrintf("\r\nReviveSanctuariesBatchJob::%s", sReport);
     return sReport;
+}
+
+bool IsMySanc(std::string sSearchProRegTxHash)
+{
+    bool fExists = false;
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    {
+        mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) {
+            std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+            Coin coin;
+            std::string sCollateralAddress = "UNKNOWN";
+            if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+                CTxDestination collateralDest;
+                if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
+                    sCollateralAddress = EncodeDestination(collateralDest);
+                }
+            }
+            CScript payeeScript = dmn->pdmnState->scriptPayout;
+            CTxDestination payeeDest;
+            std::string payeeStr = "UNKNOWN";
+            if (ExtractDestination(payeeScript, payeeDest)) {
+                payeeStr = EncodeDestination(payeeDest);
+            }
+            bool fMine = IsMyAddress(payeeStr);
+            std::string sProRegTxHash = dmn->proTxHash.ToString();
+            if (sSearchProRegTxHash == sProRegTxHash) {
+                fExists = fMine;
+            }
+        });
+    }
+    return fExists;
+}
+
+CAmount GetSancCollateralAmount(std::string sSearch)
+{
+    CAmount nAmount = 0;
+    
+    auto mnList = deterministicMNManager->GetListAtChainTip();
+    {
+        mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) {
+            std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+            Coin coin;
+            std::string sCollateralAddress = "UNKNOWN";
+            if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+                CTxDestination collateralDest;
+                if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
+                    sCollateralAddress = EncodeDestination(collateralDest);
+                }
+            }
+            CScript payeeScript = dmn->pdmnState->scriptPayout;
+            CTxDestination payeeDest;
+            std::string payeeStr = "UNKNOWN";
+            if (ExtractDestination(payeeScript, payeeDest)) {
+                payeeStr = EncodeDestination(payeeDest);
+            }
+            std::string sProRegTxHash = dmn->proTxHash.ToString();
+
+            if (sSearch == sProRegTxHash) {
+                nAmount = coin.out.nValue;
+            }
+        });
+        
+    }
+    return nAmount;
+}
+
+bool IsSanctuaryCollateral(CAmount nAmount)
+{
+    bool fCollateral = (nAmount == SANCTUARY_COLLATERAL * COIN 
+        || nAmount == SANCTUARY_COLLATERAL_TEMPLE * COIN 
+        || nAmount == SANCTUARY_COLLATERAL_ALTAR * COIN) ? true : false;
+    return fCollateral;
 }
 

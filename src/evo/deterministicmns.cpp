@@ -8,6 +8,7 @@
 #include <base58.h>
 #include <chainparams.h>
 #include <core_io.h>
+#include <rpcpog.h>
 #include <script/standard.h>
 #include <ui_interface.h>
 #include <validation.h>
@@ -75,6 +76,29 @@ uint64_t CDeterministicMN::GetInternalId() const
 std::string CDeterministicMN::ToString() const
 {
     return strprintf("CDeterministicMN(proTxHash=%s, collateralOutpoint=%s, nOperatorReward=%f, state=%s", proTxHash.ToString(), collateralOutpoint.ToStringShort(), (double)nOperatorReward / 100, pdmnState->ToString());
+}
+
+std::string CDeterministicMN::Tribe() const
+{
+    uint64_t tribeHash = (CHashWriter(SER_GETHASH, 0) << proTxHash).GetHash().GetCheapHash();
+    int nTribeModulus = tribeHash % 12;
+    std::string sTribe = GetElement(TWELVE_TRIBES_OF_ISRAEL, ",", nTribeModulus);
+    if (GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
+    {
+        return std::string();
+    }
+    return sTribe;
+}
+
+CAmount CDeterministicMN::GetCollateralAmount() const
+{
+    Coin coin;
+    CAmount nAmount = 0;
+    if (GetUTXOCoin(collateralOutpoint, coin)) 
+    {
+       nAmount = coin.out.nValue;
+    }
+    return nAmount;
 }
 
 void CDeterministicMN::ToJson(UniValue& obj) const
@@ -298,8 +322,11 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::CalculateQuorum(size_t m
     return result;
 }
 
+
 std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList::CalculateScores(const uint256& modifier) const
 {
+    const CChainParams& chainparams = Params();
+
     std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> scores;
     scores.reserve(GetAllMNsCount());
     ForEachMN(true, [&](const CDeterministicMNCPtr& dmn) {
@@ -308,6 +335,19 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             // future quorums
             return;
         }
+        // BBP: After Latter Rain height, we prefer Temples to keep the Quorum 
+        // This is because there is a higher liklihood that the Altars are offline (which presents a chainlocks risk, since LLMQs can stop forming).
+        // 
+        
+        if (chainActive.Tip()->nHeight > chainparams.GetConsensus().LATTER_RAIN_HEIGHT)
+        {
+            CAmount nAmt = dmn->GetCollateralAmount();
+            if (nAmt != SANCTUARY_COLLATERAL_TEMPLE * COIN)
+            {
+                return;
+            }
+        }
+        // 
         // calculate sha256(sha256(proTxHash, confirmedHash), modifier) per MN
         // Please note that this is not a double-sha256 but a single-sha256
         // The first part is already precalculated (confirmedHashWithProRegTxHash)
@@ -772,10 +812,12 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, const C
             }
 
             Coin coin;
-            if (!proTx.collateralOutpoint.hash.IsNull() && (!view.GetCoin(dmn->collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != SANCTUARY_COLLATERAL * COIN)) {
+            if (!proTx.collateralOutpoint.hash.IsNull() && (!view.GetCoin(dmn->collateralOutpoint, coin) 
+                || coin.IsSpent() || !IsSanctuaryCollateral(coin.out.nValue))) 
+            {
                 // should actually never get to this point as CheckProRegTx should have handled this case.
                 // We do this additional check nevertheless to be 100% sure
-                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-collateral");
+                return _state.DoS(100, false, REJECT_INVALID, "bad-protx-collateral-03");
             }
 
             auto replacedDmn = newList.GetMNByCollateral(dmn->collateralOutpoint);
@@ -1076,7 +1118,9 @@ bool CDeterministicMNManager::IsProTxWithCollateral(const CTransactionRef& tx, u
     if (proTx.collateralOutpoint.n >= tx->vout.size() || proTx.collateralOutpoint.n != n) {
         return false;
     }
-    if (tx->vout[n].nValue != SANCTUARY_COLLATERAL * COIN) {
+
+    if (!IsSanctuaryCollateral(tx->vout[n].nValue))
+    {
         return false;
     }
     return true;

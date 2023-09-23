@@ -195,9 +195,8 @@ static Consensus::LLMQParams llmq_devnet = {
         .recoveryMembers = 6,
 };
 
-// this one is for testing only
 
-// biblepay
+// BIBLEPAY - TESTNET
 static Consensus::LLMQParams llmq_test = {
         .type = Consensus::LLMQ_TEST,
         .name = "llmq_test",
@@ -209,46 +208,42 @@ static Consensus::LLMQParams llmq_test = {
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 3,
-
+        .dkgBadVotesThreshold = 7,
         .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
-
         .keepOldConnections = 3,
         .recoveryMembers = 3,
 };
+
+// BIBLEPAY - LLMQ for InstantSend (MainNet):
 static Consensus::LLMQParams llmq5_60 = {
         .type = Consensus::LLMQ_5_60,
         .name = "llmq_5_60",
         .size = 6,
         .minSize = 3,
         .threshold = 3,
-
         .dkgInterval = 24, // one DKG per hour
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
         .dkgBadVotesThreshold = 3,
-
         .signingActiveQuorumCount = 3, 
-
         .keepOldConnections = 3,
         .recoveryMembers = 3,
 };
 
+// BIBLEPAY - September 2023 - Temple Logic - LLMQ Chainlocks here (MainNet):
 static Consensus::LLMQParams llmq400_60 = {
         .type = Consensus::LLMQ_400_60,
         .name = "llmq_400_60",
         .size = 9,
         .minSize = 4,
         .threshold = 3,
-
         .dkgInterval = 24 * 12, // one DKG every 12 hours
         .dkgPhaseBlocks = 4,
         .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 28,
         .dkgBadVotesThreshold = 100,
         .signingActiveQuorumCount = 3, 
-
         .keepOldConnections = 9,
         .recoveryMembers = 9,
 };
@@ -315,6 +310,7 @@ public:
 		consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
         consensus.EXODUS_HEIGHT = 346500;
         consensus.REDSEA_HEIGHT = 428000;
+        consensus.LATTER_RAIN_HEIGHT = 449485;
 		consensus.RANDOMX_HEIGHT = 184675;
         consensus.nSubsidyHalvingInterval = 210240; // Note: actual number of blocks per calendar year with DGW v3 is ~200700 (for example 449750 - 249050)
 
@@ -529,6 +525,7 @@ public:
 		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
         consensus.EXODUS_HEIGHT = 183000;
         consensus.REDSEA_HEIGHT = 183000;
+        consensus.LATTER_RAIN_HEIGHT = 192200;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock

@@ -697,7 +697,16 @@ bool fAllowedToMine = true;
 						{
 							LogPrintf("\nblock rejected.");
 							MilliSleep(15000);
-						}
+                        }
+                        else
+                        {
+                            // To prevent Chainlocks conflicts, allow the miner to sleep a while here
+                            // If we solve multiple blocks in a row, this node can end up with a chainlocks conflict
+                           if (chainparams.NetworkIDString() == CBaseChainParams::MAIN) 
+                           {
+                                MilliSleep(120000);
+                           }
+                        }
 						coinbaseScript->KeepScript();
 						// In regression test mode, stop mining after a block is found. This
 						// allows developers to controllably generate a block on demand.
@@ -728,10 +737,9 @@ bool fAllowedToMine = true;
 							break;
 						}
 					}
-
-                    if (chainActive.Tip()->nHeight > chainparams.GetConsensus().REDSEA_HEIGHT) 
+                    else if (chainActive.Tip()->nHeight > chainparams.GetConsensus().LATTER_RAIN_HEIGHT)
                     {
-                        MilliSleep(10);
+                        MilliSleep(1);
                     }
     			}
 

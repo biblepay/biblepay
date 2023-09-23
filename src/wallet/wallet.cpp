@@ -2961,8 +2961,12 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
             } else if(nCoinType == CoinType::ONLY_NONDENOMINATED) {
                 if (CCoinJoin::IsCollateralAmount(pcoin->tx->vout[i].nValue)) continue; // do not use collateral amounts
                 found = !CCoinJoin::IsDenominatedAmount(pcoin->tx->vout[i].nValue);
-            } else if(nCoinType == CoinType::ONLY_MASTERNODE_COLLATERAL) {
-                found = pcoin->tx->vout[i].nValue == SANCTUARY_COLLATERAL*COIN;
+            } else if(nCoinType == CoinType::ONLY_MASTERNODE_COLLATERAL) 
+            {
+                found =
+                    (pcoin->tx->vout[i].nValue == SANCTUARY_COLLATERAL * COIN 
+                        || pcoin->tx->vout[i].nValue == SANCTUARY_COLLATERAL_ALTAR * COIN 
+                        || pcoin->tx->vout[i].nValue == SANCTUARY_COLLATERAL_TEMPLE * COIN);
             } else if(nCoinType == CoinType::ONLY_COINJOIN_COLLATERAL) {
                 found = CCoinJoin::IsCollateralAmount(pcoin->tx->vout[i].nValue);
             } else {
@@ -4035,7 +4039,7 @@ void CWallet::LockByMask(std::string sUA)
 		std::string sRecipient = PubKeyToAddress(pcoin->tx->vout[out.i].scriptPubKey);
 		int nPin = (int)AddressToPinV2(sUA, sRecipient);
 		bool fUTXO = CompareMask2(nAmount, nPin);
-		bool fSanc = (nAmount == (4500001 * COIN));
+		bool fSanc = (nAmount == (SANCTUARY_COLLATERAL * COIN));
 		bool fPB = CompareMask2(nAmount, 777);
         bool fTLT = IsHODLAddress(sRecipient) > 0;
         
