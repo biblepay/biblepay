@@ -329,6 +329,7 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
 
     std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> scores;
     scores.reserve(GetAllMNsCount());
+    int nOneQuarter = 60 * 60 * 24 * 30 * 3;
     ForEachMN(true, [&](const CDeterministicMNCPtr& dmn) {
         if (dmn->pdmnState->confirmedHash.IsNull()) {
             // we only take confirmed MNs into account to avoid hash grinding on the ProRegTxHash to sneak MNs into a
@@ -344,6 +345,13 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             CAmount nAmt = dmn->GetCollateralAmount();
             if (nAmt != SANCTUARY_COLLATERAL_TEMPLE * COIN)
             {
+                return;
+            }
+
+            std::string sValue = GetSidechainValue("protxhash_ban", dmn->proTxHash.ToString(), GetAdjustedTime() - nOneQuarter);
+            if (sValue == "1")
+            {
+                // If this sanctuary is continually evil, do not allow them back in the quorum for 90 days
                 return;
             }
         }

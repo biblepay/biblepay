@@ -159,5 +159,5 @@ bool IsMySanc(std::string sSearchProRegTxHash);
 BBPResult UnchainedGet(std::string sAPIPath);
 bool IsSanctuaryCollateral(CAmount nAmount);
 CAmount GetSancCollateralAmount(std::string sSearch);
-
+std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimestamp);
 #endif

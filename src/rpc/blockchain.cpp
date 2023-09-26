@@ -2644,6 +2644,27 @@ UniValue exec(const JSONRPCRequest& request)
          std::string sData2 = ReceiveIPC();
          results.pushKV("ipc2", sData2);
     }
+    else if (sItem == "persistsc")
+    {
+        std::string sObjType = request.params[1].get_str();
+        std::string sKey = request.params[2].get_str();
+        std::string sValue = request.params[3].get_str();
+        const Consensus::Params& consensusParams = Params().GetConsensus();
+        std::string sPayAddress = consensusParams.FoundationAddress;
+        std::string sSignError;
+        std::string sSig = SignMessageEvo(sPayAddress, "authenticate", sSignError);
+        if (!sSignError.empty())
+        {
+            throw std::runtime_error("You must use a good key.");
+        }
+		std::string sTXID;
+		std::string sError;
+        std::string sPayload = "<msg>authenticate</msg><sig>" + sSig + "</sig><key>" + sKey + "</key><value>" + sValue + "</value>";
+		std::string sXML = "<sc><objtype>" + sObjType + "</objtype><url>" + sPayload + "</url></sc>";
+        int nOut = 0;
+		bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, sXML, nOut);
+		results.pushKV("TXID", sTXID);
+    }
 	else if (sItem == "testsc")
 	{
 		std::string sToAddress = DefaultRecAddress("sc");
@@ -2664,14 +2685,27 @@ UniValue exec(const JSONRPCRequest& request)
     }
 	else if (sItem == "listsc")
 	{
+        std::string sObjType = request.params[1].get_str();
 		results.pushKV("scsz", (int64_t)mapSidechain.size());
 		for (auto ii : mapSidechain) 
 		{
 			Sidechain s = mapSidechain[ii.first];
 		    UniValue o;
             s.ToJson(o);
-    		results.pushKV(ii.first, o);
+            if (s.ObjectType == sObjType || sObjType == "0")
+            {
+                results.pushKV(ii.first, o);
+            }
 		}
+    }
+    else if (sItem == "listscvalue")
+    {
+        std::string sObjType = request.params[1].get_str();
+	    std::string sKey = request.params[2].get_str();
+        std::string sTS = request.params[3].get_str();
+        int nTS = (int)StringToDouble(sTS, 0);
+        std::string sValue = GetSidechainValue(sObjType, sKey, nTS);
+        results.pushKV("value", sValue);
     }
     else if (sItem == "probesanc")
     {

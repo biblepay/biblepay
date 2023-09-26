@@ -190,6 +190,11 @@ std::set<size_t> CLLMQUtils::CalcDeterministicWatchConnections(Consensus::LLMQTy
     }
 
     std::set<size_t> result;
+    if (memberCount == 0)
+    {
+        // BBP - I noticed a division by zero can occur down below in the modulus if we don't do this:
+        return result;
+    }
     uint256 rnd = qwatchConnectionSeed;
     for (size_t i = 0; i < connectionCount; i++) {
         rnd = ::SerializeHash(std::make_pair(rnd, std::make_pair(llmqType, pindexQuorum->GetBlockHash())));

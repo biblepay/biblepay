@@ -2613,17 +2613,20 @@ std::string ReviveSanctuariesJob()
         std::string sSancStatus = dmnToStatus(dmn);  //POSE_BANNED or ENABLED
         std::string sOwnerAddress = EncodeDestination(dmn->pdmnState->keyIDOwner);
         std::string sPubKeyOperator = dmn->pdmnState->pubKeyOperator.Get().ToString();
-        if (sSancStatus == "POSE_BANNED" && fMine) 
+        if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
         {
-             UniValue uResponse;
-             std::string sError;
-             if (true) {
+            if (sSancStatus == "POSE_BANNED" && fMine)
+            {
+                UniValue uResponse;
+                std::string sError;
+                if (true) {
                     bool fResult = ReviveSanctuaryEnhanced(sProRegTxHash, sError, uResponse);
                     std::string sMyResult = fResult ? "SUCCESS" : "FAIL";
-                    sReport += "Restart Result::" + sProRegTxHash + " and " + sError + ", " 
+                    sReport += "Restart Result::" + sProRegTxHash + " and " + sError + ", "
                         + sMyResult + "\r\n";
-             }
-             sReport += "Restarting " + sCollateralAddress + " in state " + sSancStatus + "\r\n";
+                }
+                sReport += "Restarting " + sCollateralAddress + " in state " + sSancStatus + "\r\n";
+            }
         }
     });
     LogPrintf("\r\nReviveSanctuariesBatchJob::%s", sReport);
@@ -2700,5 +2703,31 @@ bool IsSanctuaryCollateral(CAmount nAmount)
         || nAmount == SANCTUARY_COLLATERAL_TEMPLE * COIN 
         || nAmount == SANCTUARY_COLLATERAL_ALTAR * COIN) ? true : false;
     return fCollateral;
+}
+
+std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimestamp)
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    for (auto ii : mapSidechain) 
+	{
+		Sidechain s = mapSidechain[ii.first];
+        if (s.ObjectType == sType || sType == "0")
+        {
+             std::string sKey = ExtractXML(s.URL, "<key>", "</key>");
+             std::string sValue = ExtractXML(s.URL, "<value>", "</value>");
+             std::string sSig = ExtractXML(s.URL, "<sig>", "</sig>");
+             std::string sMsg = ExtractXML(s.URL, "<msg>", "</msg>");
+             if (sKey == sKey && s.Time >= nMinTimestamp)
+             {
+                    std::string sError;
+ 					bool fPassed = CheckStakeSignature(consensusParams.FoundationAddress, sSig, sMsg, sError);
+                    if (fPassed)
+                    {
+                        return sValue;
+                    }
+             }
+        }
+	}
+    return std::string();
 }
 

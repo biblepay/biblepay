@@ -501,6 +501,7 @@ public:
                     {270000, uint256S("0x4cb48793f323d2252cfc9f5b233931e8a727a091532841379a375390d9e31e20")},
 					{315770, uint256S("0xe8fb51c409c9c2942e60e15d013efc475eacd0a4fa9df8d54eddfaa0c421146a")},
                     {344000, uint256S("0x7c3e13950bdb25ea8ff11bd091be5bede5241dfa87ca149a75a2103c1041468a")},
+                    {440000, uint256S("0x70e38d78fcd8a5e21c4352a42c67b55907ce1f1831ed2edec9100cd657dd650f")},
 				}
             }
         };
