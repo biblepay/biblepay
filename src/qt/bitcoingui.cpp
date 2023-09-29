@@ -1025,7 +1025,7 @@ void BitcoinGUI::createIconMenu(QMenu *pmenu)
 #endif
 }
 
-#ifndef Q_OS_MAC
+
 void BitcoinGUI::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if(reason == QSystemTrayIcon::Trigger)
@@ -1034,6 +1034,9 @@ void BitcoinGUI::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
         toggleHidden();
     }
 }
+
+
+#ifndef Q_OS_MAC
 #else
 void BitcoinGUI::macosDockIconActivated()
 {

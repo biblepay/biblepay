@@ -692,7 +692,7 @@ bool fAllowedToMine = true;
 						LogPrintf("\r\nMiner::Found a randomx block solo mining! hashes=%f, hash=%s, thread=%f", nHashesDone, rxhash.GetHex(), iThreadID);
 
 						std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
-						bool bAccepted = !ProcessNewBlock(Params(), shared_pblock, true, NULL);
+						bool bAccepted = ProcessNewBlock(Params(), shared_pblock, true, NULL);
 						if (!bAccepted)
 						{
 							LogPrintf("\nblock rejected.");
