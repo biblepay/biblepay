@@ -331,9 +331,12 @@ private Q_SLOTS:
     void showHelpMessageClicked();
     /** Show CoinJoin help message dialog */
     void showCoinJoinHelpClicked();
+    // Allow this to be seen by MacOSX
+
+    void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
+
 #ifndef Q_OS_MAC
     /** Handle tray icon clicked */
-    void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 #else
     /** Handle macOS Dock icon clicked */
     void macosDockIconActivated();
