@@ -2101,7 +2101,7 @@ std::string GetPlatformRID()
         return "win-x64";
     } else if (BitcoinGUI::DEFAULT_UIPLATFORM == "linux") {
         return "linux-x64";
-    } else if (BitcoinGUI::DEFAULT_UIPLATFORM == "osx") {
+    } else if (BitcoinGUI::DEFAULT_UIPLATFORM == "macosx") {
         return "osx-x64";
     }
     else {
@@ -2167,7 +2167,7 @@ bool BitcoinGUI::StartUnchained()
     if (sRID == "win-x64") {
         sApp0 = strReplace(sApp0, "/", "\\");
     }
-    LogPrintf("9051:: qcoreapp=%s, final=%s\r\n", sWorkingDir, sApp0);
+    LogPrintf("9051:: qcoreapp=%s, final=%s, RID %s   \r\n", sWorkingDir, sApp0, sRID);
 
     QString sApp = GUIUtil::TOQS(sApp0);
 
@@ -2176,7 +2176,7 @@ bool BitcoinGUI::StartUnchained()
     {
         // On any type of Linux/MAC, set the dotnet unzip dir
         QProcess::startDetached("export DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/tmp");
-        QProcess::startDetached("chmod 777 " + sApp0);
+        QProcess::startDetached("chmod 777 " + sApp);
     }
 
     /* std::string sHTML = "<html><body><script>window.moveTo(580,240);window.resizeTo(500,690);" 
