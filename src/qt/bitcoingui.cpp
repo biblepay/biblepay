@@ -2149,6 +2149,7 @@ bool BitcoinGUI::StartUnchained()
         ? sHomeDir + "\\BMS\\bmsd.exe" : sHomeDir + "/biblepay/BiblePay.BMSD";
     if (sRID == "osx-x64")
     {
+        // Note: Home Path is "Library/Application Support/Biblepay" on Mac, returned by fs::path GetDefaultDataDir()
         sAppWithHomeDir = sHomeDir + "/biblepay/BiblePay.BMSD.app";
     }
     //QString myWorkingDir = QDir::currentPath();
@@ -2157,6 +2158,7 @@ bool BitcoinGUI::StartUnchained()
     std::string sWorkingDir = myWorkingDir.toStdString();
     sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt.exe", "");
     sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt", "");
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt.app", "");
 
     std::string sApp0 = (sRID == "win-x64") ?
         sWorkingDir + "\\bmsd.exe" : sWorkingDir + "/BiblePay.BMSD";
