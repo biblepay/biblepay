@@ -2176,7 +2176,7 @@ bool BitcoinGUI::StartUnchained()
     {
         // On any type of Linux/MAC, set the dotnet unzip dir
         QProcess::startDetached("export DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/tmp");
-        QProcess::startDetached("chmod 777 " + sApp);
+        QProcess::startDetached("chmod 777 " + sApp0);
     }
 
     /* std::string sHTML = "<html><body><script>window.moveTo(580,240);window.resizeTo(500,690);" 
