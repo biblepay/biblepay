@@ -2127,7 +2127,7 @@ bool BitcoinGUI::StartUnchained()
     std::string sResult = ProvisionUnchained2(sError);
     if (!sError.empty()) {
         // Needs Associated
-        QString msg = "Unable to provision unchained: " + GUIUtil::TOQS(sError) 
+        QString msg = "Unable to provision unchained: " + GUIUtil::TOQS(sError)
             + ".  You may have to unlock your wallet. ";
         QMessageBox::warning(0, QObject::tr("Unable to Provision Unchained"), msg);
         return false;
@@ -2145,8 +2145,12 @@ bool BitcoinGUI::StartUnchained()
     //(sRID == "64") ? "c:\\inetpub\\biblepay" : "~/biblepay";
     QString myHomeDir = QDir::homePath();
     std::string sHomeDir = myHomeDir.toStdString();
-    std::string sAppWithHomeDir = (sRID == "win-x64") 
+    std::string sAppWithHomeDir = (sRID == "win-x64")
         ? sHomeDir + "\\BMS\\bmsd.exe" : sHomeDir + "/biblepay/BiblePay.BMSD";
+    if (sRID == "osx-x64")
+    {
+        sAppWithHomeDir = sHomeDir + "/biblepay/BiblePay.BMSD.app";
+    }
     //QString myWorkingDir = QDir::currentPath();
     QString myWorkingDir = QCoreApplication::applicationFilePath();
 
@@ -2154,8 +2158,12 @@ bool BitcoinGUI::StartUnchained()
     sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt.exe", "");
     sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt", "");
 
-    std::string sApp0 = (sRID=="win-x64") ? 
+    std::string sApp0 = (sRID == "win-x64") ?
         sWorkingDir + "\\bmsd.exe" : sWorkingDir + "/BiblePay.BMSD";
+    if (sRID == "osx-x64")
+    {
+        sApp0 = sWorkingDir + "/BiblePay.BMSD.app";
+    }
     if (sRID == "win-x64") {
         sApp0 = strReplace(sApp0, "/", "\\");
     }
