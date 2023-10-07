@@ -2435,6 +2435,26 @@ UniValue exec(const JSONRPCRequest& request)
            results.pushKV("VideoList", b.Response);
         }
     }
+    else if (sItem == "makeunchainedurl")
+    {
+        // Creates an unchained URL for the user
+        std::string sError;
+        std::string sResult = ProvisionUnchained2(sError);
+        if (!sError.empty()) {
+            throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Unable to provision unchained.");
+        }
+        std::string sUnchainedAddress = DefaultRecAddress("Unchained");
+        std::string sPrivKey = GetPrivKey2(sUnchainedAddress, sError);
+        if (!sError.empty()) 
+        {
+            throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Unable to retrieve private UNCHAINED key.");
+        }
+        
+	    std::vector<unsigned char> vchKey = std::vector<unsigned char>(sPrivKey.begin(), sPrivKey.end());
+    	std::string sHex = HexStr(vchKey.begin(), vchKey.end());
+        std::string sURL = "https://unchained.biblepay.org/BMS/SAMLLogin?key=" + sHex;
+        results.pushKV("URL", sURL);
+    }
     else if (sItem == "registertemple")
     {
         std::string sTempleList = request.params[1].get_str();
@@ -2481,16 +2501,16 @@ UniValue exec(const JSONRPCRequest& request)
 
               if (!fIsMine)
               {
-                      throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Sorry, but this sanc [" + sSearch + "] is either not registered with a ProRegTxId, is not owned by your wallet, or the collateral cannot be found on the chain.");
+                  throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Sorry, but this sanc [" + sSearch + "] is either not registered with a ProRegTxId, is not owned by your wallet, or the collateral cannot be found on the chain.");
               }
               if (nStatus != 1)
               {
-                      throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "This sanc [" + sSearch + "] is POSE banned; unable to create a Temple.");
+                  throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "This sanc [" + sSearch + "] is POSE banned; unable to create a Temple.");
               }
 
               if (Contains(sConsumed, sSearch))
               {
-                      throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Each sanctuary [" + sSearch + "] must be distinct");
+                  throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Each sanctuary [" + sSearch + "] must be distinct");
               }
 
               std::string sRow = "<sanc><proregtxid>" + sProReg + "</proregtxid><ip>" 
@@ -2502,7 +2522,6 @@ UniValue exec(const JSONRPCRequest& request)
         }
         // Now we can try to register the Temple - everything looks good
         LogPrintf("\nStep 1006.%f", 1);
-
 
         results.pushKV("data", sRegPacket);
     }
