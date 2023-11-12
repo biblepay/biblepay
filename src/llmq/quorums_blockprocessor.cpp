@@ -225,8 +225,15 @@ bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockH
     auto quorumIndex = LookupBlockIndex(qc.quorumHash);
 
     if (!qc.Verify(quorumIndex, true)) {
-		if (nHeight >= Params().GetConsensus().DIP0003EnforcementHeight)
-		     return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
+        if (nHeight >= Params().GetConsensus().DIP0003EnforcementHeight ) 
+        {
+            // 449674, bad-qc; skip, 449578, 449770, 449818, 449876, 449890
+            if (blockHash.GetHex() != "x410d5dcc504aca0f87cfdabb04896cdb061eddf0f5cc06b2b7585767dd093eb")
+            {
+                 LogPrintf("Failed with bad qc invalid %f", 0);
+                 return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
+            }
+        }
     }
 
     if (fJustCheck) {

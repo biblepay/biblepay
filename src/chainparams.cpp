@@ -311,6 +311,8 @@ public:
         consensus.EXODUS_HEIGHT = 346500;
         consensus.REDSEA_HEIGHT = 428000;
         consensus.LATTER_RAIN_HEIGHT = 449485;
+        consensus.REDSEA_PARTING = 457510;
+
 		consensus.RANDOMX_HEIGHT = 184675;
         consensus.nSubsidyHalvingInterval = 210240; // Note: actual number of blocks per calendar year with DGW v3 is ~200700 (for example 449750 - 249050)
 
@@ -527,6 +529,7 @@ public:
         consensus.EXODUS_HEIGHT = 183000;
         consensus.REDSEA_HEIGHT = 183000;
         consensus.LATTER_RAIN_HEIGHT = 192200;
+        consensus.REDSEA_PARTING = 200000;
 
         consensus.nSubsidyHalvingInterval = 365 * BLOCKS_PER_DAY;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock

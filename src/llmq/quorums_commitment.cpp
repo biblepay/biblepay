@@ -40,10 +40,12 @@ bool CFinalCommitment::Verify(const CBlockIndex* pQuorumIndex, bool checkSigs) c
         return false;
     }
 
+
     if (CountValidMembers() < params.minSize) {
         LogPrintfFinalCommitment("invalid validMembers count. validMembersCount=%d\n", CountValidMembers());
         return false;
     }
+
     if (CountSigners() < params.minSize) {
         LogPrintfFinalCommitment("invalid signers count. signersCount=%d\n", CountSigners());
         return false;
@@ -65,16 +67,18 @@ bool CFinalCommitment::Verify(const CBlockIndex* pQuorumIndex, bool checkSigs) c
         return false;
     }
 
+    const auto& consensusParams = Params().GetConsensus();
+
     auto members = CLLMQUtils::GetAllQuorumMembers(llmqType, pQuorumIndex);
     for (size_t i = members.size(); i < params.size; i++) {
-        if (validMembers[i]) {
-            LogPrintfFinalCommitment("invalid validMembers bitset. bit %d should not be set\n", i);
-            return false;
-        }
-        if (signers[i]) {
-            LogPrintfFinalCommitment("invalid signers bitset. bit %d should not be set\n", i);
-            return false;
-        }
+                if (validMembers[i]) {
+                    LogPrintfFinalCommitment("invalid validMembers bitset. bit %d should not be set\n", i);
+                    return false;
+                }
+                if (signers[i]) {
+                    LogPrintfFinalCommitment("invalid signers bitset. bit %d should not be set\n", i);
+                    return false;
+                }
     }
 
     // sigs are only checked when the block is processed
@@ -173,7 +177,7 @@ bool CheckLLMQCommitment(const CTransaction& tx, const CBlockIndex* pindexPrev, 
     }
 
     if (!qcTx.commitment.Verify(pindexQuorum, false)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid");
+        return state.DoS(100, false, REJECT_INVALID, "bad-qc-invalid[2]");
     }
 
     return true;

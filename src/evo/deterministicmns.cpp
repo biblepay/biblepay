@@ -340,6 +340,7 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
         // This is because there is a higher liklihood that the Altars are offline (which presents a chainlocks risk, since LLMQs can stop forming).
         // 
         
+
         if (chainActive.Tip()->nHeight > chainparams.GetConsensus().LATTER_RAIN_HEIGHT)
         {
             CAmount nAmt = dmn->GetCollateralAmount();
@@ -348,13 +349,17 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
                 return;
             }
 
+            /*
             std::string sValue = GetSidechainValue("protxhash_ban", dmn->proTxHash.ToString(), GetAdjustedTime() - nOneQuarter);
             if (sValue == "1")
             {
                 // If this sanctuary is continually evil, do not allow them back in the quorum for 90 days
                 return;
             }
+            */
         }
+        
+
         // 
         // calculate sha256(sha256(proTxHash, confirmedHash), modifier) per MN
         // Please note that this is not a double-sha256 but a single-sha256

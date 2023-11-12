@@ -24,6 +24,7 @@ namespace llmq
 class CFinalCommitment
 {
 public:
+    // Mission Critical - Increment this to 2
     static const uint16_t CURRENT_VERSION = 1;
 
 public:

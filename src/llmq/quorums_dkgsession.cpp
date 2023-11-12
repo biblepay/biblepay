@@ -1098,6 +1098,7 @@ bool CDKGSession::PreVerifyMessage(const CDKGPrematureCommitment& qc, bool& retB
     for (size_t i = members.size(); i < params.size; i++) {
         if (qc.validMembers[i]) {
             retBan = true;
+            // BBP - 11/12/2023 - This is getting thrown in some circumstances.
             logger.Batch("invalid validMembers bitset. bit %d should not be set", i);
             return false;
         }
