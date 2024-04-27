@@ -1,23 +1,28 @@
+// Copyright (c) 2016-2023 The BiblePay Core developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef BITCOIN_QT_MASTERNODELIST_H
 #define BITCOIN_QT_MASTERNODELIST_H
 
 #include <primitives/transaction.h>
 #include <sync.h>
-#include <util.h>
-
-#include <evo/deterministicmns.h>
+#include <util/system.h>
 
 #include <QMenu>
 #include <QTimer>
 #include <QWidget>
 
-#define MASTERNODELIST_UPDATE_SECONDS 7
-#define MASTERNODELIST_FILTER_COOLDOWN_SECONDS 7
+#define MASTERNODELIST_UPDATE_SECONDS 3
+#define MASTERNODELIST_FILTER_COOLDOWN_SECONDS 3
 
 namespace Ui
 {
 class MasternodeList;
 }
+
+class CDeterministicMN;
+using CDeterministicMNCPtr = std::shared_ptr<const CDeterministicMN>;
 
 class ClientModel;
 class WalletModel;
@@ -37,6 +42,7 @@ public:
 
     enum {
         COLUMN_SERVICE,
+        COLUMN_TYPE,
         COLUMN_STATUS,
         COLUMN_POSE,
         COLUMN_REGISTERED,
@@ -47,7 +53,6 @@ public:
         COLUMN_COLLATERAL_ADDRESS,
         COLUMN_OWNER_ADDRESS,
         COLUMN_VOTING_ADDRESS,
-		COLUMN_URL,
         COLUMN_PROTX_HASH,
     };
 
@@ -56,21 +61,21 @@ public:
 
 private:
     QMenu* contextMenuDIP3;
-    int64_t nTimeFilterUpdatedDIP3;
-    int64_t nTimeUpdatedDIP3;
-    bool fFilterUpdatedDIP3;
+    int64_t nTimeFilterUpdatedDIP3{0};
+    int64_t nTimeUpdatedDIP3{0};
+    bool fFilterUpdatedDIP3{true};
 
     QTimer* timer;
     Ui::MasternodeList* ui;
-    ClientModel* clientModel;
-    WalletModel* walletModel;
+    ClientModel* clientModel{nullptr};
+    WalletModel* walletModel{nullptr};
 
     // Protects tableWidgetMasternodesDIP3
-    CCriticalSection cs_dip3list;
+    RecursiveMutex cs_dip3list;
 
     QString strCurrentFilterDIP3;
 
-    bool mnListChanged;
+    bool mnListChanged{true};
 
     CDeterministicMNCPtr GetSelectedDIP3MN();
 
@@ -87,8 +92,7 @@ private Q_SLOTS:
     void extraInfoDIP3_clicked();
     void copyProTxHash_clicked();
     void copyCollateralOutpoint_clicked();
-	void navigateToSanc_clicked();
-    
+
     void handleMasternodeListChanged();
     void updateDIP3ListScheduled();
 };

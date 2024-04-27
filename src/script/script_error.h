@@ -6,6 +6,8 @@
 #ifndef BITCOIN_SCRIPT_SCRIPT_ERROR_H
 #define BITCOIN_SCRIPT_SCRIPT_ERROR_H
 
+#include <string>
+
 typedef enum ScriptError_t
 {
     SCRIPT_ERR_OK = 0,
@@ -64,11 +66,15 @@ typedef enum ScriptError_t
     /* softfork safeness */
     SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS,
 
+    /* Constant scriptCode */
+    SCRIPT_ERR_OP_CODESEPARATOR,
+    SCRIPT_ERR_SIG_FINDANDDELETE,
+
     SCRIPT_ERR_ERROR_COUNT
 } ScriptError;
 
 #define SCRIPT_ERR_LAST SCRIPT_ERR_ERROR_COUNT
 
-const char* ScriptErrorString(const ScriptError error);
+std::string ScriptErrorString(const ScriptError error);
 
 #endif // BITCOIN_SCRIPT_SCRIPT_ERROR_H

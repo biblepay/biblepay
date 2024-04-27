@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017 The Bitcoin Core developers
+# Copyright (c) 2017-2019 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -16,11 +16,31 @@ set -u
 SCRIPTDIR=$(dirname "${BASH_SOURCE[0]}")
 LINTALL=$(basename "${BASH_SOURCE[0]}")
 
-for f in "${SCRIPTDIR}"/lint-*.sh; do
-  if [ "$(basename "$f")" != "$LINTALL" ]; then
-    if ! "$f"; then
-      echo "^---- failure generated from $f"
-      exit 1
+EXIT_CODE=0
+
+if ! command -v parallel > /dev/null; then
+  for f in "${SCRIPTDIR}"/lint-*.sh; do
+    if [ "$(basename "$f")" != "$LINTALL" ]; then
+      if ! "$f"; then
+        echo "^---- failure generated from $f"
+        EXIT_CODE=1
+      fi
     fi
+  done
+else
+  SCRIPTS=()
+
+  for f in "${SCRIPTDIR}"/lint-*.sh; do
+    if [ "$(basename "$f")" != "$LINTALL" ]; then
+      SCRIPTS+=("$f")
+    fi
+  done
+
+  if ! parallel --jobs 100% --will-cite --joblog parallel_out.log bash ::: "${SCRIPTS[@]}"; then
+    echo "^---- failure generated"
+    EXIT_CODE=1
   fi
-done
+  column -t parallel_out.log && rm parallel_out.log
+fi
+
+exit ${EXIT_CODE}

@@ -1,7 +1,12 @@
+// Copyright (c) 2020-2023 The BiblePay Core developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #ifndef BITCOIN_STATSD_CLIENT_H
 #define BITCOIN_STATSD_CLIENT_H
 
 #include <string>
+#include <memory>
 
 static const bool DEFAULT_STATSD_ENABLE = false;
 static const int DEFAULT_STATSD_PORT = 8125;
@@ -20,7 +25,7 @@ struct _StatsdClientData;
 
 class StatsdClient {
     public:
-        StatsdClient(const std::string& host = DEFAULT_STATSD_HOST, int port = DEFAULT_STATSD_PORT, const std::string& ns = DEFAULT_STATSD_NAMESPACE);
+        explicit StatsdClient(const std::string& host = DEFAULT_STATSD_HOST, int port = DEFAULT_STATSD_PORT, const std::string& ns = DEFAULT_STATSD_NAMESPACE);
         ~StatsdClient();
 
     public:
@@ -53,13 +58,13 @@ class StatsdClient {
 
     protected:
         int init();
-        void cleanup(std::string& key);
+        static void cleanup(std::string& key);
 
     protected:
-        struct _StatsdClientData* d;
+        std::unique_ptr<struct _StatsdClientData> d;
 };
 
-}; // namespace statsd
+} // namespace statsd
 
 extern statsd::StatsdClient statsClient;
 

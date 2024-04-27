@@ -1,18 +1,20 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <script/sigcache.h>
 
-#include <memusage.h>
 #include <pubkey.h>
 #include <random.h>
 #include <uint256.h>
-#include <util.h>
+#include <util/system.h>
 
 #include <cuckoocache.h>
-#include <boost/thread.hpp>
+
+#include <mutex>
+#include <shared_mutex>
+#include <vector>
 
 namespace {
 /**
@@ -24,33 +26,39 @@ class CSignatureCache
 {
 private:
      //! Entries are SHA256(nonce || signature hash || public key || signature):
-    uint256 nonce;
+    CSHA256 m_salted_hasher;
     typedef CuckooCache::cache<uint256, SignatureCacheHasher> map_type;
     map_type setValid;
-    boost::shared_mutex cs_sigcache;
+    std::shared_mutex cs_sigcache;
 
 public:
     CSignatureCache()
     {
-        GetRandBytes(nonce.begin(), 32);
+        uint256 nonce = GetRandHash();
+        // We want the nonce to be 64 bytes long to force the hasher to process
+        // this chunk, which makes later hash computations more efficient. We
+        // just write our 32-byte entropy twice to fill the 64 bytes.
+        m_salted_hasher.Write(nonce.begin(), 32);
+        m_salted_hasher.Write(nonce.begin(), 32);
     }
 
     void
     ComputeEntry(uint256& entry, const uint256 &hash, const std::vector<unsigned char>& vchSig, const CPubKey& pubkey)
     {
-        CSHA256().Write(nonce.begin(), 32).Write(hash.begin(), 32).Write(&pubkey[0], pubkey.size()).Write(&vchSig[0], vchSig.size()).Finalize(entry.begin());
+        CSHA256 hasher = m_salted_hasher;
+        hasher.Write(hash.begin(), 32).Write(pubkey.data(), pubkey.size()).Write(vchSig.data(), vchSig.size()).Finalize(entry.begin());
     }
 
     bool
     Get(const uint256& entry, const bool erase)
     {
-        boost::shared_lock<boost::shared_mutex> lock(cs_sigcache);
+        std::shared_lock<std::shared_mutex> lock(cs_sigcache);
         return setValid.contains(entry, erase);
     }
 
-    void Set(uint256& entry)
+    void Set(const uint256& entry)
     {
-        boost::unique_lock<boost::shared_mutex> lock(cs_sigcache);
+        std::unique_lock<std::shared_mutex> lock(cs_sigcache);
         setValid.insert(entry);
     }
     uint32_t setup_bytes(size_t n)

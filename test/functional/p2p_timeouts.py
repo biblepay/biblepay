@@ -1,5 +1,5 @@
-﻿#!/usr/bin/env python3
-# Copyright (c) 2016 The Bitcoin Core developers
+#!/usr/bin/env python3
+# Copyright (c) 2016-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test various net timeouts.
@@ -23,14 +23,16 @@
 
 from time import sleep
 
-from test_framework.mininode import *
+from test_framework.messages import msg_ping
+from test_framework.p2p import P2PInterface
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
+
 
 class TestP2PConn(P2PInterface):
     def on_version(self, message):
         # Don't send a verack in response
         pass
+
 
 class TimeoutsTest(BitcoinTestFramework):
     def set_test_params(self):
@@ -40,12 +42,14 @@ class TimeoutsTest(BitcoinTestFramework):
         self.extra_args = [["-peertimeout=3"]]
 
     def run_test(self):
-        # Setup the p2p connections and start up the network thread.
-        no_verack_node = self.nodes[0].add_p2p_connection(TestP2PConn())
-        no_version_node = self.nodes[0].add_p2p_connection(TestP2PConn(), send_version=False)
-        no_send_node = self.nodes[0].add_p2p_connection(TestP2PConn(), send_version=False)
+        # Setup the p2p connections
+        no_verack_node = self.nodes[0].add_p2p_connection(TestP2PConn(), wait_for_verack=False)
+        no_version_node = self.nodes[0].add_p2p_connection(TestP2PConn(), send_version=False, wait_for_verack=False)
+        no_send_node = self.nodes[0].add_p2p_connection(TestP2PConn(), send_version=False, wait_for_verack=False)
 
-        network_thread_start()
+        # Wait until we got the verack in response to the version. Though, don't wait for the other node to receive the
+        # verack, since we never sent one
+        no_verack_node.wait_for_verack()
 
         sleep(1)
 
@@ -78,6 +82,7 @@ class TimeoutsTest(BitcoinTestFramework):
             assert not no_verack_node.is_connected
             assert not no_version_node.is_connected
             assert not no_send_node.is_connected
+
 
 if __name__ == '__main__':
     TimeoutsTest().main()

@@ -1,7 +1,7 @@
 [main]
 host = https://www.transifex.com
 
-[biblepay.qt-translation-012x]
+[biblepay.biblepay_ents]
 file_filter = src/qt/locale/biblepay_<lang>.ts
-source_file = src/qt/locale/biblepay_en.ts
+source_file = src/qt/locale/biblepay_en.xlf
 source_lang = en

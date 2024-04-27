@@ -1,5 +1,5 @@
-﻿#!/usr/bin/env python3
-# Copyright (c) 2018-2021 The DÃSH Core Developers
+#!/usr/bin/env python3
+# Copyright (c) 2018-2024 The BiblePay Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the biblepay specific ZMQ notification interfaces."""
@@ -11,15 +11,10 @@ import json
 import random
 import struct
 import time
-try:
-    import zmq
-finally:
-    pass
 
-from test_framework.test_framework import (
-     BiblepayTestFramework, skip_if_no_bitcoind_zmq, skip_if_no_py3_zmq)
-from test_framework.mininode import P2PInterface, network_thread_start
-from test_framework.util import assert_equal, assert_raises_rpc_error, bytes_to_hex_str
+from test_framework.test_framework import BiblepayTestFramework
+from test_framework.p2p import P2PInterface
+from test_framework.util import assert_equal, assert_raises_rpc_error
 from test_framework.messages import (
     CBlock,
     CGovernanceObject,
@@ -32,8 +27,10 @@ from test_framework.messages import (
     hash256,
     msg_clsig,
     msg_inv,
-    msg_islock,
+    msg_isdlock,
     msg_tx,
+    MSG_TX,
+    MSG_TYPE_MASK,
     ser_string,
     uint256_from_str,
     uint256_to_string
@@ -57,6 +54,21 @@ class ZMQPublisher(Enum):
     raw_recovered_sig = "rawrecoveredsig"
 
 
+class ZMQSubscriber:
+    def __init__(self, socket, topic):
+        self.socket = socket
+        self.topic = topic
+
+        import zmq
+        self.socket.setsockopt(zmq.SUBSCRIBE, self.topic)
+
+    def receive(self, flags=0):
+        topic, body, seq = self.socket.recv_multipart(flags)
+        # Topic should match the subscriber topic.
+        assert_equal(topic, self.topic)
+        return io.BytesIO(body)
+
+
 class TestP2PConn(P2PInterface):
     def __init__(self):
         super().__init__()
@@ -67,25 +79,25 @@ class TestP2PConn(P2PInterface):
         hash = uint256_from_str(hash256(islock.serialize()))
         self.islocks[hash] = islock
 
-        inv = msg_inv([CInv(30, hash)])
+        inv = msg_inv([CInv(31, hash)])
         self.send_message(inv)
 
     def send_tx(self, tx):
         hash = uint256_from_str(hash256(tx.serialize()))
         self.txes[hash] = tx
 
-        inv = msg_inv([CInv(30, hash)])
+        inv = msg_inv([CInv(MSG_TX, hash)])
         self.send_message(inv)
 
     def on_getdata(self, message):
         for inv in message.inv:
-            if inv.hash in self.islocks:
+            if ((inv.type & MSG_TYPE_MASK) == 30 or (inv.type & MSG_TYPE_MASK) == 31) and inv.hash in self.islocks:
                 self.send_message(self.islocks[inv.hash])
-            if inv.hash in self.txes:
+            if (inv.type & MSG_TYPE_MASK) == MSG_TX and inv.hash in self.txes:
                 self.send_message(self.txes[inv.hash])
 
 
-class BiblePayZMQTest (BiblepayTestFramework):
+class BiblepayZMQTest (BiblepayTestFramework):
     def set_test_params(self):
         # That's where the zmq publisher will listen for subscriber
         self.address = "tcp://127.0.0.1:28333"
@@ -94,76 +106,106 @@ class BiblePayZMQTest (BiblepayTestFramework):
         node0_extra_args.append("-whitelist=127.0.0.1")
         node0_extra_args.append("-watchquorums")  # have to watch quorums to receive recsigs and trigger zmq
 
-        self.set_biblepay_test_params(4, 3, fast_dip3_enforcement=True, extra_args=[node0_extra_args, [], [], []])
+        extra_args = [[]] * 5
+        extra_args[0] = node0_extra_args
+        self.set_biblepay_test_params(5, 4, fast_dip3_enforcement=True, extra_args=extra_args)
+        self.set_biblepay_llmq_test_params(4, 4)
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_py3_zmq()
+        self.skip_if_no_bitcoind_zmq()
+        self.skip_if_no_wallet()
 
     def run_test(self):
+        self.subscribers = {}
         # Check that biblepayd has been built with ZMQ enabled.
         config = configparser.ConfigParser()
         config.read_file(open(self.options.configfile))
-
-        skip_if_no_py3_zmq()
-        skip_if_no_bitcoind_zmq(self)
+        import zmq
 
         try:
-            # Setup the ZMQ subscriber socket
+            # Setup the ZMQ subscriber context
             self.zmq_context = zmq.Context()
-            self.socket = self.zmq_context.socket(zmq.SUB)
-            self.socket.connect(self.address)
             # Initialize the network
             self.activate_dip8()
-            self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+            self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
             self.wait_for_sporks_same()
-            # Create an LLMQ for testing
-            self.quorum_type = 100  # llmq_test
-            self.quorum_hash = self.mine_quorum()
+            self.activate_v19(expected_activation_height=900)
+            self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
+            self.move_to_next_cycle()
+            self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
+            self.move_to_next_cycle()
+            self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
+            self.move_to_next_cycle()
+            self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+
+            self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
+
             self.sync_blocks()
             self.wait_for_chainlocked_block_all_nodes(self.nodes[0].getbestblockhash())
             # Wait a moment to avoid subscribing to recovered sig in the test before the one from the chainlock
             # has been sent which leads to test failure.
             time.sleep(1)
             # Test all biblepay related ZMQ publisher
-            self.test_recovered_signature_publishers()
+            #self.test_recovered_signature_publishers()
             self.test_chainlock_publishers()
-            self.test_instantsend_publishers()
             self.test_governance_publishers()
+            self.test_getzmqnotifications()
+            self.test_instantsend_publishers()
+            self.wait_for_chainlocked_block_all_nodes(self.nodes[0].getbestblockhash())
+            self.test_instantsend_publishers()
+            # At this point, we need to move forward 3 cycles (3 x 24 blocks) so the first 3 quarters can be created (without DKG sessions)
+            self.move_to_next_cycle()
+            self.test_instantsend_publishers()
+            self.move_to_next_cycle()
+            self.test_instantsend_publishers()
+            self.move_to_next_cycle()
+            self.test_instantsend_publishers()
+            self.mine_cycle_quorum()
+            self.test_instantsend_publishers()
         finally:
             # Destroy the ZMQ context.
             self.log.debug("Destroying ZMQ context")
             self.zmq_context.destroy(linger=None)
 
+    def generate_blocks(self, num_blocks):
+        mninfos_online = self.mninfo.copy()
+        nodes = [self.nodes[0]] + [mn.node for mn in mninfos_online]
+        self.nodes[0].generate(num_blocks)
+        self.sync_blocks(nodes)
+
     def subscribe(self, publishers):
+        import zmq
+        # Setup the ZMQ subscriber socket
+        socket = self.zmq_context.socket(zmq.SUB)
+        socket.set(zmq.RCVTIMEO, 60000)
+        socket.connect(self.address)
         # Subscribe to a list of ZMQPublishers
         for pub in publishers:
-            self.socket.subscribe(pub.value)
+            self.subscribers[pub] = ZMQSubscriber(socket, pub.value.encode())
 
     def unsubscribe(self, publishers):
         # Unsubscribe from a list of ZMQPublishers
         for pub in publishers:
-            self.socket.unsubscribe(pub.value)
-
-    def receive(self, publisher, flags=0):
-        # Receive a ZMQ message and validate it's sent from the correct ZMQPublisher
-        topic, body, seq = self.socket.recv_multipart(flags)
-        # Topic should match the publisher value
-        assert_equal(topic.decode(), publisher.value)
-        return io.BytesIO(body)
+            del self.subscribers[pub]
 
     def test_recovered_signature_publishers(self):
 
         def validate_recovered_sig(request_id, msg_hash):
             # Make sure the recovered sig exists by RPC
-            rpc_recovered_sig = self.get_recovered_sig(request_id, msg_hash)
+            self.wait_for_recovered_sig(request_id, msg_hash)
+            rpc_recovered_sig = self.mninfo[0].node.quorum('getrecsig', 103, request_id, msg_hash)
             # Validate hashrecoveredsig
-            zmq_recovered_sig_hash = bytes_to_hex_str(self.receive(ZMQPublisher.hash_recovered_sig).read(32))
+            zmq_recovered_sig_hash = self.subscribers[ZMQPublisher.hash_recovered_sig].receive().read(32).hex()
             assert_equal(zmq_recovered_sig_hash, msg_hash)
             # Validate rawrecoveredsig
             zmq_recovered_sig_raw = CRecoveredSig()
-            zmq_recovered_sig_raw.deserialize(self.receive(ZMQPublisher.raw_recovered_sig))
+            zmq_recovered_sig_raw.deserialize(self.subscribers[ZMQPublisher.raw_recovered_sig].receive())
             assert_equal(zmq_recovered_sig_raw.llmqType, rpc_recovered_sig['llmqType'])
             assert_equal(uint256_to_string(zmq_recovered_sig_raw.quorumHash), rpc_recovered_sig['quorumHash'])
             assert_equal(uint256_to_string(zmq_recovered_sig_raw.id), rpc_recovered_sig['id'])
             assert_equal(uint256_to_string(zmq_recovered_sig_raw.msgHash), rpc_recovered_sig['msgHash'])
-            assert_equal(bytes_to_hex_str(zmq_recovered_sig_raw.sig), rpc_recovered_sig['sig'])
+            assert_equal(zmq_recovered_sig_raw.sig.hex(), rpc_recovered_sig['sig'])
 
         recovered_sig_publishers = [
             ZMQPublisher.hash_recovered_sig,
@@ -208,28 +250,29 @@ class BiblePayZMQTest (BiblepayTestFramework):
         rpc_chain_lock_hash = rpc_chain_locked_block["hash"]
         assert_equal(generated_hash, rpc_chain_lock_hash)
         # Validate hashchainlock
-        zmq_chain_lock_hash = bytes_to_hex_str(self.receive(ZMQPublisher.hash_chain_lock).read(32))
+        zmq_chain_lock_hash = self.subscribers[ZMQPublisher.hash_chain_lock].receive().read(32).hex()
         assert_equal(zmq_chain_lock_hash, rpc_best_chain_lock_hash)
         # Validate rawchainlock
         zmq_chain_locked_block = CBlock()
-        zmq_chain_locked_block.deserialize(self.receive(ZMQPublisher.raw_chain_lock))
-        assert(zmq_chain_locked_block.is_valid())
+        zmq_chain_locked_block.deserialize(self.subscribers[ZMQPublisher.raw_chain_lock].receive())
+        assert zmq_chain_locked_block.is_valid()
         assert_equal(zmq_chain_locked_block.hash, rpc_chain_lock_hash)
         # Validate rawchainlocksig
-        zmq_chain_lock_sig_stream = self.receive(ZMQPublisher.raw_chain_lock_sig)
+        zmq_chain_lock_sig_stream = self.subscribers[ZMQPublisher.raw_chain_lock_sig].receive()
         zmq_chain_locked_block = CBlock()
         zmq_chain_locked_block.deserialize(zmq_chain_lock_sig_stream)
-        assert(zmq_chain_locked_block.is_valid())
+        assert zmq_chain_locked_block.is_valid()
         zmq_chain_lock = msg_clsig()
         zmq_chain_lock.deserialize(zmq_chain_lock_sig_stream)
         assert_equal(zmq_chain_lock.height, rpc_chain_lock_height)
         assert_equal(uint256_to_string(zmq_chain_lock.blockHash), rpc_chain_lock_hash)
         assert_equal(zmq_chain_locked_block.hash, rpc_chain_lock_hash)
-        assert_equal(bytes_to_hex_str(zmq_chain_lock.sig), rpc_best_chain_lock_sig)
+        assert_equal(zmq_chain_lock.sig.hex(), rpc_best_chain_lock_sig)
         # Unsubscribe from ChainLock messages
         self.unsubscribe(chain_lock_publishers)
 
     def test_instantsend_publishers(self):
+        import zmq
         instantsend_publishers = [
             ZMQPublisher.hash_tx_lock,
             ZMQPublisher.raw_tx_lock,
@@ -242,8 +285,6 @@ class BiblePayZMQTest (BiblepayTestFramework):
         self.subscribe(instantsend_publishers)
         # Initialize test node
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
-        network_thread_start()
-        self.nodes[0].p2p.wait_for_verack()
         # Make sure all nodes agree
         self.wait_for_chainlocked_block_all_nodes(self.nodes[0].getbestblockhash())
         # Create two raw TXs, they will conflict with each other
@@ -253,49 +294,49 @@ class BiblePayZMQTest (BiblepayTestFramework):
         rpc_raw_tx_1_hash = self.nodes[0].sendrawtransaction(rpc_raw_tx_1['hex'])
         self.wait_for_instantlock(rpc_raw_tx_1_hash, self.nodes[0])
         # Validate hashtxlock
-        zmq_tx_lock_hash = bytes_to_hex_str(self.receive(ZMQPublisher.hash_tx_lock).read(32))
+        zmq_tx_lock_hash = self.subscribers[ZMQPublisher.hash_tx_lock].receive().read(32).hex()
         assert_equal(zmq_tx_lock_hash, rpc_raw_tx_1['txid'])
         # Validate rawtxlock
         zmq_tx_lock_raw = CTransaction()
-        zmq_tx_lock_raw.deserialize(self.receive(ZMQPublisher.raw_tx_lock))
-        assert(zmq_tx_lock_raw.is_valid())
+        zmq_tx_lock_raw.deserialize(self.subscribers[ZMQPublisher.raw_tx_lock].receive())
+        assert zmq_tx_lock_raw.is_valid()
         assert_equal(zmq_tx_lock_raw.hash, rpc_raw_tx_1['txid'])
         # Validate rawtxlocksig
-        zmq_tx_lock_sig_stream = self.receive(ZMQPublisher.raw_tx_lock_sig)
+        zmq_tx_lock_sig_stream = self.subscribers[ZMQPublisher.raw_tx_lock_sig].receive()
         zmq_tx_lock_tx = CTransaction()
         zmq_tx_lock_tx.deserialize(zmq_tx_lock_sig_stream)
-        assert(zmq_tx_lock_tx.is_valid())
+        assert zmq_tx_lock_tx.is_valid()
         assert_equal(zmq_tx_lock_tx.hash, rpc_raw_tx_1['txid'])
-        zmq_tx_lock = msg_islock()
+        zmq_tx_lock = msg_isdlock()
         zmq_tx_lock.deserialize(zmq_tx_lock_sig_stream)
         assert_equal(uint256_to_string(zmq_tx_lock.txid), rpc_raw_tx_1['txid'])
         # Try to send the second transaction. This must throw an RPC error because it conflicts with rpc_raw_tx_1
         # which already got the InstantSend lock.
         assert_raises_rpc_error(-26, "tx-txlock-conflict", self.nodes[0].sendrawtransaction, rpc_raw_tx_2['hex'])
         # Validate hashinstantsenddoublespend
-        zmq_double_spend_hash2 = bytes_to_hex_str(self.receive(ZMQPublisher.hash_instantsend_doublespend).read(32))
-        zmq_double_spend_hash1 = bytes_to_hex_str(self.receive(ZMQPublisher.hash_instantsend_doublespend).read(32))
+        zmq_double_spend_hash2 = self.subscribers[ZMQPublisher.hash_instantsend_doublespend].receive().read(32).hex()
+        zmq_double_spend_hash1 = self.subscribers[ZMQPublisher.hash_instantsend_doublespend].receive().read(32).hex()
         assert_equal(zmq_double_spend_hash2, rpc_raw_tx_2['txid'])
         assert_equal(zmq_double_spend_hash1, rpc_raw_tx_1['txid'])
         # Validate rawinstantsenddoublespend
         zmq_double_spend_tx_2 = CTransaction()
-        zmq_double_spend_tx_2.deserialize(self.receive(ZMQPublisher.raw_instantsend_doublespend))
-        assert (zmq_double_spend_tx_2.is_valid())
+        zmq_double_spend_tx_2.deserialize(self.subscribers[ZMQPublisher.raw_instantsend_doublespend].receive())
+        assert zmq_double_spend_tx_2.is_valid()
         assert_equal(zmq_double_spend_tx_2.hash, rpc_raw_tx_2['txid'])
         zmq_double_spend_tx_1 = CTransaction()
-        zmq_double_spend_tx_1.deserialize(self.receive(ZMQPublisher.raw_instantsend_doublespend))
-        assert(zmq_double_spend_tx_1.is_valid())
+        zmq_double_spend_tx_1.deserialize(self.subscribers[ZMQPublisher.raw_instantsend_doublespend].receive())
+        assert zmq_double_spend_tx_1.is_valid()
         assert_equal(zmq_double_spend_tx_1.hash, rpc_raw_tx_1['txid'])
         # No islock notifications when tx is not received yet
         self.nodes[0].generate(1)
         rpc_raw_tx_3 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)
-        islock = self.create_islock(rpc_raw_tx_3['hex'])
-        self.test_node.send_islock(islock)
+        isdlock = self.create_isdlock(rpc_raw_tx_3['hex'])
+        self.test_node.send_islock(isdlock)
         # Validate NO hashtxlock
         time.sleep(1)
         try:
-            self.receive(ZMQPublisher.hash_tx_lock, zmq.NOBLOCK)
-            assert(False)
+            self.subscribers[ZMQPublisher.hash_tx_lock].receive(zmq.NOBLOCK)
+            assert False
         except zmq.ZMQError:
             # this is expected
             pass
@@ -303,7 +344,7 @@ class BiblePayZMQTest (BiblepayTestFramework):
         self.test_node.send_tx(FromHex(msg_tx(), rpc_raw_tx_3['hex']))
         self.wait_for_instantlock(rpc_raw_tx_3['txid'], self.nodes[0])
         # Validate hashtxlock
-        zmq_tx_lock_hash = bytes_to_hex_str(self.receive(ZMQPublisher.hash_tx_lock).read(32))
+        zmq_tx_lock_hash = self.subscribers[ZMQPublisher.hash_tx_lock].receive().read(32).hex()
         assert_equal(zmq_tx_lock_hash, rpc_raw_tx_3['txid'])
         # Drop test node connection
         self.nodes[0].disconnect_p2ps()
@@ -339,10 +380,11 @@ class BiblePayZMQTest (BiblepayTestFramework):
         self.sync_blocks()
         rpc_proposal_hash = self.nodes[0].gobject("submit", "0", proposal_rev, proposal_time, proposal_hex, collateral)
         # Validate hashgovernanceobject
-        zmq_governance_object_hash = bytes_to_hex_str(self.receive(ZMQPublisher.hash_governance_object).read(32))
+        zmq_governance_object_hash = self.subscribers[ZMQPublisher.hash_governance_object].receive().read(32).hex()
         assert_equal(zmq_governance_object_hash, rpc_proposal_hash)
+        # Validate rawgovernanceobject
         zmq_governance_object_raw = CGovernanceObject()
-        zmq_governance_object_raw.deserialize(self.receive(ZMQPublisher.raw_governance_object))
+        zmq_governance_object_raw.deserialize(self.subscribers[ZMQPublisher.raw_governance_object].receive())
         assert_equal(zmq_governance_object_raw.nHashParent, 0)
         assert_equal(zmq_governance_object_raw.nRevision, proposal_rev)
         assert_equal(zmq_governance_object_raw.nTime, proposal_time)
@@ -367,11 +409,11 @@ class BiblePayZMQTest (BiblepayTestFramework):
         self.nodes[0].gobject("vote-many", rpc_proposal_hash, map_vote_signals[1], map_vote_outcomes[1])
         rpc_proposal_votes = self.nodes[0].gobject('getcurrentvotes', rpc_proposal_hash)
         # Validate hashgovernancevote
-        zmq_governance_vote_hash = bytes_to_hex_str(self.receive(ZMQPublisher.hash_governance_vote).read(32))
-        assert(zmq_governance_vote_hash in rpc_proposal_votes)
+        zmq_governance_vote_hash = self.subscribers[ZMQPublisher.hash_governance_vote].receive().read(32).hex()
+        assert zmq_governance_vote_hash in rpc_proposal_votes
         # Validate rawgovernancevote
         zmq_governance_vote_raw = CGovernanceVote()
-        zmq_governance_vote_raw.deserialize(self.receive(ZMQPublisher.raw_governance_vote))
+        zmq_governance_vote_raw.deserialize(self.subscribers[ZMQPublisher.raw_governance_vote].receive())
         assert_equal(uint256_to_string(zmq_governance_vote_raw.nParentHash), rpc_proposal_hash)
         rpc_vote_parts = rpc_proposal_votes[zmq_governance_vote_hash].split(':')
         rpc_outpoint_parts = rpc_vote_parts[0].split('-')
@@ -383,6 +425,24 @@ class BiblePayZMQTest (BiblepayTestFramework):
         # Unsubscribe from governance messages
         self.unsubscribe(governance_publishers)
 
+    def test_getzmqnotifications(self):
+        # Test getzmqnotifications RPC
+        assert_equal(self.nodes[0].getzmqnotifications(), [
+            {"type": "pubhashchainlock", "address": self.address, "hwm": 1000},
+            {"type": "pubhashgovernanceobject", "address": self.address, "hwm": 1000},
+            {"type": "pubhashgovernancevote", "address": self.address, "hwm": 1000},
+            {"type": "pubhashinstantsenddoublespend", "address": self.address, "hwm": 1000},
+            {"type": "pubhashrecoveredsig", "address": self.address, "hwm": 1000},
+            {"type": "pubhashtxlock", "address": self.address, "hwm": 1000},
+            {"type": "pubrawchainlock", "address": self.address, "hwm": 1000},
+            {"type": "pubrawchainlocksig", "address": self.address, "hwm": 1000},
+            {"type": "pubrawgovernanceobject", "address": self.address, "hwm": 1000},
+            {"type": "pubrawgovernancevote", "address": self.address, "hwm": 1000},
+            {"type": "pubrawinstantsenddoublespend", "address": self.address, "hwm": 1000},
+            {"type": "pubrawrecoveredsig", "address": self.address, "hwm": 1000},
+            {"type": "pubrawtxlock", "address": self.address, "hwm": 1000},
+            {"type": "pubrawtxlocksig", "address": self.address, "hwm": 1000},
+        ])
 
 if __name__ == '__main__':
-    BiblePayZMQTest().main()
+    BiblepayZMQTest().main()

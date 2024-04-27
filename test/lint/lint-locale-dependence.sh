@@ -1,53 +1,60 @@
 #!/usr/bin/env bash
+# Copyright (c) 2018-2020 The Bitcoin Core developers
+# Distributed under the MIT software license, see the accompanying
+# file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 export LC_ALL=C
 
+# TODO: Reduce KNOWN_VIOLATIONS by replacing uses of locale dependent stoul/strtol with locale
+#       independent ToIntegral<T>(...).
+# TODO: Reduce KNOWN_VIOLATIONS by replacing uses of locale dependent snprintf with strprintf.
+
+# Be aware that bitcoind and bitcoin-qt differ in terms of localization: Qt
+# opts in to POSIX localization by running setlocale(LC_ALL, "") on startup,
+# whereas no such call is made in bitcoind.
+#
+# Qt runs setlocale(LC_ALL, "") on initialization. This installs the locale
+# specified by the user's LC_ALL (or LC_*) environment variable as the new
+# C locale.
+#
+# In contrast, bitcoind does not opt in to localization -- no call to
+# setlocale(LC_ALL, "") is made and the environment variables LC_* are
+# thus ignored.
+#
+# This results in situations where bitcoind is guaranteed to be running
+# with the classic locale ("C") whereas the locale of bitcoin-qt will vary
+# depending on the user's environment variables.
+#
+# An example: Assuming the environment variable LC_ALL=de_DE then the
+# call std::to_string(1.23) will return "1.230000" in bitcoind but
+# "1,230000" in bitcoin-qt.
+#
+# From the Qt documentation:
+# "On Unix/Linux Qt is configured to use the system locale settings by default.
+#  This can cause a conflict when using POSIX functions, for instance, when
+#  converting between data types such as floats and strings, since the notation
+#  may differ between locales. To get around this problem, call the POSIX function
+#  setlocale(LC_NUMERIC,"C") right after initializing QApplication, QGuiApplication
+#  or QCoreApplication to reset the locale that is used for number formatting to
+#  "C"-locale."
+#
+# See https://doc.qt.io/qt-5/qcoreapplication.html#locale-settings and
+# https://stackoverflow.com/a/34878283 for more details.
+
 KNOWN_VIOLATIONS=(
-    "src/base58.cpp:.*isspace"
-    "src/bench/string_cast.cpp.*atoi"
-    "src/biblepay-tx.cpp.*stoul"
-    "src/biblepay-tx.cpp.*trim_right"
-    "src/biblepay-tx.cpp:.*atoi"
-    "src/core_read.cpp.*is_digit"
-    "src/dbwrapper.cpp.*stoul"
+    "src/bitcoin-tx.cpp.*stoul"
     "src/dbwrapper.cpp:.*vsnprintf"
-    "src/governance/governance-validators.cpp.*isspace"
-    "src/governance/governance-validators.cpp.*tolower"
-    "src/httprpc.cpp.*trim"
-    "src/init.cpp:.*atoi"
-    "src/netbase.cpp.*to_lower"
-    "src/qt/rpcconsole.cpp:.*atoi"
-    "src/qt/rpcconsole.cpp:.*isdigit"
     "src/rest.cpp:.*strtol"
-    "src/rpc/server.cpp.*to_upper"
-    "src/rpc/blockchain.cpp.*atoi"
-    "src/rpc/governance.cpp.*atoi"
-    "src/rpc/masternode.cpp.*atoi"
-    "src/rpc/masternode.cpp.*tolower"
-    "src/rpc/server.cpp.*tolower"
     "src/statsd_client.cpp:.*snprintf"
     "src/test/dbwrapper_tests.cpp:.*snprintf"
-    "src/test/getarg_tests.cpp.*split"
-    "src/torcontrol.cpp:.*atoi"
+    "src/test/fuzz/locale.cpp"
+    "src/test/fuzz/string.cpp"
     "src/torcontrol.cpp:.*strtol"
-    "src/uint256.cpp:.*isspace"
-    "src/uint256.cpp:.*tolower"
-    "src/util.cpp:.*atoi"
-    "src/util.cpp:.*fprintf"
-    "src/util.cpp:.*tolower"
-    "src/utilmoneystr.cpp:.*isdigit"
-    "src/utilmoneystr.cpp:.*isspace"
-    "src/utilstrencodings.cpp:.*atoi"
-    "src/utilstrencodings.cpp:.*isspace"
-    "src/utilstrencodings.cpp:.*strtol"
-    "src/utilstrencodings.cpp:.*strtoll"
-    "src/utilstrencodings.cpp:.*strtoul"
-    "src/utilstrencodings.cpp:.*strtoull"
-    "src/utilstrencodings.h:.*atoi"
-    "src/wallet/wallet.cpp:.*atoi"
+    "src/util/strencodings.cpp:.*strtoll"
+    "src/util/system.cpp:.*fprintf"
 )
 
-REGEXP_IGNORE_EXTERNAL_DEPENDENCIES="^src/(crypto/ctaes/|leveldb/|secp256k1/|tinyformat.h|univalue/)"
+REGEXP_IGNORE_EXTERNAL_DEPENDENCIES="^src/(biblepaybls/|immer/|crypto/ctaes/|leveldb/|secp256k1/|tinyformat.h|univalue/)"
 
 LOCALE_DEPENDENT_FUNCTIONS=(
     alphasort    # LC_COLLATE (via strcoll)
@@ -111,7 +118,7 @@ LOCALE_DEPENDENT_FUNCTIONS=(
     mbtowc       # LC_CTYPE
     mktime
     normalize    # boost::locale::normalize
-#   printf       # LC_NUMERIC
+    printf       # LC_NUMERIC
     putwc
     putwchar
     scanf        # LC_NUMERIC
@@ -119,6 +126,8 @@ LOCALE_DEPENDENT_FUNCTIONS=(
     snprintf
     sprintf
     sscanf
+    std::locale::global
+    std::to_string
     stod
     stof
     stoi
@@ -215,8 +224,7 @@ GIT_GREP_OUTPUT=$(git grep -E "[^a-zA-Z0-9_\`'\"<>](${REGEXP_LOCALE_DEPENDENT_FU
 EXIT_CODE=0
 for LOCALE_DEPENDENT_FUNCTION in "${LOCALE_DEPENDENT_FUNCTIONS[@]}"; do
     MATCHES=$(grep -E "[^a-zA-Z0-9_\`'\"<>]${LOCALE_DEPENDENT_FUNCTION}(_r|_s)?[^a-zA-Z0-9_\`'\"<>]" <<< "${GIT_GREP_OUTPUT}" | \
-        grep -vE "\.(c|cpp|h):\s*(//|\*|/\*|\").*${LOCALE_DEPENDENT_FUNCTION}" | \
-        grep -vE 'fprintf\(.*(stdout|stderr)')
+        grep -vE "\.(c|cpp|h):\s*(//|\*|/\*|\").*${LOCALE_DEPENDENT_FUNCTION}")
     if [[ ${REGEXP_IGNORE_EXTERNAL_DEPENDENCIES} != "" ]]; then
         MATCHES=$(grep -vE "${REGEXP_IGNORE_EXTERNAL_DEPENDENCIES}" <<< "${MATCHES}")
     fi

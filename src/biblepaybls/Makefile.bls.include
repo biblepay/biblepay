@@ -1,0 +1,66 @@
+# Copyright (c) 2021 The PIVX developers
+# Copyright (c) 2022 The BiblePay Core developers
+# Distributed under the MIT software license, see the accompanying
+# file COPYING.MIT or http://www.opensource.org/licenses/mit-license.php.
+
+LIBBIBLEPAYBLS = libbiblepaybls.la
+
+BIBLEPAYBLS_CPPFLAGS = -DBLSALLOC_MIMALLOC=1
+
+BIBLEPAYBLS_INCLUDES = \
+	-I$(builddir) \
+	-I$(builddir)/obj \
+	-I$(top_srcdir)/include/biblepaybls
+
+BIBLEPAYBLS_H = \
+	src/bls.hpp \
+	src/chaincode.hpp \
+	src/elements.hpp \
+	src/extendedprivatekey.hpp \
+	src/extendedpublickey.hpp \
+	src/hdkeys.hpp \
+	src/hkdf.hpp \
+	src/legacy.hpp \
+	src/privatekey.hpp \
+	src/schemes.hpp \
+	src/test-utils.hpp \
+	src/threshold.hpp \
+	src/util.hpp
+
+libbiblepaybls_la_SOURCES = \
+	src/bls.cpp \
+	src/chaincode.cpp \
+	src/elements.cpp \
+	src/extendedprivatekey.cpp \
+	src/extendedpublickey.cpp \
+	src/legacy.cpp \
+	src/privatekey.cpp \
+	src/schemes.cpp \
+	src/threshold.cpp
+
+libbiblepaybls_la_SOURCES += \
+	$(BIBLEPAYBLS_H) \
+	$(MIMALLOC_H) \
+	$(RELIC_H)
+
+libbiblepaybls_la_LIBADD = \
+	$(LIBMIMALLOC) \
+	$(LIBRELIC) \
+	$(GMP_LIBS)
+
+libbiblepaybls_la_CPPFLAGS = $(AM_CPPFLAGS) $(RELIC_INCLUDES) $(MIMALLOC_INCLUDES) $(BIBLEPAYBLS_INCLUDES) $(BIBLEPAYBLS_CPPFLAGS)
+libbiblepaybls_la_CXXFLAGS = $(AM_CXXFLAGS)
+libbiblepaybls_la_LDFLAGS  = $(AM_LDFLAGS)
+
+include Makefile.mimalloc.include
+include Makefile.relic.include
+
+if USE_TESTS
+include Makefile.test.include
+endif
+
+if USE_BENCH
+include Makefile.bench.include
+endif
+
+lib_LTLIBRARIES += $(LIBBIBLEPAYBLS)

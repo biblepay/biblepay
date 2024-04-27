@@ -1,19 +1,10 @@
-﻿// Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2010 Satoshi Nakamoto
+// Copyright (c) 2009-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_RPC_PROTOCOL_H
 #define BITCOIN_RPC_PROTOCOL_H
-
-#include <fs.h>
-
-#include <list>
-#include <map>
-#include <stdint.h>
-#include <string>
-
-#include <univalue.h>
 
 //! HTTP status codes
 enum HTTPStatusCode
@@ -28,7 +19,7 @@ enum HTTPStatusCode
     HTTP_SERVICE_UNAVAILABLE   = 503,
 };
 
-//! Biblepay Core RPC error codes
+//! BiblePay Core RPC error codes
 enum RPCErrorCode
 {
     //! Standard JSON-RPC 2.0 errors
@@ -73,6 +64,9 @@ enum RPCErrorCode
     RPC_CLIENT_INVALID_IP_OR_SUBNET = -30, //!< Invalid IP/Subnet
     RPC_CLIENT_P2P_DISABLED         = -31, //!< No valid connection manager instance found
 
+    //! Chain errors
+    RPC_CLIENT_MEMPOOL_DISABLED     = -33, //!< No mempool instance found
+
     //! Wallet errors
     RPC_WALLET_ERROR                = -4,  //!< Unspecified problem with wallet (key not found etc.)
     RPC_WALLET_INSUFFICIENT_FUNDS   = -6,  //!< Not enough funds in wallet or account
@@ -85,6 +79,7 @@ enum RPCErrorCode
     RPC_WALLET_ALREADY_UNLOCKED     = -17, //!< Wallet is already unlocked
     RPC_WALLET_NOT_FOUND            = -18, //!< Invalid wallet specified
     RPC_WALLET_NOT_SPECIFIED        = -19, //!< No wallet specified (error when there are multiple wallets loaded)
+    RPC_WALLET_ALREADY_LOADED       = -35, //!< This same wallet is already loaded
 
 
      //! Backwards compatible aliases
@@ -92,19 +87,5 @@ enum RPCErrorCode
     //! Unused reserved codes, kept around for backwards compatibility. Do not reuse.
     RPC_FORBIDDEN_BY_SAFE_MODE      = -2,  //!< Server is in safe mode, and command is not allowed in safe mode
 };
-
-UniValue JSONRPCRequestObj(const std::string& strMethod, const UniValue& params, const UniValue& id);
-UniValue JSONRPCReplyObj(const UniValue& result, const UniValue& error, const UniValue& id);
-std::string JSONRPCReply(const UniValue& result, const UniValue& error, const UniValue& id);
-UniValue JSONRPCError(int code, const std::string& message);
-
-/** Generate a new RPC authentication cookie and write it to disk */
-bool GenerateAuthCookie(std::string *cookie_out);
-/** Read the RPC authentication cookie from disk */
-bool GetAuthCookie(std::string *cookie_out);
-/** Delete RPC authentication cookie from disk */
-void DeleteAuthCookie();
-/** Parse JSON-RPC batch reply into a vector */
-std::vector<UniValue> JSONRPCProcessBatchReply(const UniValue &in, size_t num);
 
 #endif // BITCOIN_RPC_PROTOCOL_H

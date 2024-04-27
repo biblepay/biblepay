@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
+// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -7,12 +7,14 @@
 
 #include <arith_uint256.h>
 #include <chain.h>
-#include <chainparams.h>
 #include <primitives/block.h>
 #include <uint256.h>
-#include "util.h"
+
 #include <math.h>
-#include "randomx_bbp.h"
+#include <logging.h>
+#include <logging/timer.h>
+
+
 
 unsigned int static KimotoGravityWell(const CBlockIndex* pindexLast, const Consensus::Params& params) {
     const CBlockIndex *BlockLastSolved = pindexLast;
@@ -188,6 +190,10 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 
     // Note: GetNextWorkRequiredBTC has it's own special difficulty rule,
     // so we only apply this to post-BTC algos.
+    if (params.fPowNoRetargeting) {
+        return bnPowLimit.GetCompact();
+    }
+
     if (params.fPowAllowMinDifficultyBlocks) {
         // recent block is more than 2 hours old
         if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + 2 * 60 * 60) {
@@ -203,9 +209,11 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         }
     }
 
+    /*
     if (pindexLast->nHeight + 1 < params.nPowDGWHeight) {
         return KimotoGravityWell(pindexLast, params);
     }
+    */
 
     return DarkGravityWave(pindexLast, params);
 }
@@ -236,19 +244,8 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
     return bnNew.GetCompact();
 }
 
-bool CheckTimeForSyncImpact(int64_t nTime)
-{
-	if (nTime == 0)
-		return false;
 
-	// Old RX blocks older than 1 month may cause significant performance impact when syncing:
-	int64_t nElapsed = GetAdjustedTime() - nTime;
-	if (nElapsed > (60 * 60 * 24 * 30))
-		return true;
-	return false;
-}
-
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, int nHeight, std::string sHeaderHex, uint256 uRXKey, int iThreadID, int64_t nTime)
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params, int nVersion, int nTime)
 {
     bool fNegative;
     bool fOverflow;
@@ -260,19 +257,31 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
         return false;
 
-	if (CheckTimeForSyncImpact(nTime))
-		return true;
+    
+    // If block time > BabylonFalling Height, and nVersion < critical_thresh
+    int BABYLON_FALLING_BLOCK_VERSION = 1542177296;
+    // CHECKPOINTS SECURE THE CHAIN UP TO HEIGHT PRIOR TO BABYLON_FALLING_HEIGHT
+    // BLOCK VERSION REQUIRES NEW BLOCKS BE ON SHA256 AND BE MINED AFTER BABYLON_FALLING_TIME
+    // You cant mine a block now with an old version, because it is rejected after the Bablyon_falling go live
+    // You cant mine a block with a falsified old timestamp and a new version, because that starts a new chain and violates the checkpoint rule.
 
-	// RandomX - After Barley Harvest Height
-	if (nHeight > Params().GetConsensus().BARLEY_HARVEST_HEIGHT)
-	{
-		uint256 rxhash = GetRandomXHash3(sHeaderHex, uRXKey, iThreadID);
-		if (UintToArith256(rxhash) > bnTarget) 
-		{
-			LogPrintf("\nCheckBlockHeader::ERROR-FAILED[4] height %f , headerhex %s, key %s, hash %s ", nHeight, sHeaderHex, uRXKey.GetHex(), rxhash.GetHex());
-			return false;
-		}
-	}
+    if (nTime > params.BABYLON_FALLING_TIME && nVersion <= BABYLON_FALLING_BLOCK_VERSION)
+    {
+        // After Babylon Falling go live, we are on V6 blocks
+        return false;
+    }
+    else if (nVersion <= BABYLON_FALLING_BLOCK_VERSION && nTime <= params.BABYLON_FALLING_TIME)
+    {
+        // V1 = POBH, V2 = RANDOMX, V3 = SHA
+        return true;
+    }
+
+    // Fall back to original Dash logic
+    if (UintToArith256(hash) > bnTarget)
+    {
+        LogPrintf("\nCheckBlockHeader::CheckProofOfWork::ERROR-FAILED[4] version %f  hash %s ", nVersion, hash.GetHex());
+        return false;
+    }
 	
     return true;
 }

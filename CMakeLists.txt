@@ -1,4 +1,4 @@
-﻿# This CMakeLists.txt is not meant to actually work!
+# This CMakeLists.txt is not meant to actually work!
 # It only serves as a dummy project to make CLion work properly when it comes to symbol resolution and all the nice
 # features dependent on that. Building must still be done on the command line using the automake build chain
 # If you load this project in CLion and would like to run/debug executables, make sure to remove the "Build" entry from
@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 3.7)
 project(biblepay)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(
         src
@@ -20,7 +20,18 @@ include_directories(
 if(UNIX AND NOT APPLE)
     set(DEPENDS_PREFIX depends/x86_64-pc-linux-gnu)
 elseif(APPLE)
-    set(DEPENDS_PREFIX depends/x86_64-apple-darwin14)
+    EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
+    EXECUTE_PROCESS( COMMAND system_profiler -detailLevel mini -json SPSoftwareDataType
+            COMMAND jq .SPSoftwareDataType
+            COMMAND jq .[]
+            COMMAND jq .kernel_version
+            COMMAND tr -d "Dawrin\" "
+            OUTPUT_VARIABLE DARWIN_KERNEL_VERSION)
+    if( ${ARCHITECTURE} STREQUAL "arm64" )
+        set(DEPENDS_PREFIX depends/aarch64-apple-darwin${DARWIN_KERNEL_VERSION})
+    else()
+        set(DEPENDS_PREFIX depends/x86_64-apple-darwin${DARWIN_KERNEL_VERSION})
+    endif()
 elseif(WIN32)
     set(DEPENDS_PREFIX depends/x86_64-w64-mingw32)
 endif()
@@ -37,6 +48,8 @@ add_definitions(
         -DENABLE_STACKTRACES=1
         -DENABLE_WALLET=1
 )
+
+# find src/ -name '*.h' -or -name '*.cpp' | sed -r 's/[^/]*.(h|cpp)$/*.\1/' | sort | uniq | grep -Ev "/(bench/data|obj)/" > list.txt
 
 file(GLOB SOURCE_FILES
         src/*.cpp
@@ -56,13 +69,22 @@ file(GLOB SOURCE_FILES
         src/crypto/*.h
         src/evo/*.cpp
         src/evo/*.h
+        src/governance/*.cpp
+        src/governance/*.h
+        src/index/*.cpp
+        src/index/*.h
+        src/interfaces/*.cpp
+        src/interfaces/*.h
         src/leveldb/db/*.cc
         src/leveldb/db/*.h
         src/leveldb/include/*.h
         src/llmq/*.cpp
         src/llmq/*.h
+        src/logging/*.h
         src/masternode/*.cpp
         src/masternode/*.h
+        src/node/*.cpp
+        src/node/*.h
         src/policy/*.cpp
         src/policy/*.h
         src/primitives/*.cpp
@@ -76,11 +98,20 @@ file(GLOB SOURCE_FILES
         src/script/*.cpp
         src/script/*.h
         src/secp256k1/include/*.h
+        src/support/allocators/*.h
+        src/support/*.cpp
+        src/support/*.h
         src/test/*.cpp
         src/test/*.h
+        src/test/fuzz/*.cpp
+        src/test/fuzz/*.h
+        src/test/util/*.cpp
+        src/test/util/*.h
         src/univalue/include/*.h
         src/univalue/lib/*.cpp
         src/univalue/lib/*.h
+        src/util/*.h
+        src/util/*.cpp
         src/wallet/*.cpp
         src/wallet/*.h
         src/wallet/test/*.cpp

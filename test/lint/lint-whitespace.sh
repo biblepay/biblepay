@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017 The Bitcoin Core developers
+# Copyright (c) 2017-2019 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
@@ -12,11 +12,11 @@ export LC_ALL=C
 while getopts "?" opt; do
   case $opt in
     ?)
-      echo "Usage: .lint-whitespace.sh [N]"
-      echo "       COMMIT_RANGE='<commit range>' .lint-whitespace.sh"
-      echo "       .lint-whitespace.sh -?"
+      echo "Usage: $0 [N]"
+      echo "       COMMIT_RANGE='<commit range>' $0"
+      echo "       $0 -?"
       echo "Checks unstaged changes, the previous N commits, or a commit range."
-      echo "COMMIT_RANGE='47ba2c3...ee50c9e' .lint-whitespace.sh"
+      echo "COMMIT_RANGE='47ba2c3...ee50c9e' $0"
       exit 0
     ;;
   esac
@@ -26,19 +26,21 @@ if [ -z "${COMMIT_RANGE}" ]; then
   if [ -n "$1" ]; then
     COMMIT_RANGE="HEAD~$1...HEAD"
   else
-    COMMIT_RANGE="HEAD"
+    # This assumes that the target branch of the pull request will be develop.
+    MERGE_BASE=$(git merge-base HEAD develop)
+    COMMIT_RANGE="$MERGE_BASE..HEAD"
   fi
 fi
 
 showdiff() {
-  if ! git diff -U0 "${COMMIT_RANGE}" -- "." ":(exclude)depends/patches/" ":(exclude)src/leveldb/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
+  if ! git diff -U0 "${COMMIT_RANGE}" -- "." ":(exclude)depends/patches/" ":(exclude)contrib/guix/patches/" ":(exclude)src/biblepaybls/" ":(exclude)src/util/expected.h" ":(exclude)src/immer/" ":(exclude)src/leveldb/" ":(exclude)src/crc32c/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
     echo "Failed to get a diff"
     exit 1
   fi
 }
 
 showcodediff() {
-  if ! git diff -U0 "${COMMIT_RANGE}" -- *.cpp *.h *.md *.py *.sh ":(exclude)src/leveldb/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
+  if ! git diff -U0 "${COMMIT_RANGE}" -- *.cpp *.h *.md *.py *.sh ":(exclude)src/biblepaybls/" ":(exclude)src/util/expected.h" ":(exclude)src/immer/" ":(exclude)src/leveldb/" ":(exclude)src/crc32c/" ":(exclude)src/secp256k1/" ":(exclude)src/univalue/" ":(exclude)doc/release-notes/"; then
     echo "Failed to get a diff"
     exit 1
   fi

@@ -1,7 +1,7 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>ModalOverlay</class>
- <widget class="ModalOverlay" name="ModalOverlay">
+ <widget class="QWidget" name="ModalOverlay">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -111,7 +111,7 @@
              <item>
               <widget class="QLabel" name="infoText">
                <property name="text">
-                <string>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the Biblepay network, as detailed below.</string>
+                <string>Recent transactions may not yet be visible, and therefore your wallet's balance might be incorrect. This information will be correct once your wallet has finished synchronizing with the BiblePay network, as detailed below.</string>
                </property>
                <property name="textFormat">
                 <enum>Qt::RichText</enum>
@@ -231,16 +231,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QProgressBar" name="progressBar">
-               <property name="value">
-                <number>24</number>
-               </property>
-               <property name="format">
-                <string/>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
            <item row="4" column="0">
@@ -299,6 +289,9 @@
              <property name="text">
               <string>Hide</string>
              </property>
+             <property name="shortcut">
+              <string notr="true">Esc</string>
+             </property>
              <property name="focusPolicy">
               <enum>Qt::StrongFocus</enum>
              </property>
@@ -334,14 +327,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>ModalOverlay</class>
-   <extends>QWidget</extends>
-   <header>qt/modaloverlay.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

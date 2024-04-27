@@ -2,9 +2,9 @@
 
 This issue tracker is only for technical issues related to BiblePay Core.
 
-General BiblePay questions and/or support requests and are best directed to the [BiblePay](https://forum.biblepay.org/).
+General BiblePay questions and/or support requests and are best directed to the [Biblepay Reddit](https://www.reddit.com/r/biblepay/).
 
-To report critical security issues, email rob@biblepay.org and/or see the BIBLEPAY bug bounty program on [Bugcrowd](https://forum.biblepay.org) instead of creating Github issues.
+To report critical security issues, email infosec@biblepay.org and/or see the BIBLEPAY bug bounty program on [Bugcrowd](https://bugcrowd.com/biblepaydigitalcash) instead of creating Github issues.
 
 ### Describe the issue
 
@@ -32,6 +32,8 @@ List the version number/commit ID, and if it is an official binary, self compile
 - RAM:
 - Disk size:
 - Disk Type (HD/SDD):
+
+### For the GUI-related issue on Linux provide names and versions of a distro, a desktop environment and a graphical shell (if relevant).
 
 ### Any extra information that might be useful in the debugging process.
 This is normally the contents of a `debug.log` or `config.log` file. Raw text or a link to a pastebin type site are preferred.

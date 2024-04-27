@@ -1,5 +1,5 @@
-﻿// Copyright (c) 2014 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2019 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,7 +10,9 @@
 
 #include <chainparams.h>
 #include <tinyformat.h>
-#include <util.h>
+#include <util/system.h>
+
+#include <chainparamsbase.h>
 
 #include <QApplication>
 
@@ -22,11 +24,10 @@ static const struct {
     const std::string titleAddText;
 } network_styles[] = {
     {"main", QAPP_APP_NAME_DEFAULT, 0, 0, ""},
-    {"test", QAPP_APP_NAME_TESTNET, 190, 20, QT_TRANSLATE_NOOP("SplashScreen", "[testnet]")},
+    {"test", QAPP_APP_NAME_TESTNET, 190, 20},
     {"devnet", QAPP_APP_NAME_DEVNET, 190, 20, "[devnet: %s]"},
-    {"regtest", QAPP_APP_NAME_REGTEST, 160, 30, "[regtest]"}
+    {"regtest", QAPP_APP_NAME_REGTEST, 160, 30}
 };
-static const unsigned network_styles_count = sizeof(network_styles)/sizeof(*network_styles);
 
 void NetworkStyle::rotateColor(QColor& col, const int iconColorHueShift, const int iconColorSaturationReduction)
 {
@@ -42,9 +43,8 @@ void NetworkStyle::rotateColor(QColor& col, const int iconColorHueShift, const i
     col.setHsl(h,s,l,a);
 }
 
-void NetworkStyle::rotateColors(QImage& img, const int iconColorHueShift, const int iconColorSaturationReduction) {
-    int h,s,l,a;
-
+void NetworkStyle::rotateColors(QImage& img, const int iconColorHueShift, const int iconColorSaturationReduction)
+{
     // traverse though lines
     for(int y=0;y<img.height();y++)
     {
@@ -88,26 +88,27 @@ NetworkStyle::NetworkStyle(const QString &_appName, const int iconColorHueShift,
     splashImage         = QPixmap(":/images/splash");
 }
 
-const NetworkStyle *NetworkStyle::instantiate(const QString &networkId)
+const NetworkStyle* NetworkStyle::instantiate(const std::string& networkId)
 {
-    for (unsigned x=0; x<network_styles_count; ++x)
+    std::string titleAddText = networkId == CBaseChainParams::MAIN ? "" : strprintf("[%s]", networkId);
+    for (const auto& network_style : network_styles)
     {
-        if (networkId == network_styles[x].networkId)
+        if (networkId == network_style.networkId)
         {
-            std::string appName = network_styles[x].appName;
-            std::string titleAddText = network_styles[x].titleAddText;
+            std::string appName = network_style.appName;
+            std::string titleAddText = network_style.titleAddText;
 
-            if (networkId == QString(CBaseChainParams::DEVNET.c_str())) {
+            if (networkId == CBaseChainParams::DEVNET.c_str()) {
                 appName = strprintf(appName, gArgs.GetDevNetName());
                 titleAddText = strprintf(titleAddText, gArgs.GetDevNetName());
             }
 
             return new NetworkStyle(
                     appName.c_str(),
-                    network_styles[x].iconColorHueShift,
-                    network_styles[x].iconColorSaturationReduction,
+                    network_style.iconColorHueShift,
+                    network_style.iconColorSaturationReduction,
                     titleAddText.c_str());
         }
     }
-    return 0;
+    return nullptr;
 }

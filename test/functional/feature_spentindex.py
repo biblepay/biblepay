@@ -7,17 +7,24 @@
 # Test addressindex generation and fetching
 #
 
-from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
-from test_framework.script import *
-from test_framework.mininode import *
 import binascii
+from decimal import Decimal
+
+from test_framework.messages import COIN, COutPoint, CTransaction, CTxIn, CTxOut
+from test_framework.script import CScript, OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160
+from test_framework.test_node import ErrorMatch
+from test_framework.test_framework import BitcoinTestFramework
+from test_framework.util import assert_equal
+
 
 class SpentIndexTest(BitcoinTestFramework):
 
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 4
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
 
     def setup_network(self):
         self.add_nodes(self.num_nodes)
@@ -27,24 +34,23 @@ class SpentIndexTest(BitcoinTestFramework):
         # Nodes 2/3 are used for testing
         self.start_node(2, ["-spentindex"])
         self.start_node(3, ["-spentindex", "-txindex"])
-        connect_nodes(self.nodes[0], 1)
-        connect_nodes(self.nodes[0], 2)
-        connect_nodes(self.nodes[0], 3)
-
-        self.is_network_split = False
+        self.connect_nodes(0, 1)
+        self.connect_nodes(0, 2)
+        self.connect_nodes(0, 3)
         self.sync_all()
+        self.import_deterministic_coinbase_privkeys()
 
     def run_test(self):
         self.log.info("Test that settings can't be changed without -reindex...")
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-spentindex=0"], "You need to rebuild the database using -reindex to change -spentindex", partial_match=True)
+        self.nodes[1].assert_start_raises_init_error(["-spentindex=0"], "You need to rebuild the database using -reindex to change -spentindex", match=ErrorMatch.PARTIAL_REGEX)
         self.start_node(1, ["-spentindex=0", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
+        self.connect_nodes(0, 1)
         self.sync_all()
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-spentindex"], "You need to rebuild the database using -reindex to change -spentindex", partial_match=True)
+        self.nodes[1].assert_start_raises_init_error(["-spentindex"], "You need to rebuild the database using -reindex to change -spentindex", match=ErrorMatch.PARTIAL_REGEX)
         self.start_node(1, ["-spentindex", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
+        self.connect_nodes(0, 1)
         self.sync_all()
 
         self.log.info("Mining blocks...")
@@ -69,8 +75,8 @@ class SpentIndexTest(BitcoinTestFramework):
         tx.vout = [CTxOut(amount, scriptPubKey)]
         tx.rehash()
 
-        signed_tx = self.nodes[0].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], True)
+        signed_tx = self.nodes[0].signrawtransactionwithwallet(tx.serialize().hex())
+        txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], 0)
         self.nodes[0].generate(1)
         self.sync_all()
 
@@ -104,8 +110,8 @@ class SpentIndexTest(BitcoinTestFramework):
         tx2.vout = [CTxOut(amount - int(COIN / 10), scriptPubKey2)]
         tx2.rehash()
         self.nodes[0].importprivkey(privkey)
-        signed_tx2 = self.nodes[0].signrawtransactionwithwallet(binascii.hexlify(tx2.serialize()).decode("utf-8"))
-        txid2 = self.nodes[0].sendrawtransaction(signed_tx2["hex"], True)
+        signed_tx2 = self.nodes[0].signrawtransactionwithwallet(tx2.serialize().hex())
+        txid2 = self.nodes[0].sendrawtransaction(signed_tx2["hex"], 0)
 
         # Check the mempool index
         self.sync_all()

@@ -1,15 +1,16 @@
-﻿// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <key.h>
 
 #include <key_io.h>
-#include <script/script.h>
+#include <streams.h>
+#include <test/util/setup_common.h>
 #include <uint256.h>
-#include <util.h>
-#include <utilstrencodings.h>
-#include <test/test_biblepay.h>
+#include <util/strencodings.h>
+#include <util/string.h>
+#include <util/system.h>
 
 #include <string>
 #include <vector>
@@ -68,15 +69,15 @@ BOOST_AUTO_TEST_CASE(key_test1)
     BOOST_CHECK(!key2C.VerifyPubKey(pubkey2));
     BOOST_CHECK(key2C.VerifyPubKey(pubkey2C));
 
-    BOOST_CHECK(DecodeDestination(addr1)  == CTxDestination(pubkey1.GetID()));
-    BOOST_CHECK(DecodeDestination(addr2)  == CTxDestination(pubkey2.GetID()));
-    BOOST_CHECK(DecodeDestination(addr1C) == CTxDestination(pubkey1C.GetID()));
-    BOOST_CHECK(DecodeDestination(addr2C) == CTxDestination(pubkey2C.GetID()));
+    BOOST_CHECK(DecodeDestination(addr1)  == CTxDestination(PKHash(pubkey1)));
+    BOOST_CHECK(DecodeDestination(addr2)  == CTxDestination(PKHash(pubkey2)));
+    BOOST_CHECK(DecodeDestination(addr1C) == CTxDestination(PKHash(pubkey1C)));
+    BOOST_CHECK(DecodeDestination(addr2C) == CTxDestination(PKHash(pubkey2C)));
 
     for (int n=0; n<16; n++)
     {
         std::string strMsg = strprintf("Very secret message %i: 11", n);
-        uint256 hashMsg = Hash(strMsg.begin(), strMsg.end());
+        uint256 hashMsg = Hash(strMsg);
 
         // normal signatures
 
@@ -133,7 +134,7 @@ BOOST_AUTO_TEST_CASE(key_test1)
 
     std::vector<unsigned char> detsig, detsigc;
     std::string strMsg = "Very deterministic message";
-    uint256 hashMsg = Hash(strMsg.begin(), strMsg.end());
+    uint256 hashMsg = Hash(strMsg);
     BOOST_CHECK(key1.Sign(hashMsg, detsig));
     BOOST_CHECK(key1C.Sign(hashMsg, detsigc));
     BOOST_CHECK(detsig == detsigc);
@@ -150,6 +151,147 @@ BOOST_AUTO_TEST_CASE(key_test1)
     BOOST_CHECK(key2C.SignCompact(hashMsg, detsigc));
     BOOST_CHECK(detsig == ParseHex("1c52d8a32079c11e79db95af63bb9600c5b04f21a9ca33dc129c2bfa8ac9dc1cd561d8ae5e0f6c1a16bde3719c64c2fd70e404b6428ab9a69566962e8771b5944d"));
     BOOST_CHECK(detsigc == ParseHex("2052d8a32079c11e79db95af63bb9600c5b04f21a9ca33dc129c2bfa8ac9dc1cd561d8ae5e0f6c1a16bde3719c64c2fd70e404b6428ab9a69566962e8771b5944d"));
+}
+
+BOOST_AUTO_TEST_CASE(key_signature_tests)
+{
+    // When entropy is specified, we should see at least one high R signature within 20 signatures
+    CKey key = DecodeSecret(strSecret1);
+    std::string msg = "A message to be signed";
+    uint256 msg_hash = Hash(msg);
+    std::vector<unsigned char> sig;
+    bool found = false;
+
+    for (int i = 1; i <=20; ++i) {
+        sig.clear();
+        BOOST_CHECK(key.Sign(msg_hash, sig, false, i));
+        found = sig[3] == 0x21 && sig[4] == 0x00;
+        if (found) {
+            break;
+        }
+    }
+    BOOST_CHECK(found);
+
+    // When entropy is not specified, we should always see low R signatures that are less than or equal to 70 bytes in 256 tries
+    // The low R signatures should always have the value of their "length of R" byte less than or equal to 32
+    // We should see at least one signature that is less than 70 bytes.
+    bool found_small = false;
+    bool found_big = false;
+    bool bad_sign = false;
+    for (int i = 0; i < 256; ++i) {
+        sig.clear();
+        std::string msg = "A message to be signed" + ToString(i);
+        msg_hash = Hash(msg);
+        if (!key.Sign(msg_hash, sig)) {
+            bad_sign = true;
+            break;
+        }
+        // sig.size() > 70 implies sig[3] > 32, because S is always low.
+        // But check both conditions anyway, just in case this implication is broken for some reason
+        if (sig[3] > 32 || sig.size() > 70) {
+            found_big = true;
+            break;
+        }
+        found_small |= sig.size() < 70;
+    }
+    BOOST_CHECK(!bad_sign);
+    BOOST_CHECK(!found_big);
+    BOOST_CHECK(found_small);
+}
+
+BOOST_AUTO_TEST_CASE(key_key_negation)
+{
+    // create a dummy hash for signature comparison
+    unsigned char rnd[8];
+    std::string str = "Bitcoin key verification\n";
+    GetRandBytes(rnd, sizeof(rnd));
+    uint256 hash;
+    CHash256().Write(MakeUCharSpan(str)).Write(rnd).Finalize(hash);
+
+    // import the static test key
+    CKey key = DecodeSecret(strSecret1C);
+
+    // create a signature
+    std::vector<unsigned char> vch_sig;
+    std::vector<unsigned char> vch_sig_cmp;
+    key.Sign(hash, vch_sig);
+
+    // negate the key twice
+    BOOST_CHECK(key.GetPubKey().data()[0] == 0x03);
+    key.Negate();
+    // after the first negation, the signature must be different
+    key.Sign(hash, vch_sig_cmp);
+    BOOST_CHECK(vch_sig_cmp != vch_sig);
+    BOOST_CHECK(key.GetPubKey().data()[0] == 0x02);
+    key.Negate();
+    // after the second negation, we should have the original key and thus the
+    // same signature
+    key.Sign(hash, vch_sig_cmp);
+    BOOST_CHECK(vch_sig_cmp == vch_sig);
+    BOOST_CHECK(key.GetPubKey().data()[0] == 0x03);
+}
+
+static CPubKey UnserializePubkey(const std::vector<uint8_t>& data)
+{
+    CDataStream stream{SER_NETWORK, INIT_PROTO_VERSION};
+    stream << data;
+    CPubKey pubkey;
+    stream >> pubkey;
+    return pubkey;
+}
+
+static unsigned int GetLen(unsigned char chHeader)
+{
+    if (chHeader == 2 || chHeader == 3)
+        return CPubKey::COMPRESSED_SIZE;
+    if (chHeader == 4 || chHeader == 6 || chHeader == 7)
+        return CPubKey::SIZE;
+    return 0;
+}
+
+static void CmpSerializationPubkey(const CPubKey& pubkey)
+{
+    CDataStream stream{SER_NETWORK, INIT_PROTO_VERSION};
+    stream << pubkey;
+    CPubKey pubkey2;
+    stream >> pubkey2;
+    BOOST_CHECK(pubkey == pubkey2);
+}
+
+BOOST_AUTO_TEST_CASE(pubkey_unserialize)
+{
+    for (uint8_t i = 2; i <= 7; ++i) {
+        CPubKey key = UnserializePubkey({0x02});
+        BOOST_CHECK(!key.IsValid());
+        CmpSerializationPubkey(key);
+        key = UnserializePubkey(std::vector<uint8_t>(GetLen(i), i));
+        CmpSerializationPubkey(key);
+        if (i == 5) {
+            BOOST_CHECK(!key.IsValid());
+        } else {
+            BOOST_CHECK(key.IsValid());
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(key_ellswift)
+{
+    for (const auto& secret : {strSecret1, strSecret2, strSecret1C, strSecret2C}) {
+        CKey key = DecodeSecret(secret);
+        BOOST_CHECK(key.IsValid());
+
+        uint256 ent32 = InsecureRand256();
+        auto ellswift = key.EllSwiftCreate(AsBytes(Span{ent32}));
+
+        CPubKey decoded_pubkey = ellswift.Decode();
+        if (!key.IsCompressed()) {
+            // The decoding constructor returns a compressed pubkey. If the
+            // original was uncompressed, we must decompress the decoded one
+            // to compare.
+            decoded_pubkey.Decompress();
+        }
+        BOOST_CHECK(key.GetPubKey() == decoded_pubkey);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

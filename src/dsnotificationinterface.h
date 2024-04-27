@@ -7,10 +7,20 @@
 
 #include <validationinterface.h>
 
+class CConnman;
+class CDeterministicMNManager;
+class CGovernanceManager;
+class CMasternodeSync;
+struct CJContext;
+struct LLMQContext;
+
 class CDSNotificationInterface : public CValidationInterface
 {
 public:
-    explicit CDSNotificationInterface(CConnman& connmanIn): connman(connmanIn) {}
+    explicit CDSNotificationInterface(CConnman& _connman,
+                                      CMasternodeSync& _mn_sync, const std::unique_ptr<CDeterministicMNManager>& _dmnman,
+                                      CGovernanceManager& _govman, const std::unique_ptr<LLMQContext>& _llmq_ctx,
+                                      const std::unique_ptr<CJContext>& _cj_ctx);
     virtual ~CDSNotificationInterface() = default;
 
     // a small helper to initialize current block height in sub-modules on startup
@@ -24,13 +34,20 @@ protected:
     void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
     void TransactionAddedToMempool(const CTransactionRef& tx, int64_t nAcceptTime) override;
     void TransactionRemovedFromMempool(const CTransactionRef& ptx, MemPoolRemovalReason reason) override;
-    void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex, const std::vector<CTransactionRef>& vtxConflicted) override;
+    void BlockConnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex) override;
     void BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected) override;
     void NotifyMasternodeListChanged(bool undo, const CDeterministicMNList& oldMNList, const CDeterministicMNListDiff& diff) override;
     void NotifyChainLock(const CBlockIndex* pindex, const std::shared_ptr<const llmq::CChainLockSig>& clsig) override;
 
 private:
     CConnman& connman;
+
+    CMasternodeSync& m_mn_sync;
+    const std::unique_ptr<CDeterministicMNManager>& dmnman;
+    CGovernanceManager& govman;
+
+    const std::unique_ptr<LLMQContext>& llmq_ctx;
+    const std::unique_ptr<CJContext>& cj_ctx;
 };
 
 #endif // BITCOIN_DSNOTIFICATIONINTERFACE_H

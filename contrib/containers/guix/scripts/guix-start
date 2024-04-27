@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+if [[ -n "${1}" ]]; then
+    WORKSPACE_PATH="$1"
+else
+    WORKSPACE_PATH="/src/biblepay"
+fi
+
+if [[ ! -d "$WORKSPACE_PATH" ]]; then
+    echo "$0: $WORKSPACE_PATH is not a valid directory, exiting!"
+    exit 1
+fi
+
+XCODE_VERSION="12.2"
+XCODE_RELEASE="12B45b"
+XCODE_ARCHIVE="Xcode-${XCODE_VERSION}-${XCODE_RELEASE}-extracted-SDK-with-libcxx-headers"
+
+# Check if macOS SDK is present, if not, download it
+if [ ! -d "${WORKSPACE_PATH}/depends/SDKs/${XCODE_ARCHIVE}" ]
+then
+    mkdir -p "${WORKSPACE_PATH}/depends/SDKs"
+    curl -L https://bitcoincore.org/depends-sources/sdks/${XCODE_ARCHIVE}.tar.gz | tar -xz -C "${WORKSPACE_PATH}/depends/SDKs"
+fi
+
+cd "${WORKSPACE_PATH}"
+git config --global --add safe.directory "${WORKSPACE_PATH}"
+git status >> /dev/null
+
+./contrib/guix/guix-build

@@ -25,7 +25,7 @@ class AddressTableModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    explicit AddressTableModel(WalletModel *parent = 0);
+    explicit AddressTableModel(WalletModel *parent = nullptr);
     ~AddressTableModel();
 
     enum ColumnIndex {
@@ -52,14 +52,14 @@ public:
 
     /** @name Methods overridden from QAbstractTableModel
         @{*/
-    int rowCount(const QModelIndex &parent) const;
-    int columnCount(const QModelIndex &parent) const;
-    QVariant data(const QModelIndex &index, int role) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role);
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-    QModelIndex index(int row, int column, const QModelIndex &parent) const;
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
-    Qt::ItemFlags flags(const QModelIndex &index) const;
+    int rowCount(const QModelIndex &parent) const override;
+    int columnCount(const QModelIndex &parent) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+    QModelIndex index(int row, int column, const QModelIndex &parent) const override;
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
     /*@}*/
 
     /* Add an address to the model.
@@ -67,10 +67,11 @@ public:
      */
     QString addRow(const QString &type, const QString &label, const QString &address);
 
-    /* Look up label for address in address book, if not found return empty string.
-     */
+    /** Look up label for address in address book, if not found return empty string. */
     QString labelForAddress(const QString &address) const;
-    QString labelForDestination(const CTxDestination &dest) const;
+
+    /** Look up purpose for address in address book, if not found return empty string. */
+    QString purposeForAddress(const QString &address) const;
 
     /* Look up row index of an address in the model.
        Return -1 if not found.
@@ -80,10 +81,13 @@ public:
     EditStatus getEditStatus() const { return editStatus; }
 
 private:
-    WalletModel *walletModel;
-    AddressTablePriv *priv;
+    WalletModel* const walletModel;
+    AddressTablePriv *priv = nullptr;
     QStringList columns;
-    EditStatus editStatus;
+    EditStatus editStatus = OK;
+
+    /** Look up address book data given an address string. */
+    bool getAddressData(const QString &address, std::string* name, std::string* purpose) const;
 
     /** Notify listeners that data changed. */
     void emitDataChanged(int index);

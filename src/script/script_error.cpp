@@ -1,11 +1,13 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Bitcoin Core developers
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <script/script_error.h>
 
-const char* ScriptErrorString(const ScriptError serror)
+#include <string>
+
+std::string ScriptErrorString(const ScriptError serror)
 {
     switch (serror)
     {
@@ -73,7 +75,7 @@ const char* ScriptErrorString(const ScriptError serror)
         case SCRIPT_ERR_MINIMALDATA:
             return "Data push larger than necessary";
         case SCRIPT_ERR_SIG_PUSHONLY:
-            return "Only non-push operators allowed in signatures";
+            return "Only push operators allowed in signatures";
         case SCRIPT_ERR_SIG_HIGH_S:
             return "Non-canonical signature: S value is unnecessarily high";
         case SCRIPT_ERR_SIG_NULLDUMMY:
@@ -85,7 +87,11 @@ const char* ScriptErrorString(const ScriptError serror)
         case SCRIPT_ERR_PUBKEYTYPE:
             return "Public key is neither compressed or uncompressed";
         case SCRIPT_ERR_CLEANSTACK:
-            return "Extra items left on stack after execution";
+            return "Stack size must be exactly one after execution";
+        case SCRIPT_ERR_OP_CODESEPARATOR:
+            return "Using OP_CODESEPARATOR";
+        case SCRIPT_ERR_SIG_FINDANDDELETE:
+            return "Signature is found in scriptCode";
         case SCRIPT_ERR_UNKNOWN_ERROR:
         case SCRIPT_ERR_ERROR_COUNT:
         default: break;

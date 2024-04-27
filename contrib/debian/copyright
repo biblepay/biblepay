@@ -1,14 +1,14 @@
-﻿Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Biblepay Core
-Upstream-Contact: Biblepay Core Group, Inc https://www.biblepay.org/team/
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: BiblePay Core
+Upstream-Contact: BiblePay Core Group, Inc https://www.biblepay.org/dcg/
 Source: https://github.com/biblepay/biblepay
 
 Files: *
-Copyright: 2009-2017, Bitcoin Core Developers,
-           2019-2020, Biblepay Core Developers
+Copyright: 2009-2024, Bitcoin Core Developers,
+           2019-2024, BiblePay Core Developers
 License: Expat
 Comment: The Bitcoin Core Developers encompasses the current developers listed on bitcoin.org,
-         as well as the numerous contributors to the project. The Däsh Core Developers
+         as well as the numerous contributors to the project. The BiblePay Core Developers
          encompasses the current developers listed on https://www.biblepay.org/team/, as well as
          the numerous contributors to the project.
 
@@ -24,6 +24,13 @@ License: GNU-All-permissive-License
 Files: src/secp256k1/build-aux/m4/ax_prog_cc_for_build.m4
 Copyright: 2008 Paolo Bonzini <bonzini@gnu.org>
 License: GNU-All-permissive-License
+
+
+Files: src/qt/res/icons/proxy.png
+       src/qt/res/src/proxy.svg
+Copyright: Cristian Mircea Messel
+License: public-domain
+
 
 License: Expat
  Permission is hereby granted, free of charge, to any person obtaining a

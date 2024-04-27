@@ -1,20 +1,18 @@
-﻿// Copyright (c) 2018-2019 The Bitcoin developers
+// Copyright (c) 2018-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <policy/policy.h>
 #include <script/interpreter.h>
 
-#include <test/test_biblepay.h>
-
 #include <boost/test/unit_test.hpp>
 
 #include <array>
 
-typedef std::vector<uint8_t> valtype;
-typedef std::vector<valtype> stacktype;
+using valtype = std::vector<uint8_t>;
+using stacktype = std::vector<valtype>;
 
-BOOST_FIXTURE_TEST_SUITE(dip0020opcodes_tests, BasicTestingSetup)
+BOOST_AUTO_TEST_SUITE(dip0020opcodes_tests)
 
 std::array<uint32_t, 2> flagset{{0, STANDARD_SCRIPT_VERIFY_FLAGS}};
 
@@ -566,7 +564,7 @@ static void CheckTypeConversionOp(const valtype& bin, const valtype& num)
                                    << bin.size() << OP_NUM2BIN,
                                {rebuilt_bin});
 
-    // BIN2NUM is indempotent.
+    // BIN2NUM is idempotent.
     CheckTestResultForAllFlags({bin}, CScript() << OP_BIN2NUM << OP_BIN2NUM,
                                {num});
 }

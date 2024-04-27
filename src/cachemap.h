@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -28,13 +28,9 @@ struct CacheItem
     K key;
     V value;
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CacheItem, obj)
     {
-        READWRITE(key);
-        READWRITE(value);
+        READWRITE(obj.key, obj.value);
     }
 };
 
@@ -46,21 +42,21 @@ template<typename K, typename V, typename Size = uint32_t>
 class CacheMap
 {
 public:
-    typedef Size size_type;
+    using size_type = Size;
 
-    typedef CacheItem<K,V> item_t;
+    using item_t = CacheItem<K,V>;
 
-    typedef std::list<item_t> list_t;
+    using list_t = std::list<item_t>;
 
-    typedef typename list_t::iterator list_it;
+    using list_it = typename list_t::iterator;
 
-    typedef typename list_t::const_iterator list_cit;
+    using list_cit = typename list_t::const_iterator;
 
-    typedef std::map<K, list_it> map_t;
+    using map_t = std::map<K, list_it>;
 
-    typedef typename map_t::iterator map_it;
+    using map_it = typename map_t::iterator;
 
-    typedef typename map_t::const_iterator map_cit;
+    using map_cit = typename map_t::const_iterator;
 
 private:
     size_type nMaxSize;
@@ -76,7 +72,7 @@ public:
           mapIndex()
     {}
 
-    CacheMap(const CacheMap<K,V>& other)
+    explicit CacheMap(const CacheMap<K,V>& other)
         : nMaxSize(other.nMaxSize),
           listItems(other.listItems),
           mapIndex()
@@ -127,7 +123,7 @@ public:
         if(it == mapIndex.end()) {
             return false;
         }
-        item_t& item = *(it->second);
+        const item_t& item = *(it->second);
         value = item.value;
         return true;
     }
@@ -154,16 +150,10 @@ public:
         return *this;
     }
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CacheMap, obj)
     {
-        READWRITE(nMaxSize);
-        READWRITE(listItems);
-        if(ser_action.ForRead()) {
-            RebuildIndex();
-        }
+        READWRITE(obj.nMaxSize, obj.listItems);
+        SER_READ(obj, obj.RebuildIndex());
     }
 
 private:

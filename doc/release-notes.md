@@ -1,106 +1,163 @@
-﻿Biblepay Core version 0.17.0.3
-==========================
+# BiblePay Core version v20.1.0
 
-Release is now available from:
+This is a new minor version release, including various new features, improvements, and bug fixes.
 
-  <https://www.biblepay.org/downloads/#wallets>
+This release is optional but recommended for all nodes.
 
-This is a new hotfix release.
-
-Please report bugs using the issue tracker at github:
+Please report bugs using the issue tracker at GitHub:
 
   <https://github.com/biblepay/biblepay/issues>
 
 
-Upgrading and downgrading
-=========================
+# Upgrading and downgrading
 
-How to Upgrade
---------------
+## How to Upgrade
 
 If you are running an older version, shut it down. Wait until it has completely
 shut down (which might take a few minutes for older versions), then run the
 installer (on Windows) or just copy over /Applications/BiblePay-Qt (on Mac) or
-biblepayd/biblepay-qt (on Linux). If you upgrade after DIP0003 activation and you were
-using version < 0.13 you will have to reindex (start with -reindex-chainstate
-or -reindex) to make sure your wallet has all the new data synced. Upgrading
-from version 0.13 should not require any additional actions.
+biblepayd/biblepay-qt (on Linux).
 
-When upgrading from a version prior to 0.14.0.3, the
-first startup of Biblepay Core will run a migration process which can take a few
-minutes to finish. After the migration, a downgrade to an older version is only
-possible with a reindex (or reindex-chainstate).
+## Downgrade warning
 
-Downgrade warning
------------------
+### Downgrade to a version < v19.2.0
 
-### Downgrade to a version < 0.14.0.3
+Downgrading to a version older than v19.2.0 is not supported due to changes
+in the evodb database. If you need to use an older version, you must either
+reindex or re-sync the whole chain.
 
-Downgrading to a version older than 0.14.0.3 is no longer supported due to
-changes in the "evodb" database format. If you need to use an older version,
-you must either reindex or re-sync the whole chain.
+# Notable changes
 
-### Downgrade of masternodes to < 0.17.0.2
+## HD Wallets Enabled by Default
 
-Starting with the 0.16 release, masternodes verify the protocol version of other
-masternodes. This results in PoSe punishment/banning for outdated masternodes,
-so downgrading even prior to the activation of the introduced hard-fork changes
-is not recommended.
+In this release, we are taking a significant step towards enhancing the BiblePay wallet's usability by enabling Hierarchical
+Deterministic (HD) wallets by default. This change aligns the behavior of `biblepayd` and `biblepay-qt` with the previously
+optional `-usehd=1` flag, making HD wallets the standard for all users.
 
-Notable changes
-===============
+While HD wallets are now enabled by default to improve user experience, BiblePay Core still allows for the creation of
+non-HD wallets by using the `-usehd=0` flag. However, users should be aware that this option is intended for legacy
+support and will be removed in future releases. Importantly, even with an HD wallet, users can still import non-HD
+private keys, ensuring flexibility in managing their funds.
 
-This release adds some missing translations and help strings. It also fixes
-a couple of build issues and a rare crash on some linux systems.
+## Windows release signing
 
-0.17.0.3 Change log
-===================
+Windows releases are signed by a new certificate that replaces the expired one used previously.
 
-See detailed [set of changes](https://github.com/biblepay/biblepay/compare/v0.17.0.2...biblepay:v0.17.0.3).
+## Removal of Non-Deterministic InstantSend
 
-- [`6a54af0df7`](https://github.com/biblepay/biblepay/commit/6a54af0df7) Bump to v0.17.0.3
-- [`97e8461234`](https://github.com/biblepay/biblepay/commit/97e8461234) doc: Archive v0.17.0.2 release notes
-- [`96c041896b`](https://github.com/biblepay/biblepay/commit/96c041896b) feat: add tor entrypoint script for use in biblepaymate (#4182)
-- [`3661f36bbd`](https://github.com/biblepay/biblepay/commit/3661f36bbd) Merge #14416: Fix OSX dmg issue (10.12 to 10.14) (#4177)
-- [`4f4bda0557`](https://github.com/biblepay/biblepay/commit/4f4bda0557) depends: Undefine `BLSALLOC_SODIUM` in `bls-dash.mk` (#4176)
-- [`575e0a3070`](https://github.com/biblepay/biblepay/commit/575e0a3070) qt: Add `QFont::Normal` as a supported font weight when no other font weights were found (#4175)
-- [`ce4a73b790`](https://github.com/biblepay/biblepay/commit/ce4a73b790) rpc: Fix `upgradetohd` help text (#4170)
-- [`2fa8ddf160`](https://github.com/biblepay/biblepay/commit/2fa8ddf160) Translations 202105 (add missing) (#4169)
+Legacy InstantSend was deprecated with the activation of Deterministic InstantSend, but we kept the underlying logic for some time to ensure a smooth transition. v20.1 finally removes all Legacy InstantSend logic and will no longer support sending and receiving islock p2p messages and inv p2p messages with id 30. Such messages will be seen as unknown by v20.1 nodes. The protocol version was incremented to 70231 to indicate a change in network protocol. Please note that the -llmqinstantsend and -llmqtestinstantsend command line options have also been removed as part of this change.
 
-Credits
-=======
+## RPC changes
+
+- `protx info`: It's now possible to get historical data at a specific block by providing its blockhash.
+- `gettxchainlocks`: will now return the status `mempool` indicating whether the transaction is in the mempool.
+or not.
+- Exposed transaction version numbers are now treated as unsigned 16-bit integers instead of signed 16-bit integers.
+This matches their treatment in consensus logic. Versions greater than 3 continue to be non-standard (matching previous
+behavior of smaller than 1 or greater than 3 being non-standard). Note that this includes the joinpsbt command, which
+combines partially-signed transactions by selecting the highest version number.
+- `getpeerinfo`: now returns a `connection_type` field. This indicates the type of connection established with
+the peer. It will return one of six options. For more information, see the `getpeerinfo` help documentation.
+- `getpeerinfo`: now has additional `last_block` and `last_transaction` fields that return the UNIX epoch time
+of the last block and the last valid transaction received from each peer.
+- `getblockchaininfo`: now returns a new `time` field that provides the chain tip time.
+- `fundrawtransaction` and `walletcreatefundedpsbt`: when used with the `lockUnspents` argument now lock manually
+selected coins, in addition to automatically selected coins. Note that locked coins are never used in automatic coin
+selection, but can still be manually selected.
+- `testmempoolaccept`: returns `vsize` and a `fee` object with the `base` fee if the transaction passes
+validation. The `testmempoolaccept` RPC now accepts multiple transactions (still experimental at the moment, API may be
+unstable).
+
+## Added RPCs
+
+- `submitchainlock`: allows the submission of a ChainLock signature. Note: This RPC is whitelisted for the Platform
+RPC user.
+- `getassetunlockstatuses`: allows fetching of Asset Unlock txs by their withdrawal index. The RPC accepts an array
+of indexes and an optional block height. The possible outcomes per each index are: `chainlocked`, `mined`, `mempooled`,
+`unknown`. Note: If a specific block height is passed on request, then only `chainlocked` and `unknown` outcomes are
+possible. This RPC is whitelisted for the Platform RPC user.
+- `quorum dkginfo`: returns information about DKGs: `active_dkgs` and `next_dkg`.
+- `getrawtransactionmulti`: allows requesting a batch of up to 100 raw transactions per request.
+
+## Docker Build System
+
+Modified the Dockerfile to exclude the `biblepay-qt` graphical wallet interface from the set of binaries copied to
+`/usr/local/bin` during the Docker image build process. This change streamlines the Docker image, making it more
+suitable for server environments and headless applications, where the graphical user interface of `biblepay-qt` is not
+required. The update enhances the Docker image's efficiency by reducing its size and minimizing unnecessary components.
+
+## Command-line options
+
+- The same ZeroMQ notification (e.g. `-zmqpubhashtx=address`) can now be specified multiple times to publish the same
+notification to different ZeroMQ sockets.
+- `-startupnotify=<cmd>`: Execute command on startup.
+
+
+## Notification changes
+
+- `-walletnotify` notifications are now sent for wallet transactions that are removed from the mempool because they
+conflict with a new block. These notifications were sent previously, but have been broken since
+the v18.1 release.
+- The `startupnotify` option is used to specify a command to execute when BiblePay Core has finished with its startup
+sequence.
+
+## Build System
+
+The `--enable-upnp-default` and `--enable-natpmp-default` options have been removed. If you want to use port mapping,
+you can configure it using a `.conf` file, or by passing the relevant options at runtime.
+
+## Wallet
+
+- The wallet can create a transaction without change even when the keypool is empty. Previously it failed.
+- New Discreet mode for hiding balances in BiblePay-Qt
+- Added a "Close all wallet" menu item for BiblePay-Qt
+
+## Backports from Bitcoin Core
+
+This release introduces many updates from Bitcoin  v0.20-v25.0. Breaking changes are documented here; however, for
+additional detail on what’s included in Bitcoin, please refer to their release notes.
+
+# v20.1.0 Change log
+
+See detailed [set of changes][set-of-changes].
+
+# Credits
 
 Thanks to everyone who directly contributed to this release:
 
-- dustinface (xdustinface)
-- strophy
+- Alessandro Rezzi
+- Kittywhiskers Van Gogh
+- Konstantin Akimov
+- Odysseas Gabrielides
+- PastaPastaPasta
+- thephez
 - UdjinM6
+- Vijay Manikpuri
 
-As well as everyone that submitted issues and reviewed pull requests.
+As well as everyone that submitted issues, reviewed pull requests and helped
+debug the release candidates.
 
-Older releases
-==============
-
-BiblePay was previously known as Darkcoin.
-
-Darkcoin tree 0.8.x was a fork of Litecoin tree 0.8, original name was XCoin
-which was first released on Jan/18/2014.
-
-Darkcoin tree 0.9.x was the open source implementation of masternodes based on
-the 0.8.x tree and was first released on Mar/13/2014.
-
-Darkcoin tree 0.10.x used to be the closed source implementation of Darksend
-which was released open source on Sep/25/2014.
-
-Biblepay Core tree 0.11.x was a fork of Bitcoin Core tree 0.9,
-Darkcoin was rebranded to BiblePay.
-
-Biblepay Core tree 0.12.0.x was a fork of Bitcoin Core tree 0.10.
-
-Biblepay Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
+# Older releases
 
 These release are considered obsolete. Old release notes can be found here:
 
+- [v20.0.4](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-20.0.4.md) released Jan/13/2024
+- [v20.0.3](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-20.0.3.md) released December/26/2023
+- [v20.0.2](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-20.0.2.md) released December/06/2023
+- [v20.0.1](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-20.0.1.md) released November/18/2023
+- [v20.0.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-20.0.0.md) released November/15/2023
+- [v19.3.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-19.3.0.md) released July/31/2023
+- [v19.2.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-19.2.0.md) released June/19/2023
+- [v19.1.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-19.1.0.md) released May/22/2023
+- [v19.0.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-19.0.0.md) released Apr/14/2023
+- [v18.2.2](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-18.2.2.md) released Mar/21/2023
+- [v18.2.1](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-18.2.1.md) released Jan/17/2023
+- [v18.2.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-18.2.0.md) released Jan/01/2023
+- [v18.1.1](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-18.1.1.md) released January/08/2023
+- [v18.1.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-18.1.0.md) released October/09/2022
+- [v18.0.2](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-18.0.2.md) released October/09/2022
+- [v18.0.1](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-18.0.1.md) released August/17/2022
+- [v0.17.0.3](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.17.0.3.md) released June/07/2021
 - [v0.17.0.2](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.17.0.2.md) released May/19/2021
 - [v0.16.1.1](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.16.1.1.md) released November/17/2020
 - [v0.16.1.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.16.1.0.md) released November/14/2020
@@ -130,3 +187,5 @@ These release are considered obsolete. Old release notes can be found here:
 - [v0.11.0](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.11.0.md) released Jan/15/2015
 - [v0.10.x](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.10.0.md) released Sep/25/2014
 - [v0.9.x](https://github.com/biblepay/biblepay/blob/master/doc/release-notes/biblepay/release-notes-0.9.0.md) released Mar/13/2014
+
+[set-of-changes]: https://github.com/biblepay/biblepay/compare/v20.0.4...biblepay:v20.1.0

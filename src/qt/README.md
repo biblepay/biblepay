@@ -1,10 +1,10 @@
-﻿This directory contains the BiblePay-QT graphical user interface (GUI). It uses the cross-platform framework [Qt](https://www1.qt.io/developers/).
+This directory contains the BiblepayQT graphical user interface (GUI). It uses the cross-platform framework [Qt](https://www1.qt.io/developers/).
 
 The current precise version for Qt 5 is specified in [qt.mk](/depends/packages/qt.mk). Qt 4 is not supported.
 
 ## Compile and run
 
-See build instructions ([OSX](/doc/build-osx.md), [Windows](/doc/build-windows.md), [Unix](/doc/build-unix.md), etc).
+See build instructions ([macOS](/doc/build-osx.md), [Windows](/doc/build-windows.md), [Unix](/doc/build-unix.md), etc).
 
 To run:
 
@@ -32,7 +32,7 @@ Tests.
 
 ### bitcoingui.(h/cpp)
 
-Represents the main window of the Biblepay UI.
+Represents the main window of the BiblePay UI.
 
 ### \*model.(h/cpp)
 
@@ -50,7 +50,7 @@ Various dialogs, e.g. to open a URL. Inherit from [QDialog](http://doc.qt.io/qt-
 
 ### paymentserver.(h/cpp)
 
-Used to process BIP21 and BIP70 (see https://github.com/bitcoin/bitcoin/pull/11622) payment URI / requests. Also handles URI based application switching (e.g. when following a biblepay:... link from a browser).
+Used to process BIP21 payment URI requests. Also handles URI based application switching (e.g. when following a biblepay:... link from a browser).
 
 ### walletview.(h/cpp)
 
@@ -64,8 +64,8 @@ Represents the view to a single wallet.
 * `callback.h`
 * `guiconstants.h`: UI colors, app name, etc
 * `guiutil.h`: several helper functions
-* `macdockiconhandler.(h/cpp)`
-* `macdockiconhandler.(h/cpp)`: display notifications in OSX
+* `macdockiconhandler.(h/mm)`: macOS dock icon handler
+* `macnotificationhandler.(h/mm)`: display notifications in macOS
 
 ## Contribute
 
@@ -81,9 +81,9 @@ the UI layout.
 Download and install the community edition of [Qt Creator](https://www.qt.io/download/).
 Uncheck everything except Qt Creator during the installation process.
 
-Instructions for OSX:
+Instructions for macOS:
 
-1. Make sure you installed everything through Homebrew mentioned in the [OSX build instructions](/doc/build-osx.md)
+1. Make sure you installed everything through Homebrew mentioned in the [macOS build instructions](/doc/build-osx.md)
 2. Use `./configure` with the `--enable-debug` flag
 3. In Qt Creator do "New Project" -> Import Project -> Import Existing Project
 4. Enter "biblepay-qt" as project name, enter src/qt as location

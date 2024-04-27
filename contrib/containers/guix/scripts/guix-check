@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+if [[ -n "${1}" ]]; then
+    WORKSPACE_PATH="$1"
+else
+    WORKSPACE_PATH="/src/biblepay"
+fi
+
+if [[ ! -d "$WORKSPACE_PATH" ]]; then
+    echo "$0: $WORKSPACE_PATH is not a valid directory, exiting!"
+    exit 1
+fi
+
+cd "$WORKSPACE_PATH"
+
+source "contrib/guix/libexec/prelude.bash"
+
+printf "\nBinaries:\n\n"
+( \
+SRC_PATH_PREFIX="${VERSION_BASE}/distsrc-" && \
+sha256sum ${SRC_PATH_PREFIX}*/src/biblepay{d,-cli,-tx,-wallet}{,.exe} && \
+sha256sum ${SRC_PATH_PREFIX}*/src/qt/biblepay-qt{,.exe} && \
+sha256sum ${SRC_PATH_PREFIX}*/src/test/test_biblepay{,.exe} \
+) | sort -k 2
+
+printf "\nArchives:\n\n"
+find "${OUTDIR_BASE}" -type f | grep -v SHA256 | xargs sha256sum | sort -k 2

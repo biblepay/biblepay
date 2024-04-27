@@ -1,12 +1,15 @@
-﻿#!/usr/bin/env python3
-# Copyright (c) 2018-2020 The DÃSH Core Developers
+#!/usr/bin/env python3
+# Copyright (c) 2018-2020 The BiblePay Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Tests around biblepay governance objects."""
 
+import json
+import time
+
+from test_framework.messages import uint256_to_string
 from test_framework.test_framework import BiblepayTestFramework
-from test_framework.util import *
-from test_framework.messages import *
+from test_framework.util import assert_equal, assert_greater_than, assert_raises_rpc_error
 
 
 def validate_object(prepared, rpc_prepared):
@@ -19,7 +22,7 @@ def validate_object(prepared, rpc_prepared):
     assert_equal(prepared["data"], rpc_prepared["data"])
 
 
-class BiblePayGovernanceTest (BiblepayTestFramework):
+class BiblepayGovernanceTest (BiblepayTestFramework):
     def set_test_params(self):
         self.set_biblepay_test_params(2, 1)
 
@@ -97,4 +100,4 @@ class BiblePayGovernanceTest (BiblepayTestFramework):
 
 
 if __name__ == '__main__':
-    BiblePayGovernanceTest().main()
+    BiblepayGovernanceTest().main()

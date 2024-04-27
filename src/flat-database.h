@@ -1,16 +1,16 @@
-﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_FLAT_DATABASE_H
 #define BITCOIN_FLAT_DATABASE_H
 
-#include <chainparams.h>
 #include <clientversion.h>
+#include <chainparams.h>
 #include <fs.h>
 #include <hash.h>
 #include <streams.h>
-#include <util.h>
+#include <util/system.h>
 
 /**
 *   Generic Dumping and Loading
@@ -36,7 +36,7 @@ private:
     std::string strFilename;
     std::string strMagicMessage;
 
-    bool Write(const T& objToSave)
+    bool CoreWrite(const T& objToSave)
     {
         // LOCK(objToSave.cs);
 
@@ -47,7 +47,7 @@ private:
         ssObj << strMagicMessage; // specific magic message for this type of object
         ssObj << Params().MessageStart(); // network specific magic number
         ssObj << objToSave;
-        uint256 hash = Hash(ssObj.begin(), ssObj.end());
+        uint256 hash = Hash(ssObj);
         ssObj << hash;
 
         // open output file, and associate with CAutoFile
@@ -71,7 +71,7 @@ private:
         return true;
     }
 
-    ReadResult Read(T& objToLoad, bool fDryRun = false)
+    ReadResult CoreRead(T& objToLoad)
     {
         //LOCK(objToLoad.cs);
 
@@ -97,7 +97,7 @@ private:
 
         // read data and checksum from file
         try {
-            filein.read((char *)vchData.data(), dataSize);
+            filein.read(MakeWritableByteSpan(vchData));
             filein >> hashIn;
         }
         catch (std::exception &e) {
@@ -109,7 +109,7 @@ private:
         CDataStream ssObj(vchData, SER_DISK, CLIENT_VERSION);
 
         // verify stored checksum matches input data
-        uint256 hashTmp = Hash(ssObj.begin(), ssObj.end());
+        uint256 hashTmp = Hash(ssObj);
         if (hashIn != hashTmp)
         {
             error("%s: Checksum mismatch, data corrupted", __func__);
@@ -152,28 +152,13 @@ private:
 
         LogPrintf("Loaded info from %s  %dms\n", strFilename, GetTimeMillis() - nStart);
         LogPrintf("     %s\n", objToLoad.ToString());
-        if(!fDryRun) {
-            LogPrintf("%s: Cleaning....\n", __func__);
-            objToLoad.CheckAndRemove();
-            LogPrintf("     %s\n", objToLoad.ToString());
-        }
 
         return Ok;
     }
 
-
-public:
-    CFlatDB(std::string strFilenameIn, std::string strMagicMessageIn)
+    bool Read(T& objToLoad)
     {
-        pathDB = GetDataDir() / strFilenameIn;
-        strFilename = strFilenameIn;
-        strMagicMessage = strMagicMessageIn;
-    }
-
-    bool Load(T& objToLoad)
-    {
-        LogPrintf("Reading info from %s...\n", strFilename);
-        ReadResult readResult = Read(objToLoad);
+        ReadResult readResult = CoreRead(objToLoad);
         if (readResult == FileError)
             LogPrintf("Missing file %s, will try to recreate\n", strFilename);
         else if (readResult != Ok)
@@ -192,36 +177,34 @@ public:
         return true;
     }
 
-    bool Dump(T& objToSave)
+public:
+    CFlatDB(std::string strFilenameIn, std::string strMagicMessageIn)
     {
-        int64_t nStart = GetTimeMillis();
+        pathDB = GetDataDir() / strFilenameIn;
+        strFilename = strFilenameIn;
+        strMagicMessage = strMagicMessageIn;
+    }
 
+    bool Load(T& objToLoad)
+    {
+        LogPrintf("Reading info from %s...\n", strFilename);
+        return Read(objToLoad);
+    }
+
+    bool Store(T& objToSave)
+    {
         LogPrintf("Verifying %s format...\n", strFilename);
         T tmpObjToLoad;
-        ReadResult readResult = Read(tmpObjToLoad, true);
+        if (!Read(tmpObjToLoad)) return false;
 
-        // there was an error and it was not an error on file opening => do not proceed
-        if (readResult == FileError)
-            LogPrintf("Missing file %s, will try to recreate\n", strFilename);
-        else if (readResult != Ok)
-        {
-            LogPrintf("Error reading %s: ", strFilename);
-            if(readResult == IncorrectFormat)
-                LogPrintf("%s: Magic is ok but data has invalid format, will try to recreate\n", __func__);
-            else
-            {
-                LogPrintf("%s: File format is unknown or invalid, please fix it manually\n", __func__);
-                return false;
-            }
-        }
+        int64_t nStart = GetTimeMillis();
 
         LogPrintf("Writing info to %s...\n", strFilename);
-        Write(objToSave);
+        CoreWrite(objToSave);
         LogPrintf("%s dump finished  %dms\n", strFilename, GetTimeMillis() - nStart);
 
         return true;
     }
-
 };
 
 

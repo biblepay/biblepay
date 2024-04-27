@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,7 +23,6 @@ class QItemSelectionModel;
 class QLineEdit;
 class QMenu;
 class QModelIndex;
-class QSignalMapper;
 class QTableView;
 QT_END_NAMESPACE
 
@@ -35,7 +34,7 @@ class TransactionView : public QWidget
     Q_OBJECT
 
 public:
-    explicit TransactionView(QWidget* parent = 0);
+    explicit TransactionView(QWidget* parent = nullptr);
 
     void setModel(WalletModel *model);
 
@@ -56,14 +55,14 @@ public:
         WATCHONLY_COLUMN_WIDTH = 23,
         DATE_COLUMN_WIDTH = 120,
         TYPE_COLUMN_WIDTH = 240,
-        AMOUNT_MINIMUM_COLUMN_WIDTH = 120,
+        AMOUNT_MINIMUM_COLUMN_WIDTH = 240,
         MINIMUM_COLUMN_WIDTH = 23
     };
 
 private:
-    WalletModel *model;
-    TransactionFilterProxy *transactionProxyModel;
-    QTableView *transactionView;
+    WalletModel *model{nullptr};
+    TransactionFilterProxy *transactionProxyModel{nullptr};
+    QTableView *transactionView{nullptr};
     QComboBox *dateWidget;
     QComboBox *typeWidget;
     QComboBox *watchOnlyWidget;
@@ -71,19 +70,18 @@ private:
     QLineEdit *amountWidget;
 
     QMenu *contextMenu;
-    QSignalMapper *mapperThirdPartyTxUrls;
 
     QFrame *dateRangeWidget;
     QDateTimeEdit *dateFrom;
     QDateTimeEdit *dateTo;
-    QAction *abandonAction;
+    QAction *abandonAction{nullptr};
+    QAction *resendAction;
+    QAction *copyAddressAction{nullptr};
+    QAction *copyLabelAction{nullptr};
 
     QWidget *createDateRangeWidget();
     void updateCalendarWidgets();
 
-    GUIUtil::TableViewLastColumnResizingFixer *columnResizingFixer;
-
-    virtual void resizeEvent(QResizeEvent* event) override;
     void changeEvent(QEvent* e) override;
 
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -104,6 +102,7 @@ private Q_SLOTS:
     void updateWatchOnlyColumn(bool fHaveWatchOnly);
     void updateCoinJoinVisibility();
     void abandonTx();
+    void resendTx();
 
 Q_SIGNALS:
     void doubleClicked(const QModelIndex&);

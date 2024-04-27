@@ -1,7 +1,7 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>ReceiveCoinsDialog</class>
- <widget class="QWidget" name="ReceiveCoinsDialog">
+ <widget class="QDialog" name="ReceiveCoinsDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -31,7 +31,7 @@
         <item row="6" column="0">
          <widget class="QLabel" name="label_3">
           <property name="toolTip">
-           <string>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Biblepay network.</string>
+           <string>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BiblePay network.</string>
           </property>
           <property name="text">
            <string>&amp;Message:</string>
@@ -47,14 +47,20 @@
         <item row="4" column="2">
          <widget class="QLineEdit" name="reqLabel">
           <property name="toolTip">
-           <string>An optional label to associate with the new receiving address.</string>
+           <string>An optional label to associate with the new receiving address (used by you to identify an invoice).  It is also attached to the payment request.</string>
+          </property>
+          <property name="placeholderText">
+           <string>Enter a label to associate with the new receiving address</string>
           </property>
          </widget>
         </item>
         <item row="6" column="2">
          <widget class="QLineEdit" name="reqMessage">
           <property name="toolTip">
-           <string>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Biblepay network.</string>
+           <string>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BiblePay network.</string>
+          </property>
+          <property name="placeholderText">
+           <string>Enter a message to attach to the payment request</string>
           </property>
          </widget>
         </item>
@@ -108,7 +114,13 @@
              </size>
             </property>
             <property name="text">
-             <string>&amp;Request payment</string>
+             <string>&amp;Create new receiving address</string>
+            </property>
+            <property name="autoDefault">
+             <bool>false</bool>
+            </property>
+            <property name="default">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

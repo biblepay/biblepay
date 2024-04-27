@@ -1,10 +1,12 @@
-// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2015-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <zmq/zmqabstractnotifier.h>
-#include <util.h>
 
+#include <cassert>
+
+const int CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM;
 
 CZMQAbstractNotifier::~CZMQAbstractNotifier()
 {
@@ -36,7 +38,7 @@ bool CZMQAbstractNotifier::NotifyGovernanceVote(const std::shared_ptr<const CGov
     return true;
 }
 
-bool CZMQAbstractNotifier::NotifyGovernanceObject(const std::shared_ptr<const CGovernanceObject> & /*object*/)
+bool CZMQAbstractNotifier::NotifyGovernanceObject(const std::shared_ptr<const Governance::Object> & /*object*/)
 {
     return true;
 }

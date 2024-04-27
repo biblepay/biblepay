@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018-2020 The Bitcoin developers
+// Copyright (c) 2021-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,12 +6,11 @@
 #include <script/interpreter.h>
 
 #include <test/lcg.h>
-#include <test/test_biblepay.h>
+#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 
 #include <array>
-#include <bitset>
 
 typedef std::vector<uint8_t> valtype;
 typedef std::vector<valtype> stacktype;

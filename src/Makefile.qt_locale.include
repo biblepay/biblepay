@@ -1,0 +1,22 @@
+QT_TS = \
+  qt/locale/biblepay_ar.ts \
+  qt/locale/biblepay_bg.ts \
+  qt/locale/biblepay_de.ts \
+  qt/locale/biblepay_en.ts \
+  qt/locale/biblepay_es.ts \
+  qt/locale/biblepay_fi.ts \
+  qt/locale/biblepay_fr.ts \
+  qt/locale/biblepay_it.ts \
+  qt/locale/biblepay_ja.ts \
+  qt/locale/biblepay_ko.ts \
+  qt/locale/biblepay_nl.ts \
+  qt/locale/biblepay_pl.ts \
+  qt/locale/biblepay_pt.ts \
+  qt/locale/biblepay_ro.ts \
+  qt/locale/biblepay_ru.ts \
+  qt/locale/biblepay_sk.ts \
+  qt/locale/biblepay_th.ts \
+  qt/locale/biblepay_tr.ts \
+  qt/locale/biblepay_vi.ts \
+  qt/locale/biblepay_zh_CN.ts \
+  qt/locale/biblepay_zh_TW.ts

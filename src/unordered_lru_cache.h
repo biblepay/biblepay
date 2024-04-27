@@ -1,11 +1,15 @@
-﻿// Copyright (c) 2019-2021 The DÃSH Core Developers
+// Copyright (c) 2019-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_UNORDERED_LRU_CACHE_H
 #define BITCOIN_UNORDERED_LRU_CACHE_H
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <unordered_map>
+#include <vector>
 
 template<typename Key, typename Value, typename Hasher, size_t MaxSize = 0, size_t TruncateThreshold = 0>
 class unordered_lru_cache
@@ -23,7 +27,7 @@ public:
         maxSize(_maxSize),
         truncateThreshold(_truncateThreshold == 0 ? _maxSize * 2 : _truncateThreshold)
     {
-        // either specify maxSize through template arguments or the contructor and fail otherwise
+        // either specify maxSize through template arguments or the constructor and fail otherwise
         assert(_maxSize != 0);
     }
 
@@ -32,7 +36,6 @@ public:
     template<typename Value2>
     void _emplace(const Key& key, Value2&& v)
     {
-        truncate_if_needed();
         auto it = cacheMap.find(key);
         if (it == cacheMap.end()) {
             cacheMap.emplace(key, std::make_pair(std::forward<Value2>(v), accessCounter++));
@@ -40,6 +43,7 @@ public:
             it->second.first = std::forward<Value2>(v);
             it->second.second = accessCounter++;
         }
+        truncate_if_needed();
     }
 
     void emplace(const Key& key, Value&& v)

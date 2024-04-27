@@ -1,5 +1,5 @@
-﻿Building BiblePay
+Building Biblepay
 =============
 
 See doc/build-*.md for instructions on building the various
-elements of the Biblepay Core reference implementation of BiblePay.
+elements of the BiblePay Core reference implementation of Biblepay.

@@ -1,15 +1,13 @@
-﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 
-#include <governance/governance-validators.h>
-#include <utilstrencodings.h>
+#include <governance/validators.h>
+#include <util/strencodings.h>
 
-#include <test/data/proposals_valid.json.h>
 #include <test/data/proposals_invalid.json.h>
+#include <test/data/proposals_valid.json.h>
 
-#include <test/test_biblepay.h>
+#include <test/util/setup_common.h>
 
-#include <iostream>
-#include <fstream>
 #include <string>
 
 #include <boost/test/unit_test.hpp>
@@ -20,7 +18,7 @@ extern UniValue read_json(const std::string& jsondata);
 
 BOOST_FIXTURE_TEST_SUITE(governance_validators_tests, BasicTestingSetup)
 
-std::string CreateEncodedProposalObject(const UniValue& objJSON)
+static std::string CreateEncodedProposalObject(const UniValue& objJSON)
 {
     UniValue innerArray(UniValue::VARR);
     innerArray.push_back(UniValue("proposal"));
@@ -41,22 +39,18 @@ BOOST_AUTO_TEST_CASE(valid_proposals_test)
 
     BOOST_CHECK_MESSAGE(tests.size(), "Empty `tests`");
     for(size_t i = 0; i < tests.size(); ++i) {
-        const UniValue& objProposal = tests[i];
+        const UniValue& objProposal = tests[i][0];
+        bool fAllowScript = tests[i][1].get_bool();
 
         // legacy format
         std::string strHexData1 = CreateEncodedProposalObject(objProposal);
-        CProposalValidator validator1(strHexData1, true);
-        BOOST_CHECK_MESSAGE(validator1.Validate(false), validator1.GetErrorMessages());
-        BOOST_CHECK_MESSAGE(!validator1.Validate(), validator1.GetErrorMessages());
-
-        // legacy format w/validation flag off
-        CProposalValidator validator0(strHexData1, false);
+        CProposalValidator validator0(strHexData1, fAllowScript);
         BOOST_CHECK(!validator0.Validate());
-        BOOST_CHECK_EQUAL(validator0.GetErrorMessages(), "Legacy proposal serialization format not allowed;JSON parsing error;");
+        BOOST_CHECK_EQUAL(validator0.GetErrorMessages(), "Proposal must be a JSON object;JSON parsing error;");
 
-        // new format
+        // current format
         std::string strHexData2 = HexStr(objProposal.write());
-        CProposalValidator validator2(strHexData2, false);
+        CProposalValidator validator2(strHexData2, fAllowScript);
         BOOST_CHECK_MESSAGE(validator2.Validate(false), validator2.GetErrorMessages());
         BOOST_CHECK_MESSAGE(!validator2.Validate(), validator2.GetErrorMessages());
     }
@@ -74,10 +68,11 @@ BOOST_AUTO_TEST_CASE(invalid_proposals_test)
 
         // legacy format
         std::string strHexData1 = CreateEncodedProposalObject(objProposal);
-        CProposalValidator validator1(strHexData1, true);
+        CProposalValidator validator1(strHexData1, false);
+        BOOST_CHECK(!validator1.Validate());
         BOOST_CHECK_MESSAGE(!validator1.Validate(false), validator1.GetErrorMessages());
 
-        // new format
+        // current format
         std::string strHexData2 = HexStr(objProposal.write());
         CProposalValidator validator2(strHexData2, false);
         BOOST_CHECK_MESSAGE(!validator2.Validate(false), validator2.GetErrorMessages());

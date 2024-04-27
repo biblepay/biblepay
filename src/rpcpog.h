@@ -7,13 +7,33 @@
 
 #include "hash.h"
 #include "net.h"
-#include "utilstrencodings.h"
 #include "validation.h"
 #include <univalue.h>
 #include "base58.h"
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string/trim.hpp>
-#include "governance/governance-classes.h"
+#include <txmempool.h>
+#include <memory>
+#include <optional>
+#include <stdint.h>
+#include <context.h>
+#include <shutdown.h>
+#include <evo/deterministicmns.h>
+
+
+class JSONRPCRequest;
+class CGlobalNode;
+class CChainState;
+struct NodeContext;
+
+const std::string MESSAGE_MAGIC_BBP = "DarkCoin Signed Message:\n";
+
+
+//CGovernanceManager& governance_manager;
+//const llmq::CQuorumBlockProcessor& quorum_block_processor;
+//llmq::CInstantSendManager& m_isman;
+
+
 
 struct BBPResult
 {
@@ -38,10 +58,12 @@ struct Sidechain
 	{
 		obj.clear();
 		obj.setObject();
-		obj.push_back(Pair("ObjectType", ObjectType));
-		obj.push_back(Pair("URL", URL));
-		obj.push_back(Pair("Time", Time));
-		obj.push_back(Pair("Height", Height));
+        /*
+        obj.push_back(std::make_pair("ObjectType", ObjectType));
+		obj.push_back(std::make_pair("URL", URL));
+		obj.push_back(std::make_pair("Time", Time));
+		obj.push_back(std::make_pair("Height", Height));
+        */
 	}
 
 };
@@ -63,9 +85,10 @@ struct Portfolio
 	{
 		obj.clear();
 		obj.setObject();
-		obj.push_back(Pair("OwnerAddress", OwnerAddress));
-		obj.push_back(Pair("AmountBBP", AmountBBP));
-		obj.push_back(Pair("AmountForeign", AmountForeign));
+        /*obj.push_back(std::make_pair("OwnerAddress", OwnerAddress));
+		obj.push_back(std::make_pair("AmountBBP", AmountBBP));
+		obj.push_back(std::make_pair("AmountForeign", AmountForeign));
+        */
 	}
 };
 
@@ -113,7 +136,7 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 	std::map<std::string, std::string> mapRequestHeaders = std::map<std::string, std::string>(), std::string TargetFileName = "", bool fJson = false);
 BBPResult UnchainedQuery(std::string sXMLSource, std::string sAPI);
 BBPResult SidechainQuery(std::string sXMLSource, std::string sAPI);
-std::shared_ptr<CReserveScript> GetScriptForMining();
+CScript GetScriptForMining();
 std::string TimestampToHRDate(double dtm);
 std::vector<Portfolio> GetDailySuperblock(int nHeight);
 std::string GJE(std::string sKey, std::string sValue, bool bIncludeDelimiter, bool bQuoteValue);
@@ -128,7 +151,7 @@ std::string strReplace(std::string str_input, std::string str_to_find, std::stri
 double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress);
 void LockStakes();
 bool CompareMask2(CAmount nAmount, double nMask);
-const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
+//const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
 std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctuaryPubKey, std::string sIP, int iType);
 bool POVSTest(std::string sSanctuaryPubKey, std::string sIP, int64_t nTimeout, int nType);
 int GetNextDailySuperblock(int nHeight);
@@ -146,7 +169,7 @@ std::string GetSanctuaryMiningAddress();
 void WriteUnchainedConfigFile(std::string sPub, std::string sPriv);
 void ReadUnchainedConfigFile(std::string& sPub, std::string& sPriv);
 std::string url_encode(std::string value);
-bool IsMyAddress(const std::string& sAddress);
+bool IsMyAddress(std::string sAddress);
 bool ReviveSanctuaryEnhanced(std::string sSancSearch, std::string& sError, UniValue& uSuccess);
 std::string ScanDeterministicConfigFile(std::string sSearch);
 std::string ProvisionUnchained2(std::string& sError);
@@ -159,5 +182,45 @@ bool IsMySanc(std::string sSearchProRegTxHash);
 BBPResult UnchainedGet(std::string sAPIPath);
 bool IsSanctuaryCollateral(CAmount nAmount);
 CAmount GetSancCollateralAmount(std::string sSearch);
+std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimestamp);
+void MilliSleep(int64_t n);
+BBPResult UnchainedApiGet();
+std::string ComputeMinedBlockVersion();
+bool IsSanctuaryLegacyTempleOrAltar(CDeterministicMNCPtr dmn);
+JSONRPCRequest GetJRR();
+
+bool ContextualCheckBlockMinedBySanc(const CBlock& block);
+const NodeContext& GetGlobalNodeContext();
+const CoreContext& GetGlobalCoreContext();
+
+/** Used to store a reference to the global node */
+static const CoreContext* g_bbp_core_context_ptr10;
+static const NodeContext* g_bbp_node_context_ptr10;
+
+/*
+class CGlobalNode
+{
+    private:
+
+    public:
+        NodeContext& g_bbp_node_context;
+        const CoreContext& g_bbp_core_context;
+        const CoreContext* g_bbp_core_context_ptr;
+        
+    CGlobalNode(const CoreContext& core,NodeContext& node ) :
+        g_bbp_core_context(core),    g_bbp_node_context(node)
+        {
+            g_bbp_core_context_ptr = &core;
+            LogPrintf("\n%f\n", 9009);
+        }
+    NodeContext& GetGlobalNodeContext();
+    CoreContext GetGlobalCoreContext();
+    void SetGlobalCoreContext(const CoreContext& core);
+};
+static CGlobalNode* bbp_global_node;
+*/
+
+
+
 
 #endif

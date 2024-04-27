@@ -1,4 +1,4 @@
-﻿Contents
+Contents
 ========
 This directory contains tools for developers working on this repository.
 
@@ -6,6 +6,9 @@ clang-format-diff.py
 ===================
 
 A script to format unified git diffs according to [.clang-format](../../src/.clang-format).
+
+Requires `clang-format`, installed e.g. via `brew install clang-format` on macOS,
+or `sudo apt install clang-format` on Debian/Ubuntu.
 
 For instance, to format the last commit with 0 lines of context,
 the script should be called from the git root folder as follows.
@@ -17,7 +20,7 @@ git diff -U0 HEAD~1.. | ./contrib/devtools/clang-format-diff.py -p1 -i -v
 copyright\_header.py
 ====================
 
-Provides utilities for managing copyright headers of `The Biblepay Core
+Provides utilities for managing copyright headers of `The BiblePay Core
 developers` in repository source files. It has three subcommands:
 
 ```
@@ -36,31 +39,31 @@ Specifying `verbose` will list the full filenames of files of each category.
 
 copyright\_header.py update \<base\_directory\> [verbose]
 ---------------------------------------------------------
-Updates all the copyright headers of `The DÃSH Core Developers` which were
+Updates all the copyright headers of `The BiblePay Core developers` which were
 changed in a year more recent than is listed. For example:
 ```
-// Copyright (c) <firstYear>-<lastYear> The DÃSH Core Developers
+// Copyright (c) <firstYear>-<lastYear> The BiblePay Core developers
 ```
 will be updated to:
 ```
-// Copyright (c) <firstYear>-<lastModifiedYear> The DÃSH Core Developers
+// Copyright (c) <firstYear>-<lastModifiedYear> The BiblePay Core developers
 ```
 where `<lastModifiedYear>` is obtained from the `git log` history.
 
 This subcommand also handles copyright headers that have only a single year. In
 those cases:
 ```
-// Copyright (c) <year> The DÃSH Core Developers
+// Copyright (c) <year> The BiblePay Core developers
 ```
 will be updated to:
 ```
-// Copyright (c) <year>-<lastModifiedYear> The DÃSH Core Developers
+// Copyright (c) <year>-<lastModifiedYear> The BiblePay Core developers
 ```
 where the update is appropriate.
 
 copyright\_header.py insert \<file\>
 ------------------------------------
-Inserts a copyright header for `The DÃSH Core Developers` at the top of the
+Inserts a copyright header for `The BiblePay Core developers` at the top of the
 file in either Python or C++ style as determined by the file extension. If the
 file is a Python file and it has  `#!` starting the first line, the header is
 inserted in the line below it.
@@ -70,7 +73,7 @@ The copyright dates will be set to be `<year_introduced>-<current_year>` where
 `<year_introduced>` is equal to `<current_year>`, it will be set as a single
 year rather than two hyphenated years.
 
-If the file already has a copyright for `The DÃSH Core Developers`, the
+If the file already has a copyright for `The BiblePay Core developers`, the
 script will exit.
 
 gen-manpages.sh
@@ -115,37 +118,67 @@ couldn't mess with the sources.
 
 Setup
 ---------
-Configuring the github-merge tool for the bitcoin repository is done in the following way:
+Configuring the github-merge tool for the BiblePay Core repository is done in the following way:
 
     git config githubmerge.repository biblepay/biblepay
     git config githubmerge.testcmd "make -j4 check" (adapt to whatever you want to use for testing)
-    git config --global user.signingkey mykeyid (if you want to GPG sign)
+    git config --global user.signingkey mykeyid
+
+Authentication (optional)
+--------------------------
+
+The API request limit for unauthenticated requests is quite low, but the
+limit for authenticated requests is much higher. If you start running
+into rate limiting errors it can be useful to set an authentication token
+so that the script can authenticate requests.
+
+- First, go to [Personal access tokens](https://github.com/settings/tokens).
+- Click 'Generate new token'.
+- Fill in an arbitrary token description. No further privileges are needed.
+- Click the `Generate token` button at the bottom of the form.
+- Copy the generated token (should be a hexadecimal string)
+
+Then do:
+
+    git config --global user.ghtoken "pasted token"
+
+Create and verify timestamps of merge commits
+---------------------------------------------
+To create or verify timestamps on the merge commits, install the OpenTimestamps
+client via `pip3 install opentimestamps-client`. Then, download the gpg wrapper
+`ots-git-gpg-wrapper.sh` and set it as git's `gpg.program`. See
+[the ots git integration documentation](https://github.com/opentimestamps/opentimestamps-client/blob/master/doc/git-integration.md#usage)
+for further details.
 
 optimize-pngs.py
 ================
 
-A script to optimize png files in the BiblePay
+A script to optimize png files in the biblepay
 repository (requires pngcrush).
 
 security-check.py and test-security-check.py
 ============================================
 
-Perform basic ELF security checks on a series of executables.
+Perform basic security checks on a series of executables.
 
 symbol-check.py
 ===============
 
-A script to check that the (Linux) executables produced by Gitian only contain
-allowed gcc, glibc and libstdc++ version symbols. This makes sure they are
-still compatible with the minimum supported Linux distribution versions.
+A script to check that release executables only contain
+certain symbols and are only linked against allowed libraries.
 
-Example usage after a Gitian build:
+For Linux this means checking for allowed gcc, glibc and libstdc++ version symbols.
+This makes sure they are still compatible with the minimum supported distribution versions.
 
-    find ../gitian-builder/build -type f -executable | xargs python contrib/devtools/symbol-check.py 
+For macOS and Windows we check that the executables are only linked against libraries we allow.
 
-If only supported symbols are used the return value will be 0 and the output will be empty.
+Example usage:
 
-If there are 'unsupported' symbols, the return value will be 1 a list like this will be printed:
+    find ../path/to/executables -type f -executable | xargs python3 contrib/devtools/symbol-check.py
+
+If no errors occur the return value will be 0 and the output will be empty.
+
+If there are any errors the return value will be 1 and output like this will be printed:
 
     .../64/test_biblepay: symbol memcpy from unsupported version GLIBC_2.14
     .../64/test_biblepay: symbol __fdelt_chk from unsupported version GLIBC_2.15

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018-2020 The DÃSH Core Developers
+// Copyright (c) 2018-2023 The BiblePay Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -21,9 +21,9 @@ private:
         CBLSPublicKey pubKey;
     };
 
-    typedef std::map<MessageId, Message> MessageMap;
-    typedef typename MessageMap::iterator MessageMapIterator;
-    typedef std::map<SourceId, std::vector<MessageMapIterator>> MessagesBySourceMap;
+    using MessageMap = std::map<MessageId, Message>;
+    using MessageMapIterator = typename MessageMap::iterator;
+    using MessagesBySourceMap = std::map<SourceId, std::vector<MessageMapIterator>>;
 
     bool secureVerification;
     bool perMessageFallback;

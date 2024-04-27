@@ -1,12 +1,13 @@
-﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2022 The BiblePay Core developers
 
 #include <governance/governance.h>
 
-#include <test/test_biblepay.h>
 
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(ratecheck_tests, BasicTestingSetup)
+#include <cmath>
+
+BOOST_AUTO_TEST_SUITE(ratecheck_tests)
 
 BOOST_AUTO_TEST_CASE(ratecheck_test)
 {

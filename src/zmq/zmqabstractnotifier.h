@@ -5,37 +5,54 @@
 #ifndef BITCOIN_ZMQ_ZMQABSTRACTNOTIFIER_H
 #define BITCOIN_ZMQ_ZMQABSTRACTNOTIFIER_H
 
-#include <zmq/zmqconfig.h>
+
+#include <memory>
+#include <string>
 
 class CBlockIndex;
-class CGovernanceObject;
 class CGovernanceVote;
+class CTransaction;
 class CZMQAbstractNotifier;
+
+typedef std::shared_ptr<const CTransaction> CTransactionRef;
+
+namespace Governance
+{
+    class Object;
+} //namespace Governance
 
 namespace llmq {
     class CChainLockSig;
-    class CInstantSendLock;
+    struct CInstantSendLock;
     class CRecoveredSig;
 } // namespace llmq
 
-typedef CZMQAbstractNotifier* (*CZMQNotifierFactory)();
+using CZMQNotifierFactory = std::unique_ptr<CZMQAbstractNotifier> (*)();
 
 class CZMQAbstractNotifier
 {
 public:
-    CZMQAbstractNotifier() : psocket(nullptr) { }
+    static const int DEFAULT_ZMQ_SNDHWM {1000};
+
+    CZMQAbstractNotifier() : psocket(nullptr), outbound_message_high_water_mark(DEFAULT_ZMQ_SNDHWM) { }
     virtual ~CZMQAbstractNotifier();
 
     template <typename T>
-    static CZMQAbstractNotifier* Create()
+    static std::unique_ptr<CZMQAbstractNotifier> Create()
     {
-        return new T();
+        return std::make_unique<T>();
     }
 
     std::string GetType() const { return type; }
     void SetType(const std::string &t) { type = t; }
     std::string GetAddress() const { return address; }
     void SetAddress(const std::string &a) { address = a; }
+    int GetOutboundMessageHighWaterMark() const { return outbound_message_high_water_mark; }
+    void SetOutboundMessageHighWaterMark(const int sndhwm) {
+        if (sndhwm >= 0) {
+            outbound_message_high_water_mark = sndhwm;
+        }
+    }
 
     virtual bool Initialize(void *pcontext) = 0;
     virtual void Shutdown() = 0;
@@ -45,7 +62,7 @@ public:
     virtual bool NotifyTransaction(const CTransaction &transaction);
     virtual bool NotifyTransactionLock(const CTransactionRef& transaction, const std::shared_ptr<const llmq::CInstantSendLock>& islock);
     virtual bool NotifyGovernanceVote(const std::shared_ptr<const CGovernanceVote>& vote);
-    virtual bool NotifyGovernanceObject(const std::shared_ptr<const CGovernanceObject>& object);
+    virtual bool NotifyGovernanceObject(const std::shared_ptr<const Governance::Object>& object);
     virtual bool NotifyInstantSendDoubleSpendAttempt(const CTransactionRef& currentTx, const CTransactionRef& previousTx);
     virtual bool NotifyRecoveredSig(const std::shared_ptr<const llmq::CRecoveredSig>& sig);
 
@@ -53,6 +70,7 @@ protected:
     void *psocket;
     std::string type;
     std::string address;
+    int outbound_message_high_water_mark; // aka SNDHWM
 };
 
 #endif // BITCOIN_ZMQ_ZMQABSTRACTNOTIFIER_H

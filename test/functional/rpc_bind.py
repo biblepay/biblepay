@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # Copyright (c) 2014-2016 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -6,23 +6,24 @@
 
 import sys
 
+from test_framework.netutil import all_interfaces, addr_to_hex, get_bind_addrs, test_ipv6_local
 from test_framework.test_framework import BitcoinTestFramework, SkipTest
-from test_framework.util import *
-from test_framework.netutil import *
+from test_framework.util import assert_equal, assert_raises_rpc_error, get_rpc_proxy, rpc_port, rpc_url
 
 class RPCBindTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.bind_to_localhost_only = False
         self.num_nodes = 1
+        self.supports_cli = False
 
     def setup_network(self):
         self.add_nodes(self.num_nodes, None)
 
     def add_options(self, parser):
-        parser.add_option("--ipv4", action='store_true', dest="run_ipv4", help="Run ipv4 tests only", default=False)
-        parser.add_option("--ipv6", action='store_true', dest="run_ipv6", help="Run ipv6 tests only", default=False)
-        parser.add_option("--nonloopback", action='store_true', dest="run_nonloopback", help="Run non-loopback tests only", default=False)
+        parser.add_argument("--ipv4", action='store_true', dest="run_ipv4", help="Run ipv4 tests only", default=False)
+        parser.add_argument("--ipv6", action='store_true', dest="run_ipv6", help="Run ipv6 tests only", default=False)
+        parser.add_argument("--nonloopback", action='store_true', dest="run_nonloopback", help="Run non-loopback tests only", default=False)
 
     def run_bind_test(self, allow_ips, connect_to, addresses, expected):
         '''
@@ -70,7 +71,7 @@ class RPCBindTest(BitcoinTestFramework):
 
         self.log.info("Check for ipv6")
         have_ipv6 = test_ipv6_local()
-        if not have_ipv6 and not self.options.run_ipv4:
+        if not have_ipv6 and not (self.options.run_ipv4 or self.options.run_nonloopback):
             raise SkipTest("This test requires ipv6 support.")
 
         self.log.info("Check for non-loopback interface")

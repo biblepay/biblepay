@@ -1,9 +1,10 @@
-﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 #ifndef BITCOIN_HDCHAIN_H
 #define BITCOIN_HDCHAIN_H
 
 #include <key.h>
+#include <script/keyorigin.h>
 #include <sync.h>
 
 /* hd account data model */
@@ -15,12 +16,9 @@ public:
 
     CHDAccount() : nExternalChainCounter(0), nInternalChainCounter(0) {}
 
-    ADD_SERIALIZE_METHODS;
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CHDAccount, obj)
     {
-        READWRITE(nExternalChainCounter);
-        READWRITE(nInternalChainCounter);
+        READWRITE(obj.nExternalChainCounter, obj.nInternalChainCounter);
     }
 };
 
@@ -28,24 +26,26 @@ public:
 class CHDChain
 {
 private:
+    mutable RecursiveMutex cs;
+
     static const int CURRENT_VERSION = 1;
-    int nVersion;
+    int nVersion GUARDED_BY(cs) {CURRENT_VERSION};
 
-    uint256 id;
+    uint256 id GUARDED_BY(cs);
 
-    bool fCrypted;
+    bool fCrypted GUARDED_BY(cs) {false};
 
-    SecureVector vchSeed;
-    SecureVector vchMnemonic;
-    SecureVector vchMnemonicPassphrase;
+    SecureVector vchSeed GUARDED_BY(cs);
+    SecureVector vchMnemonic GUARDED_BY(cs);
+    SecureVector vchMnemonicPassphrase GUARDED_BY(cs);
 
-    std::map<uint32_t, CHDAccount> mapAccounts;
-    // critical section to protect mapAccounts
-    mutable CCriticalSection cs_accounts;
+    std::map<uint32_t, CHDAccount> GUARDED_BY(cs) mapAccounts;
 
 public:
+    /** Default for -mnemonicbits */
+    static constexpr int DEFAULT_MNEMONIC_BITS = 128; // 128 bits == 12 words
 
-    CHDChain() { SetNull(); }
+    CHDChain() = default;
     CHDChain(const CHDChain& other) :
         nVersion(other.nVersion),
         id(other.id),
@@ -56,27 +56,28 @@ public:
         mapAccounts(other.mapAccounts)
         {}
 
-    ADD_SERIALIZE_METHODS;
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CHDChain, obj)
     {
-        LOCK(cs_accounts);
-        READWRITE(this->nVersion);
-        READWRITE(id);
-        READWRITE(fCrypted);
-        READWRITE(vchSeed);
-        READWRITE(vchMnemonic);
-        READWRITE(vchMnemonicPassphrase);
-        READWRITE(mapAccounts);
+        LOCK(obj.cs);
+        READWRITE(
+                obj.nVersion,
+                obj.id,
+                obj.fCrypted,
+                obj.vchSeed,
+                obj.vchMnemonic,
+                obj.vchMnemonicPassphrase,
+                obj.mapAccounts
+                );
     }
 
-    void swap(CHDChain& first, CHDChain& second) // nothrow
+    void swap(CHDChain& first, CHDChain& second) noexcept
     {
         // enable ADL (not necessary in our case, but good practice)
         using std::swap;
 
         // by swapping the members of two classes,
         // the two classes are effectively swapped
+        LOCK2(first.cs, second.cs);
         swap(first.nVersion, second.nVersion);
         swap(first.id, second.id);
         swap(first.fCrypted, second.fCrypted);
@@ -107,10 +108,10 @@ public:
     bool SetSeed(const SecureVector& vchSeedIn, bool fUpdateID);
     SecureVector GetSeed() const;
 
-    uint256 GetID() const { return id; }
+    uint256 GetID() const { LOCK(cs); return id; }
 
     uint256 GetSeedHash();
-    void DeriveChildExtKey(uint32_t nAccountIndex, bool fInternal, uint32_t nChildIndex, CExtKey& extKeyRet);
+    void DeriveChildExtKey(uint32_t nAccountIndex, bool fInternal, uint32_t nChildIndex, CExtKey& extKeyRet, KeyOriginInfo& key_origin);
 
     void AddAccount();
     bool GetAccount(uint32_t nAccountIndex, CHDAccount& hdAccountRet);
@@ -123,25 +124,19 @@ class CHDPubKey
 {
 private:
     static const int CURRENT_VERSION = 1;
-    int nVersion;
+    int nVersion{CHDPubKey::CURRENT_VERSION};
 
 public:
-    CExtPubKey extPubKey;
+    CExtPubKey extPubKey{};
     uint256 hdchainID;
-    uint32_t nAccountIndex;
-    uint32_t nChangeIndex;
+    uint32_t nAccountIndex{0};
+    uint32_t nChangeIndex{0};
 
-    CHDPubKey() : nVersion(CHDPubKey::CURRENT_VERSION), nAccountIndex(0), nChangeIndex(0) {}
+    CHDPubKey() = default;
 
-    ADD_SERIALIZE_METHODS;
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(CHDPubKey, obj)
     {
-        READWRITE(this->nVersion);
-        READWRITE(extPubKey);
-        READWRITE(hdchainID);
-        READWRITE(nAccountIndex);
-        READWRITE(nChangeIndex);
+        READWRITE(obj.nVersion, obj.extPubKey, obj.hdchainID, obj.nAccountIndex, obj.nChangeIndex);
     }
 
     std::string GetKeyPath() const;

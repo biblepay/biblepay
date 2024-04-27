@@ -1,10 +1,10 @@
-﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
+// Copyright (c) 2018-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <evo/evodb.h>
 
-std::unique_ptr<CEvoDB> evoDb;
+#include <uint256.h>
 
 CEvoDBScopedCommitter::CEvoDBScopedCommitter(CEvoDB &_evoDB) :
     evoDB(_evoDB)

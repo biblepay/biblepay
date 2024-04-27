@@ -1,13 +1,12 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <qt/receivecoinsdialog.h>
 #include <qt/forms/ui_receivecoinsdialog.h>
 
-#include <qt/addressbookpage.h>
 #include <qt/addresstablemodel.h>
-#include <qt/bitcoinunits.h>
+#include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
 #include <qt/receiverequestdialog.h>
 #include <qt/recentrequeststablemodel.h>
@@ -20,10 +19,9 @@
 #include <QTextDocument>
 
 ReceiveCoinsDialog::ReceiveCoinsDialog(QWidget* parent) :
-    QDialog(parent),
+    QDialog(parent, GUIUtil::dialog_flags),
     ui(new Ui::ReceiveCoinsDialog),
-    columnResizingFixer(0),
-    model(0)
+    model(nullptr)
 {
     ui->setupUi(this);
 
@@ -33,11 +31,9 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(QWidget* parent) :
                       ui->label_3}, GUIUtil::FontWeight::Normal, 15);
     GUIUtil::updateFonts();
 
-    ui->reqLabel->setPlaceholderText(tr("Enter a label to associate with the new receiving address"));
-    ui->reqMessage->setPlaceholderText(tr("Enter a message to attach to the payment request"));
-
     // context menu actions
     QAction *copyURIAction = new QAction(tr("Copy URI"), this);
+    QAction* copyAddressAction = new QAction(tr("Copy address"), this);
     QAction *copyLabelAction = new QAction(tr("Copy label"), this);
     QAction *copyMessageAction = new QAction(tr("Copy message"), this);
     QAction *copyAmountAction = new QAction(tr("Copy amount"), this);
@@ -45,18 +41,20 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(QWidget* parent) :
     // context menu
     contextMenu = new QMenu(this);
     contextMenu->addAction(copyURIAction);
+    contextMenu->addAction(copyAddressAction);
     contextMenu->addAction(copyLabelAction);
     contextMenu->addAction(copyMessageAction);
     contextMenu->addAction(copyAmountAction);
 
     // context menu signals
-    connect(ui->recentRequestsView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showMenu(QPoint)));
-    connect(copyURIAction, SIGNAL(triggered()), this, SLOT(copyURI()));
-    connect(copyLabelAction, SIGNAL(triggered()), this, SLOT(copyLabel()));
-    connect(copyMessageAction, SIGNAL(triggered()), this, SLOT(copyMessage()));
-    connect(copyAmountAction, SIGNAL(triggered()), this, SLOT(copyAmount()));
+    connect(ui->recentRequestsView, &QWidget::customContextMenuRequested, this, &ReceiveCoinsDialog::showMenu);
+    connect(copyURIAction, &QAction::triggered, this, &ReceiveCoinsDialog::copyURI);
+    connect(copyAddressAction, &QAction::triggered, this, &ReceiveCoinsDialog::copyAddress);
+    connect(copyLabelAction, &QAction::triggered, this, &ReceiveCoinsDialog::copyLabel);
+    connect(copyMessageAction, &QAction::triggered, this, &ReceiveCoinsDialog::copyMessage);
+    connect(copyAmountAction, &QAction::triggered, this, &ReceiveCoinsDialog::copyAmount);
 
-    connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
+    connect(ui->clearButton, &QPushButton::clicked, this, &ReceiveCoinsDialog::clear);
 }
 
 void ReceiveCoinsDialog::setModel(WalletModel *_model)
@@ -66,13 +64,12 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
     if(_model && _model->getOptionsModel())
     {
         _model->getRecentRequestsTableModel()->sort(RecentRequestsTableModel::Date, Qt::DescendingOrder);
-        connect(_model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
+        connect(_model->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &ReceiveCoinsDialog::updateDisplayUnit);
         updateDisplayUnit();
 
         QTableView* tableView = ui->recentRequestsView;
 
         tableView->verticalHeader()->hide();
-        tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         tableView->setModel(_model->getRecentRequestsTableModel());
         tableView->setAlternatingRowColors(true);
         tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -80,12 +77,23 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         tableView->setColumnWidth(RecentRequestsTableModel::Date, DATE_COLUMN_WIDTH);
         tableView->setColumnWidth(RecentRequestsTableModel::Label, LABEL_COLUMN_WIDTH);
         tableView->setColumnWidth(RecentRequestsTableModel::Amount, AMOUNT_MINIMUM_COLUMN_WIDTH);
+        tableView->horizontalHeader()->setMinimumSectionSize(MINIMUM_COLUMN_WIDTH);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Date, QHeaderView::Interactive);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Label, QHeaderView::Stretch);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Message, QHeaderView::Stretch);
+        tableView->horizontalHeader()->setSectionResizeMode(RecentRequestsTableModel::Amount, QHeaderView::Fixed);
 
         connect(tableView->selectionModel(),
-            SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this,
-            SLOT(recentRequestsView_selectionChanged(QItemSelection, QItemSelection)));
-        // Last 2 columns are set by the columnResizingFixer, when the table geometry is ready.
-        columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(tableView, AMOUNT_MINIMUM_COLUMN_WIDTH, DATE_COLUMN_WIDTH, this);
+            &QItemSelectionModel::selectionChanged, this,
+            &ReceiveCoinsDialog::recentRequestsView_selectionChanged);
+
+        // Set the button to be enabled or disabled based on whether the wallet can give out new addresses.
+        ui->receiveButton->setEnabled(model->wallet().canGetAddresses());
+
+        // Enable/disable the receive button if the wallet is now able/unable to give out new addresses.
+        connect(model, &WalletModel::canGetAddressesChanged, [this] {
+            ui->receiveButton->setEnabled(model->wallet().canGetAddresses());
+        });
     }
 }
 
@@ -183,30 +191,6 @@ void ReceiveCoinsDialog::on_removeRequestButton_clicked()
     model->getRecentRequestsTableModel()->removeRows(firstIndex.row(), selection.length(), firstIndex.parent());
 }
 
-// We override the virtual resizeEvent of the QWidget to adjust tables column
-// sizes as the tables width is proportional to the dialogs width.
-void ReceiveCoinsDialog::resizeEvent(QResizeEvent *event)
-{
-    QWidget::resizeEvent(event);
-    columnResizingFixer->stretchColumnWidth(RecentRequestsTableModel::Message);
-}
-
-void ReceiveCoinsDialog::keyPressEvent(QKeyEvent *event)
-{
-    if (event->key() == Qt::Key_Return)
-    {
-        // press return -> submit form
-        if (ui->reqLabel->hasFocus() || ui->reqAmount->hasFocus() || ui->reqMessage->hasFocus())
-        {
-            event->ignore();
-            on_receiveButton_clicked();
-            return;
-        }
-    }
-
-    this->QDialog::keyPressEvent(event);
-}
-
 QModelIndex ReceiveCoinsDialog::selectedRow()
 {
     if(!model || !model->getRecentRequestsTableModel() || !ui->recentRequestsView->selectionModel())
@@ -226,7 +210,7 @@ void ReceiveCoinsDialog::copyColumnToClipboard(int column)
     if (!firstIndex.isValid()) {
         return;
     }
-    GUIUtil::setClipboard(model->getRecentRequestsTableModel()->data(firstIndex.child(firstIndex.row(), column), Qt::EditRole).toString());
+    GUIUtil::setClipboard(model->getRecentRequestsTableModel()->index(firstIndex.row(), column).data(Qt::EditRole).toString());
 }
 
 // context menu
@@ -249,6 +233,19 @@ void ReceiveCoinsDialog::copyURI()
     const RecentRequestsTableModel * const submodel = model->getRecentRequestsTableModel();
     const QString uri = GUIUtil::formatBitcoinURI(submodel->entry(sel.row()).recipient);
     GUIUtil::setClipboard(uri);
+}
+
+// context menu action: copy address
+void ReceiveCoinsDialog::copyAddress()
+{
+    const QModelIndex sel = selectedRow();
+    if (!sel.isValid()) {
+        return;
+    }
+
+    const RecentRequestsTableModel* const submodel = model->getRecentRequestsTableModel();
+    const QString address = submodel->entry(sel.row()).recipient.address;
+    GUIUtil::setClipboard(address);
 }
 
 // context menu action: copy label

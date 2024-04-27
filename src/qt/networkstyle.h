@@ -1,5 +1,5 @@
-﻿// Copyright (c) 2014 The Bitcoin Core developers
-// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2019 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,8 +14,8 @@
 class NetworkStyle
 {
 public:
-    /** Get style associated with provided BIP70 network id, or 0 if not known */
-    static const NetworkStyle *instantiate(const QString &networkId);
+    /** Get style associated with provided network id, or 0 if not known */
+    static const NetworkStyle* instantiate(const std::string& networkId);
 
     const QString &getAppName() const { return appName; }
     const QIcon &getAppIcon() const { return appIcon; }

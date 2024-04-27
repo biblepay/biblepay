@@ -63,6 +63,9 @@
            <property name="toolTip">
             <string>Filter masternode list</string>
            </property>
+           <property name="placeholderText">
+            <string>Filter by any property (e.g. address or protx hash)</string>
+           </property>
           </widget>
          </item>
          <item>
@@ -98,7 +101,7 @@
          <item>
           <widget class="QLabel" name="countLabelDIP3">
            <property name="text">
-            <string>0</string>
+            <string notr="true">0</string>
            </property>
           </widget>
          </item>
@@ -127,6 +130,11 @@
          <column>
           <property name="text">
            <string>Service</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Type</string>
           </property>
          </column>
          <column>
@@ -177,11 +185,6 @@
          <column>
           <property name="text">
            <string>Voting Address</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>.</string>
           </property>
          </column>
         </widget>

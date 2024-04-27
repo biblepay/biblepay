@@ -1,15 +1,14 @@
-﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <test/data/bip39_vectors.json.h>
 
+#include <bip39.h>
 #include <key.h>
 #include <key_io.h>
-#include <util.h>
-#include <utilstrencodings.h>
-#include <test/test_biblepay.h>
-#include <bip39.h>
+#include <test/util/setup_common.h>
+#include <util/strencodings.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -55,7 +54,7 @@ BOOST_AUTO_TEST_CASE(bip39_vectors)
         CExtKey key;
         CExtPubKey pubkey;
 
-        key.SetMaster(seed.data(), 64);
+        key.SetSeed(seed);
         pubkey = key.Neuter();
 
         // printf("CBitcoinExtKey: %s\n", EncodeExtKey(key).c_str());

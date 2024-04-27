@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,10 +8,10 @@
 #include <clientversion.h>
 #include <fs.h>
 #include <serialize.h>
+#include <span.h>
 #include <streams.h>
-#include <util.h>
-#include <utilstrencodings.h>
-#include <version.h>
+#include <util/strencodings.h>
+#include <util/system.h>
 
 #include <typeindex>
 
@@ -83,12 +83,12 @@ public:
     template <typename V>
     void Write(const CDataStream& _ssKey, const V& value)
     {
-        leveldb::Slice slKey(_ssKey.data(), _ssKey.size());
+        leveldb::Slice slKey((const char*)_ssKey.data(), _ssKey.size());
 
         ssValue.reserve(DBWRAPPER_PREALLOC_VALUE_SIZE);
         ssValue << value;
         ssValue.Xor(dbwrapper_private::GetObfuscateKey(parent));
-        leveldb::Slice slValue(ssValue.data(), ssValue.size());
+        leveldb::Slice slValue((const char*)ssValue.data(), ssValue.size());
 
         batch.Put(slKey, slValue);
         // - varint: key length (1 byte up to 127B, 2 bytes up to 16383B, ...)
@@ -110,7 +110,7 @@ public:
     }
 
     void Erase(const CDataStream& _ssKey) {
-        leveldb::Slice slKey(_ssKey.data(), _ssKey.size());
+        leveldb::Slice slKey((const char*)_ssKey.data(), _ssKey.size());
 
         batch.Delete(slKey);
         // - byte: header
@@ -151,7 +151,7 @@ public:
     }
 
     void Seek(const CDataStream& ssKey) {
-        leveldb::Slice slKey(ssKey.data(), ssKey.size());
+        leveldb::Slice slKey((const char*)ssKey.data(), ssKey.size());
         piter->Seek(slKey);
     }
 
@@ -169,7 +169,7 @@ public:
 
     CDataStream GetKey() {
         leveldb::Slice slKey = piter->key();
-        return CDataStream(slKey.data(), slKey.data() + slKey.size(), SER_DISK, CLIENT_VERSION);
+        return CDataStream{MakeByteSpan(slKey), SER_DISK, CLIENT_VERSION};
     }
 
     unsigned int GetKeySize() {
@@ -179,7 +179,7 @@ public:
     template<typename V> bool GetValue(V& value) {
         leveldb::Slice slValue = piter->value();
         try {
-            CDataStream ssValue(slValue.data(), slValue.data() + slValue.size(), SER_DISK, CLIENT_VERSION);
+            CDataStream ssValue{MakeByteSpan(slValue), SER_DISK, CLIENT_VERSION};
             ssValue.Xor(dbwrapper_private::GetObfuscateKey(parent));
             ssValue >> value;
         } catch (const std::exception&) {
@@ -245,6 +245,9 @@ public:
     CDBWrapper(const fs::path& path, size_t nCacheSize, bool fMemory = false, bool fWipe = false, bool obfuscate = false);
     ~CDBWrapper();
 
+    CDBWrapper(const CDBWrapper&) = delete;
+    CDBWrapper& operator=(const CDBWrapper&) = delete;
+
     template <typename K>
     bool ReadDataStream(const K& key, CDataStream& ssValue) const
     {
@@ -256,7 +259,7 @@ public:
 
     bool ReadDataStream(const CDataStream& ssKey, CDataStream& ssValue) const
     {
-        leveldb::Slice slKey(ssKey.data(), ssKey.size());
+        leveldb::Slice slKey((const char*)ssKey.data(), ssKey.size());
 
         std::string strValue;
         leveldb::Status status = pdb->Get(readoptions, slKey, &strValue);
@@ -266,7 +269,7 @@ public:
             LogPrintf("LevelDB read failure: %s\n", status.ToString());
             dbwrapper_private::HandleError(status);
         }
-        CDataStream ssValueTmp(strValue.data(), strValue.data() + strValue.size(), SER_DISK, CLIENT_VERSION);
+        CDataStream ssValueTmp{MakeByteSpan(strValue), SER_DISK, CLIENT_VERSION};
         ssValueTmp.Xor(obfuscate_key);
         ssValue = std::move(ssValueTmp);
         return true;
@@ -316,7 +319,7 @@ public:
 
     bool Exists(const CDataStream& key) const
     {
-        leveldb::Slice slKey(key.data(), key.size());
+        leveldb::Slice slKey((const char*)key.data(), key.size());
 
         std::string strValue;
         leveldb::Status status = pdb->Get(readoptions, slKey, &strValue);
@@ -342,18 +345,6 @@ public:
     // Get an estimate of LevelDB memory usage (in bytes).
     size_t DynamicMemoryUsage() const;
 
-    // not available for LevelDB; provide for compatibility with BDB
-    bool Flush()
-    {
-        return true;
-    }
-
-    bool Sync()
-    {
-        CDBBatch batch(*this);
-        return WriteBatch(batch, true);
-    }
-
     CDBIterator *NewIterator()
     {
         return new CDBIterator(*this, pdb->NewIterator(iteroptions));
@@ -372,8 +363,8 @@ public:
         ssKey2.reserve(DBWRAPPER_PREALLOC_KEY_SIZE);
         ssKey1 << key_begin;
         ssKey2 << key_end;
-        leveldb::Slice slKey1(ssKey1.data(), ssKey1.size());
-        leveldb::Slice slKey2(ssKey2.data(), ssKey2.size());
+        leveldb::Slice slKey1((const char*)ssKey1.data(), ssKey1.size());
+        leveldb::Slice slKey2((const char*)ssKey2.data(), ssKey2.size());
         uint64_t size = 0;
         leveldb::Range range(slKey1, slKey2);
         pdb->GetApproximateSizes(&range, 1, &size);
@@ -391,8 +382,8 @@ public:
         ssKey2.reserve(DBWRAPPER_PREALLOC_KEY_SIZE);
         ssKey1 << key_begin;
         ssKey2 << key_end;
-        leveldb::Slice slKey1(ssKey1.data(), ssKey1.size());
-        leveldb::Slice slKey2(ssKey2.data(), ssKey2.size());
+        leveldb::Slice slKey1((const char*)ssKey1.data(), ssKey1.size());
+        leveldb::Slice slKey2((const char*)ssKey2.data(), ssKey2.size());
         pdb->CompactRange(&slKey1, &slKey2);
     }
 
@@ -473,25 +464,13 @@ public:
             return false;
         }
 
-        if (curIsParent) {
-            try {
-                // TODO try to avoid this copy (we need a stream that allows reading from external buffers)
-                CDataStream ssKey = parentKey;
-                ssKey >> key;
-            } catch (const std::exception&) {
-                return false;
-            }
-            return true;
-        } else {
-            try {
-                // TODO try to avoid this copy (we need a stream that allows reading from external buffers)
-                CDataStream ssKey = transactionIt->first;
-                ssKey >> key;
-            } catch (const std::exception&) {
-                return false;
-            }
-            return true;
+        try {
+            // TODO try to avoid copy transactionIt->first (we need a stream that allows reading from external buffers)
+            (curIsParent ? parentKey : CDataStream{transactionIt->first}) >> key;
+        } catch (const std::exception&) {
+            return false;
         }
+        return true;
     }
 
     CDataStream GetKey() {
@@ -576,7 +555,7 @@ protected:
 
     struct ValueHolder {
         size_t memoryUsage;
-        ValueHolder(size_t _memoryUsage) : memoryUsage(_memoryUsage) {}
+        explicit ValueHolder(size_t _memoryUsage) : memoryUsage(_memoryUsage) {}
         virtual ~ValueHolder() = default;
         virtual void Write(const CDataStream& ssKey, CommitTarget &parent) = 0;
     };
@@ -586,7 +565,7 @@ protected:
     struct ValueHolderImpl : ValueHolder {
         ValueHolderImpl(const V &_value, size_t _memoryUsage) : ValueHolder(_memoryUsage), value(_value) {}
 
-        virtual void Write(const CDataStream& ssKey, CommitTarget &commitTarget) {
+        virtual void Write(const CDataStream& ssKey, CommitTarget &commitTarget) override {
             // we're moving the value instead of copying it. This means that Write() can only be called once per
             // ValueHolderImpl instance. Commit() clears the write maps, so this ok.
             commitTarget.Write(ssKey, std::move(value));
@@ -618,7 +597,7 @@ public:
 
     template <typename V>
     void Write(const CDataStream& ssKey, const V& v) {
-        auto valueMemoryUsage = ::GetSerializeSize(v, SER_DISK, CLIENT_VERSION);
+        auto valueMemoryUsage = ::GetSerializeSize(v, CLIENT_VERSION);
 
         if (deletes.erase(ssKey)) {
             memoryUsage -= ssKey.size();
@@ -705,7 +684,7 @@ public:
         Clear();
     }
 
-    bool IsClean() {
+    bool IsClean() const {
         return writes.empty() && deletes.empty();
     }
 
@@ -714,7 +693,7 @@ public:
             // something went wrong when we accounted/calculated used memory...
             static volatile bool didPrint = false;
             if (!didPrint) {
-                LogPrintf("CDBTransaction::%s -- negative memoryUsage (%d)", __func__, memoryUsage);
+                LogPrintf("CDBTransaction::%s -- negative memoryUsage (%d)\n", __func__, memoryUsage);
                 didPrint = true;
             }
             return 0;

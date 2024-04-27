@@ -7,17 +7,22 @@
 # Test txindex generation and fetching
 #
 
-from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
-from test_framework.script import *
-from test_framework.mininode import *
 import binascii
+
+from test_framework.messages import COutPoint, CTransaction, CTxIn, CTxOut
+from test_framework.script import CScript, OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160
+from test_framework.test_framework import BitcoinTestFramework
+from test_framework.util import assert_equal
+
 
 class TxIndexTest(BitcoinTestFramework):
 
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 4
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
 
     def setup_network(self):
         self.add_nodes(self.num_nodes)
@@ -27,26 +32,13 @@ class TxIndexTest(BitcoinTestFramework):
         # Nodes 2/3 are used for testing
         self.start_node(2, ["-txindex"])
         self.start_node(3, ["-txindex"])
-        connect_nodes(self.nodes[0], 1)
-        connect_nodes(self.nodes[0], 2)
-        connect_nodes(self.nodes[0], 3)
-
-        self.is_network_split = False
+        self.connect_nodes(0, 1)
+        self.connect_nodes(0, 2)
+        self.connect_nodes(0, 3)
         self.sync_all()
+        self.import_deterministic_coinbase_privkeys()
 
     def run_test(self):
-        self.log.info("Test that settings can't be changed without -reindex...")
-        self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-txindex=0"], "You need to rebuild the database using -reindex to change -txindex", partial_match=True)
-        self.start_node(1, ["-txindex=0", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
-        self.sync_all()
-        self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-txindex"], "You need to rebuild the database using -reindex to change -txindex", partial_match=True)
-        self.start_node(1, ["-txindex", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
-        self.sync_all()
-
         self.log.info("Mining blocks...")
         self.nodes[0].generate(105)
         self.sync_all()
@@ -66,8 +58,8 @@ class TxIndexTest(BitcoinTestFramework):
         tx.vout = [CTxOut(amount, scriptPubKey)]
         tx.rehash()
 
-        signed_tx = self.nodes[0].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], True)
+        signed_tx = self.nodes[0].signrawtransactionwithwallet(tx.serialize().hex())
+        txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], 0)
         self.nodes[0].generate(1)
         self.sync_all()
 
