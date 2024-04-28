@@ -753,7 +753,7 @@ recover:
                     if (UintToArith256(sanchash) <= hashTarget) {
                         // Found a solution
                         LogPrintf("\r\nMiner::Found a sanc block solo mining! hashes=%f, hash=%s, thread=%f", nHashesDone, sanchash.GetHex(), iThreadID);
-                        bool fOK = pindexTip->nHeight > chainparams.GetConsensus().BABYLON_FALLING_HEIGHT;
+                        bool fOK = pindexTip->nHeight >= chainparams.GetConsensus().BABYLON_FALLING_HEIGHT;
 
                         if (fOK) {
                             std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
