@@ -395,7 +395,7 @@ public:
         consensus.BIP34Hash = uint256S("0x0");
         consensus.BIP65Height = 2431; // 
         consensus.BIP66Height = 2075; // 
-
+        consensus.CSVHeight = 72860;      // 
 		consensus.FoundationAddress = "yTrEKf8XQ7y7tychC2gWuGw1hsLqBybnEN";
 		consensus.BurnAddress = "yLKSrCjLQFsfVgX8RjdctZ797d54atPjnV";
 	
