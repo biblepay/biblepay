@@ -143,6 +143,29 @@
     // Inactive sancs receive a 50% reward if the sanc is down (POSE banned)
     // Legacy registered Temples/Altars receive 1 bbp (coercing them to upgrade)
 
+    // Each recipient is in the model
+    for (const auto& txout : voutMasternodePayments)
+    {
+        bool found = false;
+        std::string sRecipient1 = PubKeyToAddress(txout.scriptPubKey);
+
+        for (const auto& txout2 : txNew.vout) {
+             std::string sRecipient2 = PubKeyToAddress(txout2.scriptPubKey);
+             if (sRecipient1 == sRecipient2) {
+                    found = true;
+             }
+        }
+
+        if (!found) {
+             CTxDestination dest;
+             if (!ExtractDestination(txout.scriptPubKey, dest))
+                    assert(false);
+             LogPrintf("MasternodePayments::%s -- ERROR failed to find expected payee %s in block at height %s\n", __func__, EncodeDestination(dest), nBlockHeight);
+             return false;
+        }
+    }
+
+    /* 
     for (const auto& txout : voutMasternodePayments) {
         bool found = ranges::any_of(txNew.vout, [&txout](const auto& txout2) {return txout == txout2;});
         if (!found) {
@@ -153,6 +176,8 @@
             return false;
         }
     }
+    DASH
+    */
     return true;
 }
 
@@ -379,7 +404,9 @@ void FillBlockPayments(const CSporkManager& sporkManager, CGovernanceManager& go
     }
 
     if (!GetMasternodeTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePaymentsRet)) {
-        LogPrint(BCLog::MNPAYMENTS, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
+        //LogPrintf(BCLog::MNPAYMENTS, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
+        LogPrintf("%s -- no masternode to pay (MN list probably empty)\n", __func__);
+
     }
 
     txNew.vout.insert(txNew.vout.end(), voutMasternodePaymentsRet.begin(), voutMasternodePaymentsRet.end());
@@ -399,8 +426,8 @@ void FillBlockPayments(const CSporkManager& sporkManager, CGovernanceManager& go
     {
         txNew.vout[0].scriptPubKey = txNew.vout[1].scriptPubKey;
     }
-
-    LogPrint(BCLog::MNPAYMENTS, "%s -- nBlockHeight %d blockReward %lld voutMasternodePaymentsRet \"%s\" txNew %s", __func__, /* Continued */
+    //BCLog::MNPAYMENTS,
+    LogPrintf("%s -- nBlockHeight %d blockReward %lld voutMasternodePaymentsRet \"%s\" txNew %s", __func__, /* Continued */
                             nBlockHeight, blockSubsidy + feeReward, voutMasternodeStr, txNew.ToString());
 }
 

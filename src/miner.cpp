@@ -124,7 +124,7 @@ void BlockAssembler::resetBlock()
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn)
 {
     int64_t nTimeStart = GetTimeMicros();
-
+    
     resetBlock();
 
     pblocktemplate.reset(new CBlockTemplate());
@@ -656,15 +656,42 @@ bool CreateBlockForStratum(std::string sAddress, std::string& sError, CBlock& bl
 */
 
 static bool fThreadInterrupt = false;
+static CFeeRate blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
+
+BlockAssembler GetBlockAssembler(const CChainParams& params, const NodeContext& m_node)
+{
+    BlockAssembler::Options options;
+    options.nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;
+    options.blockMinFeeRate = blockMinFeeRate;
+    return BlockAssembler(*m_node.sporkman, *m_node.govman, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, params, options);
+}
+
+
+static void MinerSleep(int iMilliSecs)
+{
+    for (int i = 0; i < iMilliSecs / 10; i++)
+    {
+        // Allows the wallet to close during shutdown
+        if (fThreadInterrupt || ShutdownRequested()) {
+            return;
+        }
+        MilliSleep(i / 10);
+    }
+}
 
 static void BiblePayMiner(const CChainParams& chainparams, int iThreadID, int iFeatureSet, const JSONRPCRequest& jRequest)
 {
 
+    int iFailures = -1;
+
+recover:
+    
     const NodeContext& node = EnsureAnyNodeContext(jRequest.context);
     const CTxMemPool& mempool = EnsureMemPool(node);
     auto& mn_sync = *node.mn_sync;
 
     LogPrintf("BiblePayMiner -- started thread %f \n", (double)iThreadID);
+
     int64_t nThreadStart = GetTimeMillis();
     int64_t nLastGUI = GetAdjustedTime() - 30;
     int64_t nLastMiningBreak = 0;
@@ -674,9 +701,8 @@ static void BiblePayMiner(const CChainParams& chainparams, int iThreadID, int iF
     CScript cbScript = GetScriptForMining();
 
     int iStart = rand() % 1000;
-    MilliSleep(iStart);
+    MinerSleep(iStart);
 
-recover:
 
     try {
         // Throw an error if no script was provided.  This can happen
@@ -698,13 +724,12 @@ recover:
                     // on an obsolete chain. In regtest mode we expect to fly solo.
                     while (true) {
                         //    if(!m_node.masternodeSync().isBlockchainSynced())
-                        if (PeersExist(node) && !active_chainstate.IsInitialBlockDownload() && mn_sync.IsSynced() && !fReindex && !fChainEmpty)
+                        if (PeersExist(node) && !active_chainstate.IsInitialBlockDownload() && !fReindex && !fChainEmpty)
                             break;
 
-                        MilliSleep(1000);
+                        MinerSleep(1000);
                     }
                 }
-
 
                 //
                 // Create new block
@@ -716,14 +741,13 @@ recover:
                 if (!pindexPrev) break;
 
                 // Create block
+                BlockAssembler ba = GetBlockAssembler(Params(), node);
 
-                std::unique_ptr<CBlockTemplate> pblocktemplate(
-                    BlockAssembler(*node.sporkman, *node.govman, *node.llmq_ctx, *node.evodb, active_chainstate,
-                                   mempool, Params())
-                        .CreateNewBlock(cbScript));
+                std::unique_ptr<CBlockTemplate> pblocktemplate(ba.CreateNewBlock(cbScript));
 
-                if (!pblocktemplate.get()) {
-                    MilliSleep(15000);
+                if (!pblocktemplate.get())
+                {
+                    MinerSleep(15000);
                     LogPrint(BCLog::NET, "No block to mine %f", iThreadID);
                     goto recover;
                 }
@@ -743,7 +767,6 @@ recover:
                 arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
                 const Consensus::Params& consensusParams = Params().GetConsensus();
 
-
                 while (true)
                 {
                     pblock->nNonce += 1;
@@ -760,13 +783,13 @@ recover:
                             bool bAccepted = g_chainman.ProcessNewBlock(Params(), shared_pblock, true, NULL);
                             if (!bAccepted) {
                                 LogPrintf("\r\nblock rejected.%f", 2);
-                                MilliSleep(1000);
+                                MinerSleep(1000);
                             } else {
                                 // To prevent Chainlocks conflicts, allow the miner to sleep a while here
                                 // If we solve multiple blocks in a row, this node can end up with a chainlocks conflict
                                 if (chainparams.NetworkIDString() == CBaseChainParams::MAIN) {
                                     LogPrintf("\r\nMiner::Sleeping...%f", 1);
-                                    MilliSleep(1000);
+                                    MinerSleep(1000);
                                 }
                             }
                         }
@@ -805,7 +828,6 @@ recover:
 
                 UpdateHashesPerSec(nHashesDone);
                 // Check for stop or if block needs to be rebuilt
-                // boost::this_thread::interruption_point();
                 if (fThreadInterrupt || ShutdownRequested()) {
                     return;
                 }
@@ -843,12 +865,18 @@ recover:
     }
     catch (const std::runtime_error& e)
     {
-        LogPrint(BCLog::NET, "\r\nSoloMiner -- runtime error: %s\n", e.what());
-        //dHashesPerSec = 0;
-        //nThreadStart = GetTimeMillis();
-        //MilliSleep(5000);
-        //goto recover;
-        // throw;
+        // This can happen if we create a block that fails to meet business logic rules.
+        // IE: Block does not pay the right deterministic sanc.
+        iFailures++;
+        LogPrintf("\r\nSoloMiner -- failure #%f -- runtime error: %s\n", iFailures, e.what());
+        if (fThreadInterrupt || iFailures >= 100)
+        {
+            return;
+        }
+        dHashesPerSec = 0;
+        nThreadStart = GetTimeMillis();
+        MinerSleep(10000);
+        goto recover;
     }
 }
 
