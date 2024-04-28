@@ -25,7 +25,8 @@
 #include <string>
 #include "rpcpog.h"
 
-[[nodiscard]] static bool GetBlockTxOuts(const CBlockIndex* const pindexPrev, const CAmount blockSubsidy, const CAmount feeReward, std::vector<CTxOut>& voutMasternodePaymentsRet)
+[[nodiscard]] static bool GetBlockTxOuts(const CBlockIndex* const pindexPrev, const CAmount blockSubsidy,
+    const CAmount feeReward, std::vector<CTxOut>& voutMasternodePaymentsRet, bool fBlockChecking)
 {
     voutMasternodePaymentsRet.clear();
 
@@ -50,6 +51,29 @@
     if (!dmnPayee) {
         return false;
     }
+
+
+    // R Andrews - BBP - 9-16-2023
+    // POVS (Proof-of-video-streaming / Sanctuary Mining)
+    if (!fBlockChecking && pindexPrev != NULL)
+    {
+        bool fReduced = false;
+        int64_t nElapsed = GetAdjustedTime() - pindexPrev->GetBlockTime();
+        if (nElapsed < (60 * 60 * 24))
+        {
+             std::string sKey = dmnPayee->pdmnState->pubKeyOperator.Get().ToString();
+             int nStatus = mapPOVSStatus[sKey];
+             int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
+             // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
+             if (nPoseScore > 0 || nStatus == 255) {
+                    // Investors get 50% in txout1, active sancs get 100%, therefore mining txout[0] should be very low.
+                    masternodeReward = (masternodeReward * 100) / 10000;
+                    fReduced = true;
+             }
+        }
+    }
+    // End of POVS
+
 
     CAmount operatorReward = 0;
 
@@ -81,7 +105,7 @@
     // make sure it's not filled yet
     voutMasternodePaymentsRet.clear();
 
-    if(!GetBlockTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePaymentsRet)) {
+    if(!GetBlockTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePaymentsRet, false)) {
         LogPrintf("MasternodePayments::%s -- no payee (deterministic masternode list empty)\n", __func__);
         return false;
     }
@@ -110,10 +134,14 @@
     }
 
     std::vector<CTxOut> voutMasternodePayments;
-    if (!GetBlockTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePayments)) {
+    if (!GetBlockTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePayments, true)) {
         LogPrintf("MasternodePayments::%s -- ERROR failed to get payees for block at height %s\n", __func__, nBlockHeight);
         return true;
     }
+
+    // BIBLEPAY
+    // Inactive sancs receive a 50% reward if the sanc is down (POSE banned)
+    // Legacy registered Temples/Altars receive 1 bbp (coercing them to upgrade)
 
     for (const auto& txout : voutMasternodePayments) {
         bool found = ranges::any_of(txNew.vout, [&txout](const auto& txout2) {return txout == txout2;});
@@ -353,6 +381,15 @@ void FillBlockPayments(const CSporkManager& sporkManager, CGovernanceManager& go
     if (!GetMasternodeTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePaymentsRet)) {
         LogPrint(BCLog::MNPAYMENTS, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
     }
+
+
+    // BiblePay - Mining reward goes to sanc
+
+    const CChainParams& chainparams = Params();
+    if (nBlockHeight >= chainparams.GetConsensus().REDSEA_HEIGHT) {
+        txNew.vout[0].scriptPubKey = txNew.vout[1].scriptPubKey;
+    }
+
 
     txNew.vout.insert(txNew.vout.end(), voutMasternodePaymentsRet.begin(), voutMasternodePaymentsRet.end());
     txNew.vout.insert(txNew.vout.end(), voutSuperblockPaymentsRet.begin(), voutSuperblockPaymentsRet.end());
