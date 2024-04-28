@@ -3900,7 +3900,14 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
             return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-diffbits", strprintf("incorrect proof of work at %d", nHeight));
         }
     }
-    
+    if (nHeight >= consensusParams.BABYLON_FALLING_HEIGHT)
+    {
+        int BABYLON_FALLING_BLOCK_VERSION = 1542177296;
+        if (block.nVersion <= BABYLON_FALLING_BLOCK_VERSION)
+        {
+            return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion", strprintf("incorrect block version after mandatory upgrade to babylon-falling %d %d", block.nVersion, nHeight));
+        }
+    }
 
     // Check against checkpoints
     if (fCheckpointsEnabled) {

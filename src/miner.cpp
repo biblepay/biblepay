@@ -753,20 +753,20 @@ recover:
                     if (UintToArith256(sanchash) <= hashTarget) {
                         // Found a solution
                         LogPrintf("\r\nMiner::Found a sanc block solo mining! hashes=%f, hash=%s, thread=%f", nHashesDone, sanchash.GetHex(), iThreadID);
-                        bool fOK = pindexTip->nHeight >= chainparams.GetConsensus().BABYLON_FALLING_HEIGHT;
+                        bool fOK = pindexTip->nHeight >= chainparams.GetConsensus().BABYLON_FALLING_HEIGHT-1;
 
                         if (fOK) {
                             std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
                             bool bAccepted = g_chainman.ProcessNewBlock(Params(), shared_pblock, true, NULL);
                             if (!bAccepted) {
                                 LogPrintf("\r\nblock rejected.%f", 2);
-                                MilliSleep(15000);
+                                MilliSleep(1000);
                             } else {
                                 // To prevent Chainlocks conflicts, allow the miner to sleep a while here
                                 // If we solve multiple blocks in a row, this node can end up with a chainlocks conflict
                                 if (chainparams.NetworkIDString() == CBaseChainParams::MAIN) {
                                     LogPrintf("\r\nMiner::Sleeping...%f", 1);
-                                    MilliSleep(10000);
+                                    MilliSleep(1000);
                                 }
                             }
                         }
@@ -844,10 +844,10 @@ recover:
     catch (const std::runtime_error& e)
     {
         LogPrint(BCLog::NET, "\r\nSoloMiner -- runtime error: %s\n", e.what());
-        dHashesPerSec = 0;
-        nThreadStart = GetTimeMillis();
-        MilliSleep(5000);
-        goto recover;
+        //dHashesPerSec = 0;
+        //nThreadStart = GetTimeMillis();
+        //MilliSleep(5000);
+        //goto recover;
         // throw;
     }
 }

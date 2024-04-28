@@ -265,7 +265,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     // You cant mine a block now with an old version, because it is rejected after the Bablyon_falling go live
     // You cant mine a block with a falsified old timestamp and a new version, because that starts a new chain and violates the checkpoint rule.
 
-    if (nTime > params.BABYLON_FALLING_TIME && nVersion <= BABYLON_FALLING_BLOCK_VERSION)
+    if (nTime >= params.BABYLON_FALLING_TIME && nVersion <= BABYLON_FALLING_BLOCK_VERSION)
     {
         // After Babylon Falling go live, we are on V6 blocks
         return false;
