@@ -2884,16 +2884,17 @@ bool ContextualCheckBlockMinedBySanc(const CBlock& block)
     if (block.nTime < consensusParams.BABYLON_FALLING_TIME) {
         return true;
     }
+
+    return true;
+
+    std::string sNetworkName = Params().NetworkIDString();
+
     const NodeContext& node = GetGlobalNodeContext();
     CBlockIndex* pblockTip = g_chainman.ActiveChain().Tip();
 
     if (!node.mn_sync->IsBlockchainSynced())
         return true;
-    // If its an old block, older than 24 hours, dont bother with this rule
-    int nAge = GetAdjustedTime() - block.nTime;
-    if (nAge > 60 * 60 * 24) {
-        return true;
-    }
+
     // If the elapsed between last block and this block is > one hour, anyone can solve the next block
     int nElapsed = block.nTime - pblockTip->nTime;
     if (nElapsed > 60 * 60 * 1) {

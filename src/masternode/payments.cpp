@@ -382,25 +382,22 @@ void FillBlockPayments(const CSporkManager& sporkManager, CGovernanceManager& go
         LogPrint(BCLog::MNPAYMENTS, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
     }
 
-
-    // BiblePay - Mining reward goes to sanc
-
-    const CChainParams& chainparams = Params();
-    if (nBlockHeight >= chainparams.GetConsensus().REDSEA_HEIGHT) {
-        txNew.vout[0].scriptPubKey = txNew.vout[1].scriptPubKey;
-    }
-
-
     txNew.vout.insert(txNew.vout.end(), voutMasternodePaymentsRet.begin(), voutMasternodePaymentsRet.end());
     txNew.vout.insert(txNew.vout.end(), voutSuperblockPaymentsRet.begin(), voutSuperblockPaymentsRet.end());
 
     std::string voutMasternodeStr;
-    for (const auto& txout : voutMasternodePaymentsRet) {
+    for (const auto& txout : voutMasternodePaymentsRet)
+    {
         // subtract MN payment from miner reward
         txNew.vout[0].nValue -= txout.nValue;
         if (!voutMasternodeStr.empty())
             voutMasternodeStr += ",";
         voutMasternodeStr += txout.ToString();
+    }
+    // BiblePay - Mining reward goes to sanc
+    if (nBlockHeight >= Params().GetConsensus().REDSEA_HEIGHT && txNew.vout.size() > 1)
+    {
+        txNew.vout[0].scriptPubKey = txNew.vout[1].scriptPubKey;
     }
 
     LogPrint(BCLog::MNPAYMENTS, "%s -- nBlockHeight %d blockReward %lld voutMasternodePaymentsRet \"%s\" txNew %s", __func__, /* Continued */
