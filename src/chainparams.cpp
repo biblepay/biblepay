@@ -341,6 +341,7 @@ public:
 					{315770, uint256S("0xe8fb51c409c9c2942e60e15d013efc475eacd0a4fa9df8d54eddfaa0c421146a")},
                     {344000, uint256S("0x7c3e13950bdb25ea8ff11bd091be5bede5241dfa87ca149a75a2103c1041468a")},
                     {440000, uint256S("0x70e38d78fcd8a5e21c4352a42c67b55907ce1f1831ed2edec9100cd657dd650f")},
+                    {498700, uint256S("0xa261c9535b7f8d67e59ccad435183ee29a100b52a7496526b840a89a3305955e")},
 				}
             }
         };
@@ -371,10 +372,9 @@ public:
         consensus.EXODUS_HEIGHT = 183000;
         consensus.REDSEA_HEIGHT = 183000;
         consensus.LATTER_RAIN_HEIGHT = 192200;
-        consensus.REDSEA_PARTING = 200000;
-        consensus.BABYLON_FALLING_HEIGHT = 600000;
-        consensus.BABYLON_FALLING_TIME = 1744172648;
-
+        consensus.REDSEA_PARTING = 193255;
+        consensus.BABYLON_FALLING_HEIGHT = 193255;
+        consensus.BABYLON_FALLING_TIME = 1714245416;  // April 27th 2024
 
         consensus.nSubsidyHalvingInterval =  365 * 205;
         consensus.BIP16Height = 0;

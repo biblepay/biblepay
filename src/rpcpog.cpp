@@ -2170,8 +2170,9 @@ double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
 
 void LockStakes()
 {
-    CWallet* pwallet = GetInternalWallet();
     /* WAITING TO SEE IF WE NEED THIS OR NOT
+    *
+    CWallet* pwallet = GetInternalWallet();
 	pwallet->LockByMask(sUA);
     */
 }

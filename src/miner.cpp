@@ -166,6 +166,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                        ? nMedianTimePast
                        : pblock->GetBlockTime();
 
+    LogPrintf("\r\nBBPMINER::CREATENEWBLOCK::VERSION %f TIME %f", pblock->nVersion, pblock->nTime);
+
+
     if (fDIP0003Active_context) {
         for (const Consensus::LLMQParams& params : llmq::GetEnabledQuorumParams(pindexPrev)) {
             std::vector<CTransactionRef> vqcTx;

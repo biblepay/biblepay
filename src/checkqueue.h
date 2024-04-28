@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <rpcpog.h>
 
 template <typename T>
 class CCheckQueueControl;
@@ -199,6 +200,9 @@ public:
 
     ~CCheckQueue()
     {
+        if (!m_worker_threads.empty()) {
+            MilliSleep(1234);
+        }
         assert(m_worker_threads.empty());
     }
 
