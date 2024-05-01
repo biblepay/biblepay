@@ -2586,6 +2586,10 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
     CoinType nCoinType = coinControl ? coinControl->nCoinType : CoinType::ALL_COINS;
 
     CAmount nTotal = 0;
+
+    // BIBLEPAY
+    int nMaxBBPCount = 256;
+
     // Either the WALLET_FLAG_AVOID_REUSE flag is not set (in which case we always allow), or we default to avoiding, and only in the case where
     // a coin control object is provided, and has the avoid address reuse flag set to false, do we allow already used addresses
     bool allow_used_addresses = !IsWalletFlagSet(WALLET_FLAG_AVOID_REUSE) || (coinControl && !coinControl->m_avoid_address_reuse);
@@ -2679,6 +2683,10 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
 
             // Checks the maximum number of UTXO's.
             if (nMaximumCount > 0 && vCoins.size() >= nMaximumCount) {
+                return;
+            }
+
+            if (vCoins.size() >= nMaxBBPCount) {
                 return;
             }
         }

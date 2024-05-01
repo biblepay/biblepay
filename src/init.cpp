@@ -2613,7 +2613,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     if (fMasternodeMode)
     {
         JSONRPCRequest r = GetJRR();
-        GenerateCoins(true, 1, Params(), r);
+        //GenerateCoins(true, 1, Params(), r);
     }
     //End of BiblePay
 

@@ -1157,11 +1157,11 @@ bool loadFonts()
     for (const auto& it : mapStyles) {
         QString font = ":fonts/" + family + "-" + it.first;
         vecFontIds.push_back(QFontDatabase::addApplicationFont(font));
-        std::cout << __func__ << ": " << (font).toStdString() << " loaded with id " << vecFontIds.back() << std::endl;
+        // std::cout << __func__ << ": " << (font).toStdString() << " loaded with id " << vecFontIds.back() << std::endl;
 
         if (it.second) {
             vecFontIds.push_back(QFontDatabase::addApplicationFont(font + italic));
-            std::cout << __func__ << ": " << (font + italic).toStdString() << " loaded with id " << vecFontIds.back() << std::endl;
+            // std::cout << __func__ << ": " << (font + italic).toStdString() << " loaded with id " << vecFontIds.back() << std::endl;
         }
     }
 
@@ -1196,7 +1196,7 @@ bool loadFonts()
 
     setApplicationFont();
 
-	std::cout << ".FontsLoaded." << std::endl;
+	//std::cout << ".FontsLoaded." << std::endl;
 
     // Initialize supported font weights for all available fonts
     // Generate a vector with supported font weights by comparing the width of a certain test text for all font weights

@@ -113,11 +113,9 @@ const CoreContext& GetGlobalCoreContext()
 
 JSONRPCRequest GetJRR()
 {
-    LogPrintf("\r\n%f", 1001);
     const NodeContext& node(*g_bbp_node_context_ptr10);
     const CoreContext& c1(*g_bbp_core_context_ptr10);
     JSONRPCRequest request(c1);
-    LogPrintf("\r\n%f", 1004);
     //JSONRPCRequest r(context);
     return request; 
 }
@@ -2184,8 +2182,12 @@ const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
     CTransactionRef tx1;
     uint256 hashBlock1;
     const NodeContext& node = GetGlobalNodeContext();
-    
-    CTransactionRef tx = GetTransaction(nullptr, node.mempool.get(), hash, Params().GetConsensus(), hashBlock1);
+    const CTxMemPool& mempool = EnsureMemPool(node);
+    const CTxMemPool* ptrMemPool = &mempool;
+
+        
+
+    CTransactionRef tx = GetTransaction(nullptr, ptrMemPool, hash, Params().GetConsensus(), hashBlock1);
     if (tx)
     {
         const CBlockIndex* pindexOut = g_chainman.m_blockman.LookupBlockIndex(hashBlock1);
@@ -2926,3 +2928,15 @@ bool IsSanctuaryLegacyTempleOrAltar(CDeterministicMNCPtr dmn)
     }
 }
 
+bool IsSanctuaryPoseBanned(CDeterministicMNCPtr dmnPayee)
+{
+    bool fReduced = false;
+    std::string sKey = dmnPayee->pdmnState->pubKeyOperator.Get().ToString();
+    int nStatus = mapPOVSStatus[sKey];
+    int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
+    // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
+    if (nPoseScore > 0 || nStatus == 255) {
+         fReduced = true;
+    }
+    return fReduced;
+}

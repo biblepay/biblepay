@@ -13,6 +13,7 @@
 #include <qt/guiutil.h>
 #include <qt/paymentserver.h>
 #include <qt/transactionrecord.h>
+#include <node/blockstorage.h>
 
 #include <consensus/consensus.h>
 #include <key_io.h>
@@ -22,6 +23,8 @@
 #include <util/system.h>
 #include <validation.h>
 #include <wallet/ismine.h>
+#include <rpcpog.h>
+#include <rpc/blockchain.h>
 
 #include <stdint.h>
 #include <string>
@@ -278,6 +281,118 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
         quint32 numBlocksToMaturity = COINBASE_MATURITY +  1;
         strHTML += "<br>" + tr("Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to \"not accepted\" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.").arg(QString::number(numBlocksToMaturity)) + "<br>";
     }
+
+    //BIBLEPAY ADVANCED VIEW
+
+    std::string sStripped;
+    std::string sObjType;
+    const CBlockIndex* pindexTxList;
+    int64_t nAge = GetAdjustedTime() - wtx.tx->nLockTime;
+    bool fShowAdvView = true;
+    //const CTxMemPool& mempool = EnsureMemPool(*node);
+
+    if (fShowAdvView) {
+        // In Network Messages or Prayers
+
+        std::string sNetworkMessage;
+        for (unsigned int i1 = 0; i1 < wtx.tx->vout.size(); i1++) {
+            sNetworkMessage += wtx.tx->vout[i1].sTxOutMessage;
+        }
+
+        CBlockIndex* pindexPrev = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
+
+        /*
+        pindexTxList = GetBlockIndexByTransactionHash(wtx.tx->GetHash());
+        // Wallet can crash here if tx is not in a block yet...
+        if (nAge > (60 * 30)) {
+            if (pindexTxList && g_chainman.ActiveChain().Contains(pindexTxList))
+            {
+                const Consensus::Params& consensusParams = Params().GetConsensus();
+                if (pindexTxList != NULL) {
+                    CBlock blockTxList;
+                    if (ReadBlockFromDisk(blockTxList, pindexTxList, consensusParams)) {
+                        strHTML += "<br><span>Height: " + QString::fromStdString(DoubleToString((double)pindexTxList->nHeight, 0)) + "</span></b>";
+                        // strHTML += "<br><span>Difficulty: " + QString::fromStdString(DoubleToString(GetDifficulty(pindexTxList), 2)) + "</span></b>";
+                        strHTML += "<br><span>Time: " + QString::fromStdString(TimestampToHRDate(blockTxList.GetBlockTime())) + "</span></b>";
+                        strHTML += "<br><span>Subsidy: " + QString::fromStdString(DoubleToString((double)blockTxList.vtx[0]->vout[0].nValue / COIN, 4)) + "</span></b>";
+                    }
+                }
+            }
+        }
+        */
+
+        sStripped = ExtractXML(sNetworkMessage, "<MV>", "</MV>");
+        sObjType = ExtractXML(sNetworkMessage, "<MT>", "</MT>");
+
+        strHTML += "<pre>" + GUIUtil::HtmlEscape(sNetworkMessage) + "</pre><br><br>";
+
+        auto mine = wtx.txin_is_mine.begin();
+        for (const CTxIn& txin : wtx.tx->vin) {
+            if (*(mine++)) {
+                strHTML += "<b>" + tr("Debit") + ":</b> " + BitcoinUnits::formatHtmlWithUnit(unit, -wallet.getDebit(txin, ISMINE_ALL)) + "<br>";
+            }
+        }
+        mine = wtx.txout_is_mine.begin();
+        for (const CTxOut& txout : wtx.tx->vout) {
+            if (*(mine++)) {
+                strHTML += "<b>" + tr("Credit") + ":</b> " + BitcoinUnits::formatHtmlWithUnit(unit, wallet.getCredit(txout, ISMINE_ALL)) + "<br>";
+            }
+        }
+
+
+        strHTML += "<br><b>" + tr("Transaction") + ":</b><br>";
+        strHTML += GUIUtil::HtmlEscape(wtx.tx->ToString(), true);
+
+        QString sInputsHeader = "<br><b>" + tr("Inputs") + ":</b><ul>";
+
+        // Helper to query an amount
+        //const CCoinsViewMemPool amount_view{WITH_LOCK(::cs_main, return ::ChainstateActive().CoinsTip()), mempool};
+
+
+        int iRow = 0;
+        if (pindexTxList != NULL) {
+            for (auto txin : wtx.tx->vin)
+            {
+                COutPoint prevout = txin.prevout;
+
+                /*
+                Coin prev;
+
+                if (amount_view.GetCoin(prevout, prev))
+                {
+                    {
+                        iRow++;
+                        if (iRow == 1)
+                            strHTML += sInputsHeader;
+                        strHTML += "<li>";
+                        const CTxOut& vout = prev.out;
+                        CTxDestination address;
+                        if (ExtractDestination(vout.scriptPubKey, address))
+                        {
+                            strHTML += QString::fromStdString(EncodeDestination(address)) + " ";
+                        }
+                        strHTML = strHTML + " " + tr("Amount") + "=" + BitcoinUnits::formatHtmlWithUnit(unit, vout.nValue);
+                    }
+                }
+                */
+
+            }
+        }
+
+        strHTML += "</ul>";
+        strHTML += "<br><b>" + tr("Inputs") + ":</b>";
+        strHTML += "<ul>";
+
+
+        if (!sStripped.empty())
+            strHTML += "<br><b>" + GUIUtil::TOQS(sObjType) + ":</b> " + GUIUtil::TOQS(sStripped) + "<br>";
+    }
+    
+
+
+
+
+
 
     //
     // Debug view

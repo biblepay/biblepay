@@ -837,6 +837,7 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, gsl::no
             if (newList.HasUniqueProperty(proTx.addr)) {
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-protx-dup-addr");
             }
+
             if (newList.HasUniqueProperty(proTx.keyIDOwner) || newList.HasUniqueProperty(proTx.pubKeyOperator)) {
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-protx-dup-key");
             }

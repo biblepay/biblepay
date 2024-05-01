@@ -90,7 +90,9 @@ static const unsigned int DEFAULT_TX_CONFIRM_TARGET = 6;
 static const bool DEFAULT_WALLETBROADCAST = true;
 static const bool DEFAULT_DISABLE_WALLET = false;
 //! -maxtxfee default
-static const CAmount DEFAULT_TRANSACTION_MAXFEE = 777 * COIN;
+static const CAmount DEFAULT_TRANSACTION_MAXFEE = 7777 * COIN;
+// MISSION CRITICAL - FIND A WAY TO DECREASE THIS HIGH FEE
+// 
 //! Discourage users to set fees higher than this amount (in satoshis) per kB
 static const CAmount HIGH_TX_FEE_PER_KB = 777 * COIN;
 //! -maxtxfee will warn if called with a higher fee than this amount (in satoshis)

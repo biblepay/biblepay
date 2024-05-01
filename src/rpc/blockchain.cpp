@@ -77,7 +77,6 @@ static CUpdatedBlock latestblock GUARDED_BY(cs_blockchange);
 extern void TxToJSON(const CTransaction& tx, const uint256 hashBlock, CTxMemPool& mempool, CChainState& active_chainstate, llmq::CChainLocksHandler& clhandler, llmq::CInstantSendManager& isman, UniValue& entry);
 
 /* BIBLEPAY */
-UniValue protx_register(const JSONRPCRequest& request);
 UniValue protx(const JSONRPCRequest& request);
 UniValue _bls(const JSONRPCRequest& request);
 UniValue hexblocktocoinbase(const JSONRPCRequest& request);
@@ -89,7 +88,20 @@ UniValue signrawtransaction(const JSONRPCRequest& request);
 UniValue dumpprivkey(const JSONRPCRequest& request);
 UniValue sendrawtransaction(const JSONRPCRequest& request);
 UniValue importprivkey(const JSONRPCRequest& request);
-/* END OF BIBLEPAY */
+UniValue bls_generate(const JSONRPCRequest& request, const ChainstateManager& chainman);
+UniValue protx_register(const JSONRPCRequest& request, const ChainstateManager& chainman);
+UniValue protx_register_evo(const JSONRPCRequest& request, const ChainstateManager& chainman);
+UniValue protx_register_submit(const JSONRPCRequest& request, const ChainstateManager& chainman);
+UniValue protx_prepare_upgradesanc(const JSONRPCRequest& request, const ChainstateManager& chainman);
+UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
+                                       const ChainstateManager& chainman,
+                                       const bool specific_legacy_bls_scheme,
+                                       const bool isExternalRegister,
+                                       const bool isFundRegister,
+                                       const bool isPrepareRegister,
+                                       const MnType mnType);
+
+    /* END OF BIBLEPAY */
 
 
 NodeContext& EnsureAnyNodeContext(const CoreContext& context)
@@ -3365,7 +3377,9 @@ UniValue exec(const JSONRPCRequest& request)
         LogPrintf("\r\nChecking %s - response [%s]", sPage, sResponse);
         std::string sScratch = ExtractXML(sResponse, "<scratch>", "</scratch>");
         results.pushKV("Scratch", sScratch);
-    } else if (sItem == "upgradesanc" || sItem == "createsanc") {
+    }
+    else if (sItem == "upgradesanc" || sItem == "createsanc")
+    {
         if (request.params.size() != 3)
             throw std::runtime_error("You must specify exec upgradesanc/createsanc sanctuary_name (where the sanctuary_name matches the name in the masternode.conf file) 0/1 (where 0=dry-run, 1=real).   NOTE:  Please be sure your masternode.conf has a carriage return after the end of every sanctuary entry (otherwise we can't parse each entry correctly). ");
 
@@ -3385,6 +3399,10 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sMNP = vSanc[2];
         std::string sCollateralTXID = vSanc[3];
         std::string sCollateralTXIDOrdinal = vSanc[4];
+
+        LogPrintf("CreateSanc::SancIP %s  MNP   %s", sSancIP, sMNP);
+
+
         double dColOrdinal = StringToDouble(sCollateralTXIDOrdinal, 0);
         if (sCollateralTXIDOrdinal.length() != 1 || dColOrdinal > 9 || sCollateralTXID.length() < 16) {
             throw std::runtime_error("Sanctuary entry in masternode.conf corrupted (collateral txid missing, or there is no newline at the end of the entry in the masternode.conf file.)");
@@ -3403,25 +3421,31 @@ UniValue exec(const JSONRPCRequest& request)
         int nOut = 0;
         bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, "", nOut);
 
-        if (!sError.empty() || !fSent)
+        if (!sError.empty() || !fSent) {
             throw std::runtime_error("Unable to fund protx_register fee: " + sError);
+        }
+
+        LogPrintf("CreateSanc::Summary %s", sSummary);
 
         results.pushKV("Summary", sSummary);
 
         // Generate BLS keypair (This is the keypair for the sanctuary - the BLS public key goes in the chain, the private key goes into the Sanctuaries .conf file like this: masternodeblsprivkey=nnnnn
 
+        const ChainstateManager& chainman = EnsureAnyChainman(request.context);
         JSONRPCRequest myBLS(request);
-        
+
         myBLS.params.setArray();
-        myBLS.params.push_back("generate");
-        UniValue myBLSPair = _bls(myBLS);
+        //myBLS.params.push_back("blsgenerate");
+        UniValue myBLSPair = bls_generate(myBLS,chainman);
         std::string myBLSPublic = myBLSPair["public"].getValStr();
         std::string myBLSPrivate = myBLSPair["secret"].getValStr();
+
+        LogPrintf("UpgradeSanc::[0] pub %s priv %s ",myBLSPublic,myBLSPrivate);
 
         JSONRPCRequest newRequest(request);
 
         newRequest.params.setArray();
-        // Pro-tx-register_prepare preparation format: protx register_prepare 1.55mm_collateralHash 1.55mm_index_collateralIndex ipv4:port_ipAndPort home_voting_address_ownerKeyAddr blsPubKey_operatorPubKey delegate_or_home_votingKeyAddr 0_pctOf_operatorReward payout_address_payoutAddress optional_(feeSourceAddress_of_Pro_tx_fee)
+        // protx register_prepare preparation format: protx register_prepare 1.55mm_collateralHash 1.55mm_index_collateralIndex ipv4:port_ipAndPort home_voting_address_ownerKeyAddr blsPubKey_operatorPubKey delegate_or_home_votingKeyAddr 0_pctOf_operatorReward payout_address_payoutAddress optional_(feeSourceAddress_of_Pro_tx_fee)
 
         /*
     + GetHelpString(1, "collateralHash")
@@ -3432,10 +3456,19 @@ UniValue exec(const JSONRPCRequest& request)
     + GetHelpString(6, "votingAddress_register")
     + GetHelpString(7, "operatorReward")
     + GetHelpString(8, "payoutAddress_register")
+    9,platformNodeID
+    10,platformP2PPort
+    11,platformHTTPPort
+    12,feeSourceAddress
+
+
+
     + GetHelpString(9, "feeSourceAddress") +
         */
 
-        newRequest.params.push_back("register_prepare");
+        //newRequest.params.push_back("protxregister_prepare");
+        //protxregister_prepare_evo
+
         newRequest.params.push_back(sCollateralTXID);
         newRequest.params.push_back(sCollateralTXIDOrdinal);
         newRequest.params.push_back(sSancIP);
@@ -3444,23 +3477,65 @@ UniValue exec(const JSONRPCRequest& request)
         newRequest.params.push_back(myBLSPublic);    // Remote Sanctuary Public Key (Private and public keypair is stored in deterministicsanctuary.conf on the controller wallet)
         newRequest.params.push_back(sVotingAddress); // Delegates Voting address (This is a person that can vote for you if you want) - in our case its the same
 
+
         newRequest.params.push_back("0");         // Pct of rewards to share with Operator (This is the amount of reward we want to share with a Sanc Operator - IE a hosting company)
-        newRequest.params.push_back(sPayAddress); // [8] = Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
+
+        /*
+        newRequest.params.push_back("A"); //platformNodeID
+        newRequest.params.push_back("443"); //platformP2PPort
+        newRequest.params.push_back("80"); //platformHTTPPort
+        */
+
+        newRequest.params.push_back(sPayAddress); // [9,12] = Rewards Pay To Address (This can be changed to be a wallet outside of your wallet, maybe a hardware wallet)
+
+
         // Fee Source Address (prevents Fee 404)
         // std::string sCPK = DefaultRecAddress("Christian-Public-Key");
-        newRequest.params.push_back(sPayAddress);
-
+        
+        
         // 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
-        UniValue rProReg = protx(newRequest);
+        //UniValue rProReg = protx(newRequest);
+        //UniValue rProReg = protx_register_evo(newRequest, chainman);
+        bool isExternalRegister = false;
+        bool isFundRegister = false;
+        bool isPrepareRegister = true;
+
+        //UniValue rProReg = protx_register_common_wrapper(newRequest, chainman, false, isExternalRegister, isFundRegister, isPrepareRegister, MnType::Regular);
+       // UniValue rProReg = protx_register(newRequest, chainman);
+        UniValue rProReg = protx_prepare_upgradesanc(newRequest, chainman);
+        //const JSONRPCRequest& request, const ChainstateManager& chainman);
+
+        LogPrintf("\r\nCreateSanc[4.9]::Executed %f",1);
+
         std::string sProRegTxId = rProReg["tx"].getValStr();
         std::string sProCollAddr = rProReg["collateralAddress"].getValStr();
         std::string sProSignMessage = rProReg["signMessage"].getValStr();
-        if (sProSignMessage.empty() || sProRegTxId.empty())
+
+        LogPrintf("\r\n\r\nCreateSanc[5]::ProRegTxId %s   ProCollAddr %s  Sign %s",sProRegTxId,sProCollAddr,sProSignMessage);
+
+
+        if (sProSignMessage.empty() || sProRegTxId.empty()) {
             throw std::runtime_error("Failed to create pro reg tx.");
+        }
         // Step 2: Sign the Pro-Reg Tx
         JSONRPCRequest newSig(request);
 
         newSig.params.setArray();
+
+        
+        /*
+        *
+        *
+        IF WE RECEIVE BAD-PROTX-DUP-KEY its because the collateral has an Owner (PaymentAddress) or PubKeyOperator that is already in the DMN
+
+            if (newList.HasUniqueProperty(proTx.keyIDOwner) || newList.HasUniqueProperty(proTx.pubKeyOperator)) {
+                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-protx-dup-key");
+            }
+
+
+        */
+
+
         newSig.params.push_back(sProCollAddr);
         newSig.params.push_back(sProSignMessage);
         std::string sProSignature = SignMessageEvo(sProCollAddr, sProSignMessage, sError);
@@ -3472,10 +3547,12 @@ UniValue exec(const JSONRPCRequest& request)
             // Note: If this is Not a dry-run, go ahead and submit the non-financial transaction to the network here:
             JSONRPCRequest newSend(request);
             newSend.params.setArray();
-            newSend.params.push_back("register_submit");
+            //newSend.params.push_back("register_submit");
             newSend.params.push_back(sProRegTxId);
             newSend.params.push_back(sProSignature);
-            UniValue rProReg = protx(newSend);
+            LogPrintf("\r\nUpgradeSanc::TxID [ %s ]  Sig [ %s ]",sProRegTxId,sProSignature);
+
+            UniValue rProReg = protx_register_submit(newSend,chainman);
             results.push_back(rProReg);
             sSentTxId = rProReg.getValStr();
         }
@@ -3487,11 +3564,17 @@ UniValue exec(const JSONRPCRequest& request)
         results.pushKV("pro_reg_signed_message", sProSignMessage);
         results.pushKV("pro_reg_signature", sProSignature);
         results.pushKV("sent_txid", sSentTxId);
+        LogPrintf("CreateSanc::Pub %s  sentTXID %s", myBLSPublic, sSentTxId);
+
         // Step 4: Store the new deterministic sanctuary in deterministicsanc.conf
         std::string sDSD = sSancName + " " + sSancIP + " " + myBLSPublic + " " + myBLSPrivate + " " + sCollateralTXID + " " + sCollateralTXIDOrdinal + " " + sProRegTxId + " " + sProCollAddr + " " + sSentTxId + "\n";
         if (iDryRun == 1)
+        {
             AppendSanctuaryFile("deterministic.conf", sDSD);
-    } else if (sItem == "revivesanctuaries") {
+        }
+    }
+    else if (sItem == "revivesanctuaries")
+    {
         std::string sResult = ReviveSanctuariesJob();
         results.pushKV("result", sResult);
     }

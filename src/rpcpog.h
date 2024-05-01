@@ -151,7 +151,7 @@ std::string strReplace(std::string str_input, std::string str_to_find, std::stri
 double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress);
 void LockStakes();
 bool CompareMask2(CAmount nAmount, double nMask);
-//const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
+const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash);
 std::tuple<std::string, std::string, std::string> GetPOVSURL(std::string sSanctuaryPubKey, std::string sIP, int iType);
 bool POVSTest(std::string sSanctuaryPubKey, std::string sIP, int64_t nTimeout, int nType);
 int GetNextDailySuperblock(int nHeight);
@@ -187,8 +187,8 @@ void MilliSleep(int64_t n);
 BBPResult UnchainedApiGet();
 std::string ComputeMinedBlockVersion();
 bool IsSanctuaryLegacyTempleOrAltar(CDeterministicMNCPtr dmn);
+bool IsSanctuaryPoseBanned(CDeterministicMNCPtr dmn);
 JSONRPCRequest GetJRR();
-
 bool ContextualCheckBlockMinedBySanc(const CBlock& block);
 const NodeContext& GetGlobalNodeContext();
 const CoreContext& GetGlobalCoreContext();

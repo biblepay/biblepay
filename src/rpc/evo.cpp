@@ -350,6 +350,9 @@ static std::string SignAndSendSpecialTx(const JSONRPCRequest& request, const Cha
     JSONRPCRequest sendRequest(request);
     sendRequest.params.setArray();
     sendRequest.params.push_back(signResult["hex"].get_str());
+
+    LogPrintf("SignAndSendSpecialTx::%s",signResult["hex"].get_str());
+
     return sendrawtransaction(sendRequest).get_str();
 }
 
@@ -578,7 +581,7 @@ static void protx_register_prepare_evo_help(const JSONRPCRequest& request)
     }.Check(request);
 }
 
-static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
+UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
                                               const ChainstateManager& chainman,
                                               const bool specific_legacy_bls_scheme,
                                               const bool isExternalRegister,
@@ -797,7 +800,7 @@ static UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
     }
 }
 
-static UniValue protx_register_evo(const JSONRPCRequest& request, const ChainstateManager& chainman)
+UniValue protx_register_evo(const JSONRPCRequest& request, const ChainstateManager& chainman)
 {
     bool isExternalRegister = request.strMethod == "protxregister_evo";
     bool isFundRegister = request.strMethod == "protxregister_fund_evo";
@@ -821,6 +824,18 @@ UniValue protx_register(const JSONRPCRequest& request, const ChainstateManager& 
     return protx_register_common_wrapper(request, chainman, false, isExternalRegister, isFundRegister, isPrepareRegister, MnType::Regular);
 }
 
+UniValue protx_prepare_upgradesanc(const JSONRPCRequest& request, const ChainstateManager& chainman)
+{
+    bool isExternalRegister = false;
+    //request.strMethod == "protxregister";
+    bool isFundRegister = false;
+    //request.strMethod == "protxregister_fund";
+    bool isPrepareRegister = true;
+    //request.strMethod == "protxregister_prepare";
+    return protx_register_common_wrapper(request, chainman, false, isExternalRegister, isFundRegister, isPrepareRegister, MnType::Regular);
+}
+
+
 static UniValue protx_register_legacy(const JSONRPCRequest& request, const ChainstateManager& chainman)
 {
     bool isExternalRegister = request.strMethod == "protxregister_legacy";
@@ -829,7 +844,7 @@ static UniValue protx_register_legacy(const JSONRPCRequest& request, const Chain
     return protx_register_common_wrapper(request, chainman, true, isExternalRegister, isFundRegister, isPrepareRegister, MnType::Regular);
 }
 
-static UniValue protx_register_submit(const JSONRPCRequest& request, const ChainstateManager& chainman)
+UniValue protx_register_submit(const JSONRPCRequest& request, const ChainstateManager& chainman)
 {
     protx_register_submit_help(request);
 
@@ -1677,6 +1692,10 @@ UniValue protx(const JSONRPCRequest& request)
 
     const ChainstateManager& chainman = EnsureAnyChainman(request.context);
 
+
+    LogPrintf("\r\nUpgradeSanc::[3] %s", command);
+
+
 #ifdef ENABLE_WALLET
     if (command == "protxregister" || command == "protxregister_fund" || command == "protxregister_prepare") {
         return protx_register(new_request, chainman);
@@ -1732,7 +1751,7 @@ static void bls_generate_help(const JSONRPCRequest& request)
     }.Check(request);
 }
 
-static UniValue bls_generate(const JSONRPCRequest& request, const ChainstateManager& chainman)
+UniValue bls_generate(const JSONRPCRequest& request, const ChainstateManager& chainman)
 {
     bls_generate_help(request);
 

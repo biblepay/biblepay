@@ -52,28 +52,17 @@
         return false;
     }
 
-
     // R Andrews - BBP - 9-16-2023
     // POVS (Proof-of-video-streaming / Sanctuary Mining)
-    if (!fBlockChecking && pindexPrev != NULL)
+    if (!fBlockChecking)
     {
-        bool fReduced = false;
-        int64_t nElapsed = GetAdjustedTime() - pindexPrev->GetBlockTime();
-        if (nElapsed < (60 * 60 * 24))
+        if (IsSanctuaryPoseBanned(dmnPayee))
         {
-             std::string sKey = dmnPayee->pdmnState->pubKeyOperator.Get().ToString();
-             int nStatus = mapPOVSStatus[sKey];
-             int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
-             // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
-             if (nPoseScore > 0 || nStatus == 255) {
-                    // Investors get 50% in txout1, active sancs get 100%, therefore mining txout[0] should be very low.
-                    masternodeReward = (masternodeReward * 100) / 10000;
-                    fReduced = true;
-             }
+             // Inactive sancs get 50%
+             masternodeReward = 7 * COIN;
         }
     }
     // End of POVS
-
 
     CAmount operatorReward = 0;
 
@@ -403,10 +392,9 @@ void FillBlockPayments(const CSporkManager& sporkManager, CGovernanceManager& go
         CSuperblockManager::GetSuperblockPayments(governanceManager, nBlockHeight, voutSuperblockPaymentsRet);
     }
 
-    if (!GetMasternodeTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePaymentsRet)) {
-        //LogPrintf(BCLog::MNPAYMENTS, "%s -- no masternode to pay (MN list probably empty)\n", __func__);
+    if (!GetMasternodeTxOuts(pindexPrev, blockSubsidy, feeReward, voutMasternodePaymentsRet))
+    {
         LogPrintf("%s -- no masternode to pay (MN list probably empty)\n", __func__);
-
     }
 
     txNew.vout.insert(txNew.vout.end(), voutMasternodePaymentsRet.begin(), voutMasternodePaymentsRet.end());
@@ -425,9 +413,12 @@ void FillBlockPayments(const CSporkManager& sporkManager, CGovernanceManager& go
     if (nBlockHeight >= Params().GetConsensus().REDSEA_HEIGHT && txNew.vout.size() > 1)
     {
         txNew.vout[0].scriptPubKey = txNew.vout[1].scriptPubKey;
+        if (txNew.vout[1].nValue == 7 * COIN) {
+            // Special case for POSE banned sanc
+            txNew.vout[0].nValue = (txNew.vout[0].nValue * 50) / 100;
+        }
     }
-    //BCLog::MNPAYMENTS,
-    LogPrintf("%s -- nBlockHeight %d blockReward %lld voutMasternodePaymentsRet \"%s\" txNew %s", __func__, /* Continued */
+    LogPrint(BCLog::MNPAYMENTS, "%s -- nBlockHeight %d blockReward %lld voutMasternodePaymentsRet \"%s\" txNew %s", __func__, 
                             nBlockHeight, blockSubsidy + feeReward, voutMasternodeStr, txNew.ToString());
 }
 
