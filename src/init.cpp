@@ -1097,9 +1097,12 @@ void InitParameterInteraction(ArgsManager& args)
         LogPrintf("%s: parameter interaction: additional indexes -> setting -checklevel=4\n", __func__);
     }
 
+    /* BBP
     if (args.IsArgSet("-masternodeblsprivkey") && args.SoftSetBoolArg("-disablewallet", true)) {
         LogPrintf("%s: parameter interaction: -masternodeblsprivkey set -> setting -disablewallet=1\n", __func__);
     }
+    */
+
 }
 
 /**
