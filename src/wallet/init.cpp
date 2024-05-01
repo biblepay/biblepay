@@ -131,9 +131,11 @@ bool WalletInit::ParameterInteraction() const
             LogPrintf("%s: parameter interaction: -disablewallet -> ignoring -wallet=%s\n", __func__, wallet);
         }
 
-        return true;
-    } else if (gArgs.IsArgSet("-masternodeblsprivkey")) {
-        return InitError(_("You can not start a masternode with wallet enabled."));
+        return true; 
+    }
+    else if (gArgs.IsArgSet("-masternodeblsprivkey"))
+    {
+        // BBP - return InitError(_("You can not start a masternode with wallet enabled."));
     }
 
     if (gArgs.GetBoolArg("-blocksonly", DEFAULT_BLOCKSONLY) && gArgs.SoftSetBoolArg("-walletbroadcast", false)) {
