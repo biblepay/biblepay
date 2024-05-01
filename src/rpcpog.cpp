@@ -2863,14 +2863,22 @@ std::string ComputeMinedBlockVersion()
     if (fMasternodeMode) {
         const NodeContext& node = GetGlobalNodeContext();
         CDeterministicMNCPtr dmn;
+        //CRASH here
+        /*
         dmn = node.dmnman->GetListAtChainTip().GetMN(activeMasternodeInfo.proTxHash);
-        if (dmn) {
+        if (dmn)
+        {
              sSancRow = "<SANC>" + dmn->proTxHash.ToString() + "</SANC>";
         } else {
              sSancRow = "<SANC>?</SANC>";
         }
+        */
+
+        sSancRow = "<SANC>1</SANC>";
         // TODO - SANC SIG HERE, (low priority: The mining pubkey is determined by our deterministic mnlist, but good to have for extra verification later)
-    } else {
+    }
+    else
+    {
         sSancRow = "<SANC></SANC>";
     }
 
