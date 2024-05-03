@@ -704,7 +704,7 @@ static UniValue masternodelist(const JSONRPCRequest& request, ChainstateManager&
             objMN.pushKV("address", dmn.pdmnState->addr.ToString());
             objMN.pushKV("payee", payeeStr);
             // BIBLEPAY
-            bool fMine = IsMyAddress(payeeStr);
+            bool fMine = IsMyAddress(request,payeeStr);
             objMN.pushKV("IsMine", fMine);
             objMN.pushKV("collateral_amount", (double)dmn.GetCollateralAmount() / COIN);
             objMN.pushKV("tribe", dmn.Tribe());

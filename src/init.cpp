@@ -237,6 +237,7 @@ void PrepareShutdown(NodeContext& node)
     util::ThreadRename("shutoff");
     if (node.mempool) node.mempool->AddTransactionsUpdated(1);
 
+    KillMinerThreads();
     StopHTTPRPC();
     StopREST();
     StopRPC();
@@ -926,8 +927,7 @@ static void PeriodicStats(ArgsManager& args, const CTxMemPool& mempool)
     statsClient.gaugeDouble("network.hashesPerSecond", nNetworkHashPS);
     statsClient.gaugeDouble("network.terahashesPerSecond", nNetworkHashPS / 1e12);
     statsClient.gaugeDouble("network.petahashesPerSecond", nNetworkHashPS / 1e15);
-    statsClient.gaugeDouble("network.exahashesPerSecond", nNetworkHashPS / 1e18);
-    // No need for cs_main, we never use null tip here
+    statsClient.gaugeDouble("network.exahashesPerSecond", nNetworkHashPS / 1e18); // No need for cs_main, we never use null tip here
     statsClient.gaugeDouble("network.difficulty", (double)GetDifficulty(tip));
 
     statsClient.gauge("transactions.txCacheSize", WITH_LOCK(cs_main, return ::ChainstateActive().CoinsTip().GetCacheSize()), 1.0f);
@@ -982,21 +982,7 @@ static bool AppInitServers(const CoreContext& context, NodeContext& node)
     StartHTTPServer();
 
     
-
     
-    // BIBLEPAY - Global pointer to NodeContext and CoreContext
-    LogPrintf("\n%f", 2001);
-    g_bbp_core_context_ptr10 = &context;
-
-    //g_bbp_node_context_ptr10 = &node;
-    g_bbp_node_context_ptr10 = &node;
-
-
-    LogPrintf("\n%f", 200225);
-    // End of BIBLEPAY
-
-
-
     return true;
 }
 
@@ -1701,6 +1687,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
         if (!AppInitServers(context, node))
             return InitError(_("Unable to start HTTP server. See debug log for details."));
     }
+
 
 
 
@@ -2611,13 +2598,44 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading").translated);
 
-    // BiblePay
+    // BiblePay Initialize node context and start miner
+    // Note, the Core Context holds const references to one static object that has const reference to ChainActive and ConnMan so must carefully point to it here
+
+    // Step 13.1 - BBP - INITIALIZE NODE CONTEXT
+
+    CGlobalNode::SetGlobalCoreContext(context);
+    CGlobalNode::SetGlobalNodeContext(node);
+
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    const NodeContext& nb2 = EnsureAnyNodeContext(cc);
+    ChainstateManager& cb2 = EnsureChainman(nb2);
+    const CBlockIndex* tip02 = cb2.ActiveChain().Tip();
+    LogPrintf("\nPRE_INIT__02::HEIGHT %f", tip02->nHeight);
+    double nBalance = GetWalletBalance(r0);
+    LogPrintf("\n%f", 20004);
+
+    /*    CCoinsView* coins_view;
+    {
+        LOCK(::cs_main);
+        coins_view = &active_chainstate.CoinsDB();
+        blockman = &active_chainstate.m_blockman;
+        pindex = blockman->LookupBlockIndex(coins_view->GetBestBlock());
+    }
+   */
+
+    // return BlockAssembler(*m_node.sporkman, *m_node.govman, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, params, options);
+
+    // BIBLEPAY - Global pointer to NodeContext and CoreContext
+    // Lets test if we can do an rpc call here
+
+
     LockStakes();
     // Sancs always mine on 1 thread
-    if (fMasternodeMode)
+    if (fMasternodeMode || true)
     {
-        JSONRPCRequest r = GetJRR();
-        //GenerateCoins(true, 1, Params(), r);
+        JSONRPCRequest request(context);
+        GenerateCoins(true, 1, Params(), request);
     }
     //End of BiblePay
 

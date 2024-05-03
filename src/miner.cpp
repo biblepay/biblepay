@@ -675,7 +675,7 @@ static void MinerSleep(int iMilliSecs)
         if (fThreadInterrupt || ShutdownRequested()) {
             return;
         }
-        MilliSleep(i / 10);
+        MilliSleep(i / 10); 
     }
 }
 
@@ -698,7 +698,7 @@ recover:
     unsigned int nExtraNonce = 0;
     double nHashesDone = 0;
 
-    CScript cbScript = GetScriptForMining();
+    CScript cbScript = GetScriptForMining(jRequest);
 
     int iStart = rand() % 1000;
     MinerSleep(iStart);

@@ -26,6 +26,9 @@
 #include <node/coinstats.h>
 #include <node/context.h>
 #include <node/utxo_snapshot.h>
+
+#include <interfaces/node.h>
+
 #include <policy/feerate.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
@@ -107,7 +110,9 @@ UniValue protx_register_common_wrapper(const JSONRPCRequest& request,
 NodeContext& EnsureAnyNodeContext(const CoreContext& context)
 {
     auto* const node_context = GetContext<NodeContext>(context);
-    if (!node_context) {
+    if (!node_context)
+    {
+        LogPrintf("\nERROR::Node Context Not Found %f", 1);
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Node context not found");
     }
     return *node_context;
@@ -128,7 +133,9 @@ CTxMemPool& EnsureAnyMemPool(const CoreContext& context)
 
 ChainstateManager& EnsureChainman(const NodeContext& node)
 {
-    if (!node.chainman) {
+    if (!node.chainman)
+    {
+        LogPrintf("\nFATALRPC::Chainman not found %f", 1);
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Node chainman not found");
     }
     WITH_LOCK(::cs_main, CHECK_NONFATAL(std::addressof(g_chainman) == std::addressof(*node.chainman)));
@@ -3161,12 +3168,12 @@ UniValue exec(const JSONRPCRequest& request)
     } else if (sItem == "makeunchainedurl") {
         // Creates an unchained URL for the user
         std::string sError;
-        std::string sResult = ProvisionUnchained2(sError);
+        std::string sResult = ProvisionUnchained2(request,sError);
         if (!sError.empty()) {
             throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Unable to provision unchained.");
         }
-        std::string sUnchainedAddress = DefaultRecAddress("Unchained");
-        std::string sPrivKey = GetPrivKey2(sUnchainedAddress, sError);
+        std::string sUnchainedAddress = DefaultRecAddress(request,"Unchained");
+        std::string sPrivKey = GetPrivKey2(request, sUnchainedAddress, sError);
         if (!sError.empty()) {
             throw JSONRPCError(RPC_WALLET_INVALID_ACCOUNT_NAME, "Unable to retrieve private UNCHAINED key.");
         }
@@ -3249,7 +3256,7 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sSearch = request.params[1].get_str();
         std::string sError = std::string();
         UniValue uProReg;
-        bool fSuccess = ReviveSanctuaryEnhanced(sSearch, sError, uProReg);
+        bool fSuccess = ReviveSanctuaryEnhanced(request, sSearch, sError, uProReg);
         if (!fSuccess) {
             results.pushKV("Error", sError);
         } else {
@@ -3267,7 +3274,7 @@ UniValue exec(const JSONRPCRequest& request)
         const Consensus::Params& consensusParams = Params().GetConsensus();
         std::string sPayAddress = consensusParams.FoundationAddress;
         std::string sSignError;
-        std::string sSig = SignMessageEvo(sPayAddress, "authenticate", sSignError);
+        std::string sSig = SignMessageEvo(request,sPayAddress, "authenticate", sSignError);
         if (!sSignError.empty()) {
             throw std::runtime_error("You must use a good key.");
         }
@@ -3276,15 +3283,15 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sPayload = "<msg>authenticate</msg><sig>" + sSig + "</sig><key>" + sKey + "</key><value>" + sValue + "</value>";
         std::string sXML = "<sc><objtype>" + sObjType + "</objtype><url>" + sPayload + "</url></sc>";
         int nOut = 0;
-        bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, sXML, nOut);
+        bool fSent = RPCSendMoney(request,sError, sPayAddress, 1 * COIN, sTXID, sXML, nOut);
         results.pushKV("TXID", sTXID);
     } else if (sItem == "testsc") {
-        std::string sToAddress = DefaultRecAddress("sc");
+        std::string sToAddress = DefaultRecAddress(request,"sc");
         std::string sTXID;
         std::string sError;
         std::string sXML = "<sc><objtype>test</objtype><url>https://test.com/</url></sc>";
         int nOut = 0;
-        bool fSent = RPCSendMoney(sError, sToAddress, 1 * COIN, sTXID, sXML, nOut);
+        bool fSent = RPCSendMoney(request, sError, sToAddress, 1 * COIN, sTXID, sXML, nOut);
         results.pushKV("TXID", sTXID);
     } else if (sItem == "tlt") {
         std::string sAddr = request.params[1].get_str();
@@ -3345,17 +3352,18 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sNetworkID = chainparams.NetworkIDString();
         int nPort = sNetworkID == "test" ? 40001 : 40000;
         std::string sSancIP = sIP + ":" + DoubleToString(nPort, 0);
-        CAmount nBalance = GetWalletBalance();
+        
+        CAmount nBalance = GetWalletBalance(request);
         if (nBalance / COIN < SANCTUARY_COLLATERAL) {
             throw std::runtime_error("You must have at least 4.5MM available to fund a new sanctuary.  Also, please ensure your wallet is unlocked. ");
         }
-
+        
         std::string sError = "";
         std::string sTXID = "";
         int nVoutPosition = 0;
         CAmount nAmount = SANCTUARY_COLLATERAL * COIN;
-        std::string sMySancAddress = DefaultRecAddress(sSancName + "-sanc"); // Keeps this name from clashing with "-v" (voting address)
-        bool f = RPCSendMoney(sError, sMySancAddress, nAmount, sTXID, "", nVoutPosition);
+        std::string sMySancAddress = DefaultRecAddress(request,sSancName + "-sanc"); // Keeps this name from clashing with "-v" (voting address)
+        bool f = RPCSendMoney(request, sError, sMySancAddress, nAmount, sTXID, "", nVoutPosition);
 
         // # Format: alias IP:bbp_port_not_rpc_port masternodeprivkey collateral_output_txid collateral_output_index
         if (!f) {
@@ -3410,8 +3418,8 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sSummary = "Creating protx_register command for Sanctuary " + sSancName + " with IP " + sSancIP + " with TXID " + sCollateralTXID;
         // Step 1: Fund the protx fee
         // 1a. Create the new deterministic-sanctuary reward address
-        std::string sPayAddress = DefaultRecAddress(sSancName + "-d");    // d means deterministic
-        std::string sVotingAddress = DefaultRecAddress(sSancName + "-v"); // v means voting
+        std::string sPayAddress = DefaultRecAddress(request,sSancName + "-d");    // d means deterministic
+        std::string sVotingAddress = DefaultRecAddress(request,sSancName + "-v"); // v means voting
         std::string sError;
 
         bool fSubtractFee = false;
@@ -3419,7 +3427,7 @@ UniValue exec(const JSONRPCRequest& request)
         // 1b. We must send 1 COIN to ourself first here, as the deterministic sanctuaries future fund receiving address must be prefunded with enough funds to cover the non-financial transaction transmission below
         std::string sTXID;
         int nOut = 0;
-        bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, "", nOut);
+        bool fSent = RPCSendMoney(request, sError, sPayAddress, 1 * COIN, sTXID, "", nOut);
 
         if (!sError.empty() || !fSent) {
             throw std::runtime_error("Unable to fund protx_register fee: " + sError);
@@ -3505,7 +3513,7 @@ UniValue exec(const JSONRPCRequest& request)
         UniValue rProReg = protx_prepare_upgradesanc(newRequest, chainman);
         //const JSONRPCRequest& request, const ChainstateManager& chainman);
 
-        LogPrintf("\r\nCreateSanc[4.9]::Executed %f",1);
+        LogPrintf("\r\nCreateSanc[5.0]::Executed %f",1);
 
         std::string sProRegTxId = rProReg["tx"].getValStr();
         std::string sProCollAddr = rProReg["collateralAddress"].getValStr();
@@ -3524,13 +3532,13 @@ UniValue exec(const JSONRPCRequest& request)
 
         
         /*
-        *
+        * 
         *
         IF WE RECEIVE BAD-PROTX-DUP-KEY its because the collateral has an Owner (PaymentAddress) or PubKeyOperator that is already in the DMN
 
             if (newList.HasUniqueProperty(proTx.keyIDOwner) || newList.HasUniqueProperty(proTx.pubKeyOperator)) {
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-protx-dup-key");
-            }
+            } 
 
 
         */
@@ -3538,7 +3546,7 @@ UniValue exec(const JSONRPCRequest& request)
 
         newSig.params.push_back(sProCollAddr);
         newSig.params.push_back(sProSignMessage);
-        std::string sProSignature = SignMessageEvo(sProCollAddr, sProSignMessage, sError);
+        std::string sProSignature = SignMessageEvo(request,sProCollAddr, sProSignMessage, sError);
         if (!sError.empty())
             throw std::runtime_error("Unable to sign pro-reg-tx: " + sError);
 
@@ -3558,7 +3566,7 @@ UniValue exec(const JSONRPCRequest& request)
         }
         // Step 3: Report this info back to the user
         results.pushKV("bls_public_key", myBLSPublic);
-        results.pushKV("bls_private_key", myBLSPrivate);
+        results.pushKV("bls_private_key", myBLSPrivate); 
         results.pushKV("pro_reg_txid", sProRegTxId);
         results.pushKV("pro_reg_collateral_address", sProCollAddr);
         results.pushKV("pro_reg_signed_message", sProSignMessage);
@@ -3573,9 +3581,14 @@ UniValue exec(const JSONRPCRequest& request)
             AppendSanctuaryFile("deterministic.conf", sDSD);
         }
     }
+    else if (sItem == "1001")
+    {
+        std::string sTest = Test1000();
+        results.pushKV("1000",sTest);
+    }
     else if (sItem == "revivesanctuaries")
     {
-        std::string sResult = ReviveSanctuariesJob();
+        std::string sResult = ReviveSanctuariesJob(request);
         results.pushKV("result", sResult);
     }
     else if (sItem == "getgovlimit") {
@@ -3605,7 +3618,7 @@ UniValue exec(const JSONRPCRequest& request)
             std::string sError;
             std::string sTXID;
             int nOut = 0;
-            bool fSent = RPCSendMoney(sError, sPayAddress, 1 * COIN, sTXID, s, nOut);
+            bool fSent = RPCSendMoney(request, sError, sPayAddress, 1 * COIN, sTXID, s, nOut);
             results.pushKV("txid", sTXID);
         } else {
             results.pushKV("error", "data not specified");
