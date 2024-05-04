@@ -814,7 +814,8 @@ bool CDeterministicMNManager::BuildNewListFromBlock(const CBlock& block, gsl::no
 
             Coin coin;
             CAmount expectedCollateral = GetMnType(proTx.nType).collat_amount;
-            if (!proTx.collateralOutpoint.hash.IsNull() && (!view.GetCoin(dmn->collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != expectedCollateral)) {
+            if (!proTx.collateralOutpoint.hash.IsNull() && (!view.GetCoin(dmn->collateralOutpoint, coin) || coin.IsSpent() || !IsSanctuaryCollateral(coin.out.nValue)))
+            {
                 // should actually never get to this point as CheckProRegTx should have handled this case.
                 // We do this additional check nevertheless to be 100% sure
                 if (pindexPrev->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
@@ -1650,7 +1651,7 @@ bool CheckProRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pin
 
     if (!opt_ptx->collateralOutpoint.hash.IsNull()) {
         Coin coin;
-        if (!view.GetCoin(opt_ptx->collateralOutpoint, coin) || coin.IsSpent() || coin.out.nValue != expectedCollateral)
+        if (!view.GetCoin(opt_ptx->collateralOutpoint, coin) || coin.IsSpent() || !IsSanctuaryCollateral(coin.out.nValue))
         {
             if (pindexPrev->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT)
             {
@@ -1675,7 +1676,7 @@ bool CheckProRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pin
         if (opt_ptx->collateralOutpoint.n >= tx.vout.size()) {
             return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-protx-collateral-index");
         }
-        if (tx.vout[opt_ptx->collateralOutpoint.n].nValue != expectedCollateral) {
+        if (!IsSanctuaryCollateral(tx.vout[opt_ptx->collateralOutpoint.n].nValue)) {
             return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-protx-collateral-02");
         }
 

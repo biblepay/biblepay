@@ -712,7 +712,7 @@ static UniValue masternodelist(const JSONRPCRequest& request, ChainstateManager&
             objMN.pushKV("pose_ban", nPovs);
             // End of BiblePay
             objMN.pushKV("status", dmnToStatus(dmn));
-            objMN.pushKV("type", std::string(GetMnType(dmn.nType).description));
+            objMN.pushKV("type", GetSanctuaryTypeName(dmn));
             if (dmn.nType == MnType::Temple) {
                 objMN.pushKV("platformNodeID", dmn.pdmnState->platformNodeID.ToString());
                 objMN.pushKV("platformP2PPort", dmn.pdmnState->platformP2PPort);

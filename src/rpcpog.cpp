@@ -2807,6 +2807,24 @@ int GetSanctuaryMultiplier(CDeterministicMNCPtr dmnPayee)
     return 0;
 }
 
+std::string GetSanctuaryTypeName(CDeterministicMNCPtr dmnPayee)
+{
+    CAmount ca = dmnPayee->GetCollateralAmount();
+    if (ca == SANCTUARY_COLLATERAL_TEMPLE * COIN) return "TEMPLE";
+    if (ca == SANCTUARY_COLLATERAL * COIN) return "SANCTUARY";
+    if (ca == SANCTUARY_COLLATERAL_ALTAR * COIN) return "ALTAR";
+    return "UNKNOWN";
+}
+
+std::string GetSanctuaryTypeName(CDeterministicMN dmnPayee)
+{
+    CAmount ca = dmnPayee.GetCollateralAmount();
+    if (ca == SANCTUARY_COLLATERAL_TEMPLE * COIN) return "TEMPLE";
+    if (ca == SANCTUARY_COLLATERAL * COIN) return "SANCTUARY";
+    if (ca == SANCTUARY_COLLATERAL_ALTAR * COIN) return "ALTAR";
+    return "UNKNOWN";
+}
+
 CAmount ExtrapolateSubsidyInner(int nExtrapolator, CAmount cSubsidy)
 {
     // Leave room for mining dust if someone forks this coin and block subsidy approaches the max

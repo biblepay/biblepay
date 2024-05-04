@@ -125,21 +125,24 @@
     // Legacy registered Temples/Altars receive 1 bbp (coercing them to upgrade)
 
     // Each recipient is in the model
-    for (const auto& txout : voutMasternodePayments)
+    for (const auto& txoutModel : voutMasternodePayments)
     {
-        bool found = false;
-        std::string sRecipient1 = PubKeyToAddress(txout.scriptPubKey);
+        bool found = false; 
+        std::string sRecipientModel = PubKeyToAddress(txoutModel.scriptPubKey);
 
-        for (const auto& txout2 : txNew.vout) {
-             std::string sRecipient2 = PubKeyToAddress(txout2.scriptPubKey);
-             if (sRecipient1 == sRecipient2) {
-                    found = true;
-             }
+        for (const auto& txoutBlock : txNew.vout)
+        {
+            std::string sRecipientBlock = PubKeyToAddress(txoutBlock.scriptPubKey);
+            bool fAmountOK = txoutBlock.nValue <= txoutModel.nValue; 
+            if (sRecipientModel == sRecipientBlock && fAmountOK)
+            {
+                 found = true;
+            }
         }
 
         if (!found) {
              CTxDestination dest;
-             if (!ExtractDestination(txout.scriptPubKey, dest))
+             if (!ExtractDestination(txoutModel.scriptPubKey, dest))
                     assert(false);
              LogPrintf("MasternodePayments::%s -- ERROR failed to find expected payee %s in block at height %s\n", __func__, EncodeDestination(dest), nBlockHeight);
              return false;

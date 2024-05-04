@@ -191,6 +191,8 @@ std::string ComputeMinedBlockVersion();
 bool IsSanctuaryLegacyTempleOrAltar(CDeterministicMNCPtr dmn);
 bool IsSanctuaryPoseBanned(CDeterministicMNCPtr dmn);
 bool ContextualCheckBlockMinedBySanc(const CBlock& block);
+std::string GetSanctuaryTypeName(CDeterministicMNCPtr dmnPayee);
+std::string GetSanctuaryTypeName(CDeterministicMN dmnPayee);
 std::string Test1000();
 
 /** Used to store a reference to the global node */

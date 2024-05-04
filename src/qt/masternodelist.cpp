@@ -227,9 +227,12 @@ void MasternodeList::updateDIP3List()
         // populate list
         // Address, Protocol, Status, Active Seconds, Last Seen, Pub Key
         auto addr_key = dmn.pdmnState->addr.GetKey();
+
+        CDeterministicMNCPtr myMN = mnList.GetMN(dmn.proTxHash);
+
         QByteArray addr_ba(reinterpret_cast<const char*>(addr_key.data()), addr_key.size());
         QTableWidgetItem* addressItem = new CMasternodeListWidgetItem<QByteArray>(QString::fromStdString(dmn.pdmnState->addr.ToString()), addr_ba);
-        QTableWidgetItem* typeItem = new QTableWidgetItem(QString::fromStdString(std::string(GetMnType(dmn.nType).description)));
+        QTableWidgetItem* typeItem = new QTableWidgetItem(QString::fromStdString(GetSanctuaryTypeName(myMN)));
         QTableWidgetItem* statusItem = new QTableWidgetItem(dmn.pdmnState->IsBanned() ? tr("POSE_BANNED") : tr("ENABLED"));
 
    		// BIBLEPAY - POVS
