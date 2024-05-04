@@ -52,16 +52,8 @@
         return false;
     }
 
-    // R Andrews - BBP - 9-16-2023
-    // POVS (Proof-of-video-streaming / Sanctuary Mining)
-    if (!fBlockChecking)
-    {
-        if (IsSanctuaryPoseBanned(dmnPayee))
-        {
-             // Inactive sancs get 50%
-             masternodeReward = 7 * COIN;
-        }
-    }
+    // R Andrews - BBP - 9-16-2023 - POVS (Sanctuary Mining)
+    masternodeReward = ExtrapolateSubsidy(dmnPayee, masternodeReward, fBlockChecking);
     // End of POVS
 
     CAmount operatorReward = 0;
@@ -240,9 +232,10 @@ bool IsBlockValueValid(const CSporkManager& sporkManager, CGovernanceManager& go
     if (fDailySuperblock) {
         blockReward = GetDailyPaymentsLimit(nBlockHeight);
     }
-    // Biblepay - RAndrews - for Temples, we enforce the reward in IsTransactionValid, but here we need to allow more room for standard chain sync checks
-    if (block.vtx[0]->vout[0].nValue == 7 * COIN) {
-        blockReward = 20000 * COIN;
+    // Biblepay - Allow room for Temple payments
+    if (block.vtx[0]->vout[0].nValue == 7 * COIN)
+    {
+        blockReward = MAX_BLOCK_SUBSIDY * COIN;
     }
     // End of Biblepay
 
@@ -400,23 +393,28 @@ void FillBlockPayments(const CSporkManager& sporkManager, CGovernanceManager& go
     txNew.vout.insert(txNew.vout.end(), voutMasternodePaymentsRet.begin(), voutMasternodePaymentsRet.end());
     txNew.vout.insert(txNew.vout.end(), voutSuperblockPaymentsRet.begin(), voutSuperblockPaymentsRet.end());
 
+    // BIBLEPAY
+
     std::string voutMasternodeStr;
+    // If Temple payment is greater than the original mining subsidy
+    bool fTemple = txNew.vout[1].nValue > txNew.vout[0].nValue;
+    CAmount nPayment = fTemple ? 7 * COIN : .07 * COIN;
+    txNew.vout[0].nValue = nPayment; 
+
     for (const auto& txout : voutMasternodePaymentsRet)
     {
         // subtract MN payment from miner reward
-        txNew.vout[0].nValue -= txout.nValue;
+        // BBP: Already subtracted above.
+        // txNew.vout[0].nValue -= txout.nValue;
         if (!voutMasternodeStr.empty())
             voutMasternodeStr += ",";
         voutMasternodeStr += txout.ToString();
     }
+
     // BiblePay - Mining reward goes to sanc
     if (nBlockHeight >= Params().GetConsensus().REDSEA_HEIGHT && txNew.vout.size() > 1)
     {
         txNew.vout[0].scriptPubKey = txNew.vout[1].scriptPubKey;
-        if (txNew.vout[1].nValue == 7 * COIN) {
-            // Special case for POSE banned sanc
-            txNew.vout[0].nValue = (txNew.vout[0].nValue * 50) / 100;
-        }
     }
     LogPrint(BCLog::MNPAYMENTS, "%s -- nBlockHeight %d blockReward %lld voutMasternodePaymentsRet \"%s\" txNew %s", __func__, 
                             nBlockHeight, blockSubsidy + feeReward, voutMasternodeStr, txNew.ToString());

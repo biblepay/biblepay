@@ -2605,7 +2605,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
 
     CGlobalNode::SetGlobalCoreContext(context);
     CGlobalNode::SetGlobalNodeContext(node);
-
+    /*
     const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
     JSONRPCRequest r0(cc);
     const NodeContext& nb2 = EnsureAnyNodeContext(cc);
@@ -2614,6 +2614,7 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     LogPrintf("\nPRE_INIT__02::HEIGHT %f", tip02->nHeight);
     double nBalance = GetWalletBalance(r0);
     LogPrintf("\n%f", 20004);
+    */
 
     /*    CCoinsView* coins_view;
     {
@@ -2624,15 +2625,11 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     }
    */
 
-    // return BlockAssembler(*m_node.sporkman, *m_node.govman, *m_node.llmq_ctx, *m_node.evodb, ::ChainstateActive(), *m_node.mempool, params, options);
-
     // BIBLEPAY - Global pointer to NodeContext and CoreContext
-    // Lets test if we can do an rpc call here
-
 
     LockStakes();
     // Sancs always mine on 1 thread
-    if (fMasternodeMode || true)
+    if (fMasternodeMode)
     {
         JSONRPCRequest request(context);
         GenerateCoins(true, 1, Params(), request);

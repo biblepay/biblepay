@@ -774,7 +774,8 @@ static void HandlePosixSignal(int s)
 
     crash_info ci;
     ci.crashDescription = strprintf("Posix Signal: %s", name);
-    ci.stackframes = GetStackFrames(0, 16);
+    // BIBLEPAY - Show longer traces 
+    ci.stackframes = GetStackFrames(0, 36);
     ci.stackframeInfos = GetStackFrameInfos(ci.stackframes);
     PrintCrashInfo(ci);
 

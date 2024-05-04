@@ -2798,6 +2798,43 @@ bool IsSanctuaryCollateral(CAmount nAmount)
     return fCollateral;
 }
 
+int GetSanctuaryMultiplier(CDeterministicMNCPtr dmnPayee)
+{
+    CAmount ca = dmnPayee->GetCollateralAmount();
+    if (ca == SANCTUARY_COLLATERAL_TEMPLE * COIN) return 1000;
+    if (ca == SANCTUARY_COLLATERAL * COIN) return 100;
+    if (ca == SANCTUARY_COLLATERAL_ALTAR * COIN) return 10;
+    return 0;
+}
+
+CAmount ExtrapolateSubsidyInner(int nExtrapolator, CAmount cSubsidy)
+{
+    // Leave room for mining dust if someone forks this coin and block subsidy approaches the max
+    static CAmount nMax = MAX_BLOCK_SUBSIDY * COIN * .98;
+    CAmount cNew = cSubsidy * nExtrapolator / 100;
+    if (cNew > nMax)
+    {
+        return nMax;
+    }
+    return cNew;
+}
+
+CAmount ExtrapolateSubsidy(CDeterministicMNCPtr dmnPayee, CAmount nAmount, bool fBlockChecking)
+{
+    // Part 1: Depending on the sanc type, adjust the payment (Temples get 10*, Altars get 1/10th, etc)
+    int nExtrapolator = GetSanctuaryMultiplier(dmnPayee);
+    CAmount nNew = ExtrapolateSubsidyInner(nExtrapolator, nAmount);
+    // If they are POSE banned, they get half
+    if (!fBlockChecking)
+    {
+        if (IsSanctuaryPoseBanned(dmnPayee))
+        {
+            nNew = nNew * 50 / 100;
+        }
+    }
+    return nNew;
+}
+
 std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimestamp)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();

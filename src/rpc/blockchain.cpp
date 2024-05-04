@@ -2981,10 +2981,6 @@ UniValue CreateUTXOSnapshot(NodeContext& node, CChainState& chainstate, CAutoFil
 
 
 
-
-
-
-
 std::string ScanSanctuaryConfigFile(std::string sName)
 {
     int linenumber = 1;

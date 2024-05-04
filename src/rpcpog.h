@@ -36,12 +36,6 @@ class Wallet;
 const std::string MESSAGE_MAGIC_BBP = "DarkCoin Signed Message:\n";
 
 
-//CGovernanceManager& governance_manager;
-//const llmq::CQuorumBlockProcessor& quorum_block_processor;
-//llmq::CInstantSendManager& m_isman;
-
-
-
 struct BBPResult
 {
 	std::string Response;
@@ -135,7 +129,7 @@ std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end
 bool ValidateAddress2(std::string sAddress);
 std::string PubKeyToAddress(const CScript& scriptPubKey);
 boost::filesystem::path GetDeterministicConfigFile();
-boost::filesystem::path GetMasternodeConfigFile();
+boost::filesystem::path GetMasternodeConfigFile(); 
 boost::filesystem::path GetGenericFilePath(std::string sPath);
 uint256 CRXT(uint256 hash, int64_t nPrevBlockTime, int64_t nBlockTime);
 std::string PubKeyToAddress(const CScript& scriptPubKey);
@@ -189,23 +183,17 @@ bool IsMySanc(JSONRPCRequest r,std::string sSearchProRegTxHash);
 BBPResult UnchainedGet(std::string sAPIPath);
 bool IsSanctuaryCollateral(CAmount nAmount);
 CAmount GetSancCollateralAmount(std::string sSearch);
+CAmount ExtrapolateSubsidy(CDeterministicMNCPtr dmnPayee, CAmount nAmount, bool fBlockChecking);
 std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimestamp);
 void MilliSleep(int64_t n);
 BBPResult UnchainedApiGet();
 std::string ComputeMinedBlockVersion();
 bool IsSanctuaryLegacyTempleOrAltar(CDeterministicMNCPtr dmn);
 bool IsSanctuaryPoseBanned(CDeterministicMNCPtr dmn);
-
 bool ContextualCheckBlockMinedBySanc(const CBlock& block);
 std::string Test1000();
 
 /** Used to store a reference to the global node */
-//static const CoreContext* g_bbp_core_context_ptr10;
-//static const NodeContext* ode_context_ptr10;
-//void setNodePog(interfaces::Node& node);
-// const CoreContext& GetGlobalCoreContext();
-// const NodeContext& ();
-
 
 
 class CGlobalNode
@@ -239,7 +227,6 @@ class CGlobalNode
          }
 
 };
-
 
 
 
