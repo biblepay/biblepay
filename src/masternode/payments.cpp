@@ -136,7 +136,7 @@
             bool fAmountOK = txoutBlock.nValue <= txoutModel.nValue; 
             if (sRecipientModel == sRecipientBlock && fAmountOK)
             {
-                 found = true;
+                 found = true; 
             }
         }
 

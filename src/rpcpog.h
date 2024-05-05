@@ -194,6 +194,7 @@ bool ContextualCheckBlockMinedBySanc(const CBlock& block);
 std::string GetSanctuaryTypeName(CDeterministicMNCPtr dmnPayee);
 std::string GetSanctuaryTypeName(CDeterministicMN dmnPayee);
 std::string Test1000();
+void CreateWalletIfNotExists(JSONRPCRequest r);
 
 /** Used to store a reference to the global node */
 

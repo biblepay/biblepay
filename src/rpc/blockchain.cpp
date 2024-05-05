@@ -3242,7 +3242,7 @@ UniValue exec(const JSONRPCRequest& request)
                 double nGrandAdjustment = nClockAdjustment + nRecentTrend;
                 results.pushKV("Recommended Next DGW adjustment", nGrandAdjustment);
             }
-        }
+        } 
     } else if (sItem == "revivesanc" || sItem == "startsanc") {
         // Sanctuary Revival v1.2
         // The purpose of this command is to make it easy to Revive a POSE-banned deterministic sanctuary.  (In contrast to knowing how to create and send the protx update_service command).
@@ -3253,9 +3253,12 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sError = std::string();
         UniValue uProReg;
         bool fSuccess = ReviveSanctuaryEnhanced(request, sSearch, sError, uProReg);
-        if (!fSuccess) {
+        if (!fSuccess)
+        {
             results.pushKV("Error", sError);
-        } else {
+        }
+        else
+        {
             results.push_back(uProReg);
         }
     } else if (sItem == "testipc") {
@@ -3439,7 +3442,6 @@ UniValue exec(const JSONRPCRequest& request)
         JSONRPCRequest myBLS(request);
 
         myBLS.params.setArray();
-        //myBLS.params.push_back("blsgenerate");
         UniValue myBLSPair = bls_generate(myBLS,chainman);
         std::string myBLSPublic = myBLSPair["public"].getValStr();
         std::string myBLSPrivate = myBLSPair["secret"].getValStr();
@@ -3498,16 +3500,12 @@ UniValue exec(const JSONRPCRequest& request)
         
         
         // 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
-        //UniValue rProReg = protx(newRequest);
         //UniValue rProReg = protx_register_evo(newRequest, chainman);
         bool isExternalRegister = false;
         bool isFundRegister = false;
         bool isPrepareRegister = true;
 
-        //UniValue rProReg = protx_register_common_wrapper(newRequest, chainman, false, isExternalRegister, isFundRegister, isPrepareRegister, MnType::Regular);
-       // UniValue rProReg = protx_register(newRequest, chainman);
         UniValue rProReg = protx_prepare_upgradesanc(newRequest, chainman);
-        //const JSONRPCRequest& request, const ChainstateManager& chainman);
 
         LogPrintf("\r\nCreateSanc[5.0]::Executed %f",1);
 

@@ -689,7 +689,6 @@ recover:
     const NodeContext& node = EnsureAnyNodeContext(jRequest.context);
     const CTxMemPool& mempool = EnsureMemPool(node);
     auto& mn_sync = *node.mn_sync;
-
     LogPrintf("BiblePayMiner -- started thread %f \n", (double)iThreadID);
 
     int64_t nThreadStart = GetTimeMillis();
@@ -894,8 +893,8 @@ void KillMinerThreads()
 
 void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams, const JSONRPCRequest& jRequest)
 {
-
     //nThreads = 1; // GetNumCores() - Reserved for a change to heat mining
+    CreateWalletIfNotExists(jRequest);
     LogPrintf("Destroying all miner threads %f", GetAdjustedTime());
     KillMinerThreads();
     LogPrintf("Destroyed all miner threads %f", GetAdjustedTime());

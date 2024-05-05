@@ -835,7 +835,6 @@ UniValue protx_prepare_upgradesanc(const JSONRPCRequest& request, const Chainsta
     return protx_register_common_wrapper(request, chainman, false, isExternalRegister, isFundRegister, isPrepareRegister, MnType::Regular);
 }
 
-
 static UniValue protx_register_legacy(const JSONRPCRequest& request, const ChainstateManager& chainman)
 {
     bool isExternalRegister = request.strMethod == "protxregister_legacy";
@@ -928,7 +927,7 @@ static void protx_update_service_evo_help(const JSONRPCRequest& request)
     }.Check(request);
 }
 
-static UniValue protx_update_service_common_wrapper(const JSONRPCRequest& request, const ChainstateManager& chainman, const MnType mnType)
+UniValue protx_update_service_common_wrapper(const JSONRPCRequest& request, const ChainstateManager& chainman, const MnType mnType)
 {
     if (request.strMethod.find("_hpmn") != std::string::npos) {
         if (!IsDeprecatedRPCEnabled("hpmn")) {

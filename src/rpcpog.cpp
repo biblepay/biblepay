@@ -62,13 +62,11 @@
 #include <chrono> //sleep
 
 
-// UniValue protx_register(const JSONRPCRequest& request);
-// UniValue protx_register(const JSONRPCRequest& request, const ChainstateManager& chainman);
-// void protx_register_fund_evo_help(const JSONRPCRequest& request);
-
 UniValue protx(const JSONRPCRequest& request);
 UniValue _bls(const JSONRPCRequest& request);
-
+UniValue protx_update_service_common_wrapper(const JSONRPCRequest& request, const ChainstateManager& chainman, const MnType mnType);
+UniValue createwallet(const JSONRPCRequest& request);
+std::string createwalletformining(const JSONRPCRequest& request);
 UniValue VoteWithMasternodes(const std::map<uint256, CKey>& keys,
     const uint256& hash,
     vote_signal_enum_t eVoteSignal,
@@ -95,6 +93,20 @@ CWallet* GetInternalWallet(JSONRPCRequest r)
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
     CWallet* const pwallet = wallet.get();
     return pwallet;
+}
+
+void CreateWalletIfNotExists(JSONRPCRequest r)
+{
+    try
+    {
+        std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    }
+    catch(...)
+    {
+        LogPrintf("\nWALLET::Sorry, no wallet exists.  Creating default wallet for sanctuary mining.\r\n%f", 1);
+        std::string cOut = createwalletformining(r);
+        LogPrintf("\nWALLET::%s",cOut);
+    }
 }
 
 
@@ -2582,19 +2594,20 @@ bool ReviveSanctuaryEnhanced(JSONRPCRequest rold, std::string sSancSearch, std::
     
     JSONRPCRequest newRequest(rold);
 
-    newRequest.params.setArray();
-    newRequest.params.push_back("update_service");
+    newRequest.params.setArray(); //protx update_service proTxHash IpPort OpKey OpPayoutAddr feeScAddress
+    //newRequest.params.push_back("update_service");
     newRequest.params.push_back(sProRegTxId);
     newRequest.params.push_back(sSancIP);
     newRequest.params.push_back(sBLSPrivKey);
-    // Fee source address
+    // Fee source address does not need to be specified
+    /*
     newRequest.params.push_back("");
     std::string sCPK = DefaultRecAddress(rold,"Christian-Public-Key");
     newRequest.params.push_back(sCPK);
+    */
+    
+    uSuccess = protx_update_service_common_wrapper(newRequest, g_chainman, MnType::Regular);
 
-    // Interface hash changed, apparently
-    //uSuccess = protx(newRequest);
-    //results.push_back(rProReg);
     // If we made it this far and an error was not thrown:
     LogPrintf("Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes.%f",1);
     return true;

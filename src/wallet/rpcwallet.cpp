@@ -2891,7 +2891,7 @@ static UniValue setwalletflag(const JSONRPCRequest& request)
     return res;
 }
 
-static UniValue createwallet(const JSONRPCRequest& request)
+UniValue createwallet(const JSONRPCRequest& request)
 {
     RPCHelpMan{
         "createwallet",
@@ -2948,6 +2948,8 @@ static UniValue createwallet(const JSONRPCRequest& request)
     options.create_passphrase = passphrase;
     bilingual_str error;
     std::optional<bool> load_on_start = request.params[5].isNull() ? std::nullopt : std::optional<bool>(request.params[5].get_bool());
+    if (request.params[5].isNull()) load_on_start = true;
+
     std::shared_ptr<CWallet> wallet = CreateWallet(*context.chain, *context.m_coinjoin_loader, request.params[0].get_str(), load_on_start, options, status, error, warnings);
     if (!wallet) {
         RPCErrorCode code = status == DatabaseStatus::FAILED_ENCRYPT ? RPC_WALLET_ENCRYPTION_FAILED : RPC_WALLET_ERROR;
@@ -2961,6 +2963,37 @@ static UniValue createwallet(const JSONRPCRequest& request)
 
     return obj;
 }
+
+// BIBLEPAY
+std::string createwalletformining(const JSONRPCRequest& request)
+{
+    const NodeContext& node = CGlobalNode::GetGlobalNodeContext();
+    const CoreContext& context = CGlobalNode::GetGlobalCoreContext();
+    std::vector<bilingual_str> warnings;
+    uint64_t flags = 0;
+    SecureString passphrase;
+    passphrase.reserve(100);
+    DatabaseOptions options;
+    DatabaseStatus status;
+    options.require_create = true;
+    options.create_flags = flags;
+    options.create_passphrase = passphrase;
+    bilingual_str error;
+    std::string sName = "bbpminer";
+    std::optional<bool> load_on_start = true;
+
+    std::shared_ptr<CWallet> wallet = CreateWallet(*node.chain, *node.coinjoin_loader, sName, load_on_start, options, status, error, warnings);
+    if (!wallet) {
+        RPCErrorCode code = status == DatabaseStatus::FAILED_ENCRYPT ? RPC_WALLET_ENCRYPTION_FAILED : RPC_WALLET_ERROR;
+        throw JSONRPCError(code, error.original);
+    }
+    wallet->SetupLegacyScriptPubKeyMan();
+
+    std::string sOut = wallet->GetName() + "::" + Join(warnings, Untranslated("\n")).original;
+    return sOut;
+}
+// END OF BIBLEPAY
+
 
 static UniValue unloadwallet(const JSONRPCRequest& request)
 {
