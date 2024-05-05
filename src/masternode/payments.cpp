@@ -228,8 +228,7 @@ bool IsBlockValueValid(const CSporkManager& sporkManager, CGovernanceManager& go
     if (nBlockHeight < consensusParams.BABYLON_FALLING_HEIGHT)
         return true;
 
-    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= (blockReward + ARM64()));
-
+    
     // BiblePay
     bool fDailySuperblock = IsDailySuperblock(nBlockHeight);
     if (fDailySuperblock) {
@@ -241,7 +240,7 @@ bool IsBlockValueValid(const CSporkManager& sporkManager, CGovernanceManager& go
         blockReward = MAX_BLOCK_SUBSIDY * COIN;
     }
     // End of Biblepay
-
+    bool isBlockRewardValueMet = (block.vtx[0]->GetValueOut() <= (blockReward + ARM64()));
 
     strErrorRet = "";
 
