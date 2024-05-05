@@ -2921,8 +2921,6 @@ std::string ComputeMinedBlockVersion()
         {
              sSancRow = "<SANC>?</SANC>";
         }
- 
-        sSancRow = "<SANC>1</SANC>";
         // TODO - SANC SIG HERE determined by mnlist
     }
     else
