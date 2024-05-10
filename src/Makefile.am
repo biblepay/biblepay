@@ -49,7 +49,7 @@ BACKTRACE_LIB = -lbacktrace -lssl -lcrypto
 endif
 
 else
-$(info 'NO STACKTRACES ENABLED BUT ADDING LCRYPTO')
+$(info 'NO STACKTRACES ENABLED BUT ADDING LCRYPTO (PROB WIN added -lpthread)')
 BACKTRACE_LIB = -lssl -lcrypto
 endif #ENABLE_STACKTRACES
 

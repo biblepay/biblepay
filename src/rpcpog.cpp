@@ -2940,9 +2940,16 @@ bool ContextualCheckBlockMinedBySanc(const CBlock& block)
     if (block.nTime < consensusParams.BABYLON_FALLING_TIME) {
         return true;
     }
+    std::string sSanc = ExtractXML(block.vtx[0]->vout[0].sTxOutMessage, "<SANC>", "</SANC>");
+    // The light version
+    if (sSanc.length() != 64)
+    {
+        // Note: Payment goes to the sanc either way, so anyone who mines a block by brute force does not get paid for it.  Hence the reason for light mode.
+        LogPrintf("\nContextualCheckBlockMinedBySanc::ERROR Not solved by a sanc %s", sSanc);
+        return false;
+    }
 
-    return true;
-
+    /*
     std::string sNetworkName = Params().NetworkIDString();
 
     CBlockIndex* pblockTip = g_chainman.ActiveChain().Tip();
@@ -2951,12 +2958,6 @@ bool ContextualCheckBlockMinedBySanc(const CBlock& block)
     if (!fSynced)
         return true;
 
-    // If the elapsed between last block and this block is > one hour, anyone can solve the next block
-    int nElapsed = block.nTime - pblockTip->nTime;
-    if (nElapsed > 60 * 60 * 1) {
-        return true;
-    }
-    
     // The chain is synced, the masternode is synced, deterministic nodes are up, we know all the Sanc proTx Hashes, so verify that a sanc solved it
     // Only allow block to be solved by a non-sanc if block is over an hour old
     std::string sSanc = ExtractXML(block.vtx[0]->vout[0].sTxOutMessage, "<SANC>", "</SANC>");
@@ -2966,6 +2967,7 @@ bool ContextualCheckBlockMinedBySanc(const CBlock& block)
         return false;
     }
     return true;
+    */
 }
 
 bool IsSanctuaryLegacyTempleOrAltar(CDeterministicMNCPtr dmn)

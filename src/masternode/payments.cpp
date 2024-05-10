@@ -230,7 +230,7 @@ bool IsBlockValueValid(const CSporkManager& sporkManager, CGovernanceManager& go
 
     
     // BiblePay
-    bool fDailySuperblock = IsDailySuperblock(nBlockHeight);
+    bool fDailySuperblock = IsDailySuperblock(nBlockHeight);  
     if (fDailySuperblock) {
         blockReward = GetDailyPaymentsLimit(nBlockHeight);
     }

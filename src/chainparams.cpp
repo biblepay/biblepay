@@ -162,6 +162,7 @@ public:
     CMainParams() {
         strNetworkID = CBaseChainParams::MAIN;
         consensus.BABYLON_FALLING_HEIGHT = 600000;
+        
         consensus.BABYLON_FALLING_TIME = 1744172648;
 
         consensus.BARLEY_HARVEST_HEIGHT  = 320000;
@@ -374,7 +375,8 @@ public:
         consensus.LATTER_RAIN_HEIGHT = 192200;
         consensus.REDSEA_PARTING = 193255;
         consensus.BABYLON_FALLING_HEIGHT = 193255;
-        consensus.BABYLON_FALLING_TIME = 1714245416;  // April 27th 2024
+        
+        consensus.BABYLON_FALLING_TIME = 1715396772; // May 10th 2024
 
         consensus.nSubsidyHalvingInterval =  365 * 205;
         consensus.BIP16Height = 0;
@@ -552,6 +554,8 @@ public:
         consensus.nGovernanceMinQuorum = 1;
         consensus.nGovernanceFilterElements = 500;
         consensus.nMasternodeMinimumConfirmations = 1;
+        consensus.BABYLON_FALLING_HEIGHT = 1;
+        
         consensus.BIP34Height = 1; // BIP34 activated immediately on devnet
         consensus.BIP65Height = 1; // BIP65 activated immediately on devnet
         consensus.BIP66Height = 1; // BIP66 activated immediately on devnet
