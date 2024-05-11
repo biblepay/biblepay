@@ -853,6 +853,10 @@ recover:
                         break;
                     // Recreate the block if the clock has run backwards, so that we can use the correct time.
                 }
+                if (!fMasternodeMode)
+                {
+                    MilliSleep(10);
+                }
 
                 if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks) {
                     // Changing pblock->nTime can change work required on testnet:

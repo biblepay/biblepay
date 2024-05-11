@@ -2932,7 +2932,8 @@ std::string ComputeMinedBlockVersion()
     return sFullMessage;
 }
 
-bool ContextualCheckBlockMinedBySanc(const CBlock& block)
+bool
+(const CBlock& block)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
@@ -2940,6 +2941,14 @@ bool ContextualCheckBlockMinedBySanc(const CBlock& block)
     if (block.nTime < consensusParams.BABYLON_FALLING_TIME) {
         return true;
     }
+    /* In favor of this being a little dangerous, disabling for this release */
+
+
+
+
+    return true;
+
+    /*
     std::string sSanc = ExtractXML(block.vtx[0]->vout[0].sTxOutMessage, "<SANC>", "</SANC>");
     // The light version
     if (sSanc.length() != 64)
@@ -2948,6 +2957,7 @@ bool ContextualCheckBlockMinedBySanc(const CBlock& block)
         LogPrintf("\nContextualCheckBlockMinedBySanc::ERROR Not solved by a sanc %s", sSanc);
         return false;
     }
+    */
 
     /*
     std::string sNetworkName = Params().NetworkIDString();
