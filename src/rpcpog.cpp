@@ -2932,19 +2932,14 @@ std::string ComputeMinedBlockVersion()
     return sFullMessage;
 }
 
-bool
-(const CBlock& block)
+bool ContextualCheckBlockMinedBySanc(const CBlock& block)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-
     // Prior to this height, rule was not active
     if (block.nTime < consensusParams.BABYLON_FALLING_TIME) {
         return true;
     }
-    /* In favor of this being a little dangerous, disabling for this release */
-
-
-
+    /* In favor of this being dangerous */
 
     return true;
 
