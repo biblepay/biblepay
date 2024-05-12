@@ -24,7 +24,6 @@ enum class LLMQType : uint8_t {
 
     // for testing only
     LLMQ_TEST = 100, // 3 members, 2 (66%) threshold, one per hour. Params might differ when -llmqtestparams is used
-    //LLMQ_5_60 = 101;
 
     // for devnets only
     LLMQ_DEVNET = 101, // 12 members, 6 (50%) threshold, one per hour. Params might differ when -llmqdevnetparams is used
@@ -355,9 +354,9 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
         .type = LLMQType::LLMQ_5_60,
         .name = "llmq_5_60",
         .useRotation = false,
-        .size = 6,
-        .minSize = 3,
-        .threshold = 3,
+        .size = 5,
+        .minSize = 2,
+        .threshold = 2,
 
         .dkgInterval = 24, // one DKG per hour
         .dkgPhaseBlocks = 2,
@@ -365,7 +364,7 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
         .dkgMiningWindowEnd = 18,
         .dkgBadVotesThreshold = 40,
 
-        .signingActiveQuorumCount = 3, // a full day worth of LLMQs
+        .signingActiveQuorumCount = 2, // a full day worth of LLMQs
         .keepOldConnections = 3,
         .keepOldKeys = 6,
         .recoveryMembers = 3,
@@ -400,16 +399,16 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
     /**
      * llmq_400_60
      * This quorum is deployed on mainnet and requires
-     * 300 - 400 participants
+     * 3 - 100 participants
      *
      */
     LLMQParams{
         .type = LLMQType::LLMQ_400_60,
         .name = "llmq_400_60",
         .useRotation = false,
-        .size = 400,
-        .minSize = 300,
-        .threshold = 240,
+        .size = 7,
+        .minSize = 3,
+        .threshold = 3,
 
         .dkgInterval = 24 * 12, // one DKG every 12 hours
         .dkgPhaseBlocks = 4,
@@ -417,11 +416,11 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
         .dkgMiningWindowEnd = 28,
         .dkgBadVotesThreshold = 300,
 
-        .signingActiveQuorumCount = 4, // two days worth of LLMQs
+        .signingActiveQuorumCount = 2, // two days worth of LLMQs
 
         .keepOldConnections = 5,
         .keepOldKeys = 8,
-        .recoveryMembers = 100,
+        .recoveryMembers = 3,
     },
 
     /**
