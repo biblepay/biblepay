@@ -3,6 +3,7 @@
 #include "chainparams.h"
 #include "init.h"
 #include "net.h"
+#include <shutdown.h>
 
 static int64_t nPovsProcessTime = 0;
 static int64_t nSleepTime = 0;
@@ -30,13 +31,13 @@ void ThreadPOVS(CConnman& connman)
         // Called once per minute from the scheduler
         try
         {
+        if (!fProcessing) {
             double nBanning = 1;
             bool fConnectivity = POVSTest("Status", "209.145.56.214:40000", 15, 2);
             ClearDictionary();
             LogPrintf("\r\nPOVS::Sanctuary Connectivity Test::Iter %f, Time %f, Lock %f, %f", nIterations, GetAdjustedTime(), fProcessing, fConnectivity);
             bool fPOVSEnabled = nBanning == 1 && fConnectivity;
-            if (fPOVSEnabled && !fProcessing)
-            {
+            if (fPOVSEnabled && !fProcessing) {
                 // Lock
                 fProcessing = true;
                 auto mnList = deterministicMNManager->GetListAtChainTip();
@@ -62,13 +63,13 @@ void ThreadPOVS(CConnman& connman)
                     }
                 });
                 // Ban
-                for (const auto& proTxHash : toBan)
-                {
+                for (const auto& proTxHash : toBan) {
                     mnList.PoSePunish(proTxHash, mnList.CalcPenalty(100), false);
                 }
                 // Unlock
                 fProcessing = false;
             }
+        }
      }
      catch (...)
      {
