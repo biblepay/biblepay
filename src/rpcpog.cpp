@@ -1245,7 +1245,7 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 		}
 	    if (!found) 
 		{
-            LogPrintf("\nValidateDailySuperblock::ERROR failed to find expected payee %s at height %s\n", sRecipient1, nBlockHeight);
+            LogPrintf("\nValidateDailySuperblock::ERROR failed-to-find expected payee %s at height %s\n", sRecipient1, nBlockHeight);
 			return false;
         }
     }

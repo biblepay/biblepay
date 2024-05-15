@@ -373,8 +373,9 @@ public:
         consensus.EXODUS_HEIGHT = 183000;
         consensus.REDSEA_HEIGHT = 183000;
         consensus.LATTER_RAIN_HEIGHT = 192200;
-        consensus.REDSEA_PARTING = 193255;
-        consensus.BABYLON_FALLING_HEIGHT = 193255;
+
+        consensus.REDSEA_PARTING = 199010;
+        consensus.BABYLON_FALLING_HEIGHT = 199010;
         
         consensus.BABYLON_FALLING_TIME = 1715396772; // May 10th 2024
 
