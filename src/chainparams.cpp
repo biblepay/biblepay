@@ -483,10 +483,12 @@ public:
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST);
 
         
-        consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_5_60;
-        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_5_60;
-        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_5_60;
-        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_5_60;
+        consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
+
+        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_TEST;
+
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_TEST;
+        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;

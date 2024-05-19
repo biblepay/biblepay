@@ -153,7 +153,7 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
         .dkgPhaseBlocks = 2,
         .dkgMiningWindowStart = 10, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 18,
-        .dkgBadVotesThreshold = 7,
+        .dkgBadVotesThreshold = 30,
 
         .signingActiveQuorumCount = 2, // just a few ones to allow easier testing
 
@@ -355,8 +355,8 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
         .name = "llmq_5_60",
         .useRotation = false,
         .size = 5,
-        .minSize = 2,
-        .threshold = 2,
+        .minSize = 3,
+        .threshold = 3,
 
         .dkgInterval = 24, // one DKG per hour
         .dkgPhaseBlocks = 2,
