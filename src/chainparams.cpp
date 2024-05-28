@@ -294,16 +294,16 @@ public:
 
         // BBP BIP44 coin type
         nExtCoinType = 1777;
-
         vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_main), std::end(chainparams_seed_main));
 
         // long living quorum params
-        AddLLMQ(Consensus::LLMQType::LLMQ_5_60);
+
         AddLLMQ(Consensus::LLMQType::LLMQ_400_60);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_400_60;
-        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_5_60;
-        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_5_60;
+        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_400_60;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_400_60;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_400_60;
+
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
@@ -479,14 +479,13 @@ public:
         nExtCoinType = 1;
 
         // long living quorum params
-        AddLLMQ(Consensus::LLMQType::LLMQ_5_60);
+        // TODO::REMOVE        AddLLMQ(Consensus::LLMQType::LLMQ_5_60);
+
         AddLLMQ(Consensus::LLMQType::LLMQ_TEST);
 
         
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
-
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_TEST;
-
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_TEST;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
 
