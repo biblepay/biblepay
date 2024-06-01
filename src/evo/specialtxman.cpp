@@ -143,7 +143,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
     
     //BBP
     if (Params().NetworkIDString() == CBaseChainParams::TESTNET) {
-        if (pindex->nHeight < consensusParams.DIP0003Height || (pindex->nHeight >= 193256 && pindex->nHeight <= 193261)
+        if (pindex->nHeight < consensusParams.DIP0003Height || (pindex->nHeight >= 193256 && pindex->nHeight <= 193261))
         {
             return true;
         }
