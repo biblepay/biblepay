@@ -140,6 +140,15 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
                               BlockValidationState& state, std::optional<MNListUpdates>& updatesRet)
 {
     AssertLockHeld(cs_main);
+    
+    //BBP
+    if (Params().NetworkIDString() == CBaseChainParams::TESTNET && pindex->nHeight < consensusParams.DIP0003Height)
+    {
+        return true;
+    }
+    //END OF BBP
+
+
 
     try {
         static int64_t nTimeLoop = 0;
@@ -189,6 +198,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
             // pass the state returned by the function above
             return false;
         }
+        
 
         int64_t nTime4 = GetTimeMicros();
         nTimeDMN += nTime4 - nTime3;
