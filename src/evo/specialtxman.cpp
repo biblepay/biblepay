@@ -142,13 +142,12 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
     AssertLockHeld(cs_main);
     
     //BBP
-    if (Params().NetworkIDString() == CBaseChainParams::TESTNET && pindex->nHeight < consensusParams.DIP0003Height)
-    {
-        return true;
+    if (Params().NetworkIDString() == CBaseChainParams::TESTNET) {
+        if (pindex->nHeight < consensusParams.DIP0003Height || pindex->nHeight == 193258) {
+            return true;
+        }
+        // END OF BBP
     }
-    //END OF BBP
-
-
 
     try {
         static int64_t nTimeLoop = 0;
