@@ -141,14 +141,6 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
 {
     AssertLockHeld(cs_main);
     
-    //BBP
-    if (Params().NetworkIDString() == CBaseChainParams::TESTNET) {
-        if (pindex->nHeight < consensusParams.DIP0003Height || (pindex->nHeight >= 193256 && pindex->nHeight <= 193261))
-        {
-            return true;
-        }
-        // END OF BBP
-    }
 
     try {
         static int64_t nTimeLoop = 0;
@@ -237,7 +229,20 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
             bls::bls_legacy_scheme.store(false);
             LogPrintf("%s: bls_legacy_scheme=%d\n", __func__, bls::bls_legacy_scheme.load());
         }
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
+
+        // BBP
+        if (Params().NetworkIDString() == CBaseChainParams::TESTNET)
+        {
+            if (pindex->nHeight < consensusParams.BABYLON_FALLING_HEIGHT) {
+                return true;
+            }
+            // END OF BBP
+        }
+
+
         LogPrintf("%s -- failed: %s\n", __func__, e.what());
         return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "failed-procspectxsinblock");
     }
