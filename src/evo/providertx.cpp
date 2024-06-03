@@ -15,7 +15,9 @@
 bool CProRegTx::IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const
 {
     if (nVersion == 0 || nVersion > GetVersion(is_basic_scheme_active)) {
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        if (false) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        }
     }
     if (nVersion != BASIC_BLS_VERSION && nType == MnType::Temple) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-evo-version");
@@ -96,7 +98,9 @@ std::string CProRegTx::ToString() const
 bool CProUpServTx::IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const
 {
     if (nVersion == 0 || nVersion > GetVersion(is_basic_scheme_active)) {
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        if (false) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        }
     }
     if (nVersion != BASIC_BLS_VERSION && nType == MnType::Temple) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-evo-version");
@@ -120,7 +124,9 @@ std::string CProUpServTx::ToString() const
 bool CProUpRegTx::IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const
 {
     if (nVersion == 0 || nVersion > GetVersion(is_basic_scheme_active)) {
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        if (false) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        }
     }
     if (nMode != 0) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-mode");
@@ -153,7 +159,9 @@ std::string CProUpRegTx::ToString() const
 bool CProUpRevTx::IsTriviallyValid(bool is_basic_scheme_active, TxValidationState& state) const
 {
     if (nVersion == 0 || nVersion > GetVersion(is_basic_scheme_active)) {
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        if (false) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-version");
+        }
     }
 
     // nReason < CProUpRevTx::REASON_NOT_SPECIFIED is always `false` since
