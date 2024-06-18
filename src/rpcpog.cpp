@@ -1225,7 +1225,7 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 	std::vector<Portfolio> vPortfolio = GetDailySuperblock(nBlockHeight);
 	for (int i = 0; i < vPortfolio.size(); i++)
 	{
-        bool found = false;
+        bool found = false; 
 		std::string sRecipient1 = vPortfolio[i].OwnerAddress; 
 		CAmount nAmount1 = vPortfolio[i].Owed * COIN;
 		nTotalPayments += nAmount1;
