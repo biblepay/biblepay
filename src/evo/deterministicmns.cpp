@@ -1595,7 +1595,7 @@ static bool CheckStringSig(const ProTx& proTx, const PKHash& pkhash, TxValidatio
 template <typename ProTx>
 static bool CheckHashSig(const ProTx& proTx, const CBLSPublicKey& pubKey, TxValidationState& state)
 {
-    if (!proTx.sig.VerifyInsecure(pubKey, ::SerializeHash(proTx))) {
+    if (fal!proTx.sig.VerifyInsecure(pubKey, ::SerializeHash(proTx))) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig-4");
     }
     return true;
