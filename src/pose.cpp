@@ -33,7 +33,7 @@ void ThreadPOVS(CConnman& connman)
         {
         if (!fProcessing) {
             double nBanning = 1;
-            bool fConnectivity = POVSTest("Status", "209.145.56.214:40000", 15, 2);
+            bool fConnectivity = POVSTest("Status", "209.145.56.214:40000", 5, 2);
             ClearDictionary();
             LogPrintf("\r\nPOVS::Sanctuary Connectivity Test::Iter %f, Time %f, Lock %f, %f", nIterations, GetAdjustedTime(), fProcessing, fConnectivity);
             bool fPOVSEnabled = nBanning == 1 && fConnectivity;
@@ -50,7 +50,7 @@ void ThreadPOVS(CConnman& connman)
                     {
                         std::string sPubKey = dmn.pdmnState->pubKeyOperator.Get().ToString();
                         std::string sIP1 = dmn.pdmnState->addr.ToString();
-                        bool fOK = POVSTest(sPubKey, sIP1, 30, 0);
+                        bool fOK = POVSTest(sPubKey, sIP1, 5, 0);
                         int iSancOrdinal = 0;
                         int nStatus = fOK ? 1 : 255;
                         mapPOVSStatus[sPubKey] = nStatus;

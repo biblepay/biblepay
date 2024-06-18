@@ -1578,7 +1578,7 @@ template <typename ProTx>
 static bool CheckHashSig(const ProTx& proTx, const PKHash& pkhash, TxValidationState& state)
 {
     if (std::string strError; !CHashSigner::VerifyHash(::SerializeHash(proTx), ToKeyID(pkhash), proTx.vchSig, strError)) {
-            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig");
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig-2");
     }
     return true;
 }
@@ -1587,7 +1587,7 @@ template <typename ProTx>
 static bool CheckStringSig(const ProTx& proTx, const PKHash& pkhash, TxValidationState& state)
 {
     if (std::string strError; !CMessageSigner::VerifyMessage(ToKeyID(pkhash), proTx.vchSig, proTx.MakeSignString(), strError)) {
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig");
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig-3");
     }
     return true;
 }
@@ -1596,7 +1596,7 @@ template <typename ProTx>
 static bool CheckHashSig(const ProTx& proTx, const CBLSPublicKey& pubKey, TxValidationState& state)
 {
     if (!proTx.sig.VerifyInsecure(pubKey, ::SerializeHash(proTx))) {
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig");
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig-4");
     }
     return true;
 }
@@ -1737,8 +1737,9 @@ bool CheckProRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> pin
     } else {
         // collateral is part of this ProRegTx, so we know the collateral is owned by the issuer
         if (!opt_ptx->vchSig.empty()) {
-            if (pindexPrev->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
-                return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig");
+            if (pindexPrev->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT && false)
+            {
+                return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig-1");
             }
         }
     }

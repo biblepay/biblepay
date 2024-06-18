@@ -1220,13 +1220,13 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 		// After 7 days, we no longer need to check this old superblock.  This allows us to sync from zero efficiently.
         return true;
     }
-
+     
 	CAmount nTotalPayments = 0;
 	std::vector<Portfolio> vPortfolio = GetDailySuperblock(nBlockHeight);
 	for (int i = 0; i < vPortfolio.size(); i++)
 	{
         bool found = false;
-		std::string sRecipient1 = vPortfolio[i].OwnerAddress;
+		std::string sRecipient1 = vPortfolio[i].OwnerAddress; 
 		CAmount nAmount1 = vPortfolio[i].Owed * COIN;
 		nTotalPayments += nAmount1;
 	    for (const auto& txout2 : txNew.vout) 
