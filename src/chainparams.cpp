@@ -479,15 +479,12 @@ public:
         nExtCoinType = 1;
 
         // long living quorum params
-        // TODO::REMOVE        AddLLMQ(Consensus::LLMQType::LLMQ_5_60);
-
-        AddLLMQ(Consensus::LLMQType::LLMQ_TEST);
-
         
-        consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_TEST;
-        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_TEST;
-        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_TEST;
-        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_TEST;
+        AddLLMQ(Consensus::LLMQType::LLMQ_400_85);
+        consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_400_85;
+        consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_400_85;
+        consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_400_85;
+        consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_400_85;
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
@@ -495,7 +492,7 @@ public:
         m_is_test_chain = true;
         fAllowMultipleAddressesFromGroup = false;
         fAllowMultiplePorts = true;
-        nLLMQConnectionRetryTimeout = 60;
+        nLLMQConnectionRetryTimeout = 30;
         m_is_mockable_chain = false;
 
         nPoolMinParticipants = 2;
