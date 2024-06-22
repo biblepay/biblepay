@@ -9,7 +9,7 @@ static int64_t nPovsProcessTime = 0;
 static int64_t nSleepTime = 0;
 static bool fProcessing = false;
 static int nIterations = 0;
-
+ 
 void ClearDictionary()
 {
     int64_t nElapsed = GetAdjustedTime() - nPovsProcessTime;

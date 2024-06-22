@@ -368,17 +368,18 @@ class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
         strNetworkID = CBaseChainParams::TESTNET; 
-        consensus.BARLEY_HARVEST_HEIGHT = 117233;
-		consensus.BARLEY_HARVEST_HEIGHT2 = 121000;
+        consensus.BARLEY_HARVEST_HEIGHT = 199010;
+		consensus.BARLEY_HARVEST_HEIGHT2 = 199010;
+        consensus.REDSEA_PARTING = 199010;
+        consensus.BABYLON_FALLING_HEIGHT = 205465;
+
+        consensus.BABYLON_FALLING_TIME = 1715396772; // May 10th 2024
+
         consensus.EXODUS_HEIGHT = 183000;
         consensus.REDSEA_HEIGHT = 183000;
         consensus.LATTER_RAIN_HEIGHT = 192200;
 
-        consensus.REDSEA_PARTING = 199010;
-        consensus.BABYLON_FALLING_HEIGHT = 205465;
         
-        consensus.BABYLON_FALLING_TIME = 1715396772; // May 10th 2024
-
         consensus.nSubsidyHalvingInterval =  365 * 205;
         consensus.BIP16Height = 0;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
@@ -411,7 +412,7 @@ public:
         consensus.DIP0008Height = 74000; // 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // BiblePay: 1 day
-        consensus.nPowTargetSpacing = 7 * 60; // BiblePay: 3mins
+        consensus.nPowTargetSpacing = 3 * 60; // BiblePay: 3mins
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 0; // nPowKGWHeight >= nPowDGWHeight means "no KGW"

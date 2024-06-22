@@ -4113,7 +4113,7 @@ bool BlockManager::AcceptBlockHeader(const CBlockHeader& block, BlockValidationS
                 }
             }
         }
-
+          
         if (llmq::chainLocksHandler->HasConflictingChainLock(pindexPrev->nHeight + 1, hash)) {
             if (pindex == nullptr) {
                 AddToBlockIndex(block, hash, BLOCK_CONFLICT_CHAINLOCK);
