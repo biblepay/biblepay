@@ -218,13 +218,13 @@ public:
 		consensus.BurnAddress = "B4T5ciTCkWauSqVAcVKy88ofjcSasUkSYU";
 		
         consensus.nPowTargetTimespan = 24 * 60 * 60; // Biblepay: 1 day
-        consensus.nPowTargetSpacing = 2.5 * 60; // Biblepay: 2.5 minutes
+        consensus.nPowTargetSpacing = 7 * 60; // Biblepay: 7 minutes
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 0;
         consensus.nPowDGWHeight = 1;
         consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
-        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.nMinerConfirmationWindow = 205; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
@@ -411,13 +411,13 @@ public:
         consensus.DIP0008Height = 74000; // 
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // BiblePay: 1 day
-        consensus.nPowTargetSpacing = 3 * 60; // BiblePay: 3mins
+        consensus.nPowTargetSpacing = 7 * 60; // BiblePay: 3mins
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 0; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
         consensus.nPowDGWHeight = 1; // 
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
+        consensus.nMinerConfirmationWindow = 205; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008

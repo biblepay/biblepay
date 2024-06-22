@@ -195,6 +195,7 @@ bool CDKGSessionHandler::InitNewQuorum(const CBlockIndex* pQuorumBaseBlockIndex)
         return false;
     }
 
+    //Next Steps: Ensure Quorum Initializes
     LogPrintf("CDKGSessionManager::%s -- height[%d] quorum initialization OK for %s qi[%d]\n", __func__, pQuorumBaseBlockIndex->nHeight, curSession->params.name, quorumIndex);
     return true;
 }
