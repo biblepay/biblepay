@@ -131,15 +131,21 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, gsl::not_null<con
         case Consensus::LLMQType::LLMQ_DEVNET:
             return true;
         case Consensus::LLMQType::LLMQ_5_60:
-            return !fDIP0024IsActive || !fHaveDIP0024Quorums ||
-                    Params().NetworkIDString() == CBaseChainParams::TESTNET;
+            return true;
         case Consensus::LLMQType::LLMQ_TEST_INSTANTSEND:
-            return !fDIP0024IsActive || !fHaveDIP0024Quorums ||
-                    consensusParams.llmqTypeDIP0024InstantSend == Consensus::LLMQType::LLMQ_TEST_INSTANTSEND;
+            return true;
         case Consensus::LLMQType::LLMQ_TEST:
+            return true;
         case Consensus::LLMQType::LLMQ_TEST_PLATFORM:
+            return true;
         case Consensus::LLMQType::LLMQ_400_60:
+            return true;
+            // THIS ONE IS USED FOR MAINNET
+
         case Consensus::LLMQType::LLMQ_400_85:
+            return true;
+            // This one is used for TESTNET
+
         case Consensus::LLMQType::LLMQ_DEVNET_PLATFORM:
             return true;
 
@@ -147,15 +153,17 @@ bool IsQuorumTypeEnabledInternal(Consensus::LLMQType llmqType, gsl::not_null<con
             return DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_TESTDUMMY);
         }
         case Consensus::LLMQType::LLMQ_100_67:
-            return DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_DIP0020);
+            return true;
 
         case Consensus::LLMQType::LLMQ_60_75:
+            return false;
         case Consensus::LLMQType::LLMQ_DEVNET_DIP0024:
+            return true;
         case Consensus::LLMQType::LLMQ_TEST_DIP0024: {
             return fDIP0024IsActive;
         }
         case Consensus::LLMQType::LLMQ_25_67:
-            return pindexPrev->nHeight >= TESTNET_LLMQ_25_67_ACTIVATION_HEIGHT;
+            return true;
 
         default:
             throw std::runtime_error(strprintf("%s: Unknown LLMQ type %d", __func__, ToUnderlying(llmqType)));

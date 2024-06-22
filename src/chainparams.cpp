@@ -297,13 +297,11 @@ public:
         vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_main), std::end(chainparams_seed_main));
 
         // long living quorum params
-
         AddLLMQ(Consensus::LLMQType::LLMQ_400_60);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_400_60;
         consensus.llmqTypeDIP0024InstantSend = Consensus::LLMQType::LLMQ_400_60;
         consensus.llmqTypePlatform = Consensus::LLMQType::LLMQ_400_60;
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_400_60;
-
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
@@ -479,7 +477,7 @@ public:
         // Testnet BiblePay BIP44 coin type is '1' (All coin's testnet default)
         nExtCoinType = 1;
 
-        // long living quorum params
+        // long living quorum params TESTNET
         
         AddLLMQ(Consensus::LLMQType::LLMQ_400_85);
         consensus.llmqTypeChainLocks = Consensus::LLMQType::LLMQ_400_85;
