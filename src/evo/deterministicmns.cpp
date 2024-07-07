@@ -1590,7 +1590,7 @@ static bool CheckStringSig(const ProTx& proTx, const PKHash& pkhash, TxValidatio
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-protx-sig-3");
     }
     return true;
-}
+} 
 
 template <typename ProTx>
 static bool CheckHashSig(const ProTx& proTx, const CBLSPublicKey& pubKey, TxValidationState& state)

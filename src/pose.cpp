@@ -23,7 +23,7 @@ void ClearDictionary()
     /*
     CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
     int64_t nTipAge = GetAdjustedTime() - pindexTip->GetBlockTime();
-    */
+    */ 
 }
 
 void ThreadPOVS(CConnman& connman)

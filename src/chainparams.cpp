@@ -408,6 +408,19 @@ public:
         consensus.DIP0003EnforcementHash = uint256S("0x0");
 		consensus.LLMQHeight = 72860;
         consensus.DIP0008Height = 74000; // 
+
+
+
+
+        consensus.BRRHeight = 74000;
+        consensus.DIP0020Height = 74000;
+        consensus.DIP0024Height = 74000;
+        consensus.DIP0024QuorumsHeight = 74000;
+        consensus.V19Height = 74000;
+        consensus.MinBIP9WarningHeight = 74000 + 2016; // v19 activation height + miner confirmation window
+
+
+
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
         consensus.nPowTargetTimespan = 24 * 60 * 60; // BiblePay: 1 day
         consensus.nPowTargetSpacing = 3 * 60; // BiblePay: 3mins

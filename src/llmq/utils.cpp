@@ -103,7 +103,11 @@ std::vector<CDeterministicMNCPtr> GetAllQuorumMembers(Consensus::LLMQType llmqTy
     static std::map<Consensus::LLMQType, unordered_lru_cache<uint256, std::vector<CDeterministicMNCPtr>, StaticSaltedHasher>> mapQuorumMembers GUARDED_BY(cs_members);
     static RecursiveMutex cs_indexed_members;
     static std::map<Consensus::LLMQType, unordered_lru_cache<std::pair<uint256, int>, std::vector<CDeterministicMNCPtr>, StaticSaltedHasher>> mapIndexedQuorumMembers GUARDED_BY(cs_indexed_members);
-    if (!IsQuorumTypeEnabled(llmqType, pQuorumBaseBlockIndex->pprev)) {
+
+    if (!IsQuorumTypeEnabled(llmqType, pQuorumBaseBlockIndex->pprev))
+    {
+        LogPrintf("Quorum type not enabled %f", 2024);
+
         return {};
     }
     std::vector<CDeterministicMNCPtr> quorumMembers;
@@ -123,7 +127,8 @@ std::vector<CDeterministicMNCPtr> GetAllQuorumMembers(Consensus::LLMQType llmqTy
     assert(llmq_params_opt.has_value());
     const auto& llmq_params = llmq_params_opt.value();
 
-    if (IsQuorumRotationEnabled(llmq_params, pQuorumBaseBlockIndex)) {
+    if (IsQuorumRotationEnabled(llmq_params, pQuorumBaseBlockIndex))
+    {
         if (LOCK(cs_indexed_members); mapIndexedQuorumMembers.empty()) {
             InitQuorumsCache(mapIndexedQuorumMembers);
         }
@@ -142,6 +147,8 @@ std::vector<CDeterministicMNCPtr> GetAllQuorumMembers(Consensus::LLMQType llmqTy
         }
         int cycleQuorumBaseHeight = pQuorumBaseBlockIndex->nHeight - quorumIndex;
         const CBlockIndex* pCycleQuorumBaseBlockIndex = pQuorumBaseBlockIndex->GetAncestor(cycleQuorumBaseHeight);
+
+        LogPrintf("Quorum Rotation %f", 2025);
 
         /*
          * Since mapQuorumMembers stores Quorum members per block hash, and we don't know yet the block hashes of blocks for all quorumIndexes (since these blocks are not created yet)
@@ -163,7 +170,10 @@ std::vector<CDeterministicMNCPtr> GetAllQuorumMembers(Consensus::LLMQType llmqTy
         }
 
         quorumMembers = q[quorumIndex];
-    } else {
+    } else
+    {
+        LogPrintf("Std Quorum %f", 2026);
+
         quorumMembers = ComputeQuorumMembers(llmqType, pQuorumBaseBlockIndex);
     }
 
@@ -171,6 +181,7 @@ std::vector<CDeterministicMNCPtr> GetAllQuorumMembers(Consensus::LLMQType llmqTy
     mapQuorumMembers[llmqType].insert(pQuorumBaseBlockIndex->GetBlockHash(), quorumMembers);
     return quorumMembers;
 }
+
 
 std::vector<CDeterministicMNCPtr> ComputeQuorumMembers(Consensus::LLMQType llmqType, const CBlockIndex* pQuorumBaseBlockIndex)
 {
@@ -187,6 +198,8 @@ std::vector<CDeterministicMNCPtr> ComputeQuorumMembers(Consensus::LLMQType llmqT
             pQuorumBaseBlockIndex;
     const auto modifier = GetHashModifier(llmq_params_opt.value(), pQuorumBaseBlockIndex);
     auto allMns = deterministicMNManager->GetListForBlock(pWorkBlockIndex);
+    LogPrintf("Quorums::Size(ComputeQuorumMembers)%f", allMns.GetAllMNsCount());
+
     return allMns.CalculateQuorum(llmq_params_opt->size, modifier, EvoOnly);
 }
 

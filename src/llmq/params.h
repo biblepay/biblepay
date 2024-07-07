@@ -435,7 +435,7 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
         .name = "llmq_400_85",
         .useRotation = false,
         .size = 6,
-        .minSize = 2,
+        .minSize = 2, 
         .threshold = 2,
 
         .dkgInterval = 24 * 12, // one DKG every 24 hours
