@@ -348,9 +348,13 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             // future quorums
             return;
         }
-        if (onlyEvoNodes) {
-            if (dmn->nType != MnType::Temple)
-                return;
+        if (onlyEvoNodes)
+        {
+            // Reserved for Temple Quorums
+            if (false) {
+                if (dmn->nType != MnType::Temple)
+                    return;
+            }
         }
         // calculate sha256(sha256(proTxHash, confirmedHash), modifier) per MN
         // Please note that this is not a double-sha256 but a single-sha256
