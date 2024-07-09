@@ -340,10 +340,17 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::CalculateQuorum(size_t m
 
 std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList::CalculateScores(const uint256& modifier, const bool onlyEvoNodes) const
 {
+
+    // This area is very suspicious, as it returns an empty set.
+    // BBP - 07/09/2024
+    LogPrintf("CalculateScores %f", 11001);
+
     std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> scores;
     scores.reserve(GetAllMNsCount());
-    ForEachMNShared(true, [&](const CDeterministicMNCPtr& dmn) {
-        if (dmn->pdmnState->confirmedHash.IsNull()) {
+    ForEachMNShared(true, [&](const CDeterministicMNCPtr& dmn)
+    {
+        if (false && dmn->pdmnState->confirmedHash.IsNull())
+        {
             // we only take confirmed MNs into account to avoid hash grinding on the ProRegTxHash to sneak MNs into a
             // future quorums
             return;
@@ -367,7 +374,10 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
         sha256.Finalize(h.begin());
 
         scores.emplace_back(UintToArith256(h), dmn);
+        LogPrintf("CalculateScores step 1 - size %f", scores.size());
+
     });
+    LogPrintf("\r\nllmq::CalculateScores step 2 size %f", scores.size());
 
     return scores;
 }
