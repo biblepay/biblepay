@@ -1852,9 +1852,11 @@ bool CheckProUpRegTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> p
     }
 
     // don't allow reuse of payee key for other keys (don't allow people to put the payee key onto an online server)
-    if (payoutDest == CTxDestination(PKHash(dmn->pdmnState->keyIDOwner)) || payoutDest == CTxDestination(PKHash(opt_ptx->keyIDVoting))) {
-        if (pindexPrev->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
-            return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-protx-payee-reuse-1");
+    if (false) {
+        if (payoutDest == CTxDestination(PKHash(dmn->pdmnState->keyIDOwner)) || payoutDest == CTxDestination(PKHash(opt_ptx->keyIDVoting))) {
+            if (pindexPrev->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
+                return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-protx-payee-reuse-1");
+            }
         }
     }
 

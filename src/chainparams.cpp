@@ -204,11 +204,14 @@ public:
         consensus.DIP0003EnforcementHeight = 320000;
         consensus.DIP0003EnforcementHash = uint256S("0x0");
         consensus.DIP0008Height = 279407; // 00000000000000112e41e4b3afda8b233b8cc07c532d2eac5de097b68358c43e
+
         consensus.BRRHeight = 123200; // 000000000000000c5a124f3eccfbe6e17876dca79cec9e63dfa70d269113c926
         consensus.DIP0020Height = 278014; // 000000000000000f64ed3bd9af1078177ac026f6aa2677aa4d8beeae43be56cc
         consensus.DIP0024Height = 278014; // 0000000000000001342be9c0b75ad40c276beaad91616423c4d9cb101b3db438
         consensus.DIP0024QuorumsHeight = 278014; // 000000000000001aa25181e4c466e593992c98f9eb21c69ee757b8bb0af50244
         consensus.V19Height = 278014; // 0000000000000015e32e73052d663626327004c81c5c22cb8b42c361015c0eae
+
+
         consensus.MinBIP9WarningHeight = 300000 + 2016; // V19 activation height + miner confirmation window
         consensus.powLimit = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // 
 

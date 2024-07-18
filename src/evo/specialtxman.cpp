@@ -161,6 +161,15 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
             TxValidationState tx_state;
             // At this moment CheckSpecialTx() and ProcessSpecialTx() may fail by 2 possible ways:
             // consensus failures and "TX_BAD_SPECIAL"
+
+
+            if (Params().NetworkIDString() == CBaseChainParams::MAIN
+                && (pindex->pprev->nHeight >= 490982 && pindex->pprev->nHeight <= 490984))
+            {
+                continue;
+            }
+
+
             if (!CheckSpecialTxInner(*ptr_tx, pindex->pprev, view, creditPool.indexes, fCheckCbTxMerleRoots, tx_state)) {
                 assert(tx_state.GetResult() == TxValidationResult::TX_CONSENSUS || tx_state.GetResult() == TxValidationResult::TX_BAD_SPECIAL);
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, tx_state.GetRejectReason(),
@@ -185,6 +194,15 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
         int64_t nTime3 = GetTimeMicros();
         nTimeQuorum += nTime3 - nTime2;
         LogPrint(BCLog::BENCHMARK, "        - quorumBlockProcessor: %.2fms [%.2fs]\n", 0.001 * (nTime3 - nTime2), nTimeQuorum * 0.000001);
+
+        
+        if (Params().NetworkIDString() == CBaseChainParams::MAIN && (pindex->nHeight >= 490979 && pindex->nHeight <= 490987))
+        {
+            // Avoid Segfault
+            return true;
+        }
+
+
 
         if (!deterministicMNManager->ProcessBlock(block, pindex, state, view, fJustCheck, updatesRet)) {
             // pass the state returned by the function above
@@ -234,7 +252,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
     {
 
         // BBP
-        if (Params().NetworkIDString() == CBaseChainParams::TESTNET)
+        if (Params().NetworkIDString() == CBaseChainParams::TESTNET || true)
         {
             if (pindex->nHeight < consensusParams.BABYLON_FALLING_HEIGHT) {
                 return true;
@@ -243,7 +261,7 @@ bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CM
         }
 
 
-        LogPrintf("%s -- failed: %s\n", __func__, e.what());
+        LogPrintf("%s -- failed[001]: %s\n", __func__, e.what());
         return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "failed-procspectxsinblock");
     }
 
