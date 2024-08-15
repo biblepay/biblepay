@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-# Copyright (c) 2013-2016 The Bitcoin Core developers
+# Copyright (c) 2013-2020 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #
 # Generate seeds.txt from "protx list valid 1"
+# then create onion_seeds.txt and add some active onion services to it; check tor.md for some
 #
 
 import re
@@ -19,21 +20,21 @@ MAX_SEEDS_PER_ASN=4
 
 # These are hosts that have been observed to be behaving strangely (e.g.
 # aggressively connecting to every node).
-SUSPICIOUS_HOSTS = {
-}
+with open("suspicious_hosts.txt", mode="r", encoding="utf-8") as f:
+    SUSPICIOUS_HOSTS = {s.strip() for s in f if s.strip()}
+
 
 PATTERN_IPV4 = re.compile(r"^((\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})):(\d+)$")
 PATTERN_IPV6 = re.compile(r"^\[([0-9a-z:]+)\]:(\d+)$")
-PATTERN_ONION = re.compile(r"^([abcdefghijklmnopqrstuvwxyz234567]{16}\.onion):(\d+)$")
+PATTERN_ONION = re.compile(r"^([a-z2-7]{56}\.onion):(\d+)$")
 
-def parseip(ip):
-    m = PATTERN_IPV4.match(ip)
-    sortkey = None
+def parseip(ip_in):
+    m = PATTERN_IPV4.match(ip_in)
     ip = None
     if m is None:
-        m = PATTERN_IPV6.match(ip)
+        m = PATTERN_IPV6.match(ip_in)
         if m is None:
-            m = PATTERN_ONION.match(ip)
+            m = PATTERN_ONION.match(ip_in)
             if m is None:
                 return None
             else:
@@ -91,14 +92,23 @@ def filtermultipayoutaddress(mns):
     return [mn for mn in mns if len(hist[mn['state']['payoutAddress']]) == 1]
 
 def resolveasn(resolver, ip):
-    asn = int([x.to_text() for x in resolver.resolve('.'.join(reversed(ip.split('.'))) + '.origin.asn.cymru.com', 'TXT').response.answer][0].split('\"')[1].split(' ')[0])
+    if ip['net'] == 'ipv4':
+        ipaddr = ip['ip']
+        prefix = '.origin'
+    else:                  # http://www.team-cymru.com/IP-ASN-mapping.html
+        res = str()                         # 2001:4860:b002:23::68
+        for nb in ip['ip'].split(':')[:4]:  # pick the first 4 nibbles
+            for c in nb.zfill(4):           # right padded with '0'
+                res += c + '.'              # 2001 4860 b002 0023
+        ipaddr = res.rstrip('.')            # 2.0.0.1.4.8.6.0.b.0.0.2.0.0.2.3
+        prefix = '.origin6'
+    asn = int([x.to_text() for x in resolver.resolve('.'.join(reversed(ipaddr.split('.'))) + prefix  + '.asn.cymru.com', 'TXT').response.answer][0].split('\"')[1].split(' ')[0])
     return asn
 
 # Based on Greg Maxwell's seed_filter.py
 def filterbyasn(ips, max_per_asn, max_total):
     # Sift out ips by type
-    ips_ipv4 = [ip for ip in ips if ip['net'] == 'ipv4']
-    ips_ipv6 = [ip for ip in ips if ip['net'] == 'ipv6']
+    ips_ipv46 = [ip for ip in ips if ip['net'] in ['ipv4', 'ipv6']]
     ips_onion = [ip for ip in ips if ip['net'] == 'onion']
 
     my_resolver = dns.resolver.Resolver()
@@ -109,13 +119,12 @@ def filterbyasn(ips, max_per_asn, max_total):
     my_resolver.nameservers = ['208.67.222.222', '208.67.220.220']
 
     # Resolve ASNs in parallel
-    asns = [pool.apply_async(resolveasn, args=(my_resolver, ip['ip'])) for ip in ips_ipv4]
+    asns = [pool.apply_async(resolveasn, args=(my_resolver, ip)) for ip in ips_ipv46]
 
-    # Filter IPv4 by ASN
+    # Filter IPv46 by ASN
     result = []
     asn_count = {}
-    for i in range(len(ips_ipv4)):
-        ip = ips_ipv4[i]
+    for i, ip in enumerate(ips_ipv46):
         if len(result) == max_total:
             break
         try:
@@ -126,13 +135,10 @@ def filterbyasn(ips, max_per_asn, max_total):
                 continue
             asn_count[asn] += 1
             result.append(ip)
-        except:
-            sys.stderr.write('ERR: Could not resolve ASN for "' + ip['ip'] + '"\n')
+        except Exception as e:
+            sys.stderr.write(f'ERR: Could not resolve ASN for {ip["ip"]}: {e}\n')
 
-    # TODO: filter IPv6 by ASN
-
-    # Add back non-IPv4
-    result.extend(ips_ipv6)
+    # Add back Onions
     result.extend(ips_onion)
     return result
 
@@ -144,6 +150,11 @@ def main():
     else:
         mns = json.load(sys.stdin)
 
+    onions = []
+    if len(sys.argv) > 2:
+        with open(sys.argv[2], 'r', encoding="utf8") as f:
+            onions = f.read().split('\n')
+
     # Skip PoSe banned MNs
     mns = [mn for mn in mns if mn['state']['PoSeBanHeight'] == -1]
     # Skip MNs with < 10000 confirmations
@@ -154,10 +165,14 @@ def main():
     mns = filtermultipayoutaddress(mns)
     # Extract IPs
     ips = [parseip(mn['state']['service']) for mn in mns]
+    for onion in onions:
+        parsed = parseip(onion)
+        if parsed is not None:
+            ips.append(parsed)
     # Look up ASNs and limit results, both per ASN and globally.
     ips = filterbyasn(ips, MAX_SEEDS_PER_ASN, NSEEDS)
     # Sort the results by IP address (for deterministic output).
-    ips.sort(key=lambda x: (x['net'], x['sortkey']))
+    ips.sort(key=lambda x: (x['net'], x['sortkey']), reverse=True)
 
     for ip in ips:
         if ip['net'] == 'ipv6':

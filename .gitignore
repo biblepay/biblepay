@@ -1,4 +1,4 @@
-﻿*.sublime-project
+*.sublime-project
 *.sublime-workspace
 todo.txt
 reset-files.bash
@@ -9,17 +9,15 @@ reset-files.bash
 src/biblepay
 src/biblepayd
 src/biblepay-cli
+src/biblepay-gui
+src/biblepay-node
 src/biblepay-tx
+src/biblepay-wallet
+src/test/fuzz/fuzz
 src/test/test_biblepay
-src/test/test_biblepay_fuzzy
 src/qt/test/test_biblepay-qt
 src/qt/res/css/colors/*
 src/bench/bench_biblepay
-src/crypto/RandomX/buildwin64/CMakeFiles/*
-src/crypto/RandomX/buildwin64/CMakeCache.txt
-src/crypto/RandomX/buildwin64/randomx-benchmark
-src/crypto/RandomX/buildwin64/randomx-codegen
-
 
 # autoreconf
 Makefile.in
@@ -38,13 +36,15 @@ build-aux/m4/ltversion.m4
 build-aux/missing
 build-aux/compile
 build-aux/test-driver
+config.cache
 config.log
 config.status
 configure
 libtool
-src/config/biblepay-config.h
-src/config/biblepay-config.h.in
+src/config/bitcoin-config.h
+src/config/bitcoin-config.h.in
 src/config/stamp-h1
+src/obj
 share/setup.nsi
 share/qt/Info.plist
 
@@ -61,7 +61,7 @@ libconftest.dylib*
 .dirstamp
 .libs
 .*.swp
-*.*~*
+*~
 *.bak
 *.rej
 *.orig
@@ -71,16 +71,19 @@ libconftest.dylib*
 *.a
 *.pb.cc
 *.pb.h
+*.dat
 
 *.log
 *.trs
 *.dmg
+*.iso
 
 *.json.h
 *.raw.h
 
 # Only ignore unexpected patches
 *.patch
+!contrib/guix/patches/*.patch
 !depends/patches/**/*.patch
 
 #libtool object files
@@ -90,10 +93,12 @@ libconftest.dylib*
 # Compilation and Qt preprocessor part
 *.qm
 Makefile
+!depends/Makefile
 biblepay-qt
 BiblePay-Qt.app
-background.tiff*
-!/depends/Makefile
+
+# Qt Creator
+Makefile.am.user
 
 # Unit-tests
 Makefile.test
@@ -107,13 +112,19 @@ qrc_*.cpp
 build
 *.dSYM
 
+# Previous releases
+releases
+
 #lcov
 *.gcno
 *.gcda
 /*.info
 test_biblepay.coverage/
 total.coverage/
+fuzz.coverage/
 coverage_percent.txt
+/cov_tool_wrapper.sh
+qa-assets/
 
 #build tests
 linux-coverage-build
@@ -121,6 +132,7 @@ linux-build
 win32-build
 test/config.ini
 test/cache/*
+test/.mypy_cache/
 
 !src/leveldb*/Makefile
 
@@ -145,3 +157,17 @@ make
 # CLion
 .idea
 cmake-build-debug
+
+# clang-check
+*.plist
+
+osx_volname
+dist/
+
+/guix-build-*
+
+# cppcheck cache-directory
+test/lint/.cppcheck/*
+
+# flake8 cache location
+.cache/*

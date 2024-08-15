@@ -1,11 +1,11 @@
-﻿# Block and Transaction Broadcasting with ZeroMQ
+# Block and Transaction Broadcasting with ZeroMQ
 
-[ZeroMQ](http://zeromq.org/) is a lightweight wrapper around TCP
+[ZeroMQ](https://zeromq.org/) is a lightweight wrapper around TCP
 connections, inter-process communication, and shared-memory,
 providing various message-oriented semantics such as publish/subscribe,
 request/reply, and push/pull.
 
-The Biblepay Core daemon can be configured to act as a trusted "border
+The BiblePay Core daemon can be configured to act as a trusted "border
 router", implementing the biblepay wire protocol and relay, making
 consensus decisions, maintaining the local blockchain database,
 broadcasting locally generated transactions into the network, and
@@ -33,12 +33,15 @@ buffering or reassembly.
 
 ## Prerequisites
 
-The ZeroMQ feature in Biblepay Core requires ZeroMQ API version 4.x or
-newer. Typically, it is packaged by distributions as something like
+The ZeroMQ feature in BiblePay Core requires the ZeroMQ API >= 4.0.0
+[libzmq](https://github.com/zeromq/libzmq/releases).
+For version information, see [dependencies.md](dependencies.md).
+Typically, it is packaged by distributions as something like
 *libzmq3-dev*. The C++ wrapper for ZeroMQ is *not* needed.
 
-In order to run the example Python client scripts in contrib/ one must
-also install *python3-zmq*, though this is not necessary for daemon
+In order to run the example Python client scripts in the `contrib/zmq/`
+directory, one must also install [PyZMQ](https://github.com/zeromq/pyzmq)
+(generally with `pip install pyzmq`), though this is not necessary for daemon
 operation.
 
 ## Enabling
@@ -77,11 +80,38 @@ Currently, the following notifications are supported:
 
 The socket type is PUB and the address must be a valid ZeroMQ socket
 address. The same address can be used in more than one notification.
+The same notification can be specified more than once.
+
+The option to set the PUB socket's outbound message high water mark
+(SNDHWM) may be set individually for each notification:
+
+    -zmqpubhashtxhwm=n
+    -zmqpubhashblockhwm=n
+    -zmqpubhashchainlockhwm=n
+    -zmqpubhashtxlockhwm=n
+    -zmqpubhashgovernancevotehwm=n
+    -zmqpubhashgovernanceobjecthwm=n
+    -zmqpubhashinstantsenddoublespendhwm=n
+    -zmqpubhashrecoveredsighwm=n
+    -zmqpubrawblockhwm=n
+    -zmqpubrawtxhwm=n
+    -zmqpubrawchainlockhwm=n
+    -zmqpubrawchainlocksighwm=n
+    -zmqpubrawtxlockhwm=n
+    -zmqpubrawtxlocksighwm=n
+    -zmqpubrawgovernancevotehwm=n
+    -zmqpubrawgovernanceobjecthwm=n
+    -zmqpubrawinstantsenddoublespendhwm=n
+    -zmqpubrawrecoveredsighwm=n
+
+The high water mark value must be an integer greater than or equal to 0.
 
 For instance:
 
     $ biblepayd -zmqpubhashtx=tcp://127.0.0.1:28332 \
-               -zmqpubrawtx=ipc:///tmp/biblepayd.tx.raw
+               -zmqpubhashtx=tcp://192.168.1.2:28332 \
+               -zmqpubrawtx=ipc:///tmp/biblepayd.tx.raw \
+               -zmqpubhashtxhwm=10000
 
 Each PUB notification has a topic and body, where the header
 corresponds to the notification type. For instance, for the
@@ -97,7 +127,21 @@ ZeroMQ endpoint specifiers for TCP (and others) are documented in the
 Client side, then, the ZeroMQ subscriber socket must have the
 ZMQ_SUBSCRIBE option set to one or either of these prefixes (for
 instance, just `hash`); without doing so will result in no messages
-arriving. Please see `contrib/zmq/zmq_sub.py` for a working example.
+arriving. Please see [`contrib/zmq/zmq_sub.py`](/contrib/zmq/zmq_sub.py) for a working example.
+
+The ZMQ_PUB socket's ZMQ_TCP_KEEPALIVE option is enabled. This means that
+the underlying SO_KEEPALIVE option is enabled when using a TCP transport.
+The effective TCP keepalive values are managed through the underlying
+operating system configuration and must be configured prior to connection establishment.
+
+For example, when running on GNU/Linux, one might use the following
+to lower the keepalive setting to 10 minutes:
+
+sudo sysctl -w net.ipv4.tcp_keepalive_time=600
+
+Setting the keepalive values appropriately for your operating environment may
+improve connectivity in situations where long-lived connections are silently
+dropped by network middle boxes.
 
 ## Remarks
 
@@ -116,5 +160,5 @@ retrieve the chain from the last known block to the new tip.
 
 There are several possibilities that ZMQ notification can get lost
 during transmission depending on the communication type you are
-using. BiblePayd appends an up-counting sequence number to each
+using. Biblepayd appends an up-counting sequence number to each
 notification which allows listeners to detect lost notifications.

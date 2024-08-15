@@ -1,35 +1,78 @@
-﻿// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <rpc/server.h>
-#include <rpc/client.h>
-
+#include <context.h>
 #include <core_io.h>
-#include <key_io.h>
-#include <netbase.h>
+#include <interfaces/chain.h>
+#include <node/context.h>
+#include <rpc/blockchain.h>
+#include <rpc/client.h>
+#include <rpc/server.h>
+#include <rpc/util.h>
+#include <test/util/setup_common.h>
+#include <univalue.h>
+#include <util/time.h>
 
-#include <test/test_biblepay.h>
-
-#include <boost/algorithm/string.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <univalue.h>
-
-UniValue CallRPC(std::string args)
+static UniValue JSON(std::string_view json)
 {
-    std::vector<std::string> vArgs;
-    boost::split(vArgs, args, boost::is_any_of(" \t"));
+    UniValue value;
+    BOOST_CHECK(value.read(json.data(), json.size()));
+    return value;
+}
+
+class HasJSON
+{
+public:
+    explicit HasJSON(std::string json) : m_json(std::move(json)) {}
+    bool operator()(const UniValue& value) const
+    {
+        std::string json{value.write()};
+        BOOST_CHECK_EQUAL(json, m_json);
+        return json == m_json;
+    };
+
+private:
+    const std::string m_json;
+};
+
+class RPCTestingSetup : public TestingSetup
+{
+public:
+    UniValue TransformParams(const UniValue& params, std::vector<std::string> arg_names);
+    UniValue CallRPC(std::string args);
+};
+
+UniValue RPCTestingSetup::TransformParams(const UniValue& params, std::vector<std::string> arg_names)
+{
+    UniValue transformed_params;
+    CRPCTable table;
+    CRPCCommand command{"category", "method", [&](const JSONRPCRequest& request, UniValue&, bool) -> bool { transformed_params = request.params; return true; }, arg_names, /*unique_id=*/0};
+    table.appendCommand("method", &command);
+    CoreContext context{m_node};
+    JSONRPCRequest request(context);
+    request.strMethod = "method";
+    request.params = params;
+    if (RPCIsInWarmup(nullptr)) SetRPCWarmupFinished();
+    table.execute(request);
+    return transformed_params;
+}
+
+UniValue RPCTestingSetup::CallRPC(std::string args)
+{
+    std::vector<std::string> vArgs{SplitString(args, ' ')};
     std::string strMethod = vArgs[0];
     vArgs.erase(vArgs.begin());
-    JSONRPCRequest request;
+    CoreContext context{m_node};
+    JSONRPCRequest request(context);
     request.strMethod = strMethod;
     request.params = RPCConvertValues(strMethod, vArgs);
     request.fHelp = false;
-    BOOST_CHECK(tableRPC[strMethod]);
-    rpcfn_type method = tableRPC[strMethod]->actor;
+    if (RPCIsInWarmup(nullptr)) SetRPCWarmupFinished();
     try {
-        UniValue result = (*method)(request);
+        UniValue result = tableRPC.execute(request);
         return result;
     }
     catch (const UniValue& objError) {
@@ -38,7 +81,30 @@ UniValue CallRPC(std::string args)
 }
 
 
-BOOST_FIXTURE_TEST_SUITE(rpc_tests, TestingSetup)
+BOOST_FIXTURE_TEST_SUITE(rpc_tests, RPCTestingSetup)
+
+BOOST_AUTO_TEST_CASE(rpc_namedparams)
+{
+    const std::vector<std::string> arg_names{{"arg1", "arg2", "arg3", "arg4", "arg5"}};
+
+    // Make sure named arguments are transformed into positional arguments in correct places separated by nulls
+    BOOST_CHECK_EQUAL(TransformParams(JSON(R"({"arg2": 2, "arg4": 4})"), arg_names).write(), "[null,2,null,4]");
+
+    // Make sure named and positional arguments can be combined.
+    BOOST_CHECK_EQUAL(TransformParams(JSON(R"({"arg5": 5, "args": [1, 2], "arg4": 4})"), arg_names).write(), "[1,2,null,4,5]");
+
+    // Make sure a unknown named argument raises an exception
+    BOOST_CHECK_EXCEPTION(TransformParams(JSON(R"({"arg2": 2, "unknown": 6})"), arg_names), UniValue,
+                          HasJSON(R"({"code":-8,"message":"Unknown named parameter unknown"})"));
+
+    // Make sure an overlap between a named argument and positional argument raises an exception
+    BOOST_CHECK_EXCEPTION(TransformParams(JSON(R"({"args": [1,2,3], "arg4": 4, "arg2": 2})"), arg_names), UniValue,
+                          HasJSON(R"({"code":-8,"message":"Parameter arg2 specified twice both as positional and named argument"})"));
+
+    // Make sure extra positional arguments can be passed through to the method implemenation, as long as they don't overlap with named arguments.
+    BOOST_CHECK_EQUAL(TransformParams(JSON(R"({"args": [1,2,3,4,5,6,7,8,9,10]})"), arg_names).write(), "[1,2,3,4,5,6,7,8,9,10]");
+    BOOST_CHECK_EQUAL(TransformParams(JSON(R"([1,2,3,4,5,6,7,8,9,10])"), arg_names).write(), "[1,2,3,4,5,6,7,8,9,10]");
+}
 
 BOOST_AUTO_TEST_CASE(rpc_rawparams)
 {
@@ -48,6 +114,10 @@ BOOST_AUTO_TEST_CASE(rpc_rawparams)
     BOOST_CHECK_THROW(CallRPC("getrawtransaction"), std::runtime_error);
     BOOST_CHECK_THROW(CallRPC("getrawtransaction not_hex"), std::runtime_error);
     BOOST_CHECK_THROW(CallRPC("getrawtransaction a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed not_int"), std::runtime_error);
+
+    BOOST_CHECK_THROW(CallRPC("gettxchainlocks"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRPC("gettxchainlocks not_array"), std::runtime_error);
+    BOOST_CHECK_THROW(CallRPC("gettxchainlocks [] extra"), std::runtime_error);
 
     BOOST_CHECK_THROW(CallRPC("createrawtransaction"), std::runtime_error);
     BOOST_CHECK_THROW(CallRPC("createrawtransaction null null"), std::runtime_error);
@@ -117,9 +187,6 @@ BOOST_AUTO_TEST_CASE(rpc_rawsign)
 BOOST_AUTO_TEST_CASE(rpc_createraw_op_return)
 {
     BOOST_CHECK_NO_THROW(CallRPC("createrawtransaction [{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] {\"data\":\"68656c6c6f776f726c64\"}"));
-
-    // Allow more than one data transaction output
-    BOOST_CHECK_NO_THROW(CallRPC("createrawtransaction [{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] {\"data\":\"68656c6c6f776f726c64\",\"data\":\"68656c6c6f776f726c64\"}"));
 
     // Key not "data" (bad address)
     BOOST_CHECK_THROW(CallRPC("createrawtransaction [{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] {\"somedata\":\"68656c6c6f776f726c64\"}"), std::runtime_error);
@@ -243,7 +310,7 @@ BOOST_AUTO_TEST_CASE(rpc_ban)
     BOOST_CHECK_NO_THROW(CallRPC(std::string("setban 127.0.0.0 remove")));
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("listbanned")));
     ar = r.get_array();
-    BOOST_CHECK_EQUAL(ar.size(), 0);
+    BOOST_CHECK_EQUAL(ar.size(), 0U);
 
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("setban 127.0.0.0/24 add 9907731200 true")));
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("listbanned")));
@@ -273,7 +340,7 @@ BOOST_AUTO_TEST_CASE(rpc_ban)
     BOOST_CHECK_NO_THROW(CallRPC(std::string("setban 127.0.0.0/24 remove")));
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("listbanned")));
     ar = r.get_array();
-    BOOST_CHECK_EQUAL(ar.size(), 0);
+    BOOST_CHECK_EQUAL(ar.size(), 0U);
 
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("setban 127.0.0.0/255.255.0.0 add")));
     BOOST_CHECK_THROW(r = CallRPC(std::string("setban 127.0.1.1 add")), std::runtime_error);
@@ -281,7 +348,7 @@ BOOST_AUTO_TEST_CASE(rpc_ban)
     BOOST_CHECK_NO_THROW(CallRPC(std::string("clearbanned")));
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("listbanned")));
     ar = r.get_array();
-    BOOST_CHECK_EQUAL(ar.size(), 0);
+    BOOST_CHECK_EQUAL(ar.size(), 0U);
 
 
     BOOST_CHECK_THROW(r = CallRPC(std::string("setban test add")), std::runtime_error); //invalid IP
@@ -335,5 +402,129 @@ BOOST_AUTO_TEST_CASE(rpc_convert_values_generatetoaddress)
     BOOST_CHECK_EQUAL(result[2].get_int(), 9);
 }
 #endif // ENABLE_MINER
+
+BOOST_AUTO_TEST_CASE(rpc_getblockstats_calculate_percentiles_by_size)
+{
+    int64_t total_size = 200;
+    std::vector<std::pair<CAmount, int64_t>> feerates;
+    CAmount result[NUM_GETBLOCKSTATS_PERCENTILES] = { 0 };
+
+    for (int64_t i = 0; i < 100; i++) {
+        feerates.emplace_back(std::make_pair(1 ,1));
+    }
+
+    for (int64_t i = 0; i < 100; i++) {
+        feerates.emplace_back(std::make_pair(2 ,1));
+    }
+
+    CalculatePercentilesBySize(result, feerates, total_size);
+    BOOST_CHECK_EQUAL(result[0], 1);
+    BOOST_CHECK_EQUAL(result[1], 1);
+    BOOST_CHECK_EQUAL(result[2], 1);
+    BOOST_CHECK_EQUAL(result[3], 2);
+    BOOST_CHECK_EQUAL(result[4], 2);
+
+    // Test with more pairs, and two pairs overlapping 2 percentiles.
+    total_size = 100;
+    CAmount result2[NUM_GETBLOCKSTATS_PERCENTILES] = { 0 };
+    feerates.clear();
+
+    feerates.emplace_back(std::make_pair(1, 9));
+    feerates.emplace_back(std::make_pair(2 , 16)); //10th + 25th percentile
+    feerates.emplace_back(std::make_pair(4 ,50)); //50th + 75th percentile
+    feerates.emplace_back(std::make_pair(5 ,10));
+    feerates.emplace_back(std::make_pair(9 ,15));  // 90th percentile
+
+    CalculatePercentilesBySize(result2, feerates, total_size);
+
+    BOOST_CHECK_EQUAL(result2[0], 2);
+    BOOST_CHECK_EQUAL(result2[1], 2);
+    BOOST_CHECK_EQUAL(result2[2], 4);
+    BOOST_CHECK_EQUAL(result2[3], 4);
+    BOOST_CHECK_EQUAL(result2[4], 9);
+
+    // Same test as above, but one of the percentile-overlapping pairs is split in 2.
+    total_size = 100;
+    CAmount result3[NUM_GETBLOCKSTATS_PERCENTILES] = { 0 };
+    feerates.clear();
+
+    feerates.emplace_back(std::make_pair(1, 9));
+    feerates.emplace_back(std::make_pair(2 , 11)); // 10th percentile
+    feerates.emplace_back(std::make_pair(2 , 5)); // 25th percentile
+    feerates.emplace_back(std::make_pair(4 ,50)); //50th + 75th percentile
+    feerates.emplace_back(std::make_pair(5 ,10));
+    feerates.emplace_back(std::make_pair(9 ,15)); // 90th percentile
+
+    CalculatePercentilesBySize(result3, feerates, total_size);
+
+    BOOST_CHECK_EQUAL(result3[0], 2);
+    BOOST_CHECK_EQUAL(result3[1], 2);
+    BOOST_CHECK_EQUAL(result3[2], 4);
+    BOOST_CHECK_EQUAL(result3[3], 4);
+    BOOST_CHECK_EQUAL(result3[4], 9);
+
+    // Test with one transaction spanning all percentiles.
+    total_size = 104;
+    CAmount result4[NUM_GETBLOCKSTATS_PERCENTILES] = { 0 };
+    feerates.clear();
+
+    feerates.emplace_back(std::make_pair(1, 100));
+    feerates.emplace_back(std::make_pair(2, 1));
+    feerates.emplace_back(std::make_pair(3, 1));
+    feerates.emplace_back(std::make_pair(3, 1));
+    feerates.emplace_back(std::make_pair(999999, 1));
+
+    CalculatePercentilesBySize(result4, feerates, total_size);
+
+    for (int64_t i = 0; i < NUM_GETBLOCKSTATS_PERCENTILES; i++) {
+        BOOST_CHECK_EQUAL(result4[i], 1);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(rpc_bls)
+{
+    UniValue r;
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls generate")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls generate 1")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    std::string secret_legacy = find_value(r.get_obj(), "secret").get_str();
+    std::string public_legacy = find_value(r.get_obj(), "public").get_str();
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls generate 0")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    std::string secret_basic = find_value(r.get_obj(), "secret").get_str();
+    std::string public_basic = find_value(r.get_obj(), "public").get_str();
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_legacy));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), public_legacy);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_legacy + std::string(" 1")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), public_legacy);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_legacy + std::string(" 0")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    BOOST_CHECK(find_value(r.get_obj(), "public").get_str() != public_legacy);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_basic + std::string(" 0")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), public_basic);
+
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret_basic + std::string(" 1")));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK(find_value(r.get_obj(), "public").get_str() != public_basic);
+
+    std::string secret = "0b072b1b8b28335b0460aa695ee8ce1f60dc01e6eb12655ece2a877379dfdb51";
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "legacy");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), "9379c28e0f50546906fe733f1222c8f7e39574d513790034f1fec1476286eb652a350c8c0e630cd2cc60d10c26d6f6ee");
+    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("bls fromsecret ") + secret + " 0"));
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "scheme").get_str(), "basic");
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "public").get_str(), "b379c28e0f50546906fe733f1222c8f7e39574d513790034f1fec1476286eb652a350c8c0e630cd2cc60d10c26d6f6ee");
+}
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -1,12 +1,10 @@
-﻿#!/usr/bin/env python3
-# Copyright (c) 2018-2020 The DÃSH Core Developers
+#!/usr/bin/env python3
+# Copyright (c) 2018-2024 The BiblePay Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-from test_framework.mininode import *
 from test_framework.test_framework import BiblepayTestFramework
-from test_framework.util import isolate_node, reconnect_isolated_node, assert_equal, \
-    assert_raises_rpc_error
+from test_framework.util import assert_equal, assert_raises_rpc_error
 
 '''
 p2p_instantsend.py
@@ -16,16 +14,24 @@ Tests InstantSend functionality (prevent doublespend for unconfirmed transaction
 
 class InstantSendTest(BiblepayTestFramework):
     def set_test_params(self):
-        self.set_biblepay_test_params(7, 3, fast_dip3_enforcement=True)
+        self.set_biblepay_test_params(8, 4, fast_dip3_enforcement=True)
         # set sender,  receiver,  isolated nodes
         self.isolated_idx = 1
         self.receiver_idx = 2
         self.sender_idx = 3
 
     def run_test(self):
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
-        self.mine_quorum()
+        self.activate_v19(expected_activation_height=900)
+        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+        (quorum_info_i_0, quorum_info_i_1) = self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
         self.test_mempool_doublespend()
         self.test_block_doublespend()
@@ -37,7 +43,9 @@ class InstantSendTest(BiblepayTestFramework):
 
         # feed the sender with some balance
         sender_addr = sender.getnewaddress()
-        self.nodes[0].sendtoaddress(sender_addr, 1)
+        is_id = self.nodes[0].sendtoaddress(sender_addr, 1)
+        for node in self.nodes:
+            self.wait_for_instantlock(is_id, node)
         self.bump_mocktime(1)
         self.nodes[0].generate(2)
         self.sync_all()
@@ -45,7 +53,7 @@ class InstantSendTest(BiblepayTestFramework):
         # create doublespending transaction, but don't relay it
         dblspnd_tx = self.create_raw_tx(sender, isolated, 0.5, 1, 100)
         # isolate one node from network
-        isolate_node(isolated)
+        self.isolate_node(self.isolated_idx)
         # instantsend to receiver
         receiver_addr = receiver.getnewaddress()
         is_id = sender.sendtoaddress(receiver_addr, 0.9)
@@ -56,20 +64,24 @@ class InstantSendTest(BiblepayTestFramework):
         for node in connected_nodes:
             self.wait_for_instantlock(is_id, node)
         # send doublespend transaction to isolated node
-        isolated.sendrawtransaction(dblspnd_tx['hex'])
+        dblspnd_txid = isolated.sendrawtransaction(dblspnd_tx['hex'])
         # generate block on isolated node with doublespend transaction
+        self.bump_mocktime(599)
+        wrong_early_block = isolated.generate(1)[0]
+        assert not "confirmation" in isolated.getrawtransaction(dblspnd_txid, 1)
+        isolated.invalidateblock(wrong_early_block)
         self.bump_mocktime(1)
-        isolated.generate(1)
-        wrong_block = isolated.getbestblockhash()
+        wrong_block = isolated.generate(1)[0]
+        assert_equal(isolated.getrawtransaction(dblspnd_txid, 1)["confirmations"], 1)
         # connect isolated block to network
-        reconnect_isolated_node(isolated, 0)
+        self.reconnect_isolated_node(self.isolated_idx, 0)
         # check doublespend block is rejected by other nodes
         timeout = 10
-        for i in range(0, self.num_nodes):
-            if i == self.isolated_idx:
+        for idx, node in enumerate(self.nodes):
+            if idx == self.isolated_idx:
                 continue
-            res = self.nodes[i].waitforblock(wrong_block, timeout)
-            assert (res['hash'] != wrong_block)
+            res = node.waitforblock(wrong_block, timeout)
+            assert res['hash'] != wrong_block
             # wait for long time only for first node
             timeout = 1
         # send coins back to the controller node without waiting for confirmations
@@ -87,38 +99,45 @@ class InstantSendTest(BiblepayTestFramework):
         sender = self.nodes[self.sender_idx]
         receiver = self.nodes[self.receiver_idx]
         isolated = self.nodes[self.isolated_idx]
+        connected_nodes = self.nodes.copy()
+        del connected_nodes[self.isolated_idx]
 
         # feed the sender with some balance
         sender_addr = sender.getnewaddress()
-        self.nodes[0].sendtoaddress(sender_addr, 1)
+        is_id = self.nodes[0].sendtoaddress(sender_addr, 1)
+        for node in self.nodes:
+            self.wait_for_instantlock(is_id, node)
         self.bump_mocktime(1)
         self.nodes[0].generate(2)
         self.sync_all()
 
         # create doublespending transaction, but don't relay it
         dblspnd_tx = self.create_raw_tx(sender, isolated, 0.5, 1, 100)
-        dblspnd_txid = bytes_to_hex_str(hash256(hex_str_to_bytes(dblspnd_tx['hex']))[::-1])
         # isolate one node from network
-        isolate_node(isolated)
+        self.isolate_node(self.isolated_idx)
         # send doublespend transaction to isolated node
-        isolated.sendrawtransaction(dblspnd_tx['hex'])
+        dblspnd_txid = isolated.sendrawtransaction(dblspnd_tx['hex'])
+        assert dblspnd_txid in set(isolated.getrawmempool())
         # let isolated node rejoin the network
         # The previously isolated node should NOT relay the doublespending TX
-        reconnect_isolated_node(isolated, 0)
-        for node in self.nodes:
-            if node is not isolated:
-                assert_raises_rpc_error(-5, "No such mempool or blockchain transaction", node.getrawtransaction, dblspnd_txid)
-        # instantsend to receiver. The previously isolated node should prune the doublespend TX and request the correct
-        # TX from other nodes.
+        self.reconnect_isolated_node(self.isolated_idx, 0)
+        for node in connected_nodes:
+            assert_raises_rpc_error(-5, "No such mempool or blockchain transaction", node.getrawtransaction, dblspnd_txid)
+        # Instantsend to receiver. The previously isolated node won't accept the tx but it should
+        # request the correct TX from other nodes once the corresponding lock is received.
+        # And this time the doublespend TX should be pruned once the correct tx is received.
         receiver_addr = receiver.getnewaddress()
         is_id = sender.sendtoaddress(receiver_addr, 0.9)
         # wait for the transaction to propagate
         self.sync_mempools()
         for node in self.nodes:
             self.wait_for_instantlock(is_id, node)
-        assert_raises_rpc_error(-5, "No such mempool or blockchain transaction", isolated.getrawtransaction, dblspnd_txid)
+        assert dblspnd_txid not in set(isolated.getrawmempool())
         # send coins back to the controller node without waiting for confirmations
-        receiver.sendtoaddress(self.nodes[0].getnewaddress(), 0.9, "", "", True)
+        sentback_id = receiver.sendtoaddress(self.nodes[0].getnewaddress(), 0.9, "", "", True)
+        self.sync_mempools()
+        for node in self.nodes:
+            self.wait_for_instantlock(sentback_id, node)
         assert_equal(receiver.getwalletinfo()["balance"], 0)
         # mine more blocks
         self.bump_mocktime(1)

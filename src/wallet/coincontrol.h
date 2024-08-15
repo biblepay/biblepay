@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,7 +11,7 @@
 #include <primitives/transaction.h>
 #include <script/standard.h>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 enum class CoinType
 {
@@ -26,6 +26,12 @@ enum class CoinType
     MAX_COIN_TYPE = ONLY_COINJOIN_COLLATERAL,
 };
 
+//! Default for -avoidpartialspends
+static constexpr bool DEFAULT_AVOIDPARTIALSPENDS = false;
+
+const int DEFAULT_MIN_DEPTH = 0;
+const int DEFAULT_MAX_DEPTH = 9999999;
+
 /** Coin Control Features. */
 class CCoinControl
 {
@@ -35,18 +41,26 @@ public:
     bool fAllowOtherInputs;
     //! If false, only include as many inputs as necessary to fulfill a coin selection request. Only usable together with fAllowOtherInputs
     bool fRequireAllInputs;
-    //! Includes watch only addresses which match the ISMINE_WATCH_SOLVABLE criteria
+    //! Includes watch only addresses which are solvable
     bool fAllowWatchOnly;
     //! Override automatic min/max checks on fee, m_feerate must be set if true
     bool fOverrideFeeRate;
-    //! Override the default payTxFee if set
-    boost::optional<CFeeRate> m_feerate;
+    //! Override the wallet's m_pay_tx_fee if set
+    std::optional<CFeeRate> m_feerate;
     //! Override the discard feerate estimation with m_discard_feerate in CreateTransaction if set
-    boost::optional<CFeeRate> m_discard_feerate;
+    std::optional<CFeeRate> m_discard_feerate;
     //! Override the default confirmation target if set
-    boost::optional<unsigned int> m_confirm_target;
+    std::optional<unsigned int> m_confirm_target;
+    //! Avoid partial use of funds sent to a given address
+    bool m_avoid_partial_spends;
+    //! Forbids inclusion of dirty (previously used) addresses
+    bool m_avoid_address_reuse;
     //! Fee estimation mode to control arguments to estimateSmartFee
     FeeEstimateMode m_fee_mode;
+    //! Minimum chain depth value for coin availability
+    int m_min_depth = DEFAULT_MIN_DEPTH;
+    //! Maximum chain depth value for coin availability
+    int m_max_depth = DEFAULT_MAX_DEPTH;
     //! Controls which types of coins are allowed to be used (default: ALL_COINS)
     CoinType nCoinType;
 
@@ -55,22 +69,7 @@ public:
         SetNull();
     }
 
-    void SetNull(bool fResetCoinType = true)
-    {
-        destChange = CNoDestination();
-        fAllowOtherInputs = false;
-        fRequireAllInputs = true;
-        fAllowWatchOnly = false;
-        setSelected.clear();
-        m_feerate.reset();
-        m_discard_feerate.reset();
-        fOverrideFeeRate = false;
-        m_confirm_target.reset();
-        m_fee_mode = FeeEstimateMode::UNSET;
-        if (fResetCoinType) {
-            nCoinType = CoinType::ALL_COINS;
-        }
-    }
+    void SetNull(bool fResetCoinType = true);
 
     bool HasSelected() const
     {
@@ -102,7 +101,7 @@ public:
         vOutpoints.assign(setSelected.begin(), setSelected.end());
     }
 
-    // BiblePay-specific helpers
+    // Biblepay-specific helpers
 
     void UseCoinJoin(bool fUseCoinJoin)
     {

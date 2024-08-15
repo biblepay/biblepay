@@ -1,9 +1,9 @@
-﻿// Copyright (c) 2018-2020 The DÃSH Core Developers
+// Copyright (c) 2018-2022 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <script/script.h>
-#include <test/test_biblepay.h>
+#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 

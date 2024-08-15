@@ -1,5 +1,5 @@
-﻿#!/usr/bin/env python3
-# Copyright (c) 2019-2021 The DÃSH Core Developers
+#!/usr/bin/env python3
+# Copyright (c) 2019-2021 The BiblePay Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,6 +15,9 @@ Tests CoinJoin basic RPC
 class CoinJoinTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
 
     def run_test(self):
         self.test_coinjoin_start_stop()

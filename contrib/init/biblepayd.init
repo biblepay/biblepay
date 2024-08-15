@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 #
-#  biblepayd The Biblepay Core server.
+#  biblepayd The BiblePay Core server.
 #
 #
 # chkconfig: 345 80 20
@@ -39,7 +39,7 @@ start() {
 
 stop() {
     echo -n $"Stopping $prog: "
-    killproc $prog
+    killproc $prog -t600
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && rm -f $lockfile

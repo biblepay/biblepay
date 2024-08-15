@@ -8,7 +8,8 @@
 #
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
+from test_framework.test_node import ErrorMatch
+from test_framework.util import assert_equal
 
 
 class TimestampIndexTest(BitcoinTestFramework):
@@ -25,24 +26,23 @@ class TimestampIndexTest(BitcoinTestFramework):
         # Nodes 2/3 are used for testing
         self.start_node(2)
         self.start_node(3, ["-timestampindex"])
-        connect_nodes(self.nodes[0], 1)
-        connect_nodes(self.nodes[0], 2)
-        connect_nodes(self.nodes[0], 3)
+        self.connect_nodes(0, 1)
+        self.connect_nodes(0, 2)
+        self.connect_nodes(0, 3)
 
-        self.is_network_split = False
         self.sync_all()
 
     def run_test(self):
         self.log.info("Test that settings can't be changed without -reindex...")
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-timestampindex=0"], "You need to rebuild the database using -reindex to change -timestampindex", partial_match=True)
+        self.nodes[1].assert_start_raises_init_error(["-timestampindex=0"], "You need to rebuild the database using -reindex to change -timestampindex", match=ErrorMatch.PARTIAL_REGEX)
         self.start_node(1, ["-timestampindex=0", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
+        self.connect_nodes(0, 1)
         self.sync_all()
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-timestampindex"], "You need to rebuild the database using -reindex to change -timestampindex", partial_match=True)
+        self.nodes[1].assert_start_raises_init_error(["-timestampindex"], "You need to rebuild the database using -reindex to change -timestampindex", match=ErrorMatch.PARTIAL_REGEX)
         self.start_node(1, ["-timestampindex", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
+        self.connect_nodes(0, 1)
         self.sync_all()
 
         self.log.info("Mining 5 blocks...")

@@ -1,4 +1,4 @@
-﻿# /etc/conf.d/biblepayd: config file for /etc/init.d/biblepayd
+# /etc/conf.d/biblepayd: config file for /etc/init.d/biblepayd
 
 # Config file location
 #BITCOIND_CONFIGFILE="/etc/biblepaycore/biblepay.conf"

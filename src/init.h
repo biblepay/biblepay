@@ -1,72 +1,76 @@
-﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2015 The Bitcoin Core developers
+// Copyright (c) 2009-2010 Satoshi Nakamoto
+// Copyright (c) 2009-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_INIT_H
 #define BITCOIN_INIT_H
 
+#include <context.h>
+
 #include <memory>
 #include <string>
-#include <util.h>
 
-class CScheduler;
-class CWallet;
+class ArgsManager;
+struct NodeContext;
 
-class WalletInitInterface;
-extern const WalletInitInterface& g_wallet_init_interface;
-
-namespace boost
-{
+namespace interfaces {
+struct BlockAndHeaderTipInfo;
+} // namespace interfaces
+namespace boost {
 class thread_group;
 } // namespace boost
 
-void StartShutdown();
-void StartRestart();
-bool ShutdownRequested();
-/** Interrupt threads */
-void Interrupt();
-void Shutdown();
-//!Initialize the logging infrastructure
-void InitLogging();
-//!Parameter interaction: change current parameters depending on various rules
-void InitParameterInteraction();
 
-/** Initialize Biblepay Core: Basic context setup.
+
+/** Interrupt threads */
+void Interrupt(NodeContext& node);
+void Shutdown(NodeContext& node);
+//!Initialize the logging infrastructure
+void InitLogging(const ArgsManager& args);
+//!Parameter interaction: change current parameters depending on various rules
+void InitParameterInteraction(ArgsManager& args);
+
+/** Initialize BiblePay Core: Basic context setup.
  *  @note This can be done before daemonization. Do not call Shutdown() if this function fails.
  *  @pre Parameters should be parsed and config file should be read.
  */
-bool AppInitBasicSetup();
+bool AppInitBasicSetup(const ArgsManager& args);
 /**
  * Initialization: parameter interaction.
  * @note This can be done before daemonization. Do not call Shutdown() if this function fails.
  * @pre Parameters should be parsed and config file should be read, AppInitBasicSetup should have been called.
  */
-bool AppInitParameterInteraction();
+bool AppInitParameterInteraction(const ArgsManager& args);
 /**
- * Initialization sanity checks: ecc init, sanity checks, dir lock.
+ * Initialization sanity checks.
  * @note This can be done before daemonization. Do not call Shutdown() if this function fails.
  * @pre Parameters should be parsed and config file should be read, AppInitParameterInteraction should have been called.
  */
 bool AppInitSanityChecks();
 /**
- * Lock Biblepay Core data directory.
+ * Lock BiblePay Core data directory.
  * @note This should only be done after daemonization. Do not call Shutdown() if this function fails.
  * @pre Parameters should be parsed and config file should be read, AppInitSanityChecks should have been called.
  */
 bool AppInitLockDataDirectory();
 /**
- * Biblepay Core main initialization.
+ * Initialize node and wallet interface pointers. Has no prerequisites or side effects besides allocating memory.
+ */
+bool AppInitInterfaces(NodeContext& node);
+/**
+ * BiblePay Core main initialization.
  * @note This should only be done after daemonization. Call Shutdown() if this function fails.
  * @pre Parameters should be parsed and config file should be read, AppInitLockDataDirectory should have been called.
  */
-bool AppInitMain();
-void PrepareShutdown();
+
+bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info = nullptr);
+void PrepareShutdown(NodeContext& node);
 
 /**
- * Setup the arguments for gArgs
+ * Register all arguments with the ArgsManager
  */
-void SetupServerArgs();
+void SetupServerArgs(NodeContext& node);
 
 /** Returns licensing information (for -version) */
 std::string LicenseInfo();

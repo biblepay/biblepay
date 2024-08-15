@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2009-2010 Satoshi Nakamoto
+// Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -7,27 +7,10 @@
 #define BITCOIN_COMPAT_H
 
 #if defined(HAVE_CONFIG_H)
-#include <config/biblepay-config.h>
-#endif
-
-#include <type_traits>
-
-// GCC 4.8 is missing some C++11 type_traits,
-// https://www.gnu.org/software/gcc/gcc-5/changes.html
-#if defined(__GNUC__) && __GNUC__ < 5
-#define IS_TRIVIALLY_CONSTRUCTIBLE std::is_trivial
-#else
-#define IS_TRIVIALLY_CONSTRUCTIBLE std::is_trivially_constructible
+#include <config/bitcoin-config.h>
 #endif
 
 #ifdef WIN32
-#ifdef _WIN32_WINNT
-#undef _WIN32_WINNT
-#endif
-#define _WIN32_WINNT 0x0501
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -35,11 +18,7 @@
 #undef FD_SETSIZE // prevent redefinition compiler warning
 #endif
 #define FD_SETSIZE 1024 // max number of fds in fd_set
-
-#include <winsock2.h>     // Must be included before mswsock.h and windows.h
-
-#include <mswsock.h>
-#include <windows.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdint.h>
 #else
@@ -65,6 +44,7 @@ typedef unsigned int SOCKET;
 #define WSAEINVAL           EINVAL
 #define WSAEALREADY         EALREADY
 #define WSAEWOULDBLOCK      EWOULDBLOCK
+#define WSAEAGAIN           EAGAIN
 #define WSAEMSGSIZE         EMSGSIZE
 #define WSAEINTR            EINTR
 #define WSAEINPROGRESS      EINPROGRESS
@@ -73,6 +53,14 @@ typedef unsigned int SOCKET;
 #define INVALID_SOCKET      (SOCKET)(~0)
 #define SOCKET_ERROR        -1
 #define SD_SEND             SHUT_WR
+#else
+#ifndef WSAEAGAIN
+#ifdef EAGAIN
+#define WSAEAGAIN EAGAIN
+#else
+#define WSAEAGAIN WSAEWOULDBLOCK
+#endif
+#endif
 #endif
 
 #ifdef WIN32
@@ -103,6 +91,17 @@ typedef void* sockopt_arg_type;
 typedef char* sockopt_arg_type;
 #endif
 
+#ifdef WIN32
+// Export main() and ensure working ASLR when using mingw-w64.
+// Exporting a symbol will prevent the linker from stripping
+// the .reloc section from the binary, which is a requirement
+// for ASLR. While release builds are not affected, anyone
+// building with a binutils < 2.36 is subject to this ld bug.
+#define MAIN_FUNCTION __declspec(dllexport) int main(int argc, char* argv[])
+#else
+#define MAIN_FUNCTION int main(int argc, char* argv[])
+#endif
+
 // Note these both should work with the current usage of poll, but best to be safe
 // WIN32 poll is broken https://daniel.haxx.se/blog/2012/10/10/wsapoll-is-broken/
 // __APPLE__ poll is broke https://github.com/bitcoin/bitcoin/pull/14336#issuecomment-437384408
@@ -125,5 +124,15 @@ bool static inline IsSelectableSocket(const SOCKET& s) {
     return (s < FD_SETSIZE);
 #endif
 }
+
+// MSG_NOSIGNAL is not available on some platforms, if it doesn't exist define it as 0
+#if !defined(MSG_NOSIGNAL)
+#define MSG_NOSIGNAL 0
+#endif
+
+// MSG_DONTWAIT is not available on some platforms, if it doesn't exist define it as 0
+#if !defined(MSG_DONTWAIT)
+#define MSG_DONTWAIT 0
+#endif
 
 #endif // BITCOIN_COMPAT_H

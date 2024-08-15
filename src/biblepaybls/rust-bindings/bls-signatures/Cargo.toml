@@ -1,0 +1,18 @@
+[package]
+name = "bls-signatures"
+description = ""
+version = "1.2.5"
+edition = "2021"
+
+[features]
+legacy = []
+bip32 = []
+use_serde = ["serde"]
+biblepay_helpers = ["rand"]
+default = [ "legacy", "bip32", "biblepay_helpers", "use_serde"]
+apple = ["bls-biblepay-sys/apple"]
+
+[dependencies]
+bls-biblepay-sys = { path = "../bls-biblepay-sys" }
+serde = { version= "1.0.160", features = ["derive"], optional = true}
+rand = { version= "0.8.5", optional = true}

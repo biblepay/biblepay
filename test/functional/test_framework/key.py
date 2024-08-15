@@ -1,205 +1,339 @@
-# Copyright (c) 2011 Sam Rushing
-"""ECC secp256k1 OpenSSL wrapper.
+# Copyright (c) 2019-2020 Pieter Wuille
+# Distributed under the MIT software license, see the accompanying
+# file COPYING or http://www.opensource.org/licenses/mit-license.php.
+"""Test-only secp256k1 elliptic curve protocols implementation
 
-WARNING: This module does not mlock() secrets; your private keys may end up on
-disk in swap! Use with caution!
-
-This file is modified from python-bitcoinlib.
-"""
-
-import ctypes
-import ctypes.util
+WARNING: This code is slow, uses bad randomness, does not properly protect
+keys, and is trivially vulnerable to side channel attacks. Do not use for
+anything but tests."""
+import csv
 import hashlib
+import hmac
+import os
+import random
+import unittest
 
-ssl = ctypes.cdll.LoadLibrary(ctypes.util.find_library ('ssl') or 'libeay32')
+from test_framework import secp256k1
 
-ssl.BN_new.restype = ctypes.c_void_p
-ssl.BN_new.argtypes = []
+# Order of the secp256k1 curve
+ORDER = secp256k1.GE.ORDER
 
-ssl.BN_bin2bn.restype = ctypes.c_void_p
-ssl.BN_bin2bn.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p]
+def TaggedHash(tag, data):
+    ss = hashlib.sha256(tag.encode('utf-8')).digest()
+    ss += ss
+    ss += data
+    return hashlib.sha256(ss).digest()
 
-ssl.BN_CTX_free.restype = None
-ssl.BN_CTX_free.argtypes = [ctypes.c_void_p]
 
-ssl.BN_CTX_new.restype = ctypes.c_void_p
-ssl.BN_CTX_new.argtypes = []
-
-ssl.ECDH_compute_key.restype = ctypes.c_int
-ssl.ECDH_compute_key.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p]
-
-ssl.ECDSA_sign.restype = ctypes.c_int
-ssl.ECDSA_sign.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-
-ssl.ECDSA_verify.restype = ctypes.c_int
-ssl.ECDSA_verify.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
-
-ssl.EC_KEY_free.restype = None
-ssl.EC_KEY_free.argtypes = [ctypes.c_void_p]
-
-ssl.EC_KEY_new_by_curve_name.restype = ctypes.c_void_p
-ssl.EC_KEY_new_by_curve_name.argtypes = [ctypes.c_int]
-
-ssl.EC_KEY_get0_group.restype = ctypes.c_void_p
-ssl.EC_KEY_get0_group.argtypes = [ctypes.c_void_p]
-
-ssl.EC_KEY_get0_public_key.restype = ctypes.c_void_p
-ssl.EC_KEY_get0_public_key.argtypes = [ctypes.c_void_p]
-
-ssl.EC_KEY_set_private_key.restype = ctypes.c_int
-ssl.EC_KEY_set_private_key.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-
-ssl.EC_KEY_set_conv_form.restype = None
-ssl.EC_KEY_set_conv_form.argtypes = [ctypes.c_void_p, ctypes.c_int]
-
-ssl.EC_KEY_set_public_key.restype = ctypes.c_int
-ssl.EC_KEY_set_public_key.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-
-ssl.i2o_ECPublicKey.restype = ctypes.c_void_p
-ssl.i2o_ECPublicKey.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-
-ssl.EC_POINT_new.restype = ctypes.c_void_p
-ssl.EC_POINT_new.argtypes = [ctypes.c_void_p]
-
-ssl.EC_POINT_free.restype = None
-ssl.EC_POINT_free.argtypes = [ctypes.c_void_p]
-
-ssl.EC_POINT_mul.restype = ctypes.c_int
-ssl.EC_POINT_mul.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-
-# this specifies the curve used with ECDSA.
-NID_secp256k1 = 714 # from openssl/obj_mac.h
-
-# Thx to Sam Devlin for the ctypes magic 64-bit fix.
-def _check_result(val, func, args):
-    if val == 0:
-        raise ValueError
-    else:
-        return ctypes.c_void_p (val)
-
-ssl.EC_KEY_new_by_curve_name.restype = ctypes.c_void_p
-ssl.EC_KEY_new_by_curve_name.errcheck = _check_result
-
-class CECKey():
-    """Wrapper around OpenSSL's EC_KEY"""
-
-    POINT_CONVERSION_COMPRESSED = 2
-    POINT_CONVERSION_UNCOMPRESSED = 4
+class ECPubKey:
+    """A secp256k1 public key"""
 
     def __init__(self):
-        self.k = ssl.EC_KEY_new_by_curve_name(NID_secp256k1)
+        """Construct an uninitialized public key"""
+        self.p = None
 
-    def __del__(self):
-        if ssl:
-            ssl.EC_KEY_free(self.k)
-        self.k = None
-
-    def set_secretbytes(self, secret):
-        priv_key = ssl.BN_bin2bn(secret, 32, ssl.BN_new())
-        group = ssl.EC_KEY_get0_group(self.k)
-        pub_key = ssl.EC_POINT_new(group)
-        ctx = ssl.BN_CTX_new()
-        if not ssl.EC_POINT_mul(group, pub_key, priv_key, None, None, ctx):
-            raise ValueError("Could not derive public key from the supplied secret.")
-        ssl.EC_POINT_mul(group, pub_key, priv_key, None, None, ctx)
-        ssl.EC_KEY_set_private_key(self.k, priv_key)
-        ssl.EC_KEY_set_public_key(self.k, pub_key)
-        ssl.EC_POINT_free(pub_key)
-        ssl.BN_CTX_free(ctx)
-        return self.k
-
-    def set_privkey(self, key):
-        self.mb = ctypes.create_string_buffer(key)
-        return ssl.d2i_ECPrivateKey(ctypes.byref(self.k), ctypes.byref(ctypes.pointer(self.mb)), len(key))
-
-    def set_pubkey(self, key):
-        self.mb = ctypes.create_string_buffer(key)
-        return ssl.o2i_ECPublicKey(ctypes.byref(self.k), ctypes.byref(ctypes.pointer(self.mb)), len(key))
-
-    def get_privkey(self):
-        size = ssl.i2d_ECPrivateKey(self.k, 0)
-        mb_pri = ctypes.create_string_buffer(size)
-        ssl.i2d_ECPrivateKey(self.k, ctypes.byref(ctypes.pointer(mb_pri)))
-        return mb_pri.raw
-
-    def get_pubkey(self):
-        size = ssl.i2o_ECPublicKey(self.k, 0)
-        mb = ctypes.create_string_buffer(size)
-        ssl.i2o_ECPublicKey(self.k, ctypes.byref(ctypes.pointer(mb)))
-        return mb.raw
-
-    def get_raw_ecdh_key(self, other_pubkey):
-        ecdh_keybuffer = ctypes.create_string_buffer(32)
-        r = ssl.ECDH_compute_key(ctypes.pointer(ecdh_keybuffer), 32,
-                                 ssl.EC_KEY_get0_public_key(other_pubkey.k),
-                                 self.k, 0)
-        if r != 32:
-            raise Exception('CKey.get_ecdh_key(): ECDH_compute_key() failed')
-        return ecdh_keybuffer.raw
-
-    def get_ecdh_key(self, other_pubkey, kdf=lambda k: hashlib.sha256(k).digest()):
-        # FIXME: be warned it's not clear what the kdf should be as a default
-        r = self.get_raw_ecdh_key(other_pubkey)
-        return kdf(r)
-
-    def sign(self, hash):
-        # FIXME: need unit tests for below cases
-        if not isinstance(hash, bytes):
-            raise TypeError('Hash must be bytes instance; got %r' % hash.__class__)
-        if len(hash) != 32:
-            raise ValueError('Hash must be exactly 32 bytes long')
-
-        sig_size0 = ctypes.c_uint32()
-        sig_size0.value = ssl.ECDSA_size(self.k)
-        mb_sig = ctypes.create_string_buffer(sig_size0.value)
-        result = ssl.ECDSA_sign(0, hash, len(hash), mb_sig, ctypes.byref(sig_size0), self.k)
-        assert 1 == result
-        return mb_sig.raw[:sig_size0.value]
-
-    def verify(self, hash, sig):
-        """Verify a DER signature"""
-        return ssl.ECDSA_verify(0, hash, len(hash), sig, len(sig), self.k) == 1
-
-    def set_compressed(self, compressed):
-        if compressed:
-            form = self.POINT_CONVERSION_COMPRESSED
-        else:
-            form = self.POINT_CONVERSION_UNCOMPRESSED
-        ssl.EC_KEY_set_conv_form(self.k, form)
-
-
-class CPubKey(bytes):
-    """An encapsulated public key
-
-    Attributes:
-
-    is_valid      - Corresponds to CPubKey.IsValid()
-    is_fullyvalid - Corresponds to CPubKey.IsFullyValid()
-    is_compressed - Corresponds to CPubKey.IsCompressed()
-    """
-
-    def __new__(cls, buf, _cec_key=None):
-        self = super(CPubKey, cls).__new__(cls, buf)
-        if _cec_key is None:
-            _cec_key = CECKey()
-        self._cec_key = _cec_key
-        self.is_fullyvalid = _cec_key.set_pubkey(self) != 0
-        return self
-
-    @property
-    def is_valid(self):
-        return len(self) > 0
+    def set(self, data):
+        """Construct a public key from a serialization in compressed or uncompressed format"""
+        self.p = secp256k1.GE.from_bytes(data)
+        self.compressed = len(data) == 33
 
     @property
     def is_compressed(self):
-        return len(self) == 33
+        return self.compressed
 
-    def verify(self, hash, sig):
-        return self._cec_key.verify(hash, sig)
+    @property
+    def is_valid(self):
+        return self.p is not None
 
-    def __str__(self):
-        return repr(self)
+    def get_bytes(self):
+        assert self.is_valid
+        if self.compressed:
+            return self.p.to_bytes_compressed()
+        else:
+            return self.p.to_bytes_uncompressed()
 
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, super(CPubKey, self).__repr__())
+    def verify_ecdsa(self, sig, msg, low_s=True):
+        """Verify a strictly DER-encoded ECDSA signature against this pubkey.
 
+        See https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm for the
+        ECDSA verifier algorithm"""
+        assert self.is_valid
+
+        # Extract r and s from the DER formatted signature. Return false for
+        # any DER encoding errors.
+        if (sig[1] + 2 != len(sig)):
+            return False
+        if (len(sig) < 4):
+            return False
+        if (sig[0] != 0x30):
+            return False
+        if (sig[2] != 0x02):
+            return False
+        rlen = sig[3]
+        if (len(sig) < 6 + rlen):
+            return False
+        if rlen < 1 or rlen > 33:
+            return False
+        if sig[4] >= 0x80:
+            return False
+        if (rlen > 1 and (sig[4] == 0) and not (sig[5] & 0x80)):
+            return False
+        r = int.from_bytes(sig[4:4+rlen], 'big')
+        if (sig[4+rlen] != 0x02):
+            return False
+        slen = sig[5+rlen]
+        if slen < 1 or slen > 33:
+            return False
+        if (len(sig) != 6 + rlen + slen):
+            return False
+        if sig[6+rlen] >= 0x80:
+            return False
+        if (slen > 1 and (sig[6+rlen] == 0) and not (sig[7+rlen] & 0x80)):
+            return False
+        s = int.from_bytes(sig[6+rlen:6+rlen+slen], 'big')
+
+        # Verify that r and s are within the group order
+        if r < 1 or s < 1 or r >= ORDER or s >= ORDER:
+            return False
+        if low_s and s >= secp256k1.GE.ORDER_HALF:
+            return False
+        z = int.from_bytes(msg, 'big')
+
+        # Run verifier algorithm on r, s
+        w = pow(s, -1, ORDER)
+        R = secp256k1.GE.mul((z * w, secp256k1.G), (r * w, self.p))
+        if R.infinity or (int(R.x) % ORDER) != r:
+            return False
+        return True
+
+def generate_privkey():
+    """Generate a valid random 32-byte private key."""
+    return random.randrange(1, ORDER).to_bytes(32, 'big')
+
+def rfc6979_nonce(key):
+    """Compute signing nonce using RFC6979."""
+    v = bytes([1] * 32)
+    k = bytes([0] * 32)
+    k = hmac.new(k, v + b"\x00" + key, 'sha256').digest()
+    v = hmac.new(k, v, 'sha256').digest()
+    k = hmac.new(k, v + b"\x01" + key, 'sha256').digest()
+    v = hmac.new(k, v, 'sha256').digest()
+    return hmac.new(k, v, 'sha256').digest()
+
+class ECKey:
+    """A secp256k1 private key"""
+
+    def __init__(self):
+        self.valid = False
+
+    def set(self, secret, compressed):
+        """Construct a private key object with given 32-byte secret and compressed flag."""
+        assert(len(secret) == 32)
+        secret = int.from_bytes(secret, 'big')
+        self.valid = (secret > 0 and secret < ORDER)
+        if self.valid:
+            self.secret = secret
+            self.compressed = compressed
+
+    def generate(self, compressed=True):
+        """Generate a random private key (compressed or uncompressed)."""
+        self.set(generate_privkey(), compressed)
+
+    def get_bytes(self):
+        """Retrieve the 32-byte representation of this key."""
+        assert(self.valid)
+        return self.secret.to_bytes(32, 'big')
+
+    @property
+    def is_valid(self):
+        return self.valid
+
+    @property
+    def is_compressed(self):
+        return self.compressed
+
+    def get_pubkey(self):
+        """Compute an ECPubKey object for this secret key."""
+        assert(self.valid)
+        ret = ECPubKey()
+        ret.p = self.secret * secp256k1.G
+        ret.compressed = self.compressed
+        return ret
+
+    def sign_ecdsa(self, msg, low_s=True, rfc6979=False):
+        """Construct a DER-encoded ECDSA signature with this key.
+
+        See https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm for the
+        ECDSA signer algorithm."""
+        assert(self.valid)
+        z = int.from_bytes(msg, 'big')
+        # Note: no RFC6979 by default, but a simple random nonce (some tests rely on distinct transactions for the same operation)
+        if rfc6979:
+            k = int.from_bytes(rfc6979_nonce(self.secret.to_bytes(32, 'big') + msg), 'big')
+        else:
+            k = random.randrange(1, ORDER)
+        R = k * secp256k1.G
+        r = int(R.x) % ORDER
+        s = (pow(k, -1, ORDER) * (z + self.secret * r)) % ORDER
+        if low_s and s > secp256k1.GE.ORDER_HALF:
+            s = ORDER - s
+        # Represent in DER format. The byte representations of r and s have
+        # length rounded up (255 bits becomes 32 bytes and 256 bits becomes 33
+        # bytes).
+        rb = r.to_bytes((r.bit_length() + 8) // 8, 'big')
+        sb = s.to_bytes((s.bit_length() + 8) // 8, 'big')
+        return b'\x30' + bytes([4 + len(rb) + len(sb), 2, len(rb)]) + rb + bytes([2, len(sb)]) + sb
+
+def compute_xonly_pubkey(key):
+    """Compute an x-only (32 byte) public key from a (32 byte) private key.
+
+    This also returns whether the resulting public key was negated.
+    """
+
+    assert len(key) == 32
+    x = int.from_bytes(key, 'big')
+    if x == 0 or x >= ORDER:
+        return (None, None)
+    P = x * secp256k1.G
+    return (P.to_bytes_xonly(), not P.y.is_even())
+
+def tweak_add_privkey(key, tweak):
+    """Tweak a private key (after negating it if needed)."""
+
+    assert len(key) == 32
+    assert len(tweak) == 32
+
+    x = int.from_bytes(key, 'big')
+    if x == 0 or x >= ORDER:
+        return None
+    if not (x * secp256k1.G).y.is_even():
+       x = ORDER - x
+    t = int.from_bytes(tweak, 'big')
+    if t >= ORDER:
+        return None
+    x = (x + t) % ORDER
+    if x == 0:
+        return None
+    return x.to_bytes(32, 'big')
+
+def tweak_add_pubkey(key, tweak):
+    """Tweak a public key and return whether the result had to be negated."""
+
+    assert len(key) == 32
+    assert len(tweak) == 32
+
+    P = secp256k1.GE.from_bytes_xonly(key)
+    if P is None:
+        return None
+    t = int.from_bytes(tweak, 'big')
+    if t >= ORDER:
+        return None
+    Q = t * secp256k1.G + P
+    if Q.infinity:
+        return None
+    return (Q.to_bytes_xonly(), not Q.y.is_even())
+
+def verify_schnorr(key, sig, msg):
+    """Verify a Schnorr signature (see BIP 340).
+
+    - key is a 32-byte xonly pubkey (computed using compute_xonly_pubkey).
+    - sig is a 64-byte Schnorr signature
+    - msg is a 32-byte message
+    """
+    assert len(key) == 32
+    assert len(msg) == 32
+    assert len(sig) == 64
+
+    P = secp256k1.GE.from_bytes_xonly(key)
+    if P is None:
+        return False
+    r = int.from_bytes(sig[0:32], 'big')
+    if r >= secp256k1.FE.SIZE:
+        return False
+    s = int.from_bytes(sig[32:64], 'big')
+    if s >= ORDER:
+        return False
+    e = int.from_bytes(TaggedHash("BIP0340/challenge", sig[0:32] + key + msg), 'big') % ORDER
+    R = secp256k1.GE.mul((s, secp256k1.G), (-e, P))
+    if R.infinity or not R.y.is_even():
+        return False
+    if r != R.x:
+        return False
+    return True
+
+def sign_schnorr(key, msg, aux=None, flip_p=False, flip_r=False):
+    """Create a Schnorr signature (see BIP 340)."""
+
+    if aux is None:
+        aux = bytes(32)
+
+    assert len(key) == 32
+    assert len(msg) == 32
+    assert len(aux) == 32
+
+    sec = int.from_bytes(key, 'big')
+    if sec == 0 or sec >= ORDER:
+        return None
+    P = sec * secp256k1.G
+    if P.y.is_even() == flip_p:
+        sec = ORDER - sec
+    t = (sec ^ int.from_bytes(TaggedHash("BIP0340/aux", aux), 'big')).to_bytes(32, 'big')
+    kp = int.from_bytes(TaggedHash("BIP0340/nonce", t + P.to_bytes_xonly() + msg), 'big') % ORDER
+    assert kp != 0
+    R = kp * secp256k1.G
+    k = kp if R.y.is_even() != flip_r else ORDER - kp
+    e = int.from_bytes(TaggedHash("BIP0340/challenge", R.to_bytes_xonly() + P.to_bytes_xonly() + msg), 'big') % ORDER
+    return R.to_bytes_xonly() + ((k + e * sec) % ORDER).to_bytes(32, 'big')
+
+
+class TestFrameworkKey(unittest.TestCase):
+    def test_schnorr(self):
+        """Test the Python Schnorr implementation."""
+        byte_arrays = [generate_privkey() for _ in range(3)] + [v.to_bytes(32, 'big') for v in [0, ORDER - 1, ORDER, 2**256 - 1]]
+        keys = {}
+        for privkey in byte_arrays:  # build array of key/pubkey pairs
+            pubkey, _ = compute_xonly_pubkey(privkey)
+            if pubkey is not None:
+                keys[privkey] = pubkey
+        for msg in byte_arrays:  # test every combination of message, signing key, verification key
+            for sign_privkey, _ in keys.items():
+                sig = sign_schnorr(sign_privkey, msg)
+                for verify_privkey, verify_pubkey in keys.items():
+                    if verify_privkey == sign_privkey:
+                        self.assertTrue(verify_schnorr(verify_pubkey, sig, msg))
+                        sig = list(sig)
+                        sig[random.randrange(64)] ^= (1 << (random.randrange(8)))  # damaging signature should break things
+                        sig = bytes(sig)
+                    self.assertFalse(verify_schnorr(verify_pubkey, sig, msg))
+
+    def test_schnorr_testvectors(self):
+        """Implement the BIP340 test vectors (read from bip340_test_vectors.csv)."""
+        num_tests = 0
+        vectors_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bip340_test_vectors.csv')
+        with open(vectors_file, newline='', encoding='utf8') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)
+            for row in reader:
+                (i_str, seckey_hex, pubkey_hex, aux_rand_hex, msg_hex, sig_hex, result_str, comment) = row
+                i = int(i_str)
+                pubkey = bytes.fromhex(pubkey_hex)
+                msg = bytes.fromhex(msg_hex)
+                sig = bytes.fromhex(sig_hex)
+                result = result_str == 'TRUE'
+                if seckey_hex != '':
+                    seckey = bytes.fromhex(seckey_hex)
+                    pubkey_actual = compute_xonly_pubkey(seckey)[0]
+                    self.assertEqual(pubkey.hex(), pubkey_actual.hex(), "BIP340 test vector %i (%s): pubkey mismatch" % (i, comment))
+                    aux_rand = bytes.fromhex(aux_rand_hex)
+                    try:
+                        sig_actual = sign_schnorr(seckey, msg, aux_rand)
+                        self.assertEqual(sig.hex(), sig_actual.hex(), "BIP340 test vector %i (%s): sig mismatch" % (i, comment))
+                    except RuntimeError as e:
+                        self.fail("BIP340 test vector %i (%s): signing raised exception %s" % (i, comment, e))
+                result_actual = verify_schnorr(pubkey, sig, msg)
+                if result:
+                    self.assertEqual(result, result_actual, "BIP340 test vector %i (%s): verification failed" % (i, comment))
+                else:
+                    self.assertEqual(result, result_actual, "BIP340 test vector %i (%s): verification succeeded unexpectedly" % (i, comment))
+                num_tests += 1
+        self.assertTrue(num_tests >= 15) # expect at least 15 test vectors

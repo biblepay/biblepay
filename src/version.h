@@ -1,5 +1,5 @@
-﻿// Copyright (c) 2012-2014 The Bitcoin Core developers
-// Copyright (c) 2014-2021 The DÃSH Core Developers
+// Copyright (c) 2012-2014 The Bitcoin Core developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,41 +11,50 @@
  */
 
 
-static const int PROTOCOL_VERSION = 70781;
+static const int PROTOCOL_VERSION = 70782;
 
 //! initial proto version, to be increased after version/verack negotiation
-static const int INIT_PROTO_VERSION = 209;
+static const int INIT_PROTO_VERSION = 210;
 
 //! disconnect from peers older than this proto version
-static const int MIN_PEER_PROTO_VERSION = 70780;
+static const int MIN_PEER_PROTO_VERSION = 70700;
 
 //! minimum proto version of masternode to accept in DKGs
-static const int MIN_MASTERNODE_PROTO_VERSION = 70781;
-
-//! minimum proto version for governance sync and messages
-static const int MIN_GOVERNANCE_PEER_PROTO_VERSION = 70781;
-
-//! minimum proto version to broadcast governance messages from banned masternodes
-static const int GOVERNANCE_POSE_BANNED_VOTES_VERSION = 70780;
-
-//! nTime field added to CAddress, starting with this version;
-//! if possible, avoid requesting addresses nodes older than this
-static const int CADDR_TIME_VERSION = 31402;
-
-//! introduction of LLMQs
-static const int LLMQS_PROTO_VERSION = 70215;
-
-//! introduction of SENDDSQUEUE
-//! TODO we can remove this in 0.15.0.0
-static const int SENDDSQUEUE_PROTO_VERSION = 70214;
-
-//! minimum peer version accepted by mixing pool
-static const int MIN_COINJOIN_PEER_PROTO_VERSION = 70213;
+static const int MIN_MASTERNODE_PROTO_VERSION = 70700;
 
 //! protocol version is included in MNAUTH starting with this version
-static const int MNAUTH_NODE_VER_VERSION = 70218;
+static const int MNAUTH_NODE_VER_VERSION = 70782;
 
 //! introduction of QGETDATA/QDATA messages
-static const int LLMQ_DATA_MESSAGES_VERSION = 70220;
+static const int LLMQ_DATA_MESSAGES_VERSION = 70782;
+
+//! introduction of instant send deterministic lock (ISDLOCK)
+static const int ISDLOCK_PROTO_VERSION = 70782;
+
+//! GOVSCRIPT was activated in this version
+static const int GOVSCRIPT_PROTO_VERSION = 70782;
+
+//! ADDRV2 was introduced in this version
+static const int ADDRV2_PROTO_VERSION = 70782;
+
+//! BLS scheme was introduced in this version
+static const int BLS_SCHEME_PROTO_VERSION = 70782;
+
+//! Masternode type was introduced in this version
+static const int DMN_TYPE_PROTO_VERSION = 70782;
+
+//! Versioned Simplified Masternode List Entries were introduced in this version
+static const int SMNLE_VERSIONED_PROTO_VERSION = 70782;
+
+//! Versioned Simplified Masternode List Entries were introduced in this version
+static const int MNLISTDIFF_VERSION_ORDER = 70782;
+
+//! Masternode type was introduced in this version
+static const int MNLISTDIFF_CHAINLOCKS_PROTO_VERSION = 70782;
+
+//! Legacy ISLOCK messages and a corresponding INV were dropped in this version
+static const int NO_LEGACY_ISLOCK_PROTO_VERSION = 70782;
+
+// Make sure that none of the values above collide with `ADDRV2_FORMAT`.
 
 #endif // BITCOIN_VERSION_H

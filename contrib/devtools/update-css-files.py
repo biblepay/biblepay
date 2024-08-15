@@ -3,7 +3,7 @@
 # update-css-files.py creates color analyse files in css/colors and updates the
 # `<colors></colors>` section in all css files.
 #
-# Copyright (c) 2020 The DÃSH Core Developers
+# Copyright (c) 2020 The BiblePay Core developers
 # Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 

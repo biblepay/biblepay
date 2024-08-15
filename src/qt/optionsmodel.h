@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,19 +6,30 @@
 #define BITCOIN_QT_OPTIONSMODEL_H
 
 #include <amount.h>
+#include <qt/guiconstants.h>
+
+#include <cstdint>
 
 #include <QAbstractListModel>
+
+#include <assert.h>
 
 namespace interfaces {
 class Node;
 }
 
-QT_BEGIN_NAMESPACE
-class QNetworkProxy;
-QT_END_NAMESPACE
-
 extern const char *DEFAULT_GUI_PROXY_HOST;
-static constexpr unsigned short DEFAULT_GUI_PROXY_PORT = 9050;
+static constexpr uint16_t DEFAULT_GUI_PROXY_PORT = 9050;
+
+/**
+ * Convert configured prune target MiB to displayed GB. Round up to avoid underestimating max disk usage.
+ */
+static inline int PruneMiBtoGB(int64_t mib) { return (mib * 1024 * 1024 + GB_BYTES - 1) / GB_BYTES; }
+
+/**
+ * Convert displayed prune target GB to configured MiB. Round down so roundtrip GB -> MiB -> GB conversion is stable.
+ */
+static inline int64_t PruneGBtoMiB(int gb) { return gb * GB_BYTES / 1024 / 1024; }
 
 /** Interface from Qt to configuration data structure for Bitcoin client.
    To Qt, the options are presented as a list with the different options
@@ -31,51 +42,59 @@ class OptionsModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    explicit OptionsModel(interfaces::Node& node, QObject *parent = 0, bool resetSettings = false);
+    explicit OptionsModel(QObject *parent = nullptr, bool resetSettings = false);
 
     enum OptionID {
-        StartAtStartup,         // bool
-        HideTrayIcon,           // bool
-        MinimizeToTray,         // bool
-        MapPortUPnP,            // bool
-        MinimizeOnClose,        // bool
-        ProxyUse,               // bool
-        ProxyIP,                // QString
-        ProxyPort,              // int
-        ProxyUseTor,            // bool
-        ProxyIPTor,             // QString
-        ProxyPortTor,           // int
-        DisplayUnit,            // BitcoinUnits::Unit
-        ThirdPartyTxUrls,       // QString
-        Digits,                 // QString
-        Theme,                  // QString
-        FontFamily,             // int
-        FontScale,              // int
-        FontWeightNormal,       // int
-        FontWeightBold,         // int
-        Language,               // QString
-        CoinControlFeatures,    // bool
-        ThreadsScriptVerif,     // int
-        DatabaseCache,          // int
-        SpendZeroConfChange,    // bool
-        ShowMasternodesTab,     // bool
-        CoinJoinEnabled,     // bool
-        ShowAdvancedCJUI,       // bool
-        ShowCoinJoinPopups,  // bool
-        LowKeysWarning,         // bool
-        CoinJoinRounds,      // int
-        CoinJoinAmount,      // int
-        CoinJoinMultiSession,// bool
-        Listen,                 // bool
+        StartAtStartup,       // bool
+        HideTrayIcon,         // bool
+        MinimizeToTray,       // bool
+        MapPortUPnP,          // bool
+        MapPortNatpmp,        // bool
+        MinimizeOnClose,      // bool
+        ProxyUse,             // bool
+        ProxyIP,              // QString
+        ProxyPort,            // int
+        ProxyUseTor,          // bool
+        ProxyIPTor,           // QString
+        ProxyPortTor,         // int
+        DisplayUnit,          // BitcoinUnits::Unit
+        ThirdPartyTxUrls,     // QString
+        Digits,               // QString
+        Theme,                // QString
+        FontFamily,           // int
+        FontScale,            // int
+        FontWeightNormal,     // int
+        FontWeightBold,       // int
+        Language,             // QString
+        CoinControlFeatures,  // bool
+        KeepChangeAddress,    // bool
+        ThreadsScriptVerif,   // int
+        Prune,                // bool
+        PruneSize,            // int
+        DatabaseCache,        // int
+        SpendZeroConfChange,  // bool
+        ShowMasternodesTab,   // bool
+        ShowGovernanceTab,    // bool
+        CoinJoinEnabled,      // bool
+        ShowAdvancedCJUI,     // bool
+        ShowCoinJoinPopups,   // bool
+        LowKeysWarning,       // bool
+        CoinJoinSessions,     // int
+        CoinJoinRounds,       // int
+        CoinJoinAmount,       // int
+        CoinJoinDenomsGoal,   // int
+        CoinJoinDenomsHardCap,// int
+        CoinJoinMultiSession, // bool
+        Listen,               // bool
         OptionIDRowCount,
     };
 
     void Init(bool resetSettings = false);
     void Reset();
 
-    int rowCount(const QModelIndex & parent = QModelIndex()) const;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
-    bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
+    int rowCount(const QModelIndex & parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     /** Updates current unit in memory, settings and emits displayUnitChanged(newUnit) signal */
     void setDisplayUnit(const QVariant &value);
 
@@ -85,21 +104,26 @@ public:
     bool getMinimizeOnClose() const { return fMinimizeOnClose; }
     int getDisplayUnit() const { return nDisplayUnit; }
     QString getThirdPartyTxUrls() const { return strThirdPartyTxUrls; }
-    bool getProxySettings(QNetworkProxy& proxy) const;
     bool getCoinControlFeatures() const { return fCoinControlFeatures; }
+    bool getKeepChangeAddress() const { return fKeepChangeAddress; }
     bool getShowAdvancedCJUI() { return fShowAdvancedCJUI; }
     const QString& getOverriddenByCommandLine() { return strOverriddenByCommandLine; }
     void emitCoinJoinEnabledChanged();
+
+    /* Explicit setters */
+    void SetPruneEnabled(bool prune, bool force = false);
+    void SetPruneTargetGB(int prune_target_gb, bool force = false);
 
     /* Restart flag helper */
     void setRestartRequired(bool fRequired);
     bool isRestartRequired() const;
     bool resetSettingsOnShutdown{false};
 
-    interfaces::Node& node() const { return m_node; }
+    interfaces::Node& node() const { assert(m_node); return *m_node; }
+    void setNode(interfaces::Node& node) { assert(!m_node); m_node = &node; }
 
 private:
-    interfaces::Node& m_node;
+    interfaces::Node* m_node = nullptr;
     /* Qt-only settings */
     bool fHideTrayIcon;
     bool fMinimizeToTray;
@@ -108,6 +132,7 @@ private:
     int nDisplayUnit;
     QString strThirdPartyTxUrls;
     bool fCoinControlFeatures;
+    bool fKeepChangeAddress;
     bool fShowAdvancedCJUI;
     /* settings that were overridden by command-line */
     QString strOverriddenByCommandLine;
@@ -124,6 +149,7 @@ Q_SIGNALS:
     void coinJoinAmountChanged();
     void AdvancedCJUIChanged(bool);
     void coinControlFeaturesChanged(bool);
+    void keepChangeAddressChanged(bool);
     void hideTrayIconChanged(bool);
 };
 

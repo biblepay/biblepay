@@ -1,11 +1,10 @@
-﻿prefix=@prefix@
+prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
 Name: @PACKAGE_NAME@ consensus library
-Description: Library for the Bitcoin consensus protocol.
+Description: Library for the BiblePay consensus protocol.
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lbiblepayconsensus
 Cflags: -I${includedir}
-Requires.private: libcrypto

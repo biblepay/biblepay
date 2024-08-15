@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018-2021 The DÃSH Core Developers
+// Copyright (c) 2018-2024 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -6,38 +6,33 @@
 #define BITCOIN_EVO_SPECIALTX_H
 
 #include <primitives/transaction.h>
+#include <serialize.h>
 #include <streams.h>
+#include <uint256.h>
 #include <version.h>
 
-class CBlock;
-class CBlockIndex;
-class CCoinsViewCache;
-class CValidationState;
-
-bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state, const CCoinsViewCache& view);
-bool ProcessSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex, CValidationState& state, const CCoinsViewCache& view, bool fJustCheck, bool fCheckCbTxMerleRoots);
-bool UndoSpecialTxsInBlock(const CBlock& block, const CBlockIndex* pindex);
+#include <string_view>
+#include <optional>
+#include <vector>
 
 template <typename T>
-inline bool GetTxPayload(const std::vector<unsigned char>& payload, T& obj)
+std::optional<T> GetTxPayload(const std::vector<unsigned char>& payload)
 {
     CDataStream ds(payload, SER_NETWORK, PROTOCOL_VERSION);
     try {
+        T obj;
         ds >> obj;
-    } catch (std::exception& e) {
-        return false;
+        return ds.empty() ? std::make_optional(std::move(obj)) : std::nullopt;
+    } catch (const std::exception& e) {
+        return std::nullopt;
     }
-    return ds.empty();
 }
-template <typename T>
-inline bool GetTxPayload(const CMutableTransaction& tx, T& obj)
+template <typename T, typename TxType>
+std::optional<T> GetTxPayload(const TxType& tx, bool assert_type = true)
 {
-    return GetTxPayload(tx.vExtraPayload, obj);
-}
-template <typename T>
-inline bool GetTxPayload(const CTransaction& tx, T& obj)
-{
-    return GetTxPayload(tx.vExtraPayload, obj);
+    if (assert_type) { ASSERT_IF_DEBUG(tx.nType == T::SPECIALTX_TYPE); }
+    if (tx.nType != T::SPECIALTX_TYPE) return std::nullopt;
+    return GetTxPayload<T>(tx.vExtraPayload);
 }
 
 template <typename T>
@@ -45,7 +40,7 @@ void SetTxPayload(CMutableTransaction& tx, const T& payload)
 {
     CDataStream ds(SER_NETWORK, PROTOCOL_VERSION);
     ds << payload;
-    tx.vExtraPayload.assign(ds.begin(), ds.end());
+    tx.vExtraPayload.assign(UCharCast(ds.data()), UCharCast(ds.data() + ds.size()));
 }
 
 uint256 CalcTxInputsHash(const CTransaction& tx);

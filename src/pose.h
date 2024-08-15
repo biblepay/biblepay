@@ -6,11 +6,13 @@
 #define POSE_H
 
 #include <univalue.h>
-#include "util.h"
 #include "clientversion.h"
 #include "rpcpog.h"
 #include "netmessagemaker.h"
 #include "evo/deterministicmns.h"
+#include "shutdown.h"
 
+
+void ThreadPOVS(CConnman& connman);
 
 #endif

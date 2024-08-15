@@ -7,44 +7,49 @@
 # Test addressindex generation and fetching
 #
 
-from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
-from test_framework.script import *
-from test_framework.mininode import *
 import binascii
+
+from test_framework.messages import COIN, COutPoint, CTransaction, CTxIn, CTxOut
+from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_node import ErrorMatch
+from test_framework.script import CScript, OP_CHECKSIG, OP_DUP, OP_EQUAL, OP_EQUALVERIFY, OP_HASH160
+from test_framework.util import assert_equal
 
 class AddressIndexTest(BitcoinTestFramework):
 
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 4
+        self.supports_cli = False
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
 
     def setup_network(self):
         self.add_nodes(self.num_nodes)
         # Nodes 0/1 are "wallet" nodes
-        self.start_node(0, ["-relaypriority=0"])
+        self.start_node(0, [])
         self.start_node(1, ["-addressindex"])
         # Nodes 2/3 are used for testing
-        self.start_node(2, ["-addressindex", "-relaypriority=0"])
+        self.start_node(2, ["-addressindex"])
         self.start_node(3, ["-addressindex"])
-        connect_nodes(self.nodes[0], 1)
-        connect_nodes(self.nodes[0], 2)
-        connect_nodes(self.nodes[0], 3)
-
-        self.is_network_split = False
+        self.connect_nodes(0, 1)
+        self.connect_nodes(0, 2)
+        self.connect_nodes(0, 3)
         self.sync_all()
+        self.import_deterministic_coinbase_privkeys()
 
     def run_test(self):
         self.log.info("Test that settings can't be changed without -reindex...")
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-addressindex=0"], "You need to rebuild the database using -reindex to change -addressindex", partial_match=True)
+        self.nodes[1].assert_start_raises_init_error(["-addressindex=0"], "You need to rebuild the database using -reindex to change -addressindex", match=ErrorMatch.PARTIAL_REGEX)
         self.start_node(1, ["-addressindex=0", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
+        self.connect_nodes(0, 1)
         self.sync_all()
         self.stop_node(1)
-        self.nodes[1].assert_start_raises_init_error(["-addressindex"], "You need to rebuild the database using -reindex to change -addressindex", partial_match=True)
+        self.nodes[1].assert_start_raises_init_error(["-addressindex"], "You need to rebuild the database using -reindex to change -addressindex", match=ErrorMatch.PARTIAL_REGEX)
         self.start_node(1, ["-addressindex", "-reindex"])
-        connect_nodes(self.nodes[0], 1)
+        self.connect_nodes(0, 1)
         self.sync_all()
 
         self.log.info("Mining blocks...")
@@ -132,11 +137,11 @@ class AddressIndexTest(BitcoinTestFramework):
         unspent = self.nodes[0].listunspent()
         tx = CTransaction()
         tx.vin = [CTxIn(COutPoint(int(unspent[0]["txid"], 16), unspent[0]["vout"]))]
-        tx.vout = [CTxOut(10, scriptPubKey), CTxOut(11, scriptPubKey)]
+        tx.vout = [CTxOut(10 * COIN, scriptPubKey), CTxOut(11 * COIN, scriptPubKey)]
         tx.rehash()
 
-        signed_tx = self.nodes[0].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        sent_txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], True)
+        signed_tx = self.nodes[0].signrawtransactionwithwallet(tx.serialize().hex())
+        sent_txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], 0)
 
         self.nodes[0].generate(1)
         self.sync_all()
@@ -148,7 +153,7 @@ class AddressIndexTest(BitcoinTestFramework):
         # Check that balances are correct
         self.log.info("Testing balances...")
         balance0 = self.nodes[1].getaddressbalance("93bVhahvUKmQu8gu9g3QnPPa2cxFK98pMB")
-        assert_equal(balance0["balance"], 45 * 100000000 + 21)
+        assert_equal(balance0["balance"], (45 + 21) * 100000000)
 
         # Check that balances are correct after spending
         self.log.info("Testing balances after spending...")
@@ -165,8 +170,8 @@ class AddressIndexTest(BitcoinTestFramework):
         amount = int(unspent[0]["amount"] * 100000000) - tx_fee_sat
         tx.vout = [CTxOut(amount, scriptPubKey2)]
         tx.rehash()
-        signed_tx = self.nodes[0].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        spending_txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], True)
+        signed_tx = self.nodes[0].signrawtransactionwithwallet(tx.serialize().hex())
+        spending_txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], 0)
         self.nodes[0].generate(1)
         self.sync_all()
         balance1 = self.nodes[1].getaddressbalance(address2)
@@ -179,8 +184,8 @@ class AddressIndexTest(BitcoinTestFramework):
         tx.vout = [CTxOut(change_amount, scriptPubKey2), CTxOut(send_amount, scriptPubKey)]
         tx.rehash()
 
-        signed_tx = self.nodes[0].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        sent_txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], True)
+        signed_tx = self.nodes[0].signrawtransactionwithwallet(tx.serialize().hex())
+        sent_txid = self.nodes[0].sendrawtransaction(signed_tx["hex"], 0)
         self.nodes[0].generate(1)
         self.sync_all()
 
@@ -260,8 +265,8 @@ class AddressIndexTest(BitcoinTestFramework):
         amount = int(unspent[0]["amount"] * 100000000) - tx_fee_sat
         tx.vout = [CTxOut(amount, scriptPubKey3)]
         tx.rehash()
-        signed_tx = self.nodes[2].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        memtxid1 = self.nodes[2].sendrawtransaction(signed_tx["hex"], True)
+        signed_tx = self.nodes[2].signrawtransactionwithwallet(tx.serialize().hex())
+        memtxid1 = self.nodes[2].sendrawtransaction(signed_tx["hex"], 0)
         self.bump_mocktime(2)
 
         tx2 = CTransaction()
@@ -274,8 +279,8 @@ class AddressIndexTest(BitcoinTestFramework):
             CTxOut(int(amount / 4), scriptPubKey4)
         ]
         tx2.rehash()
-        signed_tx2 = self.nodes[2].signrawtransactionwithwallet(binascii.hexlify(tx2.serialize()).decode("utf-8"))
-        memtxid2 = self.nodes[2].sendrawtransaction(signed_tx2["hex"], True)
+        signed_tx2 = self.nodes[2].signrawtransactionwithwallet(tx2.serialize().hex())
+        memtxid2 = self.nodes[2].sendrawtransaction(signed_tx2["hex"], 0)
         self.bump_mocktime(2)
 
         mempool = self.nodes[2].getaddressmempool({"addresses": [address3]})
@@ -301,8 +306,8 @@ class AddressIndexTest(BitcoinTestFramework):
         tx.vout = [CTxOut(int(amount / 2 - 10000), scriptPubKey2)]
         tx.rehash()
         self.nodes[2].importprivkey(privKey3)
-        signed_tx3 = self.nodes[2].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        self.nodes[2].sendrawtransaction(signed_tx3["hex"], True)
+        signed_tx3 = self.nodes[2].signrawtransactionwithwallet(tx.serialize().hex())
+        self.nodes[2].sendrawtransaction(signed_tx3["hex"], 0)
         self.bump_mocktime(2)
 
         mempool3 = self.nodes[2].getaddressmempool({"addresses": [address3]})
@@ -333,8 +338,8 @@ class AddressIndexTest(BitcoinTestFramework):
         tx.vout = [CTxOut(amount, address1script)]
         tx.rehash()
         self.nodes[0].importprivkey(privkey1)
-        signed_tx = self.nodes[0].signrawtransactionwithwallet(binascii.hexlify(tx.serialize()).decode("utf-8"))
-        self.nodes[0].sendrawtransaction(signed_tx["hex"], True)
+        signed_tx = self.nodes[0].signrawtransactionwithwallet(tx.serialize().hex())
+        self.nodes[0].sendrawtransaction(signed_tx["hex"], 0)
 
         self.sync_all()
         mempool_deltas = self.nodes[2].getaddressmempool({"addresses": [address1]})

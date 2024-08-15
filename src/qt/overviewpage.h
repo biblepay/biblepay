@@ -29,7 +29,7 @@ class OverviewPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit OverviewPage(QWidget* parent = 0);
+    explicit OverviewPage(QWidget* parent = nullptr);
     ~OverviewPage();
 
     void setClientModel(ClientModel *clientModel);
@@ -39,6 +39,7 @@ public:
 public Q_SLOTS:
     void coinJoinStatus(bool fForce = false);
     void setBalance(const interfaces::WalletBalances& balances);
+    void setPrivacy(bool privacy);
 
 Q_SIGNALS:
     void transactionClicked(const QModelIndex &index);
@@ -50,6 +51,7 @@ private:
     ClientModel *clientModel;
     WalletModel *walletModel;
     interfaces::WalletBalances m_balances;
+    bool m_privacy{false};
     int nDisplayUnit;
     bool fShowAdvancedCJUI;
     int cachedNumISLocks;

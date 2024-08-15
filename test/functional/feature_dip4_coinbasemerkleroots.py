@@ -1,10 +1,7 @@
-﻿#!/usr/bin/env python3
-# Copyright (c) 2015-2021 The DÃSH Core Developers
+#!/usr/bin/env python3
+# Copyright (c) 2015-2024 The BiblePay Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-from test_framework.mininode import *
-from test_framework.test_framework import BiblepayTestFramework
-from test_framework.util import assert_equal
 
 '''
 feature_dip4_coinbasemerkleroots.py
@@ -13,6 +10,15 @@ Checks DIP4 merkle roots in coinbases
 
 '''
 
+from io import BytesIO
+
+from test_framework.messages import CBlock, CBlockHeader, CCbTx, CMerkleBlock, FromHex, hash256, msg_getmnlistd, QuorumId, ser_uint256
+from test_framework.p2p import P2PInterface
+from test_framework.test_framework import BiblepayTestFramework
+from test_framework.util import assert_equal
+
+
+# TODO: this helper used in many tests, find a new home for it
 class TestP2PConn(P2PInterface):
     def __init__(self):
         super().__init__()
@@ -24,7 +30,7 @@ class TestP2PConn(P2PInterface):
     def wait_for_mnlistdiff(self, timeout=30):
         def received_mnlistdiff():
             return self.last_mnlistdiff is not None
-        return wait_until(received_mnlistdiff, timeout=timeout)
+        self.wait_until(received_mnlistdiff, timeout=timeout)
 
     def getmnlistdiff(self, baseBlockHash, blockHash):
         msg = msg_getmnlistd(baseBlockHash, blockHash)
@@ -39,9 +45,13 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
         self.set_biblepay_test_params(4, 3, fast_dip3_enforcement=True)
 
     def run_test(self):
+        # No IS or Chainlocks in this test
+        self.bump_mocktime(1)
+        self.nodes[0].sporkupdate("SPORK_2_INSTANTSEND_ENABLED", 4070908800)
+        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
+        self.wait_for_sporks_same()
+
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
-        network_thread_start()
-        self.nodes[0].p2p.wait_for_verack()
 
         self.confirm_mns()
 
@@ -61,11 +71,11 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
         expectedDeleted = []
         expectedUpdated = [new_mn.proTxHash]
         mnList = self.test_getmnlistdiff(baseBlockHash, self.nodes[0].getbestblockhash(), mnList, expectedDeleted, expectedUpdated)
-        assert(mnList[new_mn.proTxHash].confirmedHash == 0)
+        assert mnList[new_mn.proTxHash].confirmedHash == 0
         # Now let the MN get enough confirmations and verify that the MNLISTDIFF now has confirmedHash != 0
         self.confirm_mns()
         mnList = self.test_getmnlistdiff(baseBlockHash, self.nodes[0].getbestblockhash(), mnList, expectedDeleted, expectedUpdated)
-        assert(mnList[new_mn.proTxHash].confirmedHash != 0)
+        assert mnList[new_mn.proTxHash].confirmedHash != 0
 
         # Spend the collateral of the previously added MN and test if it appears in "deletedMNs"
         expectedDeleted = [new_mn.proTxHash]
@@ -82,9 +92,7 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
 
         self.nodes[0].generate(1)
         oldhash = self.nodes[0].getbestblockhash()
-        # Have to disable ChainLocks here because they won't let you to invalidate already locked blocks
-        self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
-        self.wait_for_sporks_same()
+
         # Test DIP8 activation once with a pre-existing quorum and once without (we don't know in which order it will activate on mainnet)
         self.test_dip8_quorum_merkle_root_activation(True)
         for n in self.nodes:
@@ -92,14 +100,9 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
         self.sync_all()
         first_quorum = self.test_dip8_quorum_merkle_root_activation(False, True)
 
-        # Re-enable ChainLocks again
-        self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 0)
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
-        self.wait_for_sporks_same()
-
         # Verify that the first quorum appears in MNLISTDIFF
         expectedDeleted = []
-        expectedNew = [QuorumId(100, int(first_quorum, 16))]
+        expectedNew = [QuorumId(100, int(first_quorum, 16)), QuorumId(104, int(first_quorum, 16)), QuorumId(106, int(first_quorum, 16))]
         quorumList = self.test_getmnlistdiff_quorums(null_hash, self.nodes[0].getbestblockhash(), {}, expectedDeleted, expectedNew)
         baseBlockHash = self.nodes[0].getbestblockhash()
 
@@ -107,20 +110,20 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
 
         # Verify that the second quorum appears in MNLISTDIFF
         expectedDeleted = []
-        expectedNew = [QuorumId(100, int(second_quorum, 16))]
+        expectedNew = [QuorumId(100, int(second_quorum, 16)), QuorumId(104, int(second_quorum, 16)), QuorumId(106, int(second_quorum, 16))]
         quorums_before_third = self.test_getmnlistdiff_quorums(baseBlockHash, self.nodes[0].getbestblockhash(), quorumList, expectedDeleted, expectedNew)
         block_before_third = self.nodes[0].getbestblockhash()
 
         third_quorum = self.mine_quorum()
 
         # Verify that the first quorum is deleted and the third quorum is added in MNLISTDIFF (the first got inactive)
-        expectedDeleted = [QuorumId(100, int(first_quorum, 16))]
-        expectedNew = [QuorumId(100, int(third_quorum, 16))]
+        expectedDeleted = [QuorumId(100, int(first_quorum, 16)), QuorumId(104, int(first_quorum, 16)), QuorumId(106, int(first_quorum, 16))]
+        expectedNew = [QuorumId(100, int(third_quorum, 16)), QuorumId(104, int(third_quorum, 16)), QuorumId(106, int(third_quorum, 16))]
         self.test_getmnlistdiff_quorums(block_before_third, self.nodes[0].getbestblockhash(), quorums_before_third, expectedDeleted, expectedNew)
 
         # Verify that the diff between genesis and best block is the current active set (second and third quorum)
         expectedDeleted = []
-        expectedNew = [QuorumId(100, int(second_quorum, 16)), QuorumId(100, int(third_quorum, 16))]
+        expectedNew = [QuorumId(100, int(second_quorum, 16)), QuorumId(104, int(second_quorum, 16)), QuorumId(106, int(second_quorum, 16)), QuorumId(100, int(third_quorum, 16)), QuorumId(104, int(third_quorum, 16)), QuorumId(106, int(third_quorum, 16))]
         self.test_getmnlistdiff_quorums(null_hash, self.nodes[0].getbestblockhash(), {}, expectedDeleted, expectedNew)
 
         # Now verify that diffs are correct around the block that mined the third quorum.
@@ -137,8 +140,8 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
         self.test_getmnlistdiff_quorums(block_before_third, prev_block2, quorums_before_third, expectedDeleted, expectedNew)
         self.test_getmnlistdiff_quorums(block_before_third, prev_block, quorums_before_third, expectedDeleted, expectedNew)
         # The block in which the quorum was mined and the 2 after that should all give the same diff
-        expectedDeleted = [QuorumId(100, int(first_quorum, 16))]
-        expectedNew = [QuorumId(100, int(third_quorum, 16))]
+        expectedDeleted = [QuorumId(100, int(first_quorum, 16)), QuorumId(104, int(first_quorum, 16)), QuorumId(106, int(first_quorum, 16))]
+        expectedNew = [QuorumId(100, int(third_quorum, 16)), QuorumId(104, int(third_quorum, 16)), QuorumId(106, int(third_quorum, 16))]
         quorums_with_third = self.test_getmnlistdiff_quorums(block_before_third, mined_in_block, quorums_before_third, expectedDeleted, expectedNew)
         self.test_getmnlistdiff_quorums(block_before_third, next_block, quorums_before_third, expectedDeleted, expectedNew)
         self.test_getmnlistdiff_quorums(block_before_third, next_block2, quorums_before_third, expectedDeleted, expectedNew)
@@ -177,7 +180,7 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
         # Verify that the merkle root matches what we locally calculate
         hashes = []
         for mn in sorted(newMNList.values(), key=lambda mn: ser_uint256(mn.proRegTxHash)):
-            hashes.append(hash256(mn.serialize()))
+            hashes.append(hash256(mn.serialize(with_version = False)))
         merkleRoot = CBlock.get_merkle_root(hashes)
         assert_equal(merkleRoot, cbtx.merkleRootMNList)
 
@@ -239,39 +242,39 @@ class LLMQCoinbaseCommitmentsTest(BiblepayTestFramework):
 
     def test_dip8_quorum_merkle_root_activation(self, with_initial_quorum, slow_mode=False):
         if with_initial_quorum:
-            self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+            self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
             self.wait_for_sporks_same()
 
             # Mine one quorum before dip8 is activated
             self.mine_quorum()
 
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 4070908800)
+        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 4070908800)
         self.wait_for_sporks_same()
 
         cbtx = self.nodes[0].getblock(self.nodes[0].getbestblockhash(), 2)["tx"][0]
-        assert(cbtx["cbTx"]["version"] == 1)
+        assert cbtx["cbTx"]["version"] == 1
 
         self.activate_dip8(slow_mode)
 
         # Assert that merkleRootQuorums is present and 0 (we have no quorums yet)
         cbtx = self.nodes[0].getblock(self.nodes[0].getbestblockhash(), 2)["tx"][0]
         assert_equal(cbtx["cbTx"]["version"], 2)
-        assert("merkleRootQuorums" in cbtx["cbTx"])
+        assert "merkleRootQuorums" in cbtx["cbTx"]
         merkleRootQuorums = int(cbtx["cbTx"]["merkleRootQuorums"], 16)
 
         if with_initial_quorum:
-            assert(merkleRootQuorums != 0)
+            assert merkleRootQuorums != 0
         else:
             assert_equal(merkleRootQuorums, 0)
 
         self.bump_mocktime(1)
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
         # Mine quorum and verify that merkleRootQuorums has changed
         quorum = self.mine_quorum()
         cbtx = self.nodes[0].getblock(self.nodes[0].getbestblockhash(), 2)["tx"][0]
-        assert(int(cbtx["cbTx"]["merkleRootQuorums"], 16) != merkleRootQuorums)
+        assert int(cbtx["cbTx"]["merkleRootQuorums"], 16) != merkleRootQuorums
 
         return quorum
 

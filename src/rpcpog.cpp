@@ -3,72 +3,70 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <base58.h>
+#include <node/blockstorage.h>
 #include <boost/algorithm/string.hpp>           // for trim()
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string/replace.hpp>
+#include <coinjoin/client.h>
+#include <coinjoin/context.h>
+#include <interfaces/chain.h>
+#include <interfaces/coinjoin.h>
+#include <interfaces/node.h>
+#include <boost/thread.hpp>
+#include <rpc/blockchain.h>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp> // for StringToUnixTime()
-
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
+#include <evo/deterministicmns.h>
 
 #include <consensus/validation.h>
 #include <core_io.h>
 #include <fstream>
-
 #include <init.h>
 #include <key_io.h>
-
-#include <masternode/masternode-sync.h>
-#include <masternode/activemasternode.h>
-
-#include <masternode/masternode-sync.h>
-#include <governance/governance-vote.h>
-
+#include <iostream>    
+#include <algorithm>
+#include <masternode/sync.h>
+#include <masternode/node.h>
+#include <governance/vote.h>
+#include <governance/governance.h>
+#include <node/context.h>
 #include <math.h> /* round, floor, ceil, trunc */
-
 #include <messagesigner.h>
-
 #include <net.h> // for CService
 #include <netaddress.h>
 #include <netbase.h>
 #include <policy/policy.h>
-#include <randomx_bbp.h>
+
 #include <rpcpog.h>
 #include <rpc/server.h>
 
-#include <rpc/server.h>
 #include <txmempool.h>
-#include <util.h>
-
-#include <utilmoneystr.h>
 #include <validation.h>
 #include <stdint.h>
 #include <univalue.h>
-
-#include <validation.h>
 #include <sstream>
+#include <wallet/scriptpubkeyman.h>
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/md5.h>
 #include <openssl/ssl.h>
-
-
 #include <wallet/coincontrol.h>
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
 #include <wallet/walletdb.h>
 #include <wallet/walletutil.h>
+#include <chrono> //sleep
 
 
-UniValue protx_register(const JSONRPCRequest& request);
 UniValue protx(const JSONRPCRequest& request);
 UniValue _bls(const JSONRPCRequest& request);
-
-
-
+UniValue protx_update_service_common_wrapper(const JSONRPCRequest& request, const ChainstateManager& chainman, const MnType mnType);
+UniValue createwallet(const JSONRPCRequest& request);
+std::string createwalletformining(const JSONRPCRequest& request);
 UniValue VoteWithMasternodes(const std::map<uint256, CKey>& keys,
     const uint256& hash,
     vote_signal_enum_t eVoteSignal,
@@ -88,6 +86,54 @@ bool Contains(std::string data, std::string instring)
     if (found != std::string::npos) return true;
     return false;
 }
+
+
+CWallet* GetInternalWallet(JSONRPCRequest r)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    return pwallet;
+}
+
+void CreateWalletIfNotExists(JSONRPCRequest r)
+{
+    try
+    {
+        std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    }
+    catch(...)
+    {
+        LogPrintf("\nWALLET::Sorry, no wallet exists.  Creating default wallet for sanctuary mining.\r\n%f", 1);
+        std::string cOut = createwalletformining(r);
+        LogPrintf("\nWALLET::%s",cOut);
+    }
+}
+
+
+void MilliSleep(int64_t n)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(n));
+}
+
+
+template <typename T>
+std::string HexStrBBP(const T itbegin, const T itend, bool fSpaces = false)
+{
+    std::string rv;
+    static const char hexmap[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    rv.reserve((itend - itbegin) * 3);
+    for (T it = itbegin; it < itend; ++it) {
+        unsigned char val = (unsigned char)(*it);
+        if (fSpaces && it != itbegin)
+            rv.push_back(' ');
+        rv.push_back(hexmap[val >> 4]);
+        rv.push_back(hexmap[val & 15]);
+    }
+
+    return rv;
+}
+
 
 std::string ExtractXML(std::string XMLdata, std::string key, std::string key_end)
 {
@@ -152,22 +198,49 @@ double StringToDouble(std::string s, int place)
     return d;
 }
 
+
+CBlockIndex* GetNextBlockIndex(CBlockIndex* pindex)
+{
+    CBlockIndex* next = g_chainman.ActiveChain().Tip()->GetAncestor(pindex->nHeight + 1);
+    if (next && next->pprev == pindex)
+    {
+        return next;
+    }
+    next = nullptr;
+    return next;
+}
+
+
 static CBlockIndex* pblockindexFBBHLast;
 CBlockIndex* FindBlockByHeight(int nHeight)
 {
+    CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
+    
     CBlockIndex* pblockindex;
-    if (nHeight < 0 || nHeight > chainActive.Tip()->nHeight) return NULL;
+    if (nHeight < 0 || nHeight > pindexTip->nHeight) return NULL;
 
-    if (nHeight < chainActive.Tip()->nHeight / 2)
-        pblockindex = mapBlockIndex[chainActive.Genesis()->GetBlockHash()];
+    if (nHeight < (pindexTip->nHeight / 2))
+    {
+        pblockindex = g_chainman.m_blockman.LookupBlockIndex(g_chainman.ActiveChain().Genesis()->GetBlockHash());
+    }
     else
-        pblockindex = chainActive.Tip();
+    {
+        pblockindex = pindexTip;
+    }
+
     if (pblockindexFBBHLast && abs(nHeight - pblockindex->nHeight) > abs(nHeight - pblockindexFBBHLast->nHeight))
+    {
         pblockindex = pblockindexFBBHLast;
+    }
+
     while (pblockindex->nHeight > nHeight)
+    {
         pblockindex = pblockindex->pprev;
+    }
     while (pblockindex->nHeight < nHeight)
-        pblockindex = chainActive.Next(pblockindex);
+    {
+        pblockindex = GetNextBlockIndex(pblockindex);
+    }
     pblockindexFBBHLast = pblockindex;
     return pblockindex;
 }
@@ -184,34 +257,42 @@ std::string ReverseHex(std::string const& src)
     return result;
 }
 
-CAmount GetWalletBalance()
+
+CAmount GetWalletBalance(JSONRPCRequest r)
 {
-	JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
+    CWallet* pwallet = GetInternalWallet(r);
     if (!EnsureWalletIsAvailable(pwallet, false))
         return 0;
-    return wallet->GetBalance();
+    const auto bal = pwallet->GetBalance(0, false, false);
+    CAmount nBal = bal.m_mine_trusted;
+    return nBal;
 }
 
-std::string GetPrivKey2(std::string sPubKey, std::string& sError)
+
+std::string GetPrivKey2(JSONRPCRequest r, std::string sPubKey, std::string& sError)
 {
     CTxDestination dest = DecodeDestination(sPubKey);
-    JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
+    CWallet* pwallet = GetInternalWallet(r);
+
     if (!EnsureWalletIsAvailable(pwallet, false)) {
         sError = "WALLET_NEEDS_UNLOCKED";
         return "";
     }
 
-    const CKeyID* keyID = boost::get<CKeyID>(&dest);
-    if (!keyID) {
+    LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
+
+    if (!IsValidDestination(dest)) {
+        sError = "Invalid BiblePay address";
+        return "";
+    }
+    const PKHash* pkhash = std::get_if<PKHash>(&dest);
+    if (!pkhash) {
         sError = "Address does not refer to a key";
         return "";
     }
+
     CKey vchSecret;
-    if (!pwallet->GetKey(*keyID, vchSecret)) {
+    if (!spk_man->GetKey(ToKeyID(*pkhash), vchSecret)) {
         sError = "Private key for address is not known";
         return "";
     }
@@ -219,21 +300,19 @@ std::string GetPrivKey2(std::string sPubKey, std::string& sError)
     return sPK;
 }
 
-bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition)
+bool RPCSendMoney(JSONRPCRequest r, std::string& sError, std::string sAddress, CAmount nValue, std::string& sTXID, std::string sOptionalData, int& nVoutPosition)
 {
-	JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
+    CWallet* pwallet = GetInternalWallet(r);
+
     if (!EnsureWalletIsAvailable(pwallet, false))
         return false;
 	CScript scriptPubKey = GetScriptForDestination(DecodeDestination(sAddress));
 	
-    CReserveKey reservekey(pwallet);
     CAmount nFeeRequired;
-    std::string strError;
+    bilingual_str strFailReason;
+
     std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
-
 
 	// BiblePay - Handle extremely large data transactions:
     if (sOptionalData.length() > 2999 && nValue > 0) {
@@ -256,17 +335,13 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
     int nChangePos = -1;
     CTransactionRef tx;
 
-    if (!pwallet->CreateTransaction(vecSend, tx, reservekey, nFeeRequired, nChangePos, strError, coinControl, true, 0, sOptionalData)) 
+    if (!pwallet->CreateTransaction(vecSend, tx, nFeeRequired, nChangePos, strFailReason, coinControl, true, 0)) 
 	{
-        sError = "Unable to Create Transaction: " + strError;
+        // Todo : Convert bilingual string(strError) and append to the error
+        sError = "Unable to Create Transaction";
         return false;
     }
-    CValidationState state;
-	if (!pwallet->CommitTransaction(tx, {}, {}, {}, reservekey, g_connman.get(), state))
-	{
-        sError = "Error: The transaction was rejected!";
-        return false;
-    }
+    pwallet->CommitTransaction(tx, {}, {});
 
     for (unsigned int i = 0; i < tx->vout.size(); i++) 
     {
@@ -281,24 +356,21 @@ bool RPCSendMoney(std::string& sError, std::string sAddress, CAmount nValue, std
 }
 
 
-bool IsMyAddress(const std::string& sAddress)
+bool IsMyAddress(JSONRPCRequest r,std::string sAddress)
 {
-    JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
-    if (!EnsureWalletIsAvailable(pwallet, false)) {
-        return false;
-    }
-    CTxDestination dAddress = DecodeDestination(sAddress);
-    bool fMine = IsMine(*pwallet, dAddress);
-    return fMine;
+        isminetype result;
+        CWallet* pwallet = GetInternalWallet(r);
+        LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
+        CScript spkAddress = GetScriptForDestination(DecodeDestination(sAddress));
+        result = spk_man->IsMine(spkAddress);
+        bool fMine = result != ISMINE_NO;
+        return fMine;
 }
 
-std::string DefaultRecAddress(std::string sNamedEntry)
+std::string DefaultRecAddress(JSONRPCRequest r,std::string sNamedEntry)
 {
-	JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
+    CWallet* pwallet = GetInternalWallet(r);
+
     if (!EnsureWalletIsAvailable(pwallet, false))
 	{
         LogPrintf("\nDefaultRecAddress::ERROR %f No pwallet", 03142021);
@@ -307,28 +379,30 @@ std::string DefaultRecAddress(std::string sNamedEntry)
 
     boost::to_upper(sNamedEntry);
     std::string sDefaultRecAddress;
-    for (auto item : pwallet->mapAddressBook) 
-	{
+        
+    for (const std::pair<const CTxDestination, CAddressBookData>& item : pwallet->m_address_book)
+    {
         CTxDestination txd1 = item.first;
         std::string sAddr = EncodeDestination(txd1);
-        std::string strName = item.second.name;
-        bool fMine = IsMine(*pwallet, item.first);
-
-		if (fMine) {
+        std::string strName = item.second.GetLabel();
+        bool fMine = IsMyAddress(r,sAddr);
+        if (fMine) {
             boost::to_upper(strName);
-            if (strName == sNamedEntry) 
-			{
+            if (strName == sNamedEntry) {
                 return sAddr;
             }
         }
     }
+
 	// Not in the book
     std::string sError;
     if (sNamedEntry == "")
 		sNamedEntry = "NA";
   
     CPubKey pubkey;
-    if (!pwallet->GetKeyFromPool(pubkey, false))
+
+    LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
+    if (!spk_man->GetKeyFromPool(pubkey, false))
     {
 	   LogPrintf("\r\nDefaultRecAddress cant get key from keypool: denied %f",831);
 	   return "";
@@ -336,20 +410,20 @@ std::string DefaultRecAddress(std::string sNamedEntry)
 
     CKeyID vchAddress = pubkey.GetID();
     pwallet->MarkDirty();
-    pwallet->SetAddressBook(vchAddress, sNamedEntry, "receive");
+    CTxDestination dTo = PKHash(vchAddress);
 
-    sDefaultRecAddress = EncodeDestination(vchAddress);
+    pwallet->SetAddressBook(dTo, sNamedEntry, "receive");
+
+    sDefaultRecAddress = EncodeDestination(PKHash(vchAddress));
     LogPrintf("\r\nDefaultRecAddress for %s=%s, Error=%s", sNamedEntry, sDefaultRecAddress, sError);
    
     return sDefaultRecAddress;
 }
 
 
-std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::string& sError)
+std::string SignMessageEvo(JSONRPCRequest r,std::string strAddress, std::string strMessage, std::string& sError)
 {
-	JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
+    CWallet* pwallet = GetInternalWallet(r);
     if (!EnsureWalletIsAvailable(pwallet, false))
         return "no wallet";
 
@@ -365,19 +439,23 @@ std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::
         return std::string();
     }
 
-    const CKeyID* keyID = boost::get<CKeyID>(&dest);
-    if (!keyID) {
-        sError = "Address does not refer to key";
+    const PKHash* pkhash = std::get_if<PKHash>(&dest);
+    if (!pkhash) {
+        sError = "collateral type not supported";
         return std::string();
     }
+
+    LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
+
     CKey key;
-    if (!pwallet->GetKey(*keyID, key)) {
+    if (!spk_man->GetKey(ToKeyID(*pkhash), key)) {
         sError = "Private key not available";
         return std::string();
     }
 
+    
     CHashWriter ss(SER_GETHASH, 0);
-    ss << strMessageMagic;
+    ss << MESSAGE_MAGIC_BBP;
     ss << strMessage;
     std::vector<unsigned char> vchSig;
     if (!key.SignCompact(ss.GetHash(), vchSig)) {
@@ -385,7 +463,7 @@ std::string SignMessageEvo(std::string strAddress, std::string strMessage, std::
         return std::string();
     }
 
-    return EncodeBase64(&vchSig[0], vchSig.size());
+    return EncodeBase64(vchSig);
 }
 
 std::vector<std::string> Split(std::string s, std::string delim)
@@ -485,10 +563,10 @@ bool ValidateAddress2(std::string sAddress)
     return IsValidDestination(dest);
 }
 
+/*
 bool SendManyXML(std::string XML, std::string& sTXID)
 {
-	JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+	std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
     CWallet* const pwallet = wallet.get();
 	LOCK2(cs_main, pwallet->cs_wallet);
 	int nMinDepth = 1;
@@ -538,13 +616,15 @@ bool SendManyXML(std::string XML, std::string& sTXID)
 			throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
 	}
     
-	if (!pwallet->CommitTransaction(tx, {}, {}, {}, keyChange, g_connman.get(), state))
+	if (!pwallet->CommitTransaction(tx, {}, {}, {}, keyChange, an.get(), state))
 	{
 			throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
 	}
 	sTXID = tx->GetHash().GetHex();
 	return true;
 }
+*/
+
 
 uint256 CRXT(uint256 hash, int64_t nPrevBlockTime, int64_t nBlockTime)
 {
@@ -647,6 +727,7 @@ void private_connect_handler(const boost::system::error_code& error)
     }
 }
 
+
 bool TcpTest(std::string sIP, int nPort, int nTimeout)
 {
     try 
@@ -668,7 +749,9 @@ bool TcpTest(std::string sIP, int nPort, int nTimeout)
             {
                  break;
             }
-            boost::this_thread::interruption_point();
+            if (ShutdownRequested()) {
+                 break;
+            }
             MilliSleep(1000);
         }
         return (nConnectSucceeded == 1) ? true : false;
@@ -699,7 +782,6 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
     try 
     {
         double dDebugLevel = StringToDouble(gArgs.GetArg("-devdebuglevel", "0"), 0);
-    
         if (dDebugLevel == 1)
             LogPrintf("\r\nUplink::Connecting to %s [/] %s ", sBaseURL, sPage);
 
@@ -716,7 +798,6 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         if (fJson)
             mapRequestHeaders["Content-Type"] = "application/json";
         
-        /* UNCHAINED BEGIN */
         // In this section, we provide the Public unchained key, and signature, so we can query cockroachdb
         // for a report
         std::string sPublicKey;
@@ -724,11 +805,16 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         ReadUnchainedConfigFile(sPublicKey, sPrivKey);
         mapRequestHeaders["unchained-public-key"] = sPublicKey;
         std::string sSignError;
-        std::string sSig = SignMessageEvo(sPublicKey, "authenticate", sSignError);
+        std::string sSig;
+
+
+        // Start of BBP Signer
+        const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+        JSONRPCRequest r0(cc);
+        SignMessageEvo(r0, sPublicKey, "authenticate", sSignError);
         LogPrintf("\nUplink::BBPPub::%s,privlen%f,Signed::%s", sPublicKey, sPrivKey.length(), sSig);
         mapRequestHeaders["unchained-auth-signature"] = sSig;
-        /* UNCHAINED END */
-
+        // End of BBP Signer
 
         BIO* bio;
         // Todo add connection timeout here to bio object
@@ -754,7 +840,8 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
         SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
         SSL_set_tlsext_host_name(ssl, const_cast<char*>(sDomain.c_str()));
         BIO_set_conn_hostname(bio, sDomainWithPort.c_str());
-        BIO_set_conn_int_port(bio, &iPort);
+        std::string sPortNum = DoubleToString(iPort, 0);
+        BIO_set_conn_port(bio, const_cast<char*>(sPortNum.c_str()));
 
         if (dDebugLevel == 1)
             LogPrintf("Connecting to %s", sDomainWithPort.c_str());
@@ -901,17 +988,6 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
 static std::string msBaseDomain = "https://unchained.biblepay.org";
 
 static int SSL_PORT = 443;
@@ -935,7 +1011,30 @@ BBPResult UnchainedGet(std::string sAPIPath)
     b.ErrorCode = ExtractXML(sResponse, "<error>", "</error>");
     b.Response = strReplace(b.Response, "\t", "     ");
     return b;
-}       
+}
+
+BBPResult UnchainedApiGet()
+{
+    std::string msBase = "https://api.biblepay.org";
+    std::string sPage = "api/pin/getnft/56";
+    // Mission critical todo
+    int iTimeout = 10000;
+    BBPResult b;
+    b.Response = Uplink(false, "", msBase, sPage, SSL_PORT, iTimeout, 4);
+    return b;
+}
+
+std::string DateTimeStrFormat(const char* pszFormat, int64_t nTime)
+{
+    static std::locale classic(std::locale::classic());
+    // std::locale takes ownership of the pointer
+    std::locale loc(classic, new boost::posix_time::time_facet(pszFormat));
+    std::stringstream ss;
+    ss.imbue(loc);
+    ss << boost::posix_time::from_time_t(nTime);
+    return ss.str();
+}
+
 
 BBPResult SidechainQuery(std::string sXMLSource, std::string sAPI)
 {
@@ -964,18 +1063,17 @@ uint256 GetSHA256Hash(std::string sData)
     return h;
 }
 
-std::shared_ptr<CReserveScript> GetScriptForMining()
+CScript GetScriptForMining(JSONRPCRequest r)
 {
-	std::shared_ptr<CReserveScript> coinbaseScript;
-	JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-	wallet->GetScriptForMining(coinbaseScript);
-	return coinbaseScript;
+    std::string address = DefaultRecAddress(r,"MINING");
+    CTxDestination dest = DecodeDestination(address);
+    CScript script = GetScriptForDestination(dest);
+    return script;
 }
+
 
 bool IsDailySuperblock(int nHeight)
 {
-
 	const CChainParams& chainparams = Params();
     if (nHeight >= chainparams.GetConsensus().REDSEA_HEIGHT)
     {
@@ -1009,9 +1107,9 @@ CAmount GetDailyPaymentsLimit(int nHeight)
         UTXO_BLOCK_PERCENTAGE = .55;
     }
 	int nDiff = 500000000;
-	double nSubsidy = (double)GetBlockSubsidy(nDiff, nHeight, chainparams.GetConsensus())/COIN;
+	double nSubsidy = (double)GetBlockSubsidyInner(nDiff, nHeight, chainparams.GetConsensus(), true)/COIN;
 	double nLimit = nSubsidy * UTXO_BLOCK_PERCENTAGE * BLOCKS_PER_DAY;
-	// LogPrintf("\nGetDailyPaymentsLimit Subsidy %f limit %f", nSubsidy, nLimit);
+	LogPrintf("\nGetDailyPaymentsLimit Subsidy %f limit %f", nSubsidy, nLimit);
 	CAmount nPaymentsLimit = nLimit * COIN;
 	return nPaymentsLimit;
 }
@@ -1025,7 +1123,7 @@ std::vector<Portfolio> GetDailySuperblock(int nHeight)
 	std::string sData0 = ScanChainForData(nHeight);
 	std::string sHash = ExtractXML(sData0, "<hash>", "</hash>");
 	std::string sData = ExtractXML(sData0, "<data>", "</data>");
-	//	LogPrintf("\nHash %s, Data %s", sHash, sData);
+	LogPrintf("\nHash %s, Data %s", sHash, sData);
 
 	std::vector<Portfolio> vPortfolio;
 	std::vector<std::string> vRows = Split(sData, "<row>");
@@ -1122,13 +1220,13 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 		// After 7 days, we no longer need to check this old superblock.  This allows us to sync from zero efficiently.
         return true;
     }
-
+     
 	CAmount nTotalPayments = 0;
 	std::vector<Portfolio> vPortfolio = GetDailySuperblock(nBlockHeight);
 	for (int i = 0; i < vPortfolio.size(); i++)
 	{
-        bool found = false;
-		std::string sRecipient1 = vPortfolio[i].OwnerAddress;
+        bool found = false; 
+		std::string sRecipient1 = vPortfolio[i].OwnerAddress; 
 		CAmount nAmount1 = vPortfolio[i].Owed * COIN;
 		nTotalPayments += nAmount1;
 	    for (const auto& txout2 : txNew.vout) 
@@ -1147,34 +1245,10 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 		}
 	    if (!found) 
 		{
-            LogPrintf("\nValidateDailySuperblock::ERROR failed to find expected payee %s at height %s\n", sRecipient1, nBlockHeight);
+            LogPrintf("\nValidateDailySuperblock::ERROR failed-to-find expected payee %s at height %s\n", sRecipient1, nBlockHeight);
 			return false;
         }
     }
-	if (nTotalPayments == 0)
-	{
-		// Now that the GSC is stored in the chain, we don't need to check this old rule anymore...
-		/*
-		if (nElapsed < 60 * 60 * 8)
-		{
-	    	// Ensure this block is more than 8 hours old, since nothing is in it...
-			LogPrintf("\nValidateDailySuperblock::ERROR - Superblock is less than 8 hours old, and superblock is empty!  Waiting for a valid superblock... ElapsedTime=%f\n", nElapsed);
-			return false;
-		}
-		
-		CAmount nTotalSubsidy = 0;
-		for (const auto& txout3 : txNew.vout)
-		{
-			nTotalSubsidy += txout3.nValue;
-		}
-
-		if (nElapsed > (60 * 60 * 8) && nTotalSubsidy > (MAX_BLOCK_SUBSIDY*COIN))
-		{
-			LogPrintf("\nValidateDailySuperblock::ERROR - Superblock is greater than 8 hours old, and empty, with more than MAX_BLOCK_SUBSIDY[%f] in payments... Rejected.. \n", nTotalSubsidy/COIN);
-			return false;
-		}
-		*/
-	}
     return true;
 }
 
@@ -1182,6 +1256,7 @@ bool ValidateDailySuperblock(const CTransaction& txNew, int nBlockHeight, int64_
 //								                          			BBP's version of The Sentinel, March 31st, 2019                                                                                                  //
 //                                                                                                                                                                                                                   //
 
+/*
 std::string RetrieveMd5(std::string s1)
 {
     try {
@@ -1197,12 +1272,14 @@ std::string RetrieveMd5(std::string s1)
         return std::string();
     }
 }
+*/
 
 uint256 GetPAMHash(std::string sAddresses, std::string sAmounts, std::string sQTPhase)
 {
 	std::string sConcat = sAddresses + sAmounts + sQTPhase;
 	if (sConcat.empty()) return uint256S("0x0");
-	std::string sHash = RetrieveMd5(sConcat);
+    uint256 h = GetSHA256Hash(sConcat);
+    std::string sHash = h.GetHex();
 	return uint256S("0x" + sHash);
 }
 
@@ -1257,7 +1334,10 @@ bool ChainSynced(CBlockIndex* pindex)
 
 bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& sError)
 {
-	if(!masternodeSync.IsBlockchainSynced()) 
+    
+    bool fSynced = ::masternodeSync.get()->IsBlockchainSynced();
+
+	if(!fSynced) 
 	{
 		sError = "Must wait for client to sync with Sanctuary network. Try again in a minute or so.";
 		return false;
@@ -1277,14 +1357,16 @@ bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& s
 	int64_t nLastGSCSubmitted = 0;
 	CGovernanceObject govobj(hashParent, nRevision, nTime, txidFee, strData);
 
-
     DBG( std::cout << "gobject: submit "
          << " GetDataAsPlainString = " << govobj.GetDataAsPlainString()
          << ", hash = " << govobj.GetHash().GetHex()
          << ", txidFee = " << txidFee.GetHex()
          << std::endl; );
 
-	auto mnList = deterministicMNManager->GetListAtChainTip();
+    
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+
+
     bool fMnFound = mnList.HasValidMNByCollateral(activeMasternodeInfo.outpoint);
 	if (!fMnFound)
 	{
@@ -1292,7 +1374,7 @@ bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& s
 		return false;
 	}
 
-	if (govobj.GetObjectType() == GOVERNANCE_OBJECT_TRIGGER) 
+	if (govobj.GetObjectType() == GovernanceObject::TRIGGER) 
 	{
 		govobj.SetMasternodeOutpoint(activeMasternodeInfo.outpoint);
         govobj.Sign(*activeMasternodeInfo.blsKeyOperator);
@@ -1323,14 +1405,17 @@ bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& s
 		return false;
 	}
 
+    auto govman = ::governance.get();
+    const NodeContext& node = CGlobalNode::GetGlobalNodeContext();
+    
 	if (fMissingConfirmations) 
 	{
-        governance.AddPostponedObject(govobj);
-        govobj.Relay(*g_connman);
+        govman->AddPostponedObject(govobj);
+        govobj.Relay(*node.connman);
     } 
 	else 
 	{
-        governance.AddGovernanceObject(govobj, *g_connman);
+        govman->AddGovernanceObject(govobj, *node.connman);
     }
 
 	gobjecthash = govobj.GetHash().ToString();
@@ -1339,18 +1424,25 @@ bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& s
 	return true;
 }
 
+
 void GetGSCGovObjByHeight(int nHeight, uint256 uOptFilter, int& out_nVotes, uint256& out_uGovObjHash, std::string& out_PaymentAddresses, std::string& out_PaymentAmounts, std::string& out_qtdata)
 {
 	int nStartTime = 0; 
-	LOCK2(cs_main, governance.cs);
-	std::vector<const CGovernanceObject*> objs = governance.GetAllNewerThan(nStartTime);
+	
+    
+    std::vector<CGovernanceObject> objs;
+    auto govman = ::governance.get();
+
+    govman->GetAllNewerThan(objs, nStartTime);
+    LOCK2(cs_main, govman->cs);
+
 	std::string sPAM;
 	std::string sPAD;
 	int iHighVotes = -1;
 	for (const auto& pGovObj : objs) 
 	{
-		CGovernanceObject* myGov = governance.FindGovernanceObject(pGovObj->GetHash());
-		if (myGov->GetObjectType() != GOVERNANCE_OBJECT_TRIGGER) continue;
+		CGovernanceObject* myGov = govman->FindGovernanceObject(pGovObj.GetHash());
+        if (myGov->GetObjectType() != GovernanceObject::TRIGGER) continue;
 	    UniValue obj = myGov->GetJSONObject();
 		int nLocalHeight = obj["event_block_height"].get_int();
 		if (nLocalHeight == nHeight)
@@ -1378,10 +1470,13 @@ void GetGSCGovObjByHeight(int nHeight, uint256 uOptFilter, int& out_nVotes, uint
 
 int GetHeightByEpochTime(int64_t nEpoch)
 {
-    if (!chainActive.Tip()) return 0;
-    int nLast = chainActive.Tip()->nHeight;
+    CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
+
+    if (!pindexTip) return 0;
+    int nLast = pindexTip->nHeight;
     if (nLast < 1) return 0;
-    for (int nHeight = nLast; nHeight > 0; nHeight--) {
+    for (int nHeight = nLast; nHeight > 0; nHeight--)
+    {
         CBlockIndex* pindex = FindBlockByHeight(nHeight);
         if (pindex) {
             int64_t nTime = pindex->GetBlockTime();
@@ -1393,10 +1488,14 @@ int GetHeightByEpochTime(int64_t nEpoch)
 
 BBPProposal GetProposalByHash(uint256 govObj, int nLastSuperblock)
 {
-	int nSancCount = deterministicMNManager->GetListAtChainTip().GetValidMNsCount();
+    int nSancCount = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNsCount();
+
+    auto govman = ::governance.get();
+
 	int nMinPassing = nSancCount * .10;
 	if (nMinPassing < 1) nMinPassing = 1;
-	CGovernanceObject* myGov = governance.FindGovernanceObject(govObj);
+
+    CGovernanceObject* myGov = govman->FindGovernanceObject(govObj);
 	UniValue obj = myGov->GetJSONObject();
 	BBPProposal bbpProposal;
 	bbpProposal.sName = obj["name"].getValStr();
@@ -1433,11 +1532,10 @@ std::string DescribeProposal(BBPProposal bbpProposal)
 
 void GetGovSuperblockHeights(int& nNextSuperblock, int& nLastSuperblock)
 {
-    int nBlockHeight = 0;
-    {
-        LOCK(cs_main);
-        nBlockHeight = (int)chainActive.Height();
-    }
+    CBlockIndex* pindexTip = g_chainman.ActiveChain().Tip();
+
+    int nBlockHeight = pindexTip->nHeight;
+
     int nSuperblockStartBlock = Params().GetConsensus().nSuperblockStartBlock;
     int nSuperblockCycle = Params().GetConsensus().nSuperblockCycle;
     int nFirstSuperblockOffset = (nSuperblockCycle - nSuperblockStartBlock % nSuperblockCycle) % nSuperblockCycle;
@@ -1453,18 +1551,25 @@ void GetGovSuperblockHeights(int& nNextSuperblock, int& nLastSuperblock)
 
 std::vector<BBPProposal> GetWinningSanctuarySporkProposals()
 {
+    auto govman = ::governance.get();
+
 	int nStartTime = GetAdjustedTime() - (86400 * 7);
 	// NOTE: Sanctuary sporks occur every week, and expire 7 days after creation.  They should be voted on regularly.
 	int nLastSuperblock = 0;
 	int nNextSuperblock = 0;
 	GetGovSuperblockHeights(nNextSuperblock, nLastSuperblock);
-    LOCK2(cs_main, governance.cs);
-    std::vector<const CGovernanceObject*> objs = governance.GetAllNewerThan(nStartTime);
+
+    
+    LOCK2(cs_main, govman->cs);
+
+    std::vector<CGovernanceObject> objs;
+    govman->GetAllNewerThan(objs, nStartTime);
 	std::vector<BBPProposal> vSporks;
-	for (const CGovernanceObject* pGovObj : objs) 
+	for (CGovernanceObject GovObj : objs) 
     {
-		if (pGovObj->GetObjectType() != GOVERNANCE_OBJECT_PROPOSAL) continue;
-		BBPProposal bbpProposal = GetProposalByHash(pGovObj->GetHash(), nLastSuperblock);
+        if (GovObj.GetObjectType() != GovernanceObject::PROPOSAL) continue;
+
+		BBPProposal bbpProposal = GetProposalByHash(GovObj.GetHash(), nLastSuperblock);
 		// We need proposals that are sporks, that are older than 48 hours that are not expired
 		int64_t nAge = GetAdjustedTime() - bbpProposal.nStartEpoch;
 		if (bbpProposal.sExpenseType == "XSPORK-ORPHAN" || bbpProposal.sExpenseType == "XSPORK-CHARITY" || bbpProposal.sExpenseType == "XSPORK-EXPENSE" || bbpProposal.sExpenseType == "SPORK")
@@ -1525,12 +1630,13 @@ std::string SerializeSanctuaryQuorumTrigger(int iContractAssessmentHeight, int n
 	sJson += "}]]";
 	LogPrintf("\nSerializeSanctuaryQuorumTrigger:Creating New Object %s ", sJson);
 	std::vector<unsigned char> vchJson = std::vector<unsigned char>(sJson.begin(), sJson.end());
-	std::string sHex = HexStr(vchJson.begin(), vchJson.end());
+	std::string sHex = HexStrBBP(vchJson.begin(), vchJson.end());
 	return sHex;
 }
 
 bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOutcome, std::string& sError)
 {
+    auto govman = ::governance.get();
 
 	if (sVoteSignal != "funding" && sVoteSignal != "delete")
 	{
@@ -1542,10 +1648,9 @@ bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOu
 	vote_outcome_enum_t eVoteOutcome = CGovernanceVoting::ConvertVoteOutcome(sVoteOutcome);
 	int nSuccessful = 0;
 	int nFailed = 0;
-	int govObjType;
+	GovernanceObject govObjType;
 	{
-        LOCK(governance.cs);
-        CGovernanceObject *pGovObj = governance.FindGovernanceObject(govobj);
+        CGovernanceObject *pGovObj = govman->FindGovernanceObject(govobj);
         if (!pGovObj) 
 		{
 			sError = "Governance object not found";
@@ -1553,8 +1658,9 @@ bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOu
         }
         govObjType = pGovObj->GetObjectType();
     }
-	
-    auto dmn = deterministicMNManager->GetListAtChainTip().GetValidMNByCollateral(activeMasternodeInfo.outpoint);
+
+    CDeterministicMNCPtr dmn = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNByCollateral(activeMasternodeInfo.outpoint);
+
 
     if (!dmn) 
 	{
@@ -1565,7 +1671,7 @@ bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOu
     CGovernanceVote vote(dmn->collateralOutpoint, govobj, eVoteSignal, eVoteOutcome);
 
     bool signSuccess = false;
-    if (govObjType == GOVERNANCE_OBJECT_PROPOSAL && eVoteSignal == VOTE_SIGNAL_FUNDING)
+    if (govObjType == GovernanceObject::PROPOSAL && eVoteSignal == VOTE_SIGNAL_FUNDING)
     {
         sError = "Can't use vote-conf for proposals when deterministic masternodes are active";
         return false;
@@ -1582,10 +1688,15 @@ bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOu
 	}
 
     CGovernanceException exception;
-    if (governance.ProcessVoteAndRelay(vote, exception, *g_connman)) 
+
+    const NodeContext& node = CGlobalNode::GetGlobalNodeContext();
+    
+    if (govman->ProcessVoteAndRelay(vote, exception, *node.connman)) 
 	{
         nSuccessful++;
-    } else {
+    }
+    else
+    {
         nFailed++;
     }
 
@@ -1595,9 +1706,13 @@ bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOu
 
 std::vector<std::pair<int64_t, uint256>> GetGSCSortedByGov(int nHeight, uint256 inPamHash, bool fIncludeNonMatching)
 {
-	int nStartTime = 0; 
-	LOCK2(cs_main, governance.cs);
-	std::vector<const CGovernanceObject*> objs = governance.GetAllNewerThan(nStartTime);
+	int nStartTime = 0;
+    auto govman = ::governance.get();
+        
+    LOCK2(cs_main, govman->cs);
+    std::vector<CGovernanceObject> objs;
+    govman->GetAllNewerThan(objs, nStartTime);
+
 	std::string sPAM;
 	std::string sPAD;
 	std::vector<std::pair<int64_t, uint256> > vPropByGov;
@@ -1605,8 +1720,8 @@ std::vector<std::pair<int64_t, uint256>> GetGSCSortedByGov(int nHeight, uint256 
 	int iOffset = 0;
 	for (const auto& pGovObj : objs) 
 	{
-		CGovernanceObject* myGov = governance.FindGovernanceObject(pGovObj->GetHash());
-		if (myGov->GetObjectType() != GOVERNANCE_OBJECT_TRIGGER) continue;
+		CGovernanceObject* myGov = govman->FindGovernanceObject(pGovObj.GetHash());
+        if (myGov->GetObjectType() != GovernanceObject::TRIGGER) continue;
 		UniValue obj = myGov->GetJSONObject();
 		int nLocalHeight = obj["event_block_height"].get_int();
 		if (nLocalHeight == nHeight)
@@ -1642,7 +1757,9 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	std::string sAmounts;
 	std::string sQTData;
 	uint256 uPamHash = GetPAMHashByContract(sMyContract);
-	
+    auto govman = ::governance.get();
+
+    
 	GetGSCGovObjByHeight(nHeight, uPamHash, iPendingVotes, uGovObjHash, sPaymentAddresses, sAmounts, sQTData);
 	
 	bool fOverBudget = IsOverBudget(nHeight, GetAdjustedTime(), sAmounts);
@@ -1661,8 +1778,8 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	int iVotes = 0;
 	// Step 1:  Vote for contracts that agree with the local chain
 	for (int i = 0; i < vPropByGov.size(); i++)
-	{
-		CGovernanceObject* myGov = governance.FindGovernanceObject(vPropByGov[i].second);
+	{    
+		CGovernanceObject* myGov = govman->FindGovernanceObject(vPropByGov[i].second);
 		sAction = (i==0) ? "yes" : "no";
 		if (fOverBudget) 
 			sAction = "no";
@@ -1681,7 +1798,7 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 		vPropByGov = GetGSCSortedByGov(nHeight, uPamHash, true);
 		for (int i = 0; i < vPropByGov.size(); i++)
 		{
-			CGovernanceObject* myGovForRemoval = governance.FindGovernanceObject(vPropByGov[i].second);
+			CGovernanceObject* myGovForRemoval = govman->FindGovernanceObject(vPropByGov[i].second);
 			sAction = "no";
 			int iVotes = myGovForRemoval->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
 			LogPrintf("\nSmartContract-Server::VoteDownBadGCCContracts::Voting %s for govHash %s, with pre-existing-votes %f (created %f)",
@@ -1698,13 +1815,16 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 
 std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 {
-	if (chainActive.Tip()->nHeight % 5 != 0)
+    CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
+    auto govman = ::governance.get();
+
+	if (pindexTip->nHeight % 5 != 0)
 		return "WAITING...";
 	if (!fMasternodeMode && !fForce)   
 		return "NOT_A_WATCHMAN_SANCTUARY";
-	if (!chainActive.Tip()) 
+	if (!pindexTip) 
 		return "WATCHMAN_INVALID_CHAIN";
-	if (!ChainSynced(chainActive.Tip()))
+	if (!ChainSynced(pindexTip))
 		return "WATCHMAN_CHAIN_NOT_SYNCED";
 
 	const Consensus::Params& consensusParams = Params().GetConsensus();
@@ -1714,11 +1834,13 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	int nNextSuperblock = 0;
 	GetGovSuperblockHeights(nNextSuperblock, nLastSuperblock);
 
-	int nSancCount = deterministicMNManager->GetListAtChainTip().GetValidMNsCount();
+    // MISSION CRITICAL TODO HERE - CRASHING BECAUSE GETGLOBALNODECONTEXT RETURNS NULL.
+
+	int nSancCount = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNsCount();
 
 	std::string sReport;
 
-	int nBlocksUntilEpoch = nNextSuperblock - chainActive.Tip()->nHeight;
+	int nBlocksUntilEpoch = nNextSuperblock - pindexTip->nHeight;
 	if (nBlocksUntilEpoch < 0)
 		return "WATCHMAN_LOW_HEIGHT";
 
@@ -1726,14 +1848,17 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 		return "WATCHMAN_TOO_EARLY_FOR_COMING";
 
 	int nStartTime = GetAdjustedTime() - (86400 * 32);
-    std::vector<const CGovernanceObject*> objs = governance.GetAllNewerThan(nStartTime);
+
+    std::vector<CGovernanceObject> objs;
+    govman->GetAllNewerThan(objs, nStartTime);
+
 	std::vector<std::pair<int, uint256> > vProposalsSortedByVote;
 	vProposalsSortedByVote.reserve(objs.size() + 1);
     
-	for (const CGovernanceObject* pGovObj : objs) 
+	for (CGovernanceObject GovObj : objs) 
     {
-		if (pGovObj->GetObjectType() != GOVERNANCE_OBJECT_PROPOSAL) continue;
-		BBPProposal bbpProposal = GetProposalByHash(pGovObj->GetHash(), nLastSuperblock);
+        if (GovObj.GetObjectType() != GovernanceObject::PROPOSAL) continue;
+		BBPProposal bbpProposal = GetProposalByHash(GovObj.GetHash(), nLastSuperblock);
 		// We need unpaid, passing that fit within the budget
 		sReport = DescribeProposal(bbpProposal);
 		if (!bbpProposal.fIsPaid)
@@ -1853,7 +1978,6 @@ bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, st
 		strError = "Vitals empty.";
 		return false;
 	}
-	const CKeyID *keyID2 = boost::get<CKeyID>(&destAddr2);
 
 	bool fInvalid = false;
 	std::vector<unsigned char> vchSig2 = DecodeBase64(sSignature.c_str(), &fInvalid);
@@ -1863,7 +1987,7 @@ bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, st
 		return false;
 	}
 	CHashWriter ss2(SER_GETHASH, 0);
-	ss2 << strMessageMagic;
+	ss2 << MESSAGE_MAGIC_BBP;
 	ss2 << strMessage;
 	
 	CPubKey pubkey2;
@@ -1872,7 +1996,7 @@ bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, st
 		strError = "Unable to recover public key.";
 		return false;
 	}
-	bool fSuccess = (EncodeDestination(pubkey2.GetID()) == sBitcoinAddress);
+    bool fSuccess = (EncodeDestination(PKHash(pubkey2.GetID())) == sBitcoinAddress);
 	return fSuccess;
 }
 
@@ -1887,11 +2011,12 @@ std::string GetTransactionMessage(CTransactionRef tx)
 
 std::string ScanChainForData(int nHeight)
 {
+    CBlockIndex* pindexTip = g_chainman.ActiveChain().Tip();
     int nMaxDepth = nHeight;
     int nMinDepth = nHeight - (BLOCKS_PER_DAY * 2);
-	if (nMaxDepth > chainActive.Tip()->nHeight)
-		nMaxDepth = chainActive.Tip()->nHeight;
-	if (nMinDepth > chainActive.Tip()->nHeight)
+	if (nMaxDepth > pindexTip->nHeight)
+		nMaxDepth = pindexTip->nHeight;
+	if (nMinDepth > pindexTip->nHeight)
 	{
 		return "";
 	}
@@ -2009,7 +2134,6 @@ int HexToInteger2(const std::string& hex)
     return x;
 }
 
-
 double ConvertHexToDouble2(std::string hex)
 {
     int d = HexToInteger2(hex);
@@ -2024,7 +2148,8 @@ double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
     if (sAddress.length() < 20)
         return -1;
 
-    std::string sHash = RetrieveMd5(sAddress);
+    uint256 h = GetSHA256Hash(sAddress);
+    std::string sHash = h.GetHex();
     std::string sMath5 = sHash.substr(0, 5); // 0 - 1,048,575
     double d = ConvertHexToDouble2("0x" + sMath5) / 11.6508;
 
@@ -2043,22 +2168,33 @@ double AddressToPinV2(std::string sUnchainedAddress, std::string sCryptoAddress)
 
 void LockStakes()
 {
-	std::string sUA = gArgs.GetArg("-unchainedaddress", "");
-	JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
+    /* WAITING TO SEE IF WE NEED THIS OR NOT
+    *
+    CWallet* pwallet = GetInternalWallet();
 	pwallet->LockByMask(sUA);
+    */
 }
+
 
 const CBlockIndex* GetBlockIndexByTransactionHash(const uint256& hash)
 {
     CBlockIndex* pindexHistorical;
     CTransactionRef tx1;
     uint256 hashBlock1;
-    if (GetTransaction(hash, tx1, Params().GetConsensus(), hashBlock1, true)) {
-        BlockMap::iterator mi = mapBlockIndex.find(hashBlock1);
-        if (mi != mapBlockIndex.end())
-            return mapBlockIndex[hashBlock1];
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    const NodeContext& node = EnsureAnyNodeContext(r0.context);
+    const CTxMemPool& mempool = EnsureMemPool(node);
+    const CTxMemPool* ptrMemPool = &mempool;
+
+    CTransactionRef tx = GetTransaction(nullptr, ptrMemPool, hash, Params().GetConsensus(), hashBlock1);
+    if (tx)
+    {
+        const CBlockIndex* pindexOut = g_chainman.m_blockman.LookupBlockIndex(hashBlock1);
+        if (pindexOut)
+        {
+            return pindexOut;
+        }
     }
     return pindexHistorical;
 }
@@ -2111,7 +2247,6 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
     std::string sIP = GetElement(sIPIN, ":", 0); // Remove the Port
     int nPort = StringToDouble(GetElement(sIPIN, ":", 1), 0);
     // As of September 2023, first we verify the sanc is on an approved port
-
     // POVS requires that the sanctuary runs on port 40000,40001,10001,10002,10003,10004...
     bool fPortPassed = false;
     if (nPort == 40000 || nPort == 40001 || (nPort >= 10000 && nPort <= 10100))
@@ -2121,36 +2256,6 @@ bool POVSTest(std::string sSanctuaryPubKey, std::string sIPIN, int64_t nTimeout,
     // Second, we verify the sanc is up and running
     bool fOK = TcpTest(sIP, nPort, 9);
     return fOK;
-
-    /*
-    * Reserved in case we need to check a cockroachdb node for activity
-    * 
-    *     std::tuple<std::string, std::string, std::string> t = GetPOVSURL(sSanctuaryPubKey, sIP, nType);
-    int nBMS_PORT = 8443;
-
-    std::string sResponse = Uplink(false, "", std::get<0>(t), std::get<1>(t), nBMS_PORT, 9, 1);
-    std::string sOK = ExtractXML(sResponse, "Status", "\n");
-    // Mission Critical todo
-    if (false)
-    {
-         LogPrintf("\nPOVSTEST2::Response for IP %s=[%s]\r\n", sIPIN, sOK);
-    }
-    std::string sChecksumKey = ExtractXML(sResponse,"<checksumkey>", "</checksumkey>");
-    std::string sChecksumValue = ExtractXML(sResponse, "<checksumvalue>", "</checksumvalue>");
-    if (nType == 2 && !sChecksumKey.empty())
-    {
-        msChecksumKey = sChecksumKey;
-    }
-    if (nType != 2 && !msChecksumKey.empty())
-    {
-        bool fOK2 = (sChecksumValue == sChecksumKey);
-        return fOK2;
-    }
-
-    bool fOK = Contains(sOK, "SUFFICIENT");
-    return fOK;
-    */
-
 }
 
 std::string GetSANDirectory1()
@@ -2233,19 +2338,23 @@ int DeserializeSidechainFromFile()
     return nHeight;
 }
 
+
 void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
 {
     int nDeserializedHeight = 0;
 
+    CBlockIndex* pindexActive = g_chainman.ActiveChain().Tip();
+    
     if (fColdBoot) {
         nDeserializedHeight = DeserializeSidechainFromFile();
-        if (chainActive.Tip()->nHeight < nDeserializedHeight && nDeserializedHeight > 0) {
-            LogPrintf(" Chain Height %f, Loading entire sidechain index\n", chainActive.Tip()->nHeight);
+        if (pindexActive->nHeight < nDeserializedHeight && nDeserializedHeight > 0) {
+            LogPrintf(" Chain Height %f, Loading entire sidechain index\n", pindexActive->nHeight);
             nDeserializedHeight = 0;
         }
     }
 
-    int nMaxDepth = chainActive.Tip()->nHeight;
+    int nMaxDepth = pindexActive->nHeight;
+
     int nMinDepth = fDuringConnectBlock ? nMaxDepth - 1 : nMaxDepth - (BLOCKS_PER_DAY * 30 * 12 * 7); // Seven years
     if (nDeserializedHeight > 0 && nDeserializedHeight < nMaxDepth)
         nMinDepth = nDeserializedHeight;
@@ -2257,8 +2366,8 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
         if (!pindex)
             break;
 
-        if (pindex->nHeight < chainActive.Tip()->nHeight)
-            pindex = chainActive.Next(pindex);
+        if (pindex->nHeight < pindexActive->nHeight)
+            pindex = GetNextBlockIndex(pindex);
 
         CBlock block;
         if (ReadBlockFromDisk(block, pindex, consensusParams)) {
@@ -2273,16 +2382,6 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
                 for (unsigned int i = 0; i < block.vtx[n]->vout.size(); i++) 
 				{
                     sTxMsg += block.vtx[n]->vout[i].sTxOutMessage;
-                    /*
-                    std::string sPK = PubKeyToAddress(block.vtx[n]->vout[i].scriptPubKey);
-				    double dAmount = block.vtx[n]->vout[i].nValue / COIN;
-            	    if (sPK == consensusParams.FoundationAddress || sPK == consensusParams.FoundationPODSAddress) {
-                        dFoundationDonation += dAmount;
-                    }
-                    if (sPK == consensusParams.BurnAddress) {
-                        nTotalBurned += block.vtx[n]->vout[i].nValue;
-                    }
-					*/
                 }
 				std::string sSC = ExtractXML(sTxMsg, "<sc>", "</sc>");
 				if (!sSC.empty())
@@ -2342,7 +2441,6 @@ uint64_t ConvertDateToTimeStamp(int nMonth, int nYear)
     timeinfo->tm_sec    = 1;             // seconds after the minute - [0,59]
     int64_t nStamp = mktime(timeinfo);
     return nStamp;
-    
 }
 
 uint64_t IsHODLAddress(std::string sAddress)
@@ -2386,10 +2484,13 @@ bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view)
 
 std::string GetSanctuaryMiningAddress()
 {
-    auto mnList = deterministicMNManager->GetListAtChainTip();
+    
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+
     if (fMasternodeMode)
     {
-        auto dmn = mnList.GetMNByCollateral(activeMasternodeInfo.outpoint);
+        CDeterministicMNCPtr dmn{nullptr};
+        dmn = mnList.GetMNByCollateral(activeMasternodeInfo.outpoint);
         if (dmn) 
         {
             CTxDestination dest;
@@ -2443,7 +2544,6 @@ std::string ScanDeterministicConfigFile(std::string sSearch)
     if (!streamConfig.good())
         return std::string();
     //Format: Sanctuary_Name IP:port(40000=prod,40001=testnet) BLS_Public_Key BLS_Private_Key Collateral_output_txid Collateral_output_index Pro-Registration-TxId Pro-Reg-Collateral-Address Pro-Reg-Se$
-    
     for (std::string line; std::getline(streamConfig, line); linenumber++) 
     {
         if (line.empty()) continue;
@@ -2457,7 +2557,6 @@ std::string ScanDeterministicConfigFile(std::string sSearch)
                 streamConfig.close();
                 return line;
             }
-
             if (sProRegTxId == sSearch) {
                streamConfig.close();
                return line;
@@ -2469,7 +2568,7 @@ std::string ScanDeterministicConfigFile(std::string sSearch)
     return std::string();
 }
 
-bool ReviveSanctuaryEnhanced(std::string sSancSearch, std::string& sError, UniValue& uSuccess)
+bool ReviveSanctuaryEnhanced(JSONRPCRequest rold, std::string sSancSearch, std::string& sError, UniValue& uSuccess)
 {
     sError = std::string();
     std::string sSanc = ScanDeterministicConfigFile(sSancSearch);
@@ -2492,25 +2591,29 @@ bool ReviveSanctuaryEnhanced(std::string sSancSearch, std::string& sError, UniVa
     std::string sSummary = "Creating protx update_service command for Sanctuary " + sSancName + " with IP " + sSancIP + " with origin pro-reg-txid=" + sProRegTxId;
     sSummary += "(protx update_service " + sProRegTxId + " " + sSancIP + " " + sBLSPrivKey + ").";
     LogPrintf("\nCreating ProTx_Update_service %s for Sanc [%s].\n", sSummary, sSanc);
-    //results.pushKV("Summary", sSummary);
-    JSONRPCRequest newRequest;
-    newRequest.params.setArray();
-    newRequest.params.push_back("update_service");
+    
+    JSONRPCRequest newRequest(rold);
+
+    newRequest.params.setArray(); //protx update_service proTxHash IpPort OpKey OpPayoutAddr feeScAddress
+    //newRequest.params.push_back("update_service");
     newRequest.params.push_back(sProRegTxId);
     newRequest.params.push_back(sSancIP);
     newRequest.params.push_back(sBLSPrivKey);
-    // Fee source address
+    // Fee source address does not need to be specified
+    /*
     newRequest.params.push_back("");
-    std::string sCPK = DefaultRecAddress("Christian-Public-Key");
+    std::string sCPK = DefaultRecAddress(rold,"Christian-Public-Key");
     newRequest.params.push_back(sCPK);
-    uSuccess = protx(newRequest);
-    //results.push_back(rProReg);
+    */
+    
+    uSuccess = protx_update_service_common_wrapper(newRequest, g_chainman, MnType::Regular);
+
     // If we made it this far and an error was not thrown:
     LogPrintf("Sent sanctuary revival pro-tx successfully.  Please wait for the sanctuary list to be updated to ensure the sanctuary is revived.  This usually takes one to fifteen minutes.%f",1);
     return true;
 }
 
-std::string ProvisionUnchained2(std::string& sError)
+std::string ProvisionUnchained2(JSONRPCRequest r, std::string& sError)
 {
     // BIBLEPAY UNCHAINED
     std::string s1;
@@ -2522,8 +2625,8 @@ std::string ProvisionUnchained2(std::string& sError)
         return "";
     }
 
-    std::string sUnchainedAddress = DefaultRecAddress("Unchained");
-    std::string sPK = GetPrivKey2(sUnchainedAddress, sError);
+    std::string sUnchainedAddress = DefaultRecAddress(r,"Unchained");
+    std::string sPK = GetPrivKey2(r, sUnchainedAddress, sError);
     if (!sError.empty()) {
         return "";
     }
@@ -2557,70 +2660,70 @@ std::string ReceiveIPC()
     return sData;
 }
 
-std::string ReviveSanctuariesJob()
+std::string ReviveSanctuariesJob(JSONRPCRequest r)
 {
-
     // Check Biblepay.conf first to see if feature is enabled
     int nEnabled = (int)gArgs.GetArg("-revivesanctuaries", 0);
     if (nEnabled == 0) {
         return "NOT_ENABLED";
     }
-
     // The wallet has to be unlocked in this case so we can pay the txid for investor sancs:
-    JSONRPCRequest r;
-    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-    CWallet* const pwallet = wallet.get();
+    CWallet* const pwallet = GetInternalWallet(r);
     if (!EnsureWalletIsAvailable(pwallet, false)) {
         LogPrintf("\r\n******* ReviveSanctuariesJob::%s", "WALLET_NEEDS_UNLOCKED");
         return "WALLET_NEEDS_UNLOCKED";
     }
     
     // Get the list of investor sancs:
-    auto mnList = deterministicMNManager->GetListAtChainTip();
-    auto dmnToStatus = [&](const CDeterministicMNCPtr& dmn) {
-        if (mnList.IsMNValid(dmn)) {
+    
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+
+    auto dmnToStatus = [&](auto& dmn)
+    {
+        if (mnList.IsMNValid(dmn.proTxHash)) {
             return "ENABLED";
         }
-        if (mnList.IsMNPoSeBanned(dmn)) {
+        if (mnList.IsMNPoSeBanned(dmn.proTxHash)) {
             return "POSE_BANNED";
         }
         return "UNKNOWN";
     };
 
-    std::string sReport = "";
+    std::string sReport;
 
-    mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) 
+    mnList.ForEachMN(false, [&](auto& dmn)
     {
-        std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+        std::string strOutpoint = dmn.collateralOutpoint.ToStringShort();
         Coin coin;
         std::string sCollateralAddress = "UNKNOWN";
-        if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+        if (GetUTXOCoin(dmn.collateralOutpoint, coin)) {
             CTxDestination collateralDest;
             if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
                 sCollateralAddress = EncodeDestination(collateralDest);
             }
         }
-        CScript payeeScript = dmn->pdmnState->scriptPayout;
+        CScript payeeScript = dmn.pdmnState->scriptPayout;
         CTxDestination payeeDest;
         std::string payeeStr = "UNKNOWN";
         if (ExtractDestination(payeeScript, payeeDest)) {
             payeeStr = EncodeDestination(payeeDest);
         }
 
-        //  objMN.pushKV("address", dmn->pdmnState->addr.ToString());
-        bool fMine = IsMyAddress(payeeStr);
-        std::string sProRegTxHash = dmn->proTxHash.ToString();
+        bool fMine = IsMyAddress(r,payeeStr);
+        std::string sProRegTxHash = dmn.proTxHash.ToString();
         std::string sSancStatus = dmnToStatus(dmn);  //POSE_BANNED or ENABLED
-        std::string sOwnerAddress = EncodeDestination(dmn->pdmnState->keyIDOwner);
-        std::string sPubKeyOperator = dmn->pdmnState->pubKeyOperator.Get().ToString();
-        if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
+        std::string sOwnerAddress = EncodeDestination(PKHash(dmn.pdmnState->keyIDOwner));
+
+        std::string sPubKeyOperator = dmn.pdmnState->pubKeyOperator.Get().ToString();
+        if (dmn.GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
         {
             if (sSancStatus == "POSE_BANNED" && fMine)
             {
                 UniValue uResponse;
                 std::string sError;
-                if (true) {
-                    bool fResult = ReviveSanctuaryEnhanced(sProRegTxHash, sError, uResponse);
+                if (true)
+                {
+                    bool fResult = ReviveSanctuaryEnhanced(r, sProRegTxHash, sError, uResponse);
                     std::string sMyResult = fResult ? "SUCCESS" : "FAIL";
                     sReport += "Restart Result::" + sProRegTxHash + " and " + sError + ", "
                         + sMyResult + "\r\n";
@@ -2633,29 +2736,31 @@ std::string ReviveSanctuariesJob()
     return sReport;
 }
 
-bool IsMySanc(std::string sSearchProRegTxHash)
+bool IsMySanc(JSONRPCRequest r,std::string sSearchProRegTxHash)
 {
     bool fExists = false;
-    auto mnList = deterministicMNManager->GetListAtChainTip();
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
     {
-        mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) {
-            std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+        mnList.ForEachMN(false, [&](auto& dmn)
+        {
+            std::string strOutpoint = dmn.collateralOutpoint.ToStringShort();
             Coin coin;
             std::string sCollateralAddress = "UNKNOWN";
-            if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+            if (GetUTXOCoin(dmn.collateralOutpoint, coin)) {
                 CTxDestination collateralDest;
                 if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
                     sCollateralAddress = EncodeDestination(collateralDest);
                 }
             }
-            CScript payeeScript = dmn->pdmnState->scriptPayout;
+            CScript payeeScript = dmn.pdmnState->scriptPayout;
             CTxDestination payeeDest;
             std::string payeeStr = "UNKNOWN";
-            if (ExtractDestination(payeeScript, payeeDest)) {
+            if (ExtractDestination(payeeScript, payeeDest))
+            {
                 payeeStr = EncodeDestination(payeeDest);
             }
-            bool fMine = IsMyAddress(payeeStr);
-            std::string sProRegTxHash = dmn->proTxHash.ToString();
+            bool fMine = IsMyAddress(r, payeeStr);
+            std::string sProRegTxHash = dmn.proTxHash.ToString();
             if (sSearchProRegTxHash == sProRegTxHash) {
                 fExists = fMine;
             }
@@ -2668,25 +2773,26 @@ CAmount GetSancCollateralAmount(std::string sSearch)
 {
     CAmount nAmount = 0;
     
-    auto mnList = deterministicMNManager->GetListAtChainTip();
+
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
     {
-        mnList.ForEachMN(false, [&](const CDeterministicMNCPtr& dmn) {
-            std::string strOutpoint = dmn->collateralOutpoint.ToStringShort();
+        mnList.ForEachMN(false, [&](auto& dmn) {
+            std::string strOutpoint = dmn.collateralOutpoint.ToStringShort();
             Coin coin;
             std::string sCollateralAddress = "UNKNOWN";
-            if (GetUTXOCoin(dmn->collateralOutpoint, coin)) {
+            if (GetUTXOCoin(dmn.collateralOutpoint, coin)) {
                 CTxDestination collateralDest;
                 if (ExtractDestination(coin.out.scriptPubKey, collateralDest)) {
                     sCollateralAddress = EncodeDestination(collateralDest);
                 }
             }
-            CScript payeeScript = dmn->pdmnState->scriptPayout;
+            CScript payeeScript = dmn.pdmnState->scriptPayout;
             CTxDestination payeeDest;
             std::string payeeStr = "UNKNOWN";
             if (ExtractDestination(payeeScript, payeeDest)) {
                 payeeStr = EncodeDestination(payeeDest);
             }
-            std::string sProRegTxHash = dmn->proTxHash.ToString();
+            std::string sProRegTxHash = dmn.proTxHash.ToString();
 
             if (sSearch == sProRegTxHash) {
                 nAmount = coin.out.nValue;
@@ -2703,6 +2809,61 @@ bool IsSanctuaryCollateral(CAmount nAmount)
         || nAmount == SANCTUARY_COLLATERAL_TEMPLE * COIN 
         || nAmount == SANCTUARY_COLLATERAL_ALTAR * COIN) ? true : false;
     return fCollateral;
+}
+
+int GetSanctuaryMultiplier(CDeterministicMNCPtr dmnPayee)
+{
+    CAmount ca = dmnPayee->GetCollateralAmount();
+    if (ca == SANCTUARY_COLLATERAL_TEMPLE * COIN) return 1000;
+    if (ca == SANCTUARY_COLLATERAL * COIN) return 100;
+    if (ca == SANCTUARY_COLLATERAL_ALTAR * COIN) return 10;
+    return 0;
+}
+
+std::string GetSanctuaryTypeName(CDeterministicMNCPtr dmnPayee)
+{
+    CAmount ca = dmnPayee->GetCollateralAmount();
+    if (ca == SANCTUARY_COLLATERAL_TEMPLE * COIN) return "TEMPLE";
+    if (ca == SANCTUARY_COLLATERAL * COIN) return "SANCTUARY";
+    if (ca == SANCTUARY_COLLATERAL_ALTAR * COIN) return "ALTAR";
+    return "UNKNOWN";
+}
+
+std::string GetSanctuaryTypeName(CDeterministicMN dmnPayee)
+{
+    CAmount ca = dmnPayee.GetCollateralAmount();
+    if (ca == SANCTUARY_COLLATERAL_TEMPLE * COIN) return "TEMPLE";
+    if (ca == SANCTUARY_COLLATERAL * COIN) return "SANCTUARY";
+    if (ca == SANCTUARY_COLLATERAL_ALTAR * COIN) return "ALTAR";
+    return "UNKNOWN";
+}
+
+CAmount ExtrapolateSubsidyInner(int nExtrapolator, CAmount cSubsidy)
+{
+    // Leave room for mining dust if someone forks this coin and block subsidy approaches the max
+    static CAmount nMax = MAX_BLOCK_SUBSIDY * COIN * .98;
+    CAmount cNew = cSubsidy * nExtrapolator / 100;
+    if (cNew > nMax)
+    {
+        return nMax;
+    }
+    return cNew;
+}
+
+CAmount ExtrapolateSubsidy(CDeterministicMNCPtr dmnPayee, CAmount nAmount, bool fBlockChecking)
+{
+    // Part 1: Depending on the sanc type, adjust the payment (Temples get 10*, Altars get 1/10th, etc)
+    int nExtrapolator = GetSanctuaryMultiplier(dmnPayee);
+    CAmount nNew = ExtrapolateSubsidyInner(nExtrapolator, nAmount);
+    // If they are POSE banned, they get half
+    if (!fBlockChecking)
+    {
+        if (IsSanctuaryPoseBanned(dmnPayee))
+        {
+            nNew = nNew * 50 / 100;
+        }
+    }
+    return nNew;
 }
 
 std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimestamp)
@@ -2731,3 +2892,131 @@ std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimes
     return std::string();
 }
 
+bool ProTxHashIsValid(std::string sProTxHash)
+{
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+    bool fValid = false;
+    auto dmnToStatus = [&](auto& dmn) {
+        if (dmn.proTxHash.ToString() == sProTxHash) {
+            fValid = true;
+        }
+    };
+    return fValid;
+}
+
+std::string ComputeMinedBlockVersion()
+{
+    std::string sVersion0 = FormatFullVersion();
+    std::string sSancRow;
+
+    if (fMasternodeMode)
+    {
+        auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+        CDeterministicMNCPtr dmn = mnList.GetMN(activeMasternodeInfo.proTxHash);
+        if (dmn)
+        {
+             sSancRow = "<SANC>" + dmn->proTxHash.ToString() + "</SANC>";
+        }
+        else
+        {
+             sSancRow = "<SANC>?</SANC>";
+        }
+        // TODO - SANC SIG HERE determined by mnlist
+    }
+    else
+    {
+        sSancRow = "<SANC></SANC>";
+    }
+
+    std::string sFullMessage = "<VER>" + sVersion0 + "</VER>" + sSancRow;
+    return sFullMessage;
+}
+
+bool ContextualCheckBlockMinedBySanc(const CBlock& block)
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    // Prior to this height, rule was not active
+    if (block.nTime < consensusParams.BABYLON_FALLING_TIME) {
+        return true;
+    }
+    /* In favor of this being dangerous */
+
+    return true;
+
+    /*
+    std::string sSanc = ExtractXML(block.vtx[0]->vout[0].sTxOutMessage, "<SANC>", "</SANC>");
+    // The light version
+    if (sSanc.length() != 64)
+    {
+        // Note: Payment goes to the sanc either way, so anyone who mines a block by brute force does not get paid for it.  Hence the reason for light mode.
+        LogPrintf("\nContextualCheckBlockMinedBySanc::ERROR Not solved by a sanc %s", sSanc);
+        return false;
+    }
+    */
+
+    /*
+    std::string sNetworkName = Params().NetworkIDString();
+
+    CBlockIndex* pblockTip = g_chainman.ActiveChain().Tip();
+    bool fSynced = ::masternodeSync.get()->IsBlockchainSynced();
+
+    if (!fSynced)
+        return true;
+
+    // The chain is synced, the masternode is synced, deterministic nodes are up, we know all the Sanc proTx Hashes, so verify that a sanc solved it
+    // Only allow block to be solved by a non-sanc if block is over an hour old
+    std::string sSanc = ExtractXML(block.vtx[0]->vout[0].sTxOutMessage, "<SANC>", "</SANC>");
+    bool fProTxHashIsValid = ProTxHashIsValid(sSanc);
+    if (!fProTxHashIsValid) {
+        LogPrintf("\nContextualCheckBlockMinedBySanc::ERROR Not solved by a sanc %s", sSanc);
+        return false;
+    }
+    return true;
+    */
+}
+
+bool IsSanctuaryLegacyTempleOrAltar(CDeterministicMNCPtr dmn)
+{
+    // Before Dash Platform was released, BBP had its own version of Temples and Altars.
+    // If this is a legacy Temple or Altar, we need to pay them 1 BBP to coerce them to upgrade the node.
+    if (dmn->nType == MnType::Regular && dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL * COIN)
+    {
+         return true;
+    }
+    else
+    {
+         return false;
+    }
+}
+
+bool IsSanctuaryPoseBanned(CDeterministicMNCPtr dmnPayee)
+{
+    bool fReduced = false;
+    std::string sKey = dmnPayee->pdmnState->pubKeyOperator.Get().ToString();
+    int nStatus = mapPOVSStatus[sKey];
+    int nPoseScore = dmnPayee->pdmnState->nPoSePenalty;
+    // Note, the nStatus value will be 255 when the BMS POSE = 800 (that means their BMS endpoint is down)
+    if (nPoseScore > 0 || nStatus == 255) {
+         fReduced = true;
+    }
+    return fReduced;
+}
+
+std::string Test1000()
+{
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    double nBalance = GetWalletBalance(r0);
+    LogPrintf("\nTEST1000-bal %f", nBalance);
+    const NodeContext& nb2 = CGlobalNode::GetGlobalNodeContext();
+    ChainstateManager& c0 = EnsureChainman(nb2);
+    const CBlockIndex* tip = c0.ActiveChain().Tip();
+    LogPrintf("\r\nTest1000II-tipindexheight::%f", tip->nHeight);
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+    LogPrintf("\r\n1002::%f", 30003);
+    std::string s1;
+    mnList.ForEachMN(false, [&](auto& dmn) {
+        s1 = dmn.collateralOutpoint.ToStringShort();
+    });
+    return s1;
+}

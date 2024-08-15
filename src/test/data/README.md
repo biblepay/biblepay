@@ -1,7 +1,7 @@
-﻿Description
+Description
 ------------
 
-This directory contains data-driven tests for various aspects of BiblePay.
+This directory contains data-driven tests for various aspects of Biblepay.
 
 License
 --------

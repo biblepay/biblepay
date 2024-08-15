@@ -1,11 +1,11 @@
-﻿// Copyright (c) 2018-2020 The DÃSH Core Developers
+// Copyright (c) 2018-2023 The BiblePay Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_BATCHEDLOGGER_H
 #define BITCOIN_BATCHEDLOGGER_H
 
-#include <tinyformat.h>
+#include <logging.h>
 
 class CBatchedLogger
 {
@@ -14,7 +14,7 @@ private:
     std::string header;
     std::string msg;
 public:
-    CBatchedLogger(uint64_t _category, const std::string& _header);
+    CBatchedLogger(BCLog::LogFlags _category, const std::string& _header);
     virtual ~CBatchedLogger();
 
     template<typename... Args>

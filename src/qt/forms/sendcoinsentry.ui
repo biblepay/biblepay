@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>900</width>
-    <height>174</height>
+    <width>729</width>
+    <height>150</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -17,9 +17,6 @@
    <bool>false</bool>
   </property>
   <widget class="QFrame" name="SendCoins">
-   <property name="toolTip">
-    <string>This is a normal payment.</string>
-   </property>
    <property name="frameShape">
     <enum>QFrame::NoFrame</enum>
    </property>
@@ -57,7 +54,7 @@
       <item>
        <widget class="QValidatedLineEdit" name="payTo">
         <property name="toolTip">
-         <string>The Biblepay address to send the payment to</string>
+         <string>The BiblePay address to send the payment to</string>
         </property>
        </widget>
       </item>
@@ -135,6 +132,9 @@
       <property name="toolTip">
        <string>Enter a label for this address to add it to the list of used addresses</string>
       </property>
+      <property name="placeholderText">
+       <string>Enter a label for this address to add it to the list of used addresses</string>
+      </property>
      </widget>
     </item>
     <item row="2" column="0">
@@ -152,34 +152,39 @@
     </item>
     <item row="2" column="1">
      <layout class="QHBoxLayout" name="horizontalLayoutAmount" stretch="0,1,0">
-      <item>
-       <widget class="BitcoinAmountField" name="payAmount"/>
-      </item>
      
+      <item>
+       <widget class="BitcoinAmountField" name="payAmount">
+         <property name="toolTip">
+          <string>The amount to send in the selected unit</string>
+         </property>
+       </widget>
+      </item>
       
-            <item>
-             <widget class="QCheckBox" name="checkboxDonateToFoundation">
-              <property name="toolTip">
-               <string>Donate BiblePay to our foundation; the entire amount will be spent on good causes, such as orphan-charity.</string>
-              </property>
-              <property name="text">
-               <string>Donate to Foundation</string>
-              </property>
-             </widget>
-            </item>
-
-     
+      
+      
       <item>
-            <widget class="QCheckBox" name="checkboxSubtractFeeFromAmount">
-             <property name="toolTip">
-              <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
-             </property>
-             <property name="text">
-              <string>S&amp;ubtract fee from amount</string>
-             </property>
-            </widget>
+                   <widget class="QCheckBox" name="checkboxDonateToFoundation">
+                    <property name="toolTip">
+                     <string>Donate BiblePay to our foundation; the entire amount will be spent on good causes, such as orphan-charity.</string>
+                    </property>
+                    <property name="text">
+                     <string>Donate to Foundation</string>
+                    </property>
+                   </widget>
       </item>
-     
+      
+      
+      <item>
+       <widget class="QCheckBox" name="checkboxSubtractFeeFromAmount">
+        <property name="toolTip">
+         <string>The fee will be deducted from the amount being sent. The recipient will receive a lower amount of BiblePay than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</string>
+        </property>
+        <property name="text">
+         <string>S&amp;ubtract fee from amount</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="useAvailableBalanceButton">
         <property name="text">
@@ -202,7 +207,7 @@
     <item row="3" column="1">
      <widget class="QLabel" name="messageTextLabel">
       <property name="toolTip">
-       <string>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Biblepay network.</string>
+       <string>A message that was attached to the biblepay: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BiblePay network.</string>
       </property>
       <property name="textFormat">
        <enum>Qt::PlainText</enum>

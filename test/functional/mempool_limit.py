@@ -4,14 +4,24 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test mempool limiting together/eviction with the wallet."""
 
+from decimal import Decimal
+
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
+from test_framework.util import assert_equal, assert_greater_than, assert_raises_rpc_error, create_confirmed_utxos, create_lots_of_big_transactions, gen_return_txouts
 
 class MempoolLimitTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
-        self.extra_args = [["-maxmempool=5", "-spendzeroconfchange=0"]]
+        self.extra_args = [[
+            "-acceptnonstdtxn=1",
+            "-maxmempool=5",
+            "-spendzeroconfchange=0",
+        ]]
+        self.supports_cli = False
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
 
     def run_test(self):
         txouts = gen_return_txouts()
@@ -42,9 +52,9 @@ class MempoolLimitTest(BitcoinTestFramework):
             txids[i] = create_lots_of_big_transactions(self.nodes[0], txouts, utxos[30*i:30*i+30], 30, (i+1)*base_fee)
 
         self.log.info('The tx should be evicted by now')
-        assert(txid not in self.nodes[0].getrawmempool())
+        assert txid not in self.nodes[0].getrawmempool()
         txdata = self.nodes[0].gettransaction(txid)
-        assert(txdata['confirmations'] ==  0) #confirmation should still be 0
+        assert txdata['confirmations'] ==  0  #confirmation should still be 0
 
         self.log.info('Check that mempoolminfee is larger than minrelytxfee')
         assert_equal(self.nodes[0].getmempoolinfo()['minrelaytxfee'], Decimal('0.00001000'))

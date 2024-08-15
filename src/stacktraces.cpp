@@ -1,44 +1,43 @@
-﻿// Copyright (c) 2014-2021 The DÃSH Core Developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include <config/biblepay-config.h>
+#include <config/bitcoin-config.h>
 #endif // HAVE_CONFIG_H
 
 #include <stacktraces.h>
 #include <fs.h>
 #include <logging.h>
-#include <random.h>
 #include <streams.h>
-#include <utilstrencodings.h>
+#include <threadsafety.h>
+#include <util/strencodings.h>
 
-#include <mutex>
 #include <map>
 #include <vector>
 #include <memory>
-#include <thread>
 #include <atomic>
 
-#if WIN32
+#if defined(WIN32)
 #include <windows.h>
 #include <dbghelp.h>
+#include <thread>
 #else
 #ifdef ENABLE_STACKTRACES
 #include <execinfo.h>
 #endif
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #endif
 
-#if !WIN32
+#if !defined(WIN32)
 #include <dlfcn.h>
-#if !__APPLE__
+#if !defined(__APPLE__)
 #include <link.h>
 #endif
 #endif
 
-#if __APPLE__
+#if defined(__APPLE__)
 #include <mach-o/dyld.h>
 #include <mach/mach_init.h>
 #include <sys/sysctl.h>
@@ -49,11 +48,11 @@
 #include <backtrace.h>
 #endif
 
-#include <string.h>
+#include <cstring>
 
 std::string DemangleSymbol(const std::string& name)
 {
-#if __GNUC__ || __clang__
+#if defined(__GNUC__) || defined(__clang__)
     int status = -4; // some arbitrary value to eliminate the compiler warning
     char* str = abi::__cxa_demangle(name.c_str(), nullptr, nullptr, &status);
     if (status != 0) {
@@ -75,7 +74,7 @@ static std::atomic<bool> skipAbortSignal(false);
 
 static ssize_t GetExeFileNameImpl(char* buf, size_t bufSize)
 {
-#if WIN32
+#if defined(WIN32)
     std::vector<TCHAR> tmp(bufSize);
     DWORD len = GetModuleFileName(nullptr, tmp.data(), bufSize);
     if (len >= bufSize) {
@@ -85,7 +84,7 @@ static ssize_t GetExeFileNameImpl(char* buf, size_t bufSize)
         buf[i] = (char)tmp[i];
     }
     return len;
-#elif __APPLE__
+#elif defined(__APPLE__)
     uint32_t bufSize2 = (uint32_t)bufSize;
     if (_NSGetExecutablePath(buf, &bufSize2) != 0) {
         // it's not entirely clear if the value returned by _NSGetExecutablePath includes the null character
@@ -110,7 +109,7 @@ static std::string GetExeFileName()
         if (len < 0) {
             return "";
         }
-        if (len < buf.size()) {
+        if (len < int64_t(buf.size())) {
             return std::string(buf.begin(), buf.begin() + len);
         }
         buf.resize(buf.size() * 2);
@@ -128,7 +127,7 @@ static void my_backtrace_error_callback (void *data, const char *msg,
 
 static backtrace_state* GetLibBacktraceState()
 {
-#if WIN32
+#if defined(WIN32)
     // libbacktrace is not able to handle the DWARF debuglink in the .exe
     // but luckily we can just specify the .dbg file here as it's a valid PE/XCOFF file
     static std::string debugFileName = g_exeFileName + ".dbg";
@@ -141,7 +140,7 @@ static backtrace_state* GetLibBacktraceState()
 }
 #endif // ENABLE_STACKTRACES
 
-#if WIN32
+#if defined(WIN32)
 static uint64_t GetBaseAddress()
 {
     return 0;
@@ -170,8 +169,8 @@ static __attribute__((noinline)) std::vector<uint64_t> GetStackFrames(size_t ski
     static BOOL symInitialized = SymInitialize(GetCurrentProcess(), nullptr, TRUE);
 
     // dbghelp is not thread safe
-    static std::mutex m;
-    std::lock_guard<std::mutex> l(m);
+    static StdMutex m;
+    StdLockGuard l(m);
 
     HANDLE process = GetCurrentProcess();
     HANDLE thread = GetCurrentThread();
@@ -189,7 +188,7 @@ static __attribute__((noinline)) std::vector<uint64_t> GetStackFrames(size_t ski
     STACKFRAME64 stackframe;
     ZeroMemory(&stackframe, sizeof(STACKFRAME64));
 
-#ifdef __i386__
+#if defined(__i386__)
     image = IMAGE_FILE_MACHINE_I386;
     stackframe.AddrPC.Offset = context.Eip;
     stackframe.AddrPC.Mode = AddrModeFlat;
@@ -197,7 +196,7 @@ static __attribute__((noinline)) std::vector<uint64_t> GetStackFrames(size_t ski
     stackframe.AddrFrame.Mode = AddrModeFlat;
     stackframe.AddrStack.Offset = context.Esp;
     stackframe.AddrStack.Mode = AddrModeFlat;
-#elif __x86_64__
+#elif defined(__x86_64__)
     image = IMAGE_FILE_MACHINE_AMD64;
     stackframe.AddrPC.Offset = context.Rip;
     stackframe.AddrPC.Mode = AddrModeFlat;
@@ -241,7 +240,7 @@ static __attribute__((noinline)) std::vector<uint64_t> GetStackFrames(size_t ski
 }
 #else
 
-#if __APPLE__
+#if defined(__APPLE__)
 static uint64_t GetBaseAddress()
 {
     mach_port_name_t target_task;
@@ -267,7 +266,7 @@ static uint64_t GetBaseAddress()
 #else
 static int dl_iterate_callback(struct dl_phdr_info* info, size_t s, void* data)
 {
-    uint64_t* p = (uint64_t*)data;
+    uint64_t* p = reinterpret_cast<uint64_t*>(data);
     if (info->dlpi_name == nullptr || info->dlpi_name[0] == '\0') {
         *p = info->dlpi_addr;
     }
@@ -311,15 +310,9 @@ struct stackframe_info {
     int lineno{-1};
     std::string function;
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(stackframe_info, obj)
     {
-        READWRITE(pc);
-        READWRITE(filename);
-        READWRITE(lineno);
-        READWRITE(function);
+        READWRITE(obj.pc, obj.filename, obj.lineno, obj.function);
     }
 };
 
@@ -356,8 +349,8 @@ static std::vector<stackframe_info> GetStackFrameInfos(const std::vector<uint64_
     std::vector<stackframe_info> infos;
     infos.reserve(stackframes.size());
 
-    for (size_t i = 0; i < stackframes.size(); i++) {
-        if (backtrace_pcinfo(GetLibBacktraceState(), stackframes[i], my_backtrace_full_callback, my_backtrace_error_callback, &infos)) {
+    for (uint64_t stackframe : stackframes) {
+        if (backtrace_pcinfo(GetLibBacktraceState(), stackframe, my_backtrace_full_callback, my_backtrace_error_callback, &infos)) {
             break;
         }
     }
@@ -374,17 +367,12 @@ static std::vector<stackframe_info> GetStackFrameInfos(const std::vector<uint64_
 struct crash_info_header
 {
     std::string magic;
-    uint16_t version;
+    uint16_t version{0};
     std::string exeFileName;
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(crash_info_header, obj)
     {
-        READWRITE(magic);
-        READWRITE(version);
-        READWRITE(exeFileName);
+        READWRITE(obj.magic, obj.version, obj.exeFileName);
     }
 };
 
@@ -394,14 +382,9 @@ struct crash_info
     std::vector<uint64_t> stackframes;
     std::vector<stackframe_info> stackframeInfos;
 
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
+    SERIALIZE_METHODS(crash_info, obj)
     {
-        READWRITE(crashDescription);
-        READWRITE(stackframes);
-        READWRITE(stackframeInfos);
+        READWRITE(obj.crashDescription, obj.stackframes, obj.stackframeInfos);
     }
 
     void ConvertAddresses(int64_t offset)
@@ -422,7 +405,7 @@ static std::string GetCrashInfoStrNoDebugInfo(crash_info ci)
     CDataStream ds(SER_DISK, 0);
 
     crash_info_header hdr;
-    hdr.magic = "BiblePayCrashInfo";
+    hdr.magic = "BiblepayCrashInfo";
     hdr.version = 1;
     hdr.exeFileName = g_exeFileBaseName;
     ds << hdr;
@@ -430,7 +413,7 @@ static std::string GetCrashInfoStrNoDebugInfo(crash_info ci)
     ci.ConvertAddresses(-(int64_t)basePtr);
     ds << ci;
 
-    auto ciStr = EncodeBase32((const unsigned char*)ds.data(), ds.size());
+    auto ciStr = EncodeBase32(ds.str());
     std::string s = ci.crashDescription + "\n";
     s += strprintf("No debug information available for stacktrace. You should add debug information and then run:\n"
                    "%s -printcrashinfo=%s\n", g_exeFileBaseName, ciStr);
@@ -458,7 +441,7 @@ std::string GetCrashInfoStrFromSerializedStr(const std::string& ciStr)
         return "Error while deserializing crash info header";
     }
 
-    if (hdr.magic != "BiblePayCrashInfo") {
+    if (hdr.magic != "BiblepayCrashInfo") {
         return "Invalid magic string";
     }
     if (hdr.version != 1) {
@@ -499,9 +482,7 @@ static std::string GetCrashInfoStr(const crash_info& ci, size_t spaces)
     std::vector<std::string> lstrs;
     lstrs.reserve(ci.stackframeInfos.size());
 
-    for (size_t i = 0; i < ci.stackframeInfos.size(); i++) {
-        auto& si = ci.stackframeInfos[i];
-
+    for (const auto& si : ci.stackframeInfos) {
         std::string lstr;
         if (!si.filename.empty()) {
             lstr += fs::path(si.filename).filename().string();
@@ -545,22 +526,19 @@ static void PrintCrashInfo(const crash_info& ci)
 {
     auto str = GetCrashInfoStr(ci);
     LogPrintf("%s", str); /* Continued */
-    fprintf(stderr, "%s", str.c_str());
+    tfm::format(std::cerr, "%s", str);
     fflush(stderr);
 }
 
 #ifdef ENABLE_CRASH_HOOKS
-static std::mutex g_stacktraces_mutex;
+static StdMutex g_stacktraces_mutex;
 static std::map<void*, std::shared_ptr<std::vector<uint64_t>>> g_stacktraces;
 
-#if CRASH_HOOKS_WRAPPED_CXX_ABI
+#ifdef CRASH_HOOKS_WRAPPED_CXX_ABI
 // These come in through -Wl,-wrap
-// It only works on GCC
 extern "C" void* __real___cxa_allocate_exception(size_t thrown_size);
 extern "C" void __real___cxa_free_exception(void * thrown_exception);
-#if __clang__
-#error not supported on WIN32 (no dlsym support)
-#elif WIN32
+#if defined(WIN32)
 extern "C" void __real__assert(const char *assertion, const char *file, unsigned int line);
 extern "C" void __real__wassert(const wchar_t *assertion, const wchar_t *file, unsigned int line);
 #else
@@ -579,13 +557,13 @@ extern "C" void __real___cxa_free_exception(void * thrown_exception)
     static auto f = (void(*)(void*))dlsym(RTLD_NEXT, "__cxa_free_exception");
     return f(thrown_exception);
 }
-#if __clang__
+#if defined(__clang__) && defined(__APPLE__)
 extern "C" void __attribute__((noreturn)) __real___assert_rtn(const char *function, const char *file, int line, const char *assertion)
 {
     static auto f = (void(__attribute__((noreturn)) *) (const char*, const char*, int, const char*))dlsym(RTLD_NEXT, "__assert_rtn");
     f(function, file, line, assertion);
 }
-#elif WIN32
+#elif defined(WIN32)
 #error not supported on WIN32 (no dlsym support)
 #else
 extern "C" void __real___assert_fail(const char *assertion, const char *file, unsigned int line, const char *function)
@@ -596,7 +574,7 @@ extern "C" void __real___assert_fail(const char *assertion, const char *file, un
 #endif
 #endif
 
-#if CRASH_HOOKS_WRAPPED_CXX_ABI
+#ifdef CRASH_HOOKS_WRAPPED_CXX_ABI
 #define WRAPPED_NAME(x) __wrap_##x
 #else
 #define WRAPPED_NAME(x) x
@@ -613,7 +591,7 @@ extern "C" void* __attribute__((noinline)) WRAPPED_NAME(__cxa_allocate_exception
 
     void* p = __real___cxa_allocate_exception(thrown_size);
 
-    std::lock_guard<std::mutex> l(g_stacktraces_mutex);
+    StdLockGuard l(g_stacktraces_mutex);
     g_stacktraces.emplace(p, st);
     return p;
 }
@@ -622,7 +600,7 @@ extern "C" void __attribute__((noinline)) WRAPPED_NAME(__cxa_free_exception)(voi
 {
     __real___cxa_free_exception(thrown_exception);
 
-    std::lock_guard<std::mutex> l(g_stacktraces_mutex);
+    StdLockGuard l(g_stacktraces_mutex);
     g_stacktraces.erase(thrown_exception);
 }
 
@@ -644,7 +622,7 @@ static __attribute__((noinline)) crash_info GetCrashInfoFromAssertion(const char
     return ci;
 }
 
-#if __clang__
+#if defined(__clang__) && defined(__APPLE__)
 extern "C" void __attribute__((noinline)) WRAPPED_NAME(__assert_rtn)(const char *function, const char *file, int line, const char *assertion)
 {
     auto ci = GetCrashInfoFromAssertion(assertion, file, line, function);
@@ -652,7 +630,7 @@ extern "C" void __attribute__((noinline)) WRAPPED_NAME(__assert_rtn)(const char 
     skipAbortSignal = true;
     __real___assert_rtn(function, file, line, assertion);
 }
-#elif WIN32
+#elif defined(WIN32)
 extern "C" void __attribute__((noinline)) WRAPPED_NAME(_assert)(const char *assertion, const char *file, unsigned int line)
 {
     auto ci = GetCrashInfoFromAssertion(assertion, file, line, nullptr);
@@ -686,7 +664,7 @@ static std::shared_ptr<std::vector<uint64_t>> GetExceptionStacktrace(const std::
 #ifdef ENABLE_CRASH_HOOKS
     void* p = *(void**)&e;
 
-    std::lock_guard<std::mutex> l(g_stacktraces_mutex);
+    StdLockGuard l(g_stacktraces_mutex);
     auto it = g_stacktraces.find(p);
     if (it == g_stacktraces.end()) {
         return nullptr;
@@ -721,18 +699,18 @@ crash_info GetCrashInfoFromException(const std::exception_ptr& e)
     try {
         // rethrow and catch the exception as there is no other way to reliably cast to the real type (not possible with RTTI)
         std::rethrow_exception(e);
-    } catch (const std::exception& e) {
+    } catch (const std::exception& e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
-    } catch (const std::string& e) {
+        what = GetExceptionWhat(e2);
+    } catch (const std::string& e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
-    } catch (const char* e) {
+        what = GetExceptionWhat(e2);
+    } catch (const char* e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
-    } catch (int e) {
+        what = GetExceptionWhat(e2);
+    } catch (int e2) {
         type = getExceptionType();
-        what = GetExceptionWhat(e);
+        what = GetExceptionWhat(e2);
     } catch (...) {
         type = getExceptionType();
         what = "<unknown>";
@@ -759,7 +737,6 @@ static void terminate_handler()
     auto exc = std::current_exception();
 
     crash_info ci;
-    ci.crashDescription = "std::terminate() called, aborting";
 
     if (exc) {
         auto ci2 = GetCrashInfoFromException(exc);
@@ -769,9 +746,8 @@ static void terminate_handler()
     } else {
         ci.crashDescription = "std::terminate() called due unknown reason";
         ci.stackframes = GetStackFrames(0, 16);
+        ci.stackframeInfos = GetStackFrameInfos(ci.stackframes);
     }
-
-    ci.stackframeInfos = GetStackFrameInfos(ci.stackframes);
 
     PrintCrashInfo(ci);
 
@@ -784,7 +760,7 @@ void RegisterPrettyTerminateHander()
     std::set_terminate(terminate_handler);
 }
 
-#if !WIN32
+#if !defined(WIN32)
 static void HandlePosixSignal(int s)
 {
     if (s == SIGABRT && skipAbortSignal) {
@@ -798,7 +774,8 @@ static void HandlePosixSignal(int s)
 
     crash_info ci;
     ci.crashDescription = strprintf("Posix Signal: %s", name);
-    ci.stackframes = GetStackFrames(0, 16);
+    // BIBLEPAY - Show longer traces 
+    ci.stackframes = GetStackFrames(0, 36);
     ci.stackframeInfos = GetStackFrameInfos(ci.stackframes);
     PrintCrashInfo(ci);
 
@@ -861,7 +838,7 @@ LONG WINAPI HandleWindowsException(EXCEPTION_POINTERS * ExceptionInfo)
 
 void RegisterPrettySignalHandlers()
 {
-#if WIN32
+#if defined(WIN32)
     SetUnhandledExceptionFilter(HandleWindowsException);
 #else
     const std::vector<int> posix_signals = {
@@ -877,7 +854,7 @@ void RegisterPrettySignalHandlers()
             SIGTRAP,    // Trace/breakpoint trap
             SIGXCPU,    // CPU time limit exceeded (4.2BSD)
             SIGXFSZ,    // File size limit exceeded (4.2BSD)
-#if __APPLE__
+#if defined(__APPLE__)
             SIGEMT,     // emulation instruction executed
 #endif
     };

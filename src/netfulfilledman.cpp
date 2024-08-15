@@ -1,13 +1,34 @@
-﻿// Copyright (c) 2014-2020 The DÃSH Core Developers
+// Copyright (c) 2014-2023 The BiblePay Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <chainparams.h>
-#include <init.h>
+#include <flat-database.h>
 #include <netfulfilledman.h>
-#include <util.h>
+#include <shutdown.h>
+#include <util/system.h>
 
-CNetFulfilledRequestManager netfulfilledman;
+std::unique_ptr<CNetFulfilledRequestManager> netfulfilledman;
+
+CNetFulfilledRequestManager::CNetFulfilledRequestManager(bool load_cache) :
+    m_db{std::make_unique<db_type>("netfulfilled.dat", "magicFulfilledCache")},
+    is_valid{
+        [&]() -> bool {
+            assert(m_db != nullptr);
+            return load_cache ? m_db->Load(*this) : m_db->Store(*this);
+        }()
+    }
+{
+    if (is_valid && load_cache) {
+        CheckAndRemove();
+    }
+}
+
+CNetFulfilledRequestManager::~CNetFulfilledRequestManager()
+{
+    if (!is_valid) return;
+    m_db->Store(*this);
+}
 
 void CNetFulfilledRequestManager::AddFulfilledRequest(const CService& addr, const std::string& strRequest)
 {
@@ -25,17 +46,6 @@ bool CNetFulfilledRequestManager::HasFulfilledRequest(const CService& addr, cons
     return  it != mapFulfilledRequests.end() &&
             it->second.find(strRequest) != it->second.end() &&
             it->second[strRequest] > GetTime();
-}
-
-void CNetFulfilledRequestManager::RemoveFulfilledRequest(const CService& addr, const std::string& strRequest)
-{
-    LOCK(cs_mapFulfilledRequests);
-    CService addrSquashed = Params().AllowMultiplePorts() ? addr : CService(addr, 0);
-    fulfilledreqmap_t::iterator it = mapFulfilledRequests.find(addrSquashed);
-
-    if (it != mapFulfilledRequests.end()) {
-        it->second.erase(strRequest);
-    }
 }
 
 void CNetFulfilledRequestManager::RemoveAllFulfilledRequests(const CService& addr)
@@ -73,13 +83,13 @@ void CNetFulfilledRequestManager::CheckAndRemove()
     }
 }
 
-void CNetFulfilledRequestManager::Clear()
+void NetFulfilledRequestStore::Clear()
 {
     LOCK(cs_mapFulfilledRequests);
     mapFulfilledRequests.clear();
 }
 
-std::string CNetFulfilledRequestManager::ToString() const
+std::string NetFulfilledRequestStore::ToString() const
 {
     std::ostringstream info;
     info << "Nodes with fulfilled requests: " << (int)mapFulfilledRequests.size();

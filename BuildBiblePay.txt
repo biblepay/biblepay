@@ -100,13 +100,12 @@ make deploy
 
 
 #How to cross compile MAC on Ubuntu 20.04 for Darwin14:
-#sudo apt-get install python3-setuptools
-#sudo apt install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git libdb4.8-dev libdb4.8++-dev curl
-#sudo apt install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev libzmq3-dev
-#sudo apt install ca-certificates curl g++ git-core pkg-config autoconf librsvg2-bin libtiff-tools libtool automake faketime bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python python-dev python-setuptools fonts-tuffy p7zip-full sleuthkit
-#sudo apt install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
-#sudo apt-get install python3-setuptools libcap-dev zlib1g-dev libbz2-dev
-sudo apt-get install python3-setuptools libcap-dev zlib1g-dev libbz2-dev cmake
+sudo apt-get install python3-setuptools
+sudo apt install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git libdb4.8-dev libdb4.8++-dev curl
+sudo apt install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev libzmq3-dev
+sudo apt install ca-certificates curl g++ git-core pkg-config autoconf librsvg2-bin libtiff-tools libtool automake faketime bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python python-dev python-setuptools fonts-tuffy p7zip-full sleuthkit
+sudo apt install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+sudo apt-get install python3-setuptools libcap-dev zlib1g-dev libbz2-dev
 
 #old way: Saving in case the new way breaks; skip this section and go to the new way first (10.14):
 First, extract the MAC SDK.
@@ -126,21 +125,10 @@ mv MacOSX10.11.sdk/ depends/SDKs/
  curl https://bitcoincore.org/depends-sources/sdks/MacOSX10.14.sdk.tar.gz -o depends/sdk-sources/MacOSX10.14.sdk.tar.gz
  tar -C depends/SDKs -xf depends/sdk-sources/MacOSX10.14.sdk.tar.gz
 
-#newest way:
-mkdir -p depends/sdk-sources
-mkdir -p depends/SDKs
-curl https://bitcoincore.org/depends-sources/sdks/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz -o depends/sdk-sources/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz
-tar -C depends/SDKs -xf depends/sdk-sources/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz
-
-
-
-
 Build the Apple dependencies:
-#make -C depends HOST=x86_64-apple-darwin14
-make -C depends HOST=x86_64-apple-darwin19
+make -C depends HOST=x86_64-apple-darwin14
 ./autogen.sh
-
-./configure --prefix=`pwd`/depends/x86_64-apple-darwin19
+./configure --prefix=`pwd`/depends/x86_64-apple-darwin14
 make
 
 

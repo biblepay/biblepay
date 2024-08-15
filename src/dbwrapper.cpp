@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2019 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,9 +10,10 @@
 #include <leveldb/cache.h>
 #include <leveldb/env.h>
 #include <leveldb/filter_policy.h>
-#include <memenv.h>
+#include <leveldb/helpers/memenv/memenv.h>
 #include <stdint.h>
 #include <algorithm>
+#include <optional>
 
 class CBitcoinLevelDBLogger : public leveldb::Logger {
 public:
@@ -78,7 +79,7 @@ static void SetMaxOpenFiles(leveldb::Options *options) {
     // do not interfere with select() loops. On 64-bit Unix hosts this value is
     // also OK, because up to that amount LevelDB will use an mmap
     // implementation that does not use extra file descriptors (the fds are
-    // closed after being mmaped).
+    // closed after being mmap'ed).
     //
     // Increasing the value beyond the default is dangerous because LevelDB will
     // fall back to a non-mmap implementation when the file count is too large.
@@ -115,7 +116,7 @@ static leveldb::Options GetOptions(size_t nCacheSize)
 }
 
 CDBWrapper::CDBWrapper(const fs::path& path, size_t nCacheSize, bool fMemory, bool fWipe, bool obfuscate)
-    : m_name(fs::basename(path))
+    : m_name{path.stem().string()}
 {
     penv = nullptr;
     readoptions.verify_checksums = true;
@@ -197,13 +198,15 @@ bool CDBWrapper::WriteBatch(CDBBatch& batch, bool fSync)
     return true;
 }
 
-size_t CDBWrapper::DynamicMemoryUsage() const {
+size_t CDBWrapper::DynamicMemoryUsage() const
+{
     std::string memory;
-    if (!pdb->GetProperty("leveldb.approximate-memory-usage", &memory)) {
+    std::optional<size_t> parsed;
+    if (!pdb->GetProperty("leveldb.approximate-memory-usage", &memory) || !(parsed = ToIntegral<size_t>(memory))) {
         LogPrint(BCLog::LEVELDB, "Failed to get approximate-memory-usage property\n");
         return 0;
     }
-    return stoul(memory);
+    return parsed.value();
 }
 
 // Prefixed with null character to avoid collisions with other keys
@@ -220,10 +223,9 @@ const unsigned int CDBWrapper::OBFUSCATE_KEY_NUM_BYTES = 8;
  */
 std::vector<unsigned char> CDBWrapper::CreateObfuscateKey() const
 {
-    unsigned char buff[OBFUSCATE_KEY_NUM_BYTES];
-    GetRandBytes(buff, OBFUSCATE_KEY_NUM_BYTES);
-    return std::vector<unsigned char>(&buff[0], &buff[OBFUSCATE_KEY_NUM_BYTES]);
-
+    std::vector<uint8_t> ret(OBFUSCATE_KEY_NUM_BYTES);
+    GetRandBytes(ret.data(), OBFUSCATE_KEY_NUM_BYTES);
+    return ret;
 }
 
 bool CDBWrapper::IsEmpty()

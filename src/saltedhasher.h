@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2019-2020 The DÃSH Core Developers
+// Copyright (c) 2019-2023 The BiblePay Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,7 @@
 
 #include <hash.h>
 #include <uint256.h>
+#include <crypto/siphash.h>
 
 /** Helper classes for std::unordered_map and std::unordered_set hashing */
 

@@ -1,14 +1,7 @@
-﻿#!/usr/bin/env python3
-# Copyright (c) 2015-2021 The DÃSH Core Developers
+#!/usr/bin/env python3
+# Copyright (c) 2015-2024 The BiblePay Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-import time
-from decimal import Decimal
-
-from test_framework.blocktools import get_masternode_payment, create_coinbase, create_block
-from test_framework.mininode import *
-from test_framework.test_framework import BiblepayTestFramework
-from test_framework.util import assert_equal, assert_raises_rpc_error, get_bip9_status
 
 '''
 feature_llmq_is_cl_conflicts.py
@@ -16,6 +9,15 @@ feature_llmq_is_cl_conflicts.py
 Checks conflict handling between ChainLocks and InstantSend
 
 '''
+
+import struct
+
+from test_framework.blocktools import create_block_with_mnpayments
+from test_framework.messages import CInv, CTransaction, FromHex, hash256, msg_clsig, msg_inv, ser_string, ToHex, uint256_from_str
+from test_framework.p2p import P2PInterface
+from test_framework.test_framework import BiblepayTestFramework
+from test_framework.util import assert_equal, assert_raises_rpc_error, hex_str_to_bytes, wait_until
+
 
 class TestP2PConn(P2PInterface):
     def __init__(self):
@@ -30,11 +32,11 @@ class TestP2PConn(P2PInterface):
         inv = msg_inv([CInv(29, hash)])
         self.send_message(inv)
 
-    def send_islock(self, islock):
-        hash = uint256_from_str(hash256(islock.serialize()))
-        self.islocks[hash] = islock
+    def send_isdlock(self, isdlock):
+        hash = uint256_from_str(hash256(isdlock.serialize()))
+        self.islocks[hash] = isdlock
 
-        inv = msg_inv([CInv(30, hash)])
+        inv = msg_inv([CInv(31, hash)])
         self.send_message(inv)
 
     def on_getdata(self, message):
@@ -47,20 +49,28 @@ class TestP2PConn(P2PInterface):
 
 class LLMQ_IS_CL_Conflicts(BiblepayTestFramework):
     def set_test_params(self):
-        self.set_biblepay_test_params(4, 3, fast_dip3_enforcement=True)
-        #disable_mocktime()
+        self.set_biblepay_test_params(5, 4, fast_dip3_enforcement=True)
+        self.set_biblepay_llmq_test_params(4, 4)
+        self.supports_cli = False
 
     def run_test(self):
         self.activate_dip8()
 
         self.test_node = self.nodes[0].add_p2p_connection(TestP2PConn())
-        network_thread_start()
-        self.nodes[0].p2p.wait_for_verack()
 
-        self.nodes[0].spork("SPORK_17_QUORUM_DKG_ENABLED", 0)
+        self.nodes[0].sporkupdate("SPORK_17_QUORUM_DKG_ENABLED", 0)
         self.wait_for_sporks_same()
 
-        self.mine_quorum()
+        self.activate_v19(expected_activation_height=900)
+        self.log.info("Activated v19 at height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+C height:" + str(self.nodes[0].getblockcount()))
+        self.move_to_next_cycle()
+        self.log.info("Cycle H+2C height:" + str(self.nodes[0].getblockcount()))
+
+        self.mine_cycle_quorum(llmq_type_name='llmq_test_dip0024', llmq_type=103)
 
         # mine single block, wait for chainlock
         self.nodes[0].generate(1)
@@ -82,7 +92,7 @@ class LLMQ_IS_CL_Conflicts(BiblepayTestFramework):
         rawtx2_obj = FromHex(CTransaction(), rawtx2)
 
         rawtx1_txid = self.nodes[0].sendrawtransaction(rawtx1)
-        rawtx2_txid = encode(hash256(hex_str_to_bytes(rawtx2))[::-1], 'hex_codec').decode('ascii')
+        rawtx2_txid = hash256(hex_str_to_bytes(rawtx2))[::-1].hex()
 
         # Create a chained TX on top of tx1
         inputs = []
@@ -101,16 +111,18 @@ class LLMQ_IS_CL_Conflicts(BiblepayTestFramework):
             self.wait_for_instantlock(rawtx1_txid, node)
             self.wait_for_instantlock(rawtx4_txid, node)
 
-        block = self.create_block(self.nodes[0], [rawtx2_obj])
+        block = create_block_with_mnpayments(self.mninfo, self.nodes[0], [rawtx2_obj])
         if test_block_conflict:
             # The block shouldn't be accepted/connected but it should be known to node 0 now
             submit_result = self.nodes[0].submitblock(ToHex(block))
-            assert(submit_result == "conflict-tx-lock")
+            assert submit_result == "conflict-tx-lock"
 
         cl = self.create_chainlock(self.nodes[0].getblockcount() + 1, block)
 
         if mine_confllicting:
             islock_tip = self.nodes[0].generate(1)[-1]
+            # Make sure we won't sent clsig too early
+            self.sync_blocks()
 
         self.test_node.send_clsig(cl)
 
@@ -137,13 +149,12 @@ class LLMQ_IS_CL_Conflicts(BiblepayTestFramework):
         submit_result = self.nodes[1].submitblock(ToHex(block))
         if test_block_conflict:
             # Node 1 should receive the block from node 0 and should not accept it again via submitblock
-            assert(submit_result == "duplicate")
+            assert submit_result == "duplicate"
         else:
             # The block should get accepted now, and at the same time prune the conflicting ISLOCKs
-            assert(submit_result is None)
+            assert submit_result is None
 
-        for node in self.nodes:
-            self.wait_for_chainlocked_block(node, block.hash)
+        self.wait_for_chainlocked_block_all_nodes(block.hash)
 
         # Create a chained TX on top of tx2
         inputs = []
@@ -194,14 +205,17 @@ class LLMQ_IS_CL_Conflicts(BiblepayTestFramework):
         rawtx1 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
         rawtx2 = self.create_raw_tx(self.nodes[0], self.nodes[0], 1, 1, 100)['hex']
 
-        rawtx1_txid = encode(hash256(hex_str_to_bytes(rawtx1))[::-1], 'hex_codec').decode('ascii')
-        rawtx2_txid = encode(hash256(hex_str_to_bytes(rawtx2))[::-1], 'hex_codec').decode('ascii')
+        rawtx1_txid = hash256(hex_str_to_bytes(rawtx1))[::-1].hex()
+        rawtx2_txid = hash256(hex_str_to_bytes(rawtx2))[::-1].hex()
 
         # Create an ISLOCK but don't broadcast it yet
-        islock = self.create_islock(rawtx2)
+        isdlock = self.create_isdlock(rawtx2)
 
-        # Disable ChainLocks to avoid accidential locking
-        self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
+        # Ensure spork uniqueness in multiple function runs
+        self.bump_mocktime(1)
+        # Disable ChainLocks to avoid accidental locking
+        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 4070908800)
+        self.wait_for_sporks_same()
 
         # Send tx1, which will later conflict with the ISLOCK
         self.nodes[0].sendrawtransaction(rawtx1)
@@ -215,121 +229,57 @@ class LLMQ_IS_CL_Conflicts(BiblepayTestFramework):
         self.sync_all()
 
         # Assert that the conflicting tx got mined and the locked TX is not valid
-        assert(self.nodes[0].getrawtransaction(rawtx1_txid, True)['confirmations'] > 0)
-        assert_raises_rpc_error(-25, "Missing inputs", self.nodes[0].sendrawtransaction, rawtx2)
+        assert self.nodes[0].getrawtransaction(rawtx1_txid, True)['confirmations'] > 0
+        assert_raises_rpc_error(-25, "bad-txns-inputs-missingorspent", self.nodes[0].sendrawtransaction, rawtx2)
 
         # Create the block and the corresponding clsig but do not relay clsig yet
-        cl_block = self.create_block(self.nodes[0])
+        cl_block = create_block_with_mnpayments(self.mninfo, self.nodes[0])
         cl = self.create_chainlock(self.nodes[0].getblockcount() + 1, cl_block)
         self.nodes[0].submitblock(ToHex(cl_block))
         self.sync_all()
         assert self.nodes[0].getbestblockhash() == cl_block.hash
 
-        # Send the ISLOCK, which should result in the last 2 blocks to be invalidated, even though the nodes don't know
-        # the locked transaction yet
-        self.test_node.send_islock(islock)
-        time.sleep(5)
+        # Send the ISLOCK, which should result in the last 2 blocks to be disconnected,
+        # even though the nodes don't know the locked transaction yet
+        self.test_node.send_isdlock(isdlock)
+        for node in self.nodes:
+            wait_until(lambda: node.getbestblockhash() == good_tip, timeout=10, sleep=0.5)
+            # islock for tx2 is incomplete, tx1 should return in mempool now that blocks are disconnected
+            assert rawtx1_txid in set(node.getrawmempool())
 
-        assert(self.nodes[0].getbestblockhash() == good_tip)
-        assert(self.nodes[1].getbestblockhash() == good_tip)
-
-        # Send the actual transaction and mine it
+        # Should drop tx1 and accept tx2 because there is an isdlock waiting for it
         self.nodes[0].sendrawtransaction(rawtx2)
-        self.nodes[0].generate(1)
+        # bump mocktime to force tx relay
+        self.bump_mocktime(60)
+        for node in self.nodes:
+            self.wait_for_instantlock(rawtx2_txid, node)
+
+        # Should not allow competing txes now
+        assert_raises_rpc_error(-26, "tx-txlock-conflict", self.nodes[0].sendrawtransaction, rawtx1)
+
+        islock_tip = self.nodes[0].generate(1)[0]
         self.sync_all()
 
-        assert(self.nodes[0].getrawtransaction(rawtx2_txid, True)['confirmations'] > 0)
-        assert(self.nodes[1].getrawtransaction(rawtx2_txid, True)['confirmations'] > 0)
-        assert(self.nodes[0].getrawtransaction(rawtx2_txid, True)['instantlock'])
-        assert(self.nodes[1].getrawtransaction(rawtx2_txid, True)['instantlock'])
-        assert(self.nodes[0].getbestblockhash() != good_tip)
-        assert(self.nodes[1].getbestblockhash() != good_tip)
+        for node in self.nodes:
+            self.wait_for_instantlock(rawtx2_txid, node)
+            assert_equal(node.getrawtransaction(rawtx2_txid, True)['confirmations'], 1)
+            assert_equal(node.getbestblockhash(), islock_tip)
 
         # Check that the CL-ed block overrides the one with islocks
-        self.nodes[0].spork("SPORK_19_CHAINLOCKS_ENABLED", 0)  # Re-enable ChainLocks to accept clsig
+        self.nodes[0].sporkupdate("SPORK_19_CHAINLOCKS_ENABLED", 0)  # Re-enable ChainLocks to accept clsig
         self.test_node.send_clsig(cl)  # relay clsig ASAP to prevent nodes from locking islock-ed tip
         self.wait_for_sporks_same()
         for node in self.nodes:
             self.wait_for_chainlocked_block(node, cl_block.hash)
-
-    def create_block(self, node, vtx=[]):
-        bt = node.getblocktemplate()
-        height = bt['height']
-        tip_hash = bt['previousblockhash']
-
-        coinbasevalue = bt['coinbasevalue']
-        miner_address = node.getnewaddress()
-        mn_payee = bt['masternode'][0]['payee']
-
-        # calculate fees that the block template included (we'll have to remove it from the coinbase as we won't
-        # include the template's transactions
-        bt_fees = 0
-        for tx in bt['transactions']:
-            bt_fees += tx['fee']
-
-        new_fees = 0
-        for tx in vtx:
-            in_value = 0
-            out_value = 0
-            for txin in tx.vin:
-                txout = node.gettxout(uint256_to_string(txin.prevout.hash), txin.prevout.n, False)
-                in_value += int(txout['value'] * COIN)
-            for txout in tx.vout:
-                out_value += txout.nValue
-            new_fees += in_value - out_value
-
-        # fix fees
-        coinbasevalue -= bt_fees
-        coinbasevalue += new_fees
-
-        realloc_info = get_bip9_status(self.nodes[0], 'realloc')
-        realloc_height = 99999999
-        if realloc_info['status'] == 'active':
-            realloc_height = realloc_info['since']
-        mn_amount = get_masternode_payment(height, coinbasevalue, realloc_height)
-        miner_amount = coinbasevalue - mn_amount
-
-        outputs = {miner_address: str(Decimal(miner_amount) / COIN)}
-        if mn_amount > 0:
-            outputs[mn_payee] = str(Decimal(mn_amount) / COIN)
-
-        coinbase = FromHex(CTransaction(), node.createrawtransaction([], outputs))
-        coinbase.vin = create_coinbase(height).vin
-
-        # We can't really use this one as it would result in invalid merkle roots for masternode lists
-        if len(bt['coinbase_payload']) != 0:
-            cbtx = FromHex(CCbTx(version=1), bt['coinbase_payload'])
-            coinbase.nVersion = 3
-            coinbase.nType = 5 # CbTx
-            coinbase.vExtraPayload = cbtx.serialize()
-
-        coinbase.calc_sha256()
-
-        block = create_block(int(tip_hash, 16), coinbase, nTime=bt['curtime'])
-        block.vtx += vtx
-
-        # Add quorum commitments from template
-        for tx in bt['transactions']:
-            tx2 = FromHex(CTransaction(), tx['data'])
-            if tx2.nType == 6:
-                block.vtx.append(tx2)
-
-        block.hashMerkleRoot = block.calc_merkle_root()
-        block.solve()
-        return block
+            # Previous tip should be marked as conflicting now
+            assert_equal(node.getchaintips(2)[1]["status"], "conflicting")
 
     def create_chainlock(self, height, block):
         request_id_buf = ser_string(b"clsig") + struct.pack("<I", height)
         request_id = hash256(request_id_buf)[::-1].hex()
         message_hash = block.hash
 
-        quorum_member = None
-        for mn in self.mninfo:
-            res = mn.node.quorum('sign', 100, request_id, message_hash)
-            if res and quorum_member is None:
-                quorum_member = mn
-
-        recSig = self.get_recovered_sig(request_id, message_hash, node=quorum_member.node)
+        recSig = self.get_recovered_sig(request_id, message_hash)
         clsig = msg_clsig(height, block.sha256, hex_str_to_bytes(recSig['sig']))
         return clsig
 

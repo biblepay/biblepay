@@ -1,15 +1,15 @@
-﻿// Copyright (c) 2015 The Bitcoin Core developers
+// Copyright (c) 2015-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <vector>
 #include <prevector.h>
+#include <vector>
 
 #include <reverse_iterator.h>
 #include <serialize.h>
 #include <streams.h>
 
-#include <test/test_biblepay.h>
+#include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -165,7 +165,8 @@ public:
         test();
     }
 
-    void swap() {
+    void swap() noexcept
+    {
         real_vector.swap(real_vector_alt);
         pre_vector.swap(pre_vector_alt);
         test();
@@ -209,8 +210,8 @@ public:
 
     prevector_tester() {
         SeedInsecureRand();
-        rand_seed = insecure_rand_seed;
-        rand_cache = insecure_rand_ctx;
+        rand_seed = InsecureRand256();
+        rand_cache = FastRandomContext(rand_seed);
     }
 };
 

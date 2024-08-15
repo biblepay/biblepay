@@ -1,14 +1,13 @@
-﻿// Copyright (c) 2012-2015 The Bitcoin Core developers
+// Copyright (c) 2012-2020 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <consensus/tx_verify.h>
-#include <pubkey.h>
 #include <key.h>
+#include <pubkey.h>
 #include <script/script.h>
 #include <script/standard.h>
+#include <test/util/setup_common.h>
 #include <uint256.h>
-#include <test/test_biblepay.h>
 
 #include <vector>
 
@@ -38,7 +37,7 @@ BOOST_AUTO_TEST_CASE(GetSigOpCount)
     BOOST_CHECK_EQUAL(s1.GetSigOpCount(true), 3U);
     BOOST_CHECK_EQUAL(s1.GetSigOpCount(false), 21U);
 
-    CScript p2sh = GetScriptForDestination(CScriptID(s1));
+    CScript p2sh = GetScriptForDestination(ScriptHash(s1));
     CScript scriptSig;
     scriptSig << OP_0 << Serialize(s1);
     BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(scriptSig), 3U);
@@ -54,7 +53,7 @@ BOOST_AUTO_TEST_CASE(GetSigOpCount)
     BOOST_CHECK_EQUAL(s2.GetSigOpCount(true), 3U);
     BOOST_CHECK_EQUAL(s2.GetSigOpCount(false), 20U);
 
-    p2sh = GetScriptForDestination(CScriptID(s2));
+    p2sh = GetScriptForDestination(ScriptHash(s2));
     BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(true), 0U);
     BOOST_CHECK_EQUAL(p2sh.GetSigOpCount(false), 0U);
     CScript scriptSig2;

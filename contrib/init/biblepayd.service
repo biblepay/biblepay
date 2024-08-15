@@ -1,24 +1,58 @@
-﻿# It is not recommended to modify this file in-place, because it will
+# It is not recommended to modify this file in-place, because it will
 # be overwritten during package upgrades. If you want to add further
 # options or overwrite existing ones then use
 # $ systemctl edit biblepayd.service
 # See "man systemd.service" for details.
 
 # Note that almost all daemon options could be specified in
-# /etc/biblepay/biblepay.conf
+# /etc/biblepay/biblepay.conf, but keep in mind those explicitly
+# specified as arguments in ExecStart= will override those in the
+# config file.
 
 [Unit]
 Description=BiblePay daemon
-After=network.target
+Documentation=https://github.com/biblepay/biblepay/blob/master/doc/init.md
+
+# https://www.freedesktop.org/wiki/Software/systemd/NetworkTarget/
+After=network-online.target
+Wants=network-online.target
 
 [Service]
-ExecStart=/usr/bin/biblepayd -daemon -conf=/etc/biblepay/biblepay.conf-pid=/run/biblepayd/biblepayd.pid
-# Creates /run/biblepay owned by biblepaycore
-RuntimeDirectory=biblepayd
-User=biblepaycore
+ExecStart=/usr/bin/biblepayd -daemon \
+                                                            -pid=/run/biblepayd/biblepayd.pid \
+                                                            -conf=/etc/biblepay/biblepay.conf  \
+                                                            -datadir=/var/lib/biblepayd
+
+# Make sure the config directory is readable by the service user
+PermissionsStartOnly=true
+ExecStartPre=/bin/chgrp biblepaycore /etc/biblepay
+
+# Process management
+####################
+
 Type=forking
 PIDFile=/run/biblepayd/biblepayd.pid
 Restart=on-failure
+TimeoutStopSec=600
+
+# Directory creation and permissions
+####################################
+
+# Run as biblepay:biblepay
+User=biblepaycore
+Group=biblepaycore
+
+# /run/biblepayd
+RuntimeDirectory=biblepayd
+RuntimeDirectoryMode=0710
+
+# /etc/biblepay
+ConfigurationDirectory=biblepay
+ConfigurationDirectoryMode=0710
+
+# /var/lib/biblepayd
+StateDirectory=biblepayd
+StateDirectoryMode=0710
 
 # Hardening measures
 ####################
@@ -28,6 +62,9 @@ PrivateTmp=true
 
 # Mount /usr, /boot/ and /etc read-only for the process.
 ProtectSystem=full
+
+# Deny access to /home, /root and /run/user
+ProtectHome=true
 
 # Disallow the process and all of its children to gain
 # new privileges through execve().

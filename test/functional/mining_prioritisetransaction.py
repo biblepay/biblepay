@@ -4,15 +4,22 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the prioritisetransaction mining RPC."""
 
+from test_framework.messages import COIN, MAX_BLOCK_SIZE
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import *
-from test_framework.mininode import COIN, MAX_BLOCK_SIZE
+from test_framework.util import assert_equal, assert_raises_rpc_error, create_confirmed_utxos, create_lots_of_big_transactions, gen_return_txouts
 
 class PrioritiseTransactionTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
-        self.extra_args = [["-printpriority=1"]] * 2
+        self.extra_args = [[
+            "-printpriority=1",
+            "-acceptnonstdtxn=1",
+        ]] * self.num_nodes
+        self.supports_cli = False
+
+    def skip_test_if_missing_module(self):
+        self.skip_if_no_wallet()
 
     def run_test(self):
         # Test `prioritisetransaction` required parameters
@@ -23,7 +30,8 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         assert_raises_rpc_error(-1, "prioritisetransaction", self.nodes[0].prioritisetransaction, '', 0, 0)
 
         # Test `prioritisetransaction` invalid `txid`
-        assert_raises_rpc_error(-1, "txid must be hexadecimal string", self.nodes[0].prioritisetransaction, txid='foo', fee_delta=0)
+        assert_raises_rpc_error(-8, "txid must be of length 64 (not 3, for 'foo')", self.nodes[0].prioritisetransaction, txid='foo', fee_delta=0)
+        assert_raises_rpc_error(-8, "txid must be hexadecimal string (not 'Zd1d4e24ed99057e84c3f80fd8fbec79ed9e1acee37da269356ecea000000000')", self.nodes[0].prioritisetransaction, txid='Zd1d4e24ed99057e84c3f80fd8fbec79ed9e1acee37da269356ecea000000000', fee_delta=0)
 
         txid = '1d1d4e24ed99057e84c3f80fd8fbec79ed9e1acee37da269356ecea000000000'
 
@@ -53,9 +61,9 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         sizes = [0, 0, 0]
         for i in range(3):
             for j in txids[i]:
-                assert(j in mempool)
-                sizes[i] += mempool[j]['size']
-            assert(sizes[i] > MAX_BLOCK_SIZE) # Fail => raise utxo_count
+                assert j in mempool
+                sizes[i] += mempool[j]['vsize']
+            assert sizes[i] > MAX_BLOCK_SIZE  # Fail => raise utxo_count
 
         # add a fee delta to something in the cheapest bucket and make sure it gets mined
         # also check that a different entry in the cheapest bucket is NOT mined
@@ -65,8 +73,8 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
 
         mempool = self.nodes[0].getrawmempool()
         self.log.info("Assert that prioritised transaction was mined")
-        assert(txids[0][0] not in mempool)
-        assert(txids[0][1] in mempool)
+        assert txids[0][0] not in mempool
+        assert txids[0][1] in mempool
 
         high_fee_tx = None
         for x in txids[2]:
@@ -74,7 +82,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
                 high_fee_tx = x
 
         # Something high-fee should have been mined!
-        assert(high_fee_tx != None)
+        assert high_fee_tx is not None
 
         # Add a prioritisation before a tx is in the mempool (de-prioritising a
         # high-fee transaction so that it's now low fee).
@@ -85,7 +93,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
 
         # Check to make sure our high fee rate tx is back in the mempool
         mempool = self.nodes[0].getrawmempool()
-        assert(high_fee_tx in mempool)
+        assert high_fee_tx in mempool
 
         # Now verify the modified-high feerate transaction isn't mined before
         # the other high fee transactions. Keep mining until our mempool has
@@ -97,14 +105,14 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         # transactions should have been.
         mempool = self.nodes[0].getrawmempool()
         self.log.info("Assert that de-prioritised transaction is still in mempool")
-        assert(high_fee_tx in mempool)
+        assert high_fee_tx in mempool
         for x in txids[2]:
             if (x != high_fee_tx):
-                assert(x not in mempool)
+                assert x not in mempool
 
         # Create a free transaction.  Should be rejected.
         utxo_list = self.nodes[0].listunspent()
-        assert(len(utxo_list) > 0)
+        assert len(utxo_list) > 0
         utxo = utxo_list[0]
 
         inputs = []
@@ -117,7 +125,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
 
         # This will raise an exception due to min relay fee not being met
         assert_raises_rpc_error(-26, "min relay fee not met", self.nodes[0].sendrawtransaction, tx_hex)
-        assert(tx_id not in self.nodes[0].getrawmempool())
+        assert tx_id not in self.nodes[0].getrawmempool()
 
         # This is a less than 1000-byte transaction, so just set the fee
         # to be the minimum for a 1000-byte transaction and check that it is
@@ -126,7 +134,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
 
         self.log.info("Assert that prioritised free transaction is accepted to mempool")
         assert_equal(self.nodes[0].sendrawtransaction(tx_hex), tx_id)
-        assert(tx_id in self.nodes[0].getrawmempool())
+        assert tx_id in self.nodes[0].getrawmempool()
 
         # Test that calling prioritisetransaction is sufficient to trigger
         # getblocktemplate to (eventually) return a new block.
@@ -136,7 +144,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         self.nodes[0].setmocktime(self.mocktime+10)
         new_template = self.nodes[0].getblocktemplate()
 
-        assert(template != new_template)
+        assert template != new_template
 
 if __name__ == '__main__':
     PrioritiseTransactionTest().main()
