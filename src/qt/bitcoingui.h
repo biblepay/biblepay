@@ -137,6 +137,7 @@ private:
     QToolButton* overviewButton = nullptr;
     //BBP
     QToolButton* unchainedAction;
+    QToolButton* extensionAction;
     QToolButton* forumAction;
     QToolButton* prayerRequestAction;
     //END OF BBP
@@ -288,6 +289,8 @@ public Q_SLOTS:
     void message(const QString& title, QString message, unsigned int style, bool* ret = nullptr, const QString& detailed_message = QString());
 
     void showUnchained();
+    void showExtensions();
+    bool ShowExtensions();
 
     void showPrayerRequests();
 
@@ -371,7 +374,7 @@ public Q_SLOTS:
     void showGraph();
     void showPeers();
     void showRepair();
-
+    
     /** Open external (default) editor with biblepay.conf */
     void showConfEditor();
     /** Show folder with wallet backups in default file browser */

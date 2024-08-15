@@ -3951,8 +3951,7 @@ static bool ContextualCheckBlock(const CBlock& block, BlockValidationState& stat
 {
     AssertLockHeld(cs_main);
     const int nHeight = pindexPrev == nullptr ? 0 : pindexPrev->nHeight + 1;
-
-    // Enforce BIP113 (Median Time Past).
+    // Enforce BIP113 (Median Time Past). 
     int nLockTimeFlags = 0;
     if (DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_CSV)) {
         assert(pindexPrev != nullptr);

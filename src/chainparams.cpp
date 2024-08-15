@@ -161,9 +161,9 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = CBaseChainParams::MAIN;
-        consensus.BABYLON_FALLING_HEIGHT = 600000;
+        consensus.BABYLON_FALLING_HEIGHT = 526500;
         
-        consensus.BABYLON_FALLING_TIME = 1744172648;
+        consensus.BABYLIME = 1725153382; // 9-1-2024
 
         consensus.BARLEY_HARVEST_HEIGHT  = 320000;
 	    consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
@@ -175,6 +175,7 @@ public:
         consensus.REDSEA_PARTING = 457510;
     	consensus.RANDOMX_HEIGHT = 184675;
         consensus.nSubsidyHalvingInterval = 210240; // Note: actual number of blocks per calendar year with DGW v3 is ~200700 (for example 449750 - 249050)
+
         consensus.BIP16Height = 0;
         consensus.nMasternodePaymentsStartBlock = 21600; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
         consensus.nMasternodePaymentsIncreaseBlock = 21601; // actual historical value
@@ -189,9 +190,9 @@ public:
         consensus.nSuperblockStartHash = uint256S("0x0");
         consensus.nSuperblockCycle = 205*30;
         consensus.nSuperblockMaturityWindow = 205*3; // ~3 days before actual Superblock is emitted
-        consensus.nGovernanceMinQuorum = 10;
+        consensus.nGovernanceMinQuorum = 3;
         consensus.nGovernanceFilterElements = 20000;
-        consensus.nMasternodeMinimumConfirmations = 7;
+        consensus.nMasternodeMinimumConfirmations = 3;
         consensus.BIP34Height = 278014;
         consensus.BIP34Hash = uint256S("0x0");
         consensus.BIP65Height = 123200; // 00000000000076d8fcea02ec0963de4abfd01e771fec0863f960c2c64fe6f357
@@ -344,6 +345,7 @@ public:
                     {344000, uint256S("0x7c3e13950bdb25ea8ff11bd091be5bede5241dfa87ca149a75a2103c1041468a")},
                     {440000, uint256S("0x70e38d78fcd8a5e21c4352a42c67b55907ce1f1831ed2edec9100cd657dd650f")},
                     {498700, uint256S("0xa261c9535b7f8d67e59ccad435183ee29a100b52a7496526b840a89a3305955e")},
+                    {523600, uint256S("0x384688560466f4a2a0783426e09986fd384a4965726869ee0b33565e9a60212b")},
 				}
             }
         };
@@ -367,7 +369,7 @@ public:
  */
 class CTestNetParams : public CChainParams {
 public:
-    CTestNetParams() {
+    CTestNetParams() { 
         strNetworkID = CBaseChainParams::TESTNET; 
         consensus.BARLEY_HARVEST_HEIGHT = 199010;
 		consensus.BARLEY_HARVEST_HEIGHT2 = 199010;
@@ -1308,7 +1310,7 @@ void CDevNetParams::UpdateLLMQDevnetParametersFromArgs(const ArgsManager& args)
     }
     if (!ParseInt32(vParams[1], &threshold)) {
         throw std::runtime_error(strprintf("Invalid LLMQ_DEVNET threshold (%s)", vParams[1]));
-    }
+    } 
     LogPrintf("Setting LLMQ_DEVNET parameters to size=%ld, threshold=%ld\n", size, threshold);
     UpdateLLMQDevnetParameters(size, threshold);
 }

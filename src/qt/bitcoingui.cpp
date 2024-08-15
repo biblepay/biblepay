@@ -20,6 +20,8 @@
 #include <qt/optionsmodel.h>
 #include <qt/rpcconsole.h>
 #include <qt/utilitydialog.h>
+#include <QDir>
+#include <QProcess>
 
 #ifdef ENABLE_WALLET
 #include <qt/walletcontroller.h>
@@ -731,12 +733,16 @@ void BitcoinGUI::createToolBars()
         unchainedAction->setText(tr("&Unchained"));
         unchainedAction->setStatusTip(tr("Unchained"));
         unchainedAction->setToolTip(unchainedAction->statusTip());
-        //unchainedAction->setCheckable(true);
-        //unchainedAction->setIcon(QIcon(":/icons/network"));
-        //unchainedAction->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        //unchainedAction->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         tabGroup->addButton(unchainedAction);
         connect(unchainedAction, SIGNAL(clicked()), this, SLOT(showUnchained()));
+
+        extensionAction = new QToolButton(this);
+        extensionAction->setText(tr("&Extensions"));
+        extensionAction->setStatusTip(tr("Extensions"));
+        extensionAction->setToolTip(extensionAction->statusTip());
+        tabGroup->addButton(extensionAction);
+        connect(extensionAction, SIGNAL(clicked()), this, SLOT(showExtensions()));
+
 
         prayerRequestAction = new QToolButton(this);
         prayerRequestAction->setText(tr("&Prayer Req."));
@@ -2199,3 +2205,54 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
         optionsModel->setDisplayUnit(action->data());
     }
 }
+
+static qint64 mqiUnchainedPID = 0;
+static QProcess mqpUnchained;
+
+bool BitcoinGUI::ShowExtensions()
+{
+    std::string sRID = "win-x64";
+
+
+    /* Todo: Add the DEFAULT_OSPLATFORM RID:    LogPrintf("9009 LegPlatformRID %s=", BitcoinGUI::DEFAULT_OSPLATFORM);   */
+
+    QString myWorkingDir = QCoreApplication::applicationFilePath();
+    QString sAppWorkingDir = QDir::homePath();
+    std::string sWorkingDir = myWorkingDir.toStdString();
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt.exe", "");
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt", "");
+    sWorkingDir = strReplace(sWorkingDir, "/biblepay-qt.app", "");
+
+    std::string sApp0 = sWorkingDir + "\\bbpextensions.exe";
+
+    if (sRID == "win-x64") {
+        sApp0 = strReplace(sApp0, "/", "\\");
+    }
+    LogPrintf("9051:: qcoreapp=%s, final=%s, RID %s   \r\n", sWorkingDir, sApp0, sRID);
+
+    QString sApp = GUIUtil::TOQS(sApp0);
+    std::string sAppArgs = "";
+    QString qsArgs = GUIUtil::TOQS(sAppArgs);
+    QStringList sArgs = {};
+    sArgs << qsArgs;
+
+    // Prepare file for first use
+    if (sRID != "win-x64") {
+        QProcess::startDetached("export DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/tmp", sArgs);
+        QProcess::startDetached("chmod 777 " + sApp, sArgs);
+    }
+
+    mqpUnchained.startDetached(sApp, sArgs, sAppWorkingDir, &mqiUnchainedPID);
+
+    LogPrintf("Started Unchained PID  platform=%s, app=%s  Args=%s    pid=%f   msg=%s",
+              sRID,
+              sApp0,
+              sAppArgs, (long)mqiUnchainedPID, "");
+    return true;
+}
+
+void BitcoinGUI::showExtensions()
+{
+    ShowExtensions();
+}
+

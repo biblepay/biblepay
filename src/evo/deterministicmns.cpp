@@ -1825,7 +1825,7 @@ bool CheckProUpServTx(const CTransaction& tx, gsl::not_null<const CBlockIndex*> 
             return false;
         }
     }
-
+     
     return true;
 }
 
