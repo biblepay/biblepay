@@ -162,8 +162,7 @@ public:
     CMainParams() {
         strNetworkID = CBaseChainParams::MAIN;
         consensus.BABYLON_FALLING_HEIGHT = 526500;
-        
-        consensus.BABYLIME = 1725153382; // 9-1-2024
+        consensus.BABYLON_FALLING_TIME = 1725153382; // 9-1-2024
 
         consensus.BARLEY_HARVEST_HEIGHT  = 320000;
 	    consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
