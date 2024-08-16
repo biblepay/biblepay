@@ -696,12 +696,12 @@ void PrintExceptionContinue(const std::exception_ptr pex, const char* pszExcepti
 fs::path GetDefaultDataDir()
 {
     // ~/.biblepaycore
-    // Windows: C:\Users\Username\AppData\Roaming\BiblePayCore
+    // Windows: C:\Users\Username\AppData\Roaming\Biblepay
     // macOS: ~/Library/Application Support/BiblePayCore
     // Unix-like: ~/.biblepaycore
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "BiblePayCore";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "Biblepay";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -711,10 +711,10 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // macOS
-    return pathRet / "Library/Application Support/BiblePayCore";
+    return pathRet / "Library/Application Support/Biblepay";
 #else
     // Unix-like
-    return pathRet / ".biblepaycore";
+    return pathRet / ".biblepay";
 #endif
 #endif
 }
