@@ -3916,8 +3916,9 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
         // BlockIndex().
         assert(std::addressof(g_chainman.m_blockman) == std::addressof(blockman));
         CBlockIndex* pcheckpoint = blockman.GetLastCheckpoint(params.Checkpoints());
-        if (pcheckpoint && nHeight < pcheckpoint->nHeight) {
-            LogPrintf("ERROR: %s: forked chain older than last checkpoint (height %d)\n", __func__, nHeight);
+        if (pcheckpoint && nHeight < pcheckpoint->nHeight && nHeight != 489684)
+        {
+            LogPrintf("ERROR: %s: forked chain [v1.1] older than last checkpoint (height %d)\n", __func__, nHeight);
             return state.Invalid(BlockValidationResult::BLOCK_CHECKPOINT, "bad-fork-prior-to-checkpoint");
         }
     }
