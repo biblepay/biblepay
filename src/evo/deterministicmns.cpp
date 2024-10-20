@@ -355,6 +355,13 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             // future quorums
             return;
         }
+
+        // BIBLEPAY - If its not a temple, reject the quorum
+        if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN) {
+            return;
+        }
+
+        /*
         if (onlyEvoNodes)
         {
             // Reserved for Temple Quorums
@@ -363,6 +370,8 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
                     return;
             }
         }
+        */
+
         // calculate sha256(sha256(proTxHash, confirmedHash), modifier) per MN
         // Please note that this is not a double-sha256 but a single-sha256
         // The first part is already precalculated (confirmedHashWithProRegTxHash)
