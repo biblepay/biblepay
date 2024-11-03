@@ -1818,7 +1818,7 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
     CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
     auto govman = ::governance.get();
 
-	if (pindexTip->nHeight % 5 != 0)
+	if (pindexTip->nHeight % 5 != 0 && !fForce)
 		return "WAITING...";
 	if (!fMasternodeMode && !fForce)   
 		return "NOT_A_WATCHMAN_SANCTUARY";
