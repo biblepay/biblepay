@@ -3196,6 +3196,10 @@ UniValue exec(const JSONRPCRequest& request)
     } else if (sItem == "sleep") {
         MilliSleep(10000);
         results.pushKV("sleep", 1);
+    } else if (sItem == "watchmannow") {
+        std::string sContractOut;
+        std::string sResult = WatchmanOnTheWall(true, sContractOut);
+        results.pushKV("watchman", sResult);
     }
     else if (sItem == "sendmanyxml") {
         /*

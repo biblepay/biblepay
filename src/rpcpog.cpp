@@ -1955,6 +1955,11 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 		sContract += "<ACTION>VOTING</ACTION>";
 		return "WATCHMAN_VOTING";
 	}
+    if (iTriggerVotes >= (nSancCount / 2))
+    {
+        LogPrintf("**WatchmanOnTheWall::DORMANT::Not voting for anything::Sanc Ct %f  Trigger Votes %f",
+                          nSancCount, (double)iTriggerVotes);
+    }
 
 	return "WATCHMAN_SUCCESS";
 }
