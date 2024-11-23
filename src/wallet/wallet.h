@@ -224,15 +224,16 @@ public:
     }
 };
 
-struct CRecipient
-{
+struct CRecipient {
     CScript scriptPubKey;
     CAmount nAmount;
     bool fSubtractFeeFromAmount;
+    // BIBLEPAY
+    std::string sTxOutMessage;
+    // END OF BIBLEPAY
 };
 
 typedef std::map<std::string, std::string> mapValue_t;
-
 
 static inline void ReadOrderPos(int64_t& nOrderPos, mapValue_t& mapValue)
 {

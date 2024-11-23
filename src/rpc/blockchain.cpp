@@ -3270,25 +3270,33 @@ UniValue exec(const JSONRPCRequest& request)
         WriteIPC(sData);
         std::string sData2 = ReceiveIPC();
         results.pushKV("ipc2", sData2);
-    } else if (sItem == "persistsc") {
+    }
+    else if (sItem == "persistsc")
+    {
+        // PersistSC signs the message.
         std::string sObjType = request.params[1].get_str();
         std::string sKey = request.params[2].get_str();
         std::string sValue = request.params[3].get_str();
         const Consensus::Params& consensusParams = Params().GetConsensus();
+        std::string sSignAddress = DefaultRecAddress(request,"Christian-Public-Key");
         std::string sPayAddress = consensusParams.FoundationAddress;
         std::string sSignError;
-        std::string sSig = SignMessageEvo(request,sPayAddress, "authenticate", sSignError);
+        std::string sSig = SignMessageEvo(request, sSignAddress, "authenticate", sSignError);
         if (!sSignError.empty()) {
             throw std::runtime_error("You must use a good key.");
         }
         std::string sTXID;
         std::string sError;
-        std::string sPayload = "<msg>authenticate</msg><sig>" + sSig + "</sig><key>" + sKey + "</key><value>" + sValue + "</value>";
+        std::string sPayload = "<msg>authenticate</msg><signer>" + sSignAddress + "</signer><sig>"
+            + sSig + "</sig><key>" + sKey + "</key><value>" + sValue + "</value>";
         std::string sXML = "<sc><objtype>" + sObjType + "</objtype><url>" + sPayload + "</url></sc>";
         int nOut = 0;
-        bool fSent = RPCSendMoney(request,sError, sPayAddress, 1 * COIN, sTXID, sXML, nOut);
+        bool fSent = RPCSendMoney(request, sError, sPayAddress, 1 * COIN, sTXID, sXML, nOut);
+        results.pushKV("version", "1.1");
         results.pushKV("TXID", sTXID);
-    } else if (sItem == "testsc") {
+    }
+    else if (sItem == "testsc")
+    {
         std::string sToAddress = DefaultRecAddress(request,"sc");
         std::string sTXID;
         std::string sError;
@@ -3296,46 +3304,121 @@ UniValue exec(const JSONRPCRequest& request)
         int nOut = 0;
         bool fSent = RPCSendMoney(request, sError, sToAddress, 1 * COIN, sTXID, sXML, nOut);
         results.pushKV("TXID", sTXID);
-    } else if (sItem == "tlt") {
+    }
+    else if (sItem == "tlt")
+    {
         std::string sAddr = request.params[1].get_str();
         uint64_t n = IsHODLAddress(sAddr);
         std::string s = TimestampToHRDate(n);
         results.pushKV("tlt", n);
         results.pushKV("dt", s);
-    } else if (sItem == "listsc")
+    }
+    else if (sItem == "listsc")
     {
+        /*
         BBPResult b = UnchainedApiGet();
         results.pushKV("Resp", b.Response);
+        */
 
-
-        /*
         std::string sObjType = request.params[1].get_str();
+
         results.pushKV("scsz", (int64_t)mapSidechain.size());
+        int i0 = 0;
+
         for (auto ii : mapSidechain) {
+            i0++;
             Sidechain s = mapSidechain[ii.first];
-            UniValue o;
-            s.ToJson(o);
             if (s.ObjectType == sObjType || sObjType == "0") {
-                results.pushKV(ii.first, o);
+
+                std::string sKey = ExtractXML(s.URL, "<key>", "</key>");
+                std::string sValue = ExtractXML(s.URL, "<value>", "</value>");
+                std::string sSig = ExtractXML(s.URL, "<sig>", "</sig>");
+                std::string sMsg = ExtractXML(s.URL, "<msg>", "</msg>");
+                results.pushKV("key" + DoubleToString(i0,0), sKey);
+                results.pushKV("value" + DoubleToString(i0, 0), sValue);
+                results.pushKV("msg" + DoubleToString(i0, 0), sMsg);
+                results.pushKV("sig" + DoubleToString(i0, 0), sSig);
             }
         }
-        */
-    } else if (sItem == "listscvalue")
+    }
+    else if (sItem == "listnfts")
     {
-        /*
+
+        // list all nfts
+        std::map<std::string, NFT> l = GetNFTs();
+        for (auto ii : l)
+        {
+            NFT n = l[ii.first];
+            results.pushKV(n.id, n.ToString());
+        }
+    }
+    else if (sItem == "listscvalue")
+    {
         std::string sObjType = request.params[1].get_str();
         std::string sKey = request.params[2].get_str();
         std::string sTS = request.params[3].get_str();
         int nTS = (int)StringToDouble(sTS, 0);
         std::string sValue = GetSidechainValue(sObjType, sKey, nTS);
         results.pushKV("value", sValue);
-        */
-    } else if (sItem == "probesanc") {
+    }
+
+    else if (sItem == "testnft0")
+    {
+        // Basic NFT unit test.
+        NFT n;
+        n.Category = "ORPHAN";
+        n.Name="Name1";
+        n.Action = "CREATE";
+        n.id = "123_00";
+        n.Description = "THE DESC " + DoubleToString(GetAdjustedTime(), 0);
+        n.AssetURL = "URL";
+        n.JsonURL = "JSONURL";
+        n.BuyItNowAmount = 2.35;
+        n.Deleted = 0;
+        n.SoulBound = 1;
+        n.Marketable = 1;
+        n.Version = 1;
+        n.Signer = DefaultRecAddress(request, "Christian-Public-Key");
+        n.Message = "authorize-" + DoubleToString(GetAdjustedTime(), 0);
+        std::string sSignError;
+        n.Signature = SignMessageEvo(request,n.Signer,n.Message,sSignError);
+        if (!sSignError.empty()) {
+            throw std::runtime_error("You must use a good key.");
+        }
+
+        //Remove
+        std::string sJS = n.ToString();
+        results.pushKV("json",sJS);
+        NFT n2;
+        n2 = n2.FromJson(sJS);
+        results.pushKV("json2", n2.ToString());
+        //end of remove
+
+        const Consensus::Params& consensusParams = Params().GetConsensus();
+        std::string sSignAddress = DefaultRecAddress(request, "Christian-Public-Key");
+        std::string sPayAddress = consensusParams.FoundationAddress;
+        std::string sTXID;
+        std::string sError;
+        std::string sPayload = "<msg>" + n.Message + "</msg><signer>" + n.Signer + "</signer><sig>" + n.Signature
+            + "</sig><key>" + n.id
+            + "</key><value>" + n.ToString()
+            + "</value>";
+        std::string sXML = "<sc><objtype>NFT</objtype><url>" + sPayload + "</url></sc>";
+        int nOut = 0;
+        bool fSent = RPCSendMoney(request, sError, sSignAddress, 1 * COIN, sTXID, sXML, nOut);
+        results.pushKV("version", "1.3");
+        results.pushKV("TXID", sTXID);
+
+    }
+    else if (sItem == "probesanc")
+    {
         std::string sProReg = request.params[1].get_str();
         CAmount n = GetSancCollateralAmount(sProReg);
         double nAmt = n / COIN;
         results.pushKV("amt", nAmt);
-    } else if (sItem == "fundsanc") {
+    }
+    else if (sItem == "fundsanc")
+    {
         if (request.params.size() != 3) {
             throw std::runtime_error("You must specify the sanctuary_name sanctuary_ip.");
         }
@@ -3504,7 +3587,6 @@ UniValue exec(const JSONRPCRequest& request)
         
         
         // 1c.  First send the pro-tx-register_prepare command, and look for the tx, collateralAddress and signMessage response:
-        //UniValue rProReg = protx_register_evo(newRequest, chainman);
         bool isExternalRegister = false;
         bool isFundRegister = false;
         bool isPrepareRegister = true;
@@ -3693,6 +3775,7 @@ UniValue exec(const JSONRPCRequest& request)
     } else {
         results.pushKV("Error", "Command not found");
     }
+    LOCK(cs_main);
 
     return results;
 }

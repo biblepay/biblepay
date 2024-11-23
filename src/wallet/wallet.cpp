@@ -3562,6 +3562,9 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransac
                 for (const auto& recipient : vecSend)
                 {
                     CTxOut txout(recipient.nAmount, recipient.scriptPubKey);
+                    // BIBLEPAY
+                    txout.sTxOutMessage = recipient.sTxOutMessage;
+                    // END OF BIBLEPAY
 
                     if (recipient.fSubtractFeeFromAmount)
                     {

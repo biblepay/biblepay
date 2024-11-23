@@ -2360,8 +2360,11 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     node.scheduler->scheduleEvery(std::bind(&CDeterministicMNManager::DoMaintenance, std::ref(*node.dmnman)), std::chrono::seconds{10});
 
     // BIBLEPAY POSE
-	node.scheduler->scheduleEvery(std::bind(&ThreadPOVS, std::ref(*node.connman)), std::chrono::seconds{60});
+    node.scheduler->scheduleEvery(std::bind(&ThreadPOVS, std::ref(*node.connman)), std::chrono::seconds{60});
+    uiInterface.InitMessage(_("Memorizing sidechain...").translated);
+    MemorizeSidechain(false, true);
     // END OF BIBLEPAY POSE
+
 
 
     if (!fDisableGovernance) {

@@ -69,8 +69,10 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, CTxMemPool& mempo
 
     // Add spent information if spentindex is enabled
     CSpentIndexTxInfo txSpentInfo;
-    for (const auto& txin : tx.vin) {
-        if (!tx.IsCoinBase()) {
+    for (const auto& txin : tx.vin)
+    {
+        if (!tx.IsCoinBase())
+        {
             CSpentIndexValue spentInfo;
             CSpentIndexKey spentKey(txin.prevout.hash, txin.prevout.n);
             if (GetSpentIndex(mempool, spentKey, spentInfo)) {
@@ -78,11 +80,13 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, CTxMemPool& mempo
             }
         }
     }
-    for (unsigned int i = 0; i < tx.vout.size(); i++) {
+    for (unsigned int i = 0; i < tx.vout.size(); i++)
+    {
         CSpentIndexValue spentInfo;
         CSpentIndexKey spentKey(txid, i);
-        if (GetSpentIndex(mempool, spentKey, spentInfo)) {
-            txSpentInfo.mSpentInfo.emplace(spentKey, spentInfo);
+        if (GetSpentIndex(mempool, spentKey, spentInfo))
+        {
+             txSpentInfo.mSpentInfo.emplace(spentKey, spentInfo);
         }
     }
 
@@ -94,14 +98,18 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, CTxMemPool& mempo
 
         entry.pushKV("blockhash", hashBlock.GetHex());
         CBlockIndex* pindex = active_chainstate.m_blockman.LookupBlockIndex(hashBlock);
-        if (pindex) {
-            if (active_chainstate.m_chain.Contains(pindex)) {
+        if (pindex)
+        {
+            if (active_chainstate.m_chain.Contains(pindex))
+            {
                 entry.pushKV("height", pindex->nHeight);
                 entry.pushKV("confirmations", 1 + active_chainstate.m_chain.Height() - pindex->nHeight);
                 entry.pushKV("time", pindex->GetBlockTime());
                 entry.pushKV("blocktime", pindex->GetBlockTime());
                 chainLock = clhandler.HasChainLock(pindex->nHeight, pindex->GetBlockHash());
-            } else {
+            }
+            else
+            {
                 entry.pushKV("height", -1);
                 entry.pushKV("confirmations", 0);
             }
@@ -109,6 +117,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, CTxMemPool& mempo
     }
 
     bool fLocked = isman.IsLocked(txid);
+
     entry.pushKV("instantlock", fLocked || chainLock);
     entry.pushKV("instantlock_internal", fLocked);
     entry.pushKV("chainlock", chainLock);

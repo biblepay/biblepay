@@ -34,6 +34,8 @@ class Wallet;
 };
 
 const std::string MESSAGE_MAGIC_BBP = "DarkCoin Signed Message:\n";
+double StringToDouble(std::string s, int place);
+bool CheckStakeSignature(std::string sBitcoinAddress, std::string sSignature, std::string strMessage, std::string& strError);
 
 
 struct BBPResult
@@ -55,6 +57,8 @@ struct Sidechain
 	std::string URL;
 	int64_t Time;
 	int Height;
+    std::string TXID;
+
 	void ToJson(UniValue& obj)
 	{
 		obj.clear();
@@ -66,7 +70,110 @@ struct Sidechain
 		obj.push_back(std::make_pair("Height", Height));
         */
 	}
+};
 
+struct NFT {
+        std::string Category; // ORPHAN,GENERAL,CHRISTIAN
+        std::string Name;
+        std::string Action;
+        std::string Description;
+        std::string AssetURL;
+        std::string JsonURL;
+        std::string id;
+        std::string Signer;
+        std::string Signature;
+        std::string Message;
+
+        double BuyItNowAmount;
+        int SoulBound;
+        int Marketable;
+        int Deleted;
+        int Version;
+        void ToJson(UniValue& obj)
+        {
+                obj.clear();
+                obj.setObject();
+                obj.pushKV("Category", Category);
+                obj.pushKV("Name", Name);
+                obj.pushKV("Action", Action);
+                obj.pushKV("Description", Description);
+                obj.pushKV("AssetURL", AssetURL);
+                obj.pushKV("JsonURL", JsonURL);
+                obj.pushKV("id", id);
+                obj.pushKV("BuyItNowAmount", BuyItNowAmount);
+                obj.pushKV("SoulBound", SoulBound);
+                obj.pushKV("Marketable", Marketable);
+                obj.pushKV("Deleted", Deleted);
+                obj.pushKV("Version", Version);
+                obj.pushKV("Signer", Signer);
+                obj.pushKV("Signature", Signature);
+                obj.pushKV("Message", Message);
+        }
+
+        std::string GetUniString(UniValue o, std::string sMemberName)
+        {
+                std::string sResult = o[sMemberName].isStr() ? o[sMemberName].get_str() : "";
+                return sResult;
+        }
+
+        double GetUniReal(UniValue o, std::string sMemberName)
+        {
+                double dResult = o[sMemberName].isNum() ? o[sMemberName].get_real() : 0;
+                return dResult;
+        }
+
+        int GetUniInt(UniValue o, std::string sMemberName)
+        {
+                int iResult = o[sMemberName].isNum() ? o[sMemberName].get_int() : 0;
+                return iResult;
+        }
+
+
+    NFT FromJson(std::string sJson)
+    {
+           NFT n;
+           UniValue obj;
+           obj.clear();
+           obj.setObject();
+           if (!obj.read(sJson))
+           {
+               n.id = "0";
+               return n;
+           }
+           n.Category = GetUniString(obj, "Category");
+           n.Name = GetUniString(obj, "Name");
+           n.Action = GetUniString(obj, "Action");
+           n.Description = GetUniString(obj, "Description");
+           n.AssetURL = GetUniString(obj, "AssetURL");
+           n.JsonURL = GetUniString(obj, "JsonURL");
+           n.id = GetUniString(obj, "id");
+           n.BuyItNowAmount = GetUniReal(obj, "BuyItNowAmount");
+           n.SoulBound = GetUniInt(obj, "SoulBound");
+           n.Marketable = GetUniInt(obj, "Marketable");
+           n.Deleted = GetUniInt(obj, "Deleted");
+           n.Version = GetUniInt(obj,"Version");
+           n.Signer = GetUniString(obj, "Signer");
+           n.Signature = GetUniString(obj, "Signature");
+           n.Message = GetUniString(obj,"Message");
+           boost::to_lower(n.Action);
+           boost::trim(n.Action);
+           return n;
+    }
+    bool IsValid()
+    {
+           if (id.length() < 2) return false;
+           if (Signer.length() < 2 || Signature.length() < 2) return false;
+           std::string sSigError;
+           bool fPassed = CheckStakeSignature(Signer, Signature, Message, sSigError);
+           return fPassed;
+    }
+    std::string ToString()
+    {
+           UniValue obj;
+           ToJson(obj);
+           std::string strJSON = obj.write() + "\n";
+           return strJSON;
+    }
 };
 
 struct Portfolio
@@ -116,7 +223,6 @@ struct BBPProposal
 };
 
 uint256 CoordToUint256(int row, int col);
-double StringToDouble(std::string s, int place);
 std::string DoubleToString(double d, int place);
 std::string ReverseHex(std::string const& src);
 std::string DefaultRecAddress(JSONRPCRequest r,std::string sType);
@@ -195,10 +301,14 @@ std::string GetSanctuaryTypeName(CDeterministicMNCPtr dmnPayee);
 std::string GetSanctuaryTypeName(CDeterministicMN dmnPayee);
 std::string Test1000();
 void CreateWalletIfNotExists(JSONRPCRequest r);
+std::map<std::string, NFT> GetNFTs();
+bool AuthorizeNFT(NFT n, std::string& sError);
+bool CheckMemPoolTransactionBiblepay(const CTransaction& tx, const CBlockIndex* pindexPrev);
+CAmount GetSanctuaryCollateralAmount();
+
+
 
 /** Used to store a reference to the global node */
-
-
 class CGlobalNode
 {
     

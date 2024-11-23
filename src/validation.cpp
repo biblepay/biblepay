@@ -169,7 +169,7 @@ int64_t nHPSTimerStart = 0;
 bool fCoinControlUnlocked = false;
 int iMinerThreadCount = 0;
 std::map<std::string, int> mapPOVSStatus;
-std::map<std::string, Sidechain> mapSidechain;
+std::map<int64_t, Sidechain> mapSidechain;
 // END OF BIBLEPAY AREA
 
 
@@ -669,6 +669,17 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     }
 
     assert(std::addressof(::ChainstateActive()) == std::addressof(m_active_chainstate));
+
+    /* BIBLEPAY NFT */
+
+    bool fOK = CheckMemPoolTransactionBiblepay(tx, m_active_chainstate.m_chain.Tip());
+    if (!fOK) {
+        return error("%s: CheckMemPoolTxBiblePay: %s, %s", __func__, hash.ToString(), state.ToString());
+    }
+    
+    /* END OF BIBLEPAY */
+
+
     if (!ContextualCheckTransaction(tx, state, chainparams.GetConsensus(), m_active_chainstate.m_chain.Tip()))
         return error("%s: ContextualCheckTransaction: %s, %s", __func__, hash.ToString(), state.ToString());
 

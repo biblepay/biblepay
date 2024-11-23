@@ -315,19 +315,33 @@ bool RPCSendMoney(JSONRPCRequest r, std::string& sError, std::string sAddress, C
     int nChangePosRet = -1;
 
 	// BiblePay - Handle extremely large data transactions:
-    if (sOptionalData.length() > 2999 && nValue > 0) {
-        double nReq = ceil(sOptionalData.length() / 10000);
+    int nMaxLength = 2999;
+    if (sOptionalData.length() > nMaxLength && nValue > 0)
+    {
+        double nReq = ceil(sOptionalData.length() / nMaxLength);
         double n1 = (double)nValue / COIN;
         double n2 = n1 / nReq;
-        for (int n3 = 0; n3 < nReq; n3++) {
+        int nCharPos = 0;
+
+        for (int n3 = 0; n3 < nReq; n3++)
+        {
             CAmount indAmt = n2 * COIN;
             CRecipient recipient = {scriptPubKey, indAmt, false};
+            int nCurLength = (nCharPos + nCharPos) <= sOptionalData.length() ? nMaxLength : sOptionalData.length() - nCharPos;
+            std::string sOptDataChunk = sOptionalData.substr(nCharPos, nCurLength);
+            recipient.sTxOutMessage = sOptDataChunk;
             vecSend.push_back(recipient);
+            nCharPos += nMaxLength;
         }
-    } else {
+    }
+    else
+    {
         CRecipient recipient = {scriptPubKey, nValue, false};
+        recipient.sTxOutMessage = sOptionalData;
         vecSend.push_back(recipient);
     }
+    // END OF BIBLEPAY
+
 
 
     int nMinConfirms = 0;
@@ -341,6 +355,7 @@ bool RPCSendMoney(JSONRPCRequest r, std::string& sError, std::string sAddress, C
         sError = "Unable to Create Transaction";
         return false;
     }
+
     pwallet->CommitTransaction(tx, {}, {});
 
     for (unsigned int i = 0; i < tx->vout.size(); i++) 
@@ -1428,17 +1443,12 @@ bool SubmitGSCTrigger(std::string sHex, std::string& gobjecthash, std::string& s
 void GetGSCGovObjByHeight(int nHeight, uint256 uOptFilter, int& out_nVotes, uint256& out_uGovObjHash, std::string& out_PaymentAddresses, std::string& out_PaymentAmounts, std::string& out_qtdata)
 {
 	int nStartTime = 0; 
-	
-    
     std::vector<CGovernanceObject> objs;
     auto govman = ::governance.get();
-
     govman->GetAllNewerThan(objs, nStartTime);
     LOCK2(cs_main, govman->cs);
-
 	std::string sPAM;
 	std::string sPAD;
-	int iHighVotes = -1;
 	for (const auto& pGovObj : objs) 
 	{
 		CGovernanceObject* myGov = govman->FindGovernanceObject(pGovObj.GetHash());
@@ -1455,15 +1465,11 @@ void GetGSCGovObjByHeight(int nHeight, uint256 uOptFilter, int& out_nVotes, uint
 			/* LogPrintf("\n Found gscgovobj2 %s with votes %f with pad %s and pam %s , pam hash %s ", myGov->GetHash().GetHex(), (double)iVotes, sPAD, sPAM, uHash.GetHex()); */
 			if (uOptFilter != uint256S("0x0") && uHash != uOptFilter) continue;
 			// This governance-object matches the trigger height and the optional filter
-			if (iVotes > iHighVotes) 
-			{
-				iHighVotes = iVotes;
-				out_PaymentAddresses = sPAD;
-				out_PaymentAmounts = sPAM;
-				out_nVotes = iHighVotes;
-				out_uGovObjHash = myGov->GetHash();
-				out_qtdata = sQT;
-			}
+			out_PaymentAddresses = sPAD;
+			out_PaymentAmounts = sPAM;
+            out_nVotes = iVotes;
+			out_uGovObjHash = myGov->GetHash();
+			out_qtdata = sQT;
 		}
 	}
 }
@@ -1759,7 +1765,6 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	uint256 uPamHash = GetPAMHashByContract(sMyContract);
     auto govman = ::governance.get();
 
-    
 	GetGSCGovObjByHeight(nHeight, uPamHash, iPendingVotes, uGovObjHash, sPaymentAddresses, sAmounts, sQTData);
 	
 	bool fOverBudget = IsOverBudget(nHeight, GetAdjustedTime(), sAmounts);
@@ -1777,6 +1782,9 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	std::string sAction;
 	int iVotes = 0;
 	// Step 1:  Vote for contracts that agree with the local chain
+    int nSancCount = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNsCount();
+
+    
 	for (int i = 0; i < vPropByGov.size(); i++)
 	{    
 		CGovernanceObject* myGov = govman->FindGovernanceObject(vPropByGov[i].second);
@@ -1784,11 +1792,20 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 		if (fOverBudget) 
 			sAction = "no";
 		iVotes = myGov->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
+        bool fSkipVote = false;
+
+        if (sAction == "yes" && iVotes > nSancCount)
+        {
+            fSkipVote = true;
+        }
+
 		LogPrintf("\nSmartContract-Server::VoteForGSCContractOrderedByHash::Voting %s for govHash %s, with pre-existing-votes %f (created %f) Overbudget %f ",
 			sAction, myGov->GetHash().GetHex(), iVotes, myGov->GetCreationTime(), (double)fOverBudget);
-		VoteForGobject(myGov->GetHash(), "funding", sAction, sError);
-		// Additionally, clear the delete flag, just in case another node saw this contract as a negative earlier in the cycle
-		VoteForGobject(myGov->GetHash(), "delete", "no", sError);
+        if (!fSkipVote) {
+                VoteForGobject(myGov->GetHash(), "funding", sAction, sError);
+                // Additionally, clear the delete flag, just in case another node saw this contract as a negative earlier in the cycle
+                VoteForGobject(myGov->GetHash(), "delete", "no", sError);
+        }
 		break;
 	}
 	// Phase 2: Vote against contracts at this height that do not match our hash
@@ -1800,19 +1817,29 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 		{
 			CGovernanceObject* myGovForRemoval = govman->FindGovernanceObject(vPropByGov[i].second);
 			sAction = "no";
-			int iVotes = myGovForRemoval->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
-			LogPrintf("\nSmartContract-Server::VoteDownBadGCCContracts::Voting %s for govHash %s, with pre-existing-votes %f (created %f)",
-				sAction, myGovForRemoval->GetHash().GetHex(), iVotes, myGovForRemoval->GetCreationTime());
-			VoteForGobject(myGovForRemoval->GetHash(), "funding", sAction, sError);
-			iVotedNo++;
-			if (iVotedNo > 2)
-				break;
+            bool fSkipVote = false;
+            int iVotes = myGovForRemoval->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
+            
+            if (sAction == "no" && iVotes < (nSancCount * -1))
+            {
+                  fSkipVote = true;
+            }
+            if (!fSkipVote)
+            {
+                LogPrintf("\nSmartContract-Server::VoteDownBadGCCContracts::Voting %s for govHash %s, with pre-existing-votes %f (created %f)",
+                                          sAction, myGovForRemoval->GetHash().GetHex(), iVotes, myGovForRemoval->GetCreationTime());
+                VoteForGobject(myGovForRemoval->GetHash(), "funding", sAction, sError);
+                iVotedNo++;
+                if (iVotedNo > 2)
+                        break;
+            }
 		}
 	}
 
 	return sError.empty() ? true : false;
 }
 
+static uint256 LAST_CREATED_GSC_CONTRACT_HASH = uint256S("0x0");
 std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 {
     CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
@@ -1826,6 +1853,11 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 		return "WATCHMAN_INVALID_CHAIN";
 	if (!ChainSynced(pindexTip))
 		return "WATCHMAN_CHAIN_NOT_SYNCED";
+
+    if (GetSanctuaryCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
+    {
+        return "NOT_A_WATCHMAN_TEMPLE";
+    }
 
 	const Consensus::Params& consensusParams = Params().GetConsensus();
 	int MIN_EPOCH_BLOCKS = consensusParams.nSuperblockCycle * .07; // TestNet Weekly superblocks (1435), Prod Monthly superblocks (6150), this means a 75 block warning in TestNet, and a 210 block warning in Prod
@@ -1926,7 +1958,7 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	sContract = "<ADDRESSES>" + sAddresses + "</ADDRESSES><PAYMENTS>" + sPayments + "</PAYMENTS><PROPOSALS>" + sHashes + "</PROPOSALS>";
 
 	uint256 uGovObjHash = uint256S("0x0");
-	uint256 uPamHash = GetPAMHashByContract(sContract);
+    uint256 uPamHash = GetPAMHashByContract(sContract);
 	int iTriggerVotes = 0;
 	std::string sQTData;
 	GetGSCGovObjByHeight(nNextSuperblock, uPamHash, iTriggerVotes, uGovObjHash, sAddresses, sPayments, sQTData);
@@ -1939,12 +1971,16 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	sContract += "<VOTES>" + DoubleToString(iTriggerVotes, 0) + "</VOTES><METRICS><HASH>" + uGovObjHash.GetHex() + "</HASH><PAMHASH>" 
 		+ uPamHash.GetHex() + "</PAMHASH><SANCTUARYCOUNT>" + DoubleToString(nSancCount, 0) + "</SANCTUARYCOUNT></METRICS><VOTEDATA>" + sVotes + "</VOTEDATA>";
 
-	if (uGovObjHash == uint256S("0x0"))
+    // BBP: Do not allow the node to keep creating the same contract over and over.
+
+	if (uGovObjHash == uint256S("0x0") && uPamHash != LAST_CREATED_GSC_CONTRACT_HASH)
 	{
+        LAST_CREATED_GSC_CONTRACT_HASH = uPamHash;
 		std::string sWatchmanTrigger = SerializeSanctuaryQuorumTrigger(nNextSuperblock, nNextSuperblock, GetAdjustedTime(), sContract);
 		std::string sGobjectHash;
 		SubmitGSCTrigger(sWatchmanTrigger, sGobjectHash, sError);
-		LogPrintf("**WatchmanOnTheWall::SubmitWatchmanTrigger::CreatingWatchmanContract hash %s , gobject %s, results %s **\n", sWatchmanTrigger, sGobjectHash, sError);
+		LogPrintf("**WatchmanOnTheWall::SubmitWatchmanTrigger::CreatingWatchmanContract out_gov_hash %s, gobject %s, pamhash %s, results %s **\n",
+            sWatchmanTrigger, sGobjectHash, uPamHash.GetHex(), sError);
 		sContract += "<ACTION>CREATING_CONTRACT</ACTION>";
 		return "WATCHMAN_CREATING_CONTRACT";
 	}
@@ -2289,7 +2325,8 @@ void SerializeSidechainToFile(int nHeight)
     for (auto ii : mapSidechain) 
 	{
         Sidechain s = mapSidechain[ii.first];
-        std::string sRow = DoubleToString(nHeight, 0) + "<col-sidechain>" + ii.first + "<col-sidechain>" + s.ObjectType + "<col-sidechain>" + s.URL + "<col-sidechain>" 
+        std::string sRow = DoubleToString(nHeight, 0) + "<col-sidechain>" + s.TXID
+            + "<col-sidechain>" + s.ObjectType + "<col-sidechain>" + s.URL + "<col-sidechain>" 
 			+ DoubleToString(s.Time, 0) + "<col-sidechain>" + DoubleToString(s.Height, 0) + "<row-sidechain>";
         sRow = strReplace(sRow, "\r", "[~r]");
         sRow = strReplace(sRow, "\n", "[~n]");
@@ -2311,9 +2348,9 @@ int DeserializeSidechainFromFile()
     std::ifstream streamIn;
     streamIn.open(pathIn.string().c_str());
     if (!streamIn) return -1;
-    int nHeight = 0;
     std::string line;
     int iRows = 0;
+    int nHeight = 0;
     while (std::getline(streamIn, line)) {
         line = strReplace(line, "[~r]", "\r");
         line = strReplace(line, "[~n]", "\n");
@@ -2323,17 +2360,15 @@ int DeserializeSidechainFromFile()
             if (vCols.size() > 4) 
 			{
 				Sidechain s;
-		        int cHeight = StringToDouble(vCols[0], 0);
-                if (cHeight > nHeight)
-					nHeight = cHeight;
-                std::string sKey = vCols[1];
+                s.TXID = vCols[1];
 				s.ObjectType = vCols[2];
 				s.URL = vCols[3];
-				s.Time = StringToDouble(vCols[4], 0);
+				s.Time = (int64_t)StringToDouble(vCols[4], 0);
 				s.Height = StringToDouble(vCols[5], 0);
-				mapSidechain[sKey] = s;
-				if (false)
-					LogPrintf("SC txid %s value %s ", sKey, s.URL);
+                if (s.Height > nHeight) {
+                         nHeight = s.Height;
+                }
+				mapSidechain[s.Time] = s;
                 iRows++;
             }
         }
@@ -2349,6 +2384,9 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
     int nDeserializedHeight = 0;
 
     CBlockIndex* pindexActive = g_chainman.ActiveChain().Tip();
+    if (!pindexActive) {
+        return;
+    }
     
     if (fColdBoot) {
         nDeserializedHeight = DeserializeSidechainFromFile();
@@ -2360,14 +2398,15 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
 
     int nMaxDepth = pindexActive->nHeight;
 
-    int nMinDepth = fDuringConnectBlock ? nMaxDepth - 1 : nMaxDepth - (BLOCKS_PER_DAY * 30 * 12 * 7); // Seven years
+    int nMinDepth = fDuringConnectBlock ? nMaxDepth : nMaxDepth - (BLOCKS_PER_DAY * 30 * 12 * 7); // Seven years
     if (nDeserializedHeight > 0 && nDeserializedHeight < nMaxDepth)
         nMinDepth = nDeserializedHeight;
     if (nMinDepth < 0)
         nMinDepth = 0;
     CBlockIndex* pindex = FindBlockByHeight(nMinDepth);
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    while (pindex && pindex->nHeight < nMaxDepth) {
+    while (pindex && pindex->nHeight <= nMaxDepth)
+    {
         if (!pindex)
             break;
 
@@ -2396,11 +2435,15 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
 					s.URL = ExtractXML(sSC, "<url>", "</url>");
 					s.Time = block.GetBlockTime();
 					s.Height = pindex->nHeight;
-					std::string sTXID = block.vtx[n]->GetHash().GetHex();
-					mapSidechain[sTXID] = s;
-					LogPrintf("Processing Sidechain TXID %s [%s] URL [%s] sz %f ", sTXID, sSC, s.URL, (double)mapSidechain.size());
+                    s.TXID = block.vtx[n]->GetHash().GetHex();
+					mapSidechain[s.Time] = s;
+					LogPrintf("Processing Sidechain TXID %s [%s] URL [%s] sz %f ", s.TXID, sSC, s.URL, (double)mapSidechain.size());
 				}
             }
+        }
+
+        if (pindex->nHeight == pindexActive->nHeight) {
+            break;
         }
     }
     if (fColdBoot) {
@@ -2486,6 +2529,26 @@ bool CheckTLTTx(const CTransaction& tx, const CCoinsViewCache& view)
     }
     return true;
 }
+
+CAmount GetSanctuaryCollateralAmount()
+{
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+    if (fMasternodeMode)
+    {
+         CDeterministicMNCPtr dmn{nullptr};
+         dmn = mnList.GetMNByCollateral(activeMasternodeInfo.outpoint);
+         if (dmn)
+         {
+             return dmn->GetCollateralAmount();
+         }
+    }
+    else
+    {
+         return 0;
+    }
+    return 0;
+}
+
 
 std::string GetSanctuaryMiningAddress()
 {
@@ -2883,10 +2946,11 @@ std::string GetSidechainValue(std::string sType, std::string sKey, int nMinTimes
              std::string sValue = ExtractXML(s.URL, "<value>", "</value>");
              std::string sSig = ExtractXML(s.URL, "<sig>", "</sig>");
              std::string sMsg = ExtractXML(s.URL, "<msg>", "</msg>");
+             std::string sSigner = ExtractXML(s.URL, "<signer>", "</signer>");
              if (sKey == sKey && s.Time >= nMinTimestamp)
              {
                     std::string sError;
- 					bool fPassed = CheckStakeSignature(consensusParams.FoundationAddress, sSig, sMsg, sError);
+ 					bool fPassed = CheckStakeSignature(sSigner, sSig, sMsg, sError);
                     if (fPassed)
                     {
                         return sValue;
@@ -3024,4 +3088,218 @@ std::string Test1000()
         s1 = dmn.collateralOutpoint.ToStringShort();
     });
     return s1;
+}
+
+
+std::map<std::string,NFT> GetNFTs()
+{
+    std::map<std::string, NFT> mapNFTs;
+    for (auto ii : mapSidechain)
+    {
+         Sidechain s = mapSidechain[ii.first];
+         if (s.ObjectType == "NFT")
+         {
+             std::string sKey = ExtractXML(s.URL, "<key>", "</key>");
+             std::string sValue = ExtractXML(s.URL, "<value>", "</value>");
+             std::string sSig = ExtractXML(s.URL, "<sig>", "</sig>");
+             std::string sMsg = ExtractXML(s.URL, "<msg>", "</msg>");
+             std::string sSigner = ExtractXML(s.URL, "<signer>", "</signer>");
+             std::string sError;
+                 
+             bool fPassed = CheckStakeSignature(sSigner, sSig, sMsg, sError);
+             if (fPassed)
+             {
+                LogPrintf("\nGETNFTS::Info %s", sValue);
+    
+                NFT n;
+                n = n.FromJson(sValue);
+                
+                mapNFTs[n.id] = n;
+                LogPrintf("\nGETNFTS::NAME=%s ID=%s", n.Name, n.id);
+
+             }
+         }
+    }
+    return mapNFTs;
+}
+
+NFT GetNFTById(std::string sID)
+{
+    std::map<std::string, NFT> nfts = GetNFTs();
+    for (auto ii : nfts) {
+         NFT n = nfts[ii.first];
+         if (n.id == sID) {
+             return n;
+         }
+    }
+    NFT n;
+    return n;
+}
+
+bool AuthorizeNFT(NFT n, std::string& sError)
+{
+    // Retrieve the prior version of the NFT.
+    NFT nftOld = GetNFTById(n.id);
+    if (n.IsValid()) {
+         sError = "NFT signature failed.";
+         return false;
+    }
+
+    if (n.Action == "CREATE")
+    {
+         if (nftOld.IsValid())
+         {
+             sError = "Sorry, the NFT already exists.";
+             return false;
+         }
+         return true;
+    }
+    else if (n.Action == "BUY")
+    {
+        // dont let them buy a Deleted, Non Marketable, or Invalid (null ID or unsigned or bad sig) NFT.
+
+         if (!nftOld.IsValid())
+         {
+             sError = "Unable to find NFT.";
+             return false;
+         }
+         // Verify the amount in the tx is greater than buy it now.
+         if (n.Marketable == 0) {
+             sError = "Sorry, the NFT is not marketable.";
+             return false;
+         }
+         if (n.Deleted == 1) {
+             sError = "Sorry, this NFT is deleted.";
+             return false;
+         }
+         if (0 < n.BuyItNowAmount) {
+             sError = "Sorry, the purchase price must be greater or equal to the buy it now amount.";
+             return false;
+         }
+         // the NFT now goes to the new owner.
+         // Verify the PAYMENT is going to the Prior owner, and the amount is greater >= to buy it now amount;
+
+         return true;
+    }
+    else if (n.Action == "EDIT")
+    {
+        if (!nftOld.IsValid())
+        {
+             sError = "Unable to find NFT";
+             return false;
+        }
+        // the users verified address must match the old owners verified address.
+        if (nftOld.Signer != n.Signer) {
+             sError = "An NFT may only be edited by its owner.";
+             return false;
+        }
+        return true;
+    } else {
+         sError = "Invalid Action.";
+         return false;
+    }
+}
+
+NFT GetNFTFromTransaction(const CTransaction& tx)
+{
+    NFT n;
+    std::string sTxMsg;
+    for (unsigned int i = 0; i < tx.vout.size(); i++) {
+         sTxMsg += tx.vout[i].sTxOutMessage;
+    }
+    
+    std::string sSC = ExtractXML(sTxMsg, "<sc>", "</sc>");
+    LogPrintf("\r\nTxMsg %s Sc=%s", sTxMsg, sSC);
+
+    if (!sSC.empty())
+    {
+         Sidechain s;
+         s.ObjectType = ExtractXML(sSC, "<objtype>", "</objtype>");
+         s.URL = ExtractXML(sSC, "<url>", "</url>");
+         
+         if (s.ObjectType == "NFT")
+         {
+             std::string sValue = ExtractXML(s.URL, "<value>", "</value>");
+             n = n.FromJson(sValue);
+             return n;
+         }
+    }
+    return n;
+}
+
+CAmount CalculateTotalPaidToAddress(const CTransaction& tx, std::string sTargetAddress)
+{
+    CAmount nTotal = 0;
+    for (unsigned int k = 0; k < tx.vout.size(); k++) {
+         const CTxOut& txOut = tx.vout[k];
+         std::string sTo = PubKeyToAddress(txOut.scriptPubKey);
+         if (sTargetAddress == sTo) {
+             nTotal += txOut.nValue;
+         }
+    }
+    return nTotal;
+}
+
+bool CheckMemPoolTransactionBiblepay(const CTransaction& tx, const CBlockIndex* pindexPrev)
+{
+    NFT n = GetNFTFromTransaction(tx);
+    if (n.IsValid())
+    {
+         LogPrintf("\r\nMEMPOOL_BBP::DATA %s", n.id);
+         NFT nOldNFT = GetNFTById(n.id);
+         
+         if (n.Action == "buy")
+         {
+             if (nOldNFT.IsValid())
+             {
+                // Scan outputs to see the total being spent to the prior NFT address.
+                CAmount nPaid = CalculateTotalPaidToAddress(tx, nOldNFT.Signer);
+                LogPrintf("\r\nMEMPOOL_BBP::TXID %s::NewAction %s, OldMarketable %f, OldDeleted %f, BuyItNowAmount %f, Paid to %s, Amount %f, OldNFT Signer %s, NewNFT Signer %s",
+                    tx.GetHash().GetHex() ,
+                    n.Action,
+                    nOldNFT.Marketable,
+                    nOldNFT.Deleted,
+                    nOldNFT.BuyItNowAmount, 
+                    nOldNFT.Signer,
+                    (double)nPaid / COIN, nOldNFT.Signer,
+                    n.Signer);
+                // Critical Section
+                if (nOldNFT.Deleted == 1)
+                {
+                     LogPrintf("\r\nMEMPOOL_BBP::Unable to buy Deleted NFT %f", nOldNFT.Deleted);
+                     return false;
+                }
+                if (nOldNFT.Marketable == 0)
+                {
+                     LogPrintf("\r\nMEMPOOL_BBP::Unable to buy a non marketable NFT %f", nOldNFT.Marketable);
+                     return false;
+                }
+                if (nPaid < (nOldNFT.BuyItNowAmount * COIN))
+                {
+                     LogPrintf("\r\nMEMPOOL_BBP::Sorry, the amount paid %f is less than the buy-it-now-amount of %f for tx %s",
+                               (double)nPaid / COIN, nOldNFT.BuyItNowAmount, tx.GetHash().GetHex());
+                     return false;               
+                }
+             }
+         }
+
+         if (nOldNFT.Action == "edit")
+         {
+             NFT nOldNFT = GetNFTById(n.id);
+             if (nOldNFT.IsValid())
+             {
+                if (nOldNFT.Deleted == 1)
+                {
+                     LogPrintf("\r\nMEMPOOL_BBP::Unable to edit Deleted NFT %f", nOldNFT.Deleted);
+                     return false;
+                }
+                if (nOldNFT.Signer != n.Signer)
+                {
+                     LogPrintf("\r\nMEMPOOL_BBP::Only the current owner can edit an NFT %s id %s", tx.GetHash().GetHex(), n.id);
+                     return false;
+                }
+             }
+         }
+    }
+    return true;
 }
