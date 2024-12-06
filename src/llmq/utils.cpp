@@ -839,7 +839,7 @@ void AddQuorumProbeConnections(const Consensus::LLMQParams& llmqParams, gsl::not
             continue;
         }
         auto lastOutbound = mmetaman->GetMetaInfo(dmn->proTxHash)->GetLastOutboundSuccess();
-        if (curTime - lastOutbound < 10 * 60) {
+        if (curTime - lastOutbound < 1 * 60) {
             // avoid re-probing nodes too often
             continue;
         }

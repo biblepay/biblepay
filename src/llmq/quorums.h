@@ -90,7 +90,7 @@ private:
     int64_t nTime{GetTime()};
     bool fProcessed{false};
 
-    static constexpr int64_t EXPIRATION_TIMEOUT{300};
+    static constexpr int64_t EXPIRATION_TIMEOUT{600};
     static constexpr int64_t EXPIRATION_BIAS{60};
 
 public:

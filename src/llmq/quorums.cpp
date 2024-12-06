@@ -952,7 +952,7 @@ void CQuorumManager::StartQuorumDataRecoveryThread(const CQuorumCPtr pQuorum, co
                     }
                 }
                 // Sleep a bit depending on the start offset to balance out multiple requests to same masternode
-                quorumThreadInterrupt.sleep_for(std::chrono::milliseconds(nMyStartOffset * 100));
+                quorumThreadInterrupt.sleep_for(std::chrono::milliseconds(nMyStartOffset * 30));
                 nTimeLastSuccess = GetTime<std::chrono::seconds>().count();
                 connman.AddPendingMasternode(*pCurrentMemberHash);
                 printLog("Connect");
@@ -1051,7 +1051,7 @@ void CQuorumManager::StartCleanupOldQuorumDataThread(const CBlockIndex* pIndex) 
     // window and it's better to have more room so we pick next cycle.
     // dkgMiningWindowStart for small quorums is 10 i.e. a safe block to start
     // these calculations is at height 576 + 24 * 2 + 10 = 576 + 58.
-    if ((!fMasternodeMode && !IsWatchQuorumsEnabled()) || pIndex == nullptr || (pIndex->nHeight % 576 != 58)) {
+    if ((!fMasternodeMode && !IsWatchQuorumsEnabled()) || pIndex == nullptr || (pIndex->nHeight % 205 != 58)) {
         return;
     }
 

@@ -307,12 +307,12 @@ public:
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_400_60;
 
         fDefaultConsistencyChecks = false;
-        fRequireStandard = true;
-        fRequireRoutableExternalIP = true;
+        fRequireStandard = false;
+        fRequireRoutableExternalIP = false;
         m_is_test_chain = false;
         fAllowMultipleAddressesFromGroup = true;
         fAllowMultiplePorts = true;
-        nLLMQConnectionRetryTimeout = 60;
+        nLLMQConnectionRetryTimeout = 30;
         m_is_mockable_chain = false;
 
         nPoolMinParticipants = 2;
