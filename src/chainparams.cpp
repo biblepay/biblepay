@@ -307,7 +307,7 @@ public:
         consensus.llmqTypeMnhf = Consensus::LLMQType::LLMQ_400_60;
 
         fDefaultConsistencyChecks = false;
-        fRequireStandard = false;
+        fRequireStandard = true;
         fRequireRoutableExternalIP = false;
         m_is_test_chain = false;
         fAllowMultipleAddressesFromGroup = true;
