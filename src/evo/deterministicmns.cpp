@@ -343,7 +343,7 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
 
     // This area is very suspicious, as it returns an empty set.
     // BBP - 07/09/2024
-    LogPrintf("CalculateScores %f", 11001);
+    LogPrintf("CalculateScores %f", 11002);
 
     std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> scores;
     scores.reserve(GetAllMNsCount());
@@ -356,14 +356,25 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             return;
         }
 
-        // BIBLEPAY - If its not a temple, reject the quorum
-        if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN) {
+        // BIBLEPAY - If its not an externally visible node, keep it out of the quorum - 12-7-2024
+
+        if (Contains(dmn->pdmnState->addr.ToString(), "1.2.3.4") || Contains(dmn->pdmnState->addr.ToString(),"141.27.35.1:40001"))
+        {
             return;
         }
 
+        if (!Contains(dmn->pdmnState->addr.ToString(), "40000") && !Contains(dmn->pdmnState->addr.ToString(), "40001") && !Contains(dmn->pdmnState->addr.ToString(), "10002"))
+        {
+            return;
+        }
+       
         /*
         if (onlyEvoNodes)
         {
+            if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
+            return;
+        
+
             // Reserved for Temple Quorums
             if (false) {
                 if (dmn->nType != MnType::Temple)
