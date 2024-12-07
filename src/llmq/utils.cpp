@@ -826,8 +826,11 @@ bool EnsureQuorumConnections(const Consensus::LLMQParams& llmqParams, gsl::not_n
 void AddQuorumProbeConnections(const Consensus::LLMQParams& llmqParams, gsl::not_null<const CBlockIndex*> pQuorumBaseBlockIndex,
                                CConnman& connman, const uint256 &myProTxHash)
 {
-    if (!IsQuorumPoseEnabled(llmqParams.type)) {
-        return;
+
+    if (false) {
+        if (!IsQuorumPoseEnabled(llmqParams.type)) {
+            return;
+        }
     }
 
     auto members = GetAllQuorumMembers(llmqParams.type, pQuorumBaseBlockIndex);
@@ -839,7 +842,10 @@ void AddQuorumProbeConnections(const Consensus::LLMQParams& llmqParams, gsl::not
             continue;
         }
         auto lastOutbound = mmetaman->GetMetaInfo(dmn->proTxHash)->GetLastOutboundSuccess();
-        if (curTime - lastOutbound < 1 * 60) {
+        // 30 seconds
+
+        if (curTime - lastOutbound < 30)
+        {
             // avoid re-probing nodes too often
             continue;
         }

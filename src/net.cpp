@@ -432,8 +432,10 @@ CNode* CConnman::ConnectNode(CAddress addrConnect, const char *pszDest, bool fCo
         CNode* pnode = FindNode(static_cast<CService>(addrConnect));
         if (pnode)
         {
-            LogPrintf("Failed to open new connection, already connected\n");
-            return nullptr;
+            if (!Params().AllowMultiplePorts()) {
+                LogPrintf("Failed to open new connection, already connected [3]\n");
+                return nullptr;
+            }
         }
     }
 
@@ -467,7 +469,7 @@ CNode* CConnman::ConnectNode(CAddress addrConnect, const char *pszDest, bool fCo
             if (pnode)
             {
                 pnode->MaybeSetAddrName(std::string(pszDest));
-                LogPrintf("Failed to open new connection, already connected\n");
+                LogPrintf("Failed to open new connection, already connected [1]\n");
                 return nullptr;
             }
         }
@@ -2620,7 +2622,8 @@ void CConnman::ThreadOpenAddedConnections()
 {
     AddNode("sanc1.biblepay.org"); // Rob
     AddNode("sanc2.biblepay.org"); // Rob
-    AddNode("sanc4.biblepay.org"); // Rob
+    AddNode("sanc4.biblepay.org"); 
+    AddNode("seven.biblepay.org"); 
     AddNode("dns1.biblepay.org");
     AddNode("testnet.biblepay.org");
 
@@ -2710,7 +2713,7 @@ void CConnman::ThreadOpenMasternodeConnections()
                         // we probably connected to it before it became a masternode
                         // or maybe we are still waiting for mnauth
                         (void)ForNode(addr2, [&](CNode* pnode) {
-                            if (pnode->nTimeFirstMessageReceived != 0 && GetSystemTimeInSeconds() - pnode->nTimeFirstMessageReceived > 5) {
+                            if (pnode->nTimeFirstMessageReceived != 0 && GetSystemTimeInSeconds() - pnode->nTimeFirstMessageReceived > 25) {
                                 // clearly not expecting mnauth to take that long even if it wasn't the first message
                                 // we received (as it should normally), disconnect
                                 LogPrint(BCLog::NET_NETCONN, "CConnman::%s -- dropping non-mnauth connection to %s, service=%s\n", _func_, proRegTxHash.ToString(), addr2.ToString(false));
@@ -2809,7 +2812,8 @@ void CConnman::ThreadOpenMasternodeConnections()
 
         OpenMasternodeConnection(CAddress(connectToDmn->pdmnState->addr, NODE_NETWORK), isProbe);
         // should be in the list now if connection was opened
-        bool connected = ForNode(connectToDmn->pdmnState->addr, CConnman::AllNodes, [&](CNode* pnode) {
+        bool connected = ForNode(connectToDmn->pdmnState->addr, CConnman::AllNodes, [&](CNode* pnode)
+        {
             if (pnode->fDisconnect) {
                 return false;
             }
@@ -2865,7 +2869,7 @@ void CConnman::OpenNetworkConnection(const CAddress& addrConnect, bool fCountFai
                 FindNode(static_cast<CService>(addrConnect)) :
                 FindNode(static_cast<CNetAddr>(addrConnect));
         if (skip) {
-            LogPrintf("CConnman::%s -- Failed to open new connection to %s, already connected\n", __func__, getIpStr());
+            LogPrintf("CConnman::%s -- Failed to open new connection to %s, already connected [2]\n", __func__, getIpStr());
             return;
         }
     } else if (FindNode(std::string(pszDest)))
