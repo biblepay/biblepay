@@ -356,8 +356,12 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             return;
         }
 
-        // BIBLEPAY - If its not an externally visible node, keep it out of the quorum - 12-7-2024
+        // BIBLEPAY - If its not a Temple...
+        if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN) {
+            return;
+        }
 
+        /*
         if (Contains(dmn->pdmnState->addr.ToString(), "1.2.3.4") || Contains(dmn->pdmnState->addr.ToString(),"141.27.35.1:40001"))
         {
             return;
@@ -367,13 +371,13 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
         {
             return;
         }
+        */
+
        
         /*
         if (onlyEvoNodes)
         {
-            if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN)
-            return;
-        
+         
 
             // Reserved for Temple Quorums
             if (false) {
