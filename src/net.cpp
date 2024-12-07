@@ -470,7 +470,8 @@ CNode* CConnman::ConnectNode(CAddress addrConnect, const char *pszDest, bool fCo
             {
                 pnode->MaybeSetAddrName(std::string(pszDest));
                 LogPrintf("Failed to open new connection, already connected [1]\n");
-                return nullptr;
+                //BIBLEPAY
+                //return nullptr;
             }
         }
     }
