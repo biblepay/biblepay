@@ -11,7 +11,7 @@
  */
 
 
-static const int PROTOCOL_VERSION = 70783;
+static const int PROTOCOL_VERSION = 70784;
 
 //! initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 210;
@@ -20,10 +20,10 @@ static const int INIT_PROTO_VERSION = 210;
 static const int MIN_PEER_PROTO_VERSION = 70782;
 
 //! minimum proto version of masternode to accept in DKGs
-static const int MIN_MASTERNODE_PROTO_VERSION = 70783;
+static const int MIN_MASTERNODE_PROTO_VERSION = 70784;
 
 //! protocol version is included in MNAUTH starting with this version
-static const int MNAUTH_NODE_VER_VERSION = 70783;
+static const int MNAUTH_NODE_VER_VERSION = 70784;
 
 //! introduction of QGETDATA/QDATA messages
 static const int LLMQ_DATA_MESSAGES_VERSION = 70783;
@@ -38,7 +38,7 @@ static const int GOVSCRIPT_PROTO_VERSION = 70783;
 static const int ADDRV2_PROTO_VERSION = 70783;
 
 //! BLS scheme was introduced in this version
-static const int BLS_SCHEME_PROTO_VERSION = 70783;
+static const int BLS_SCHEME_PROTO_VERSION = 70784;
 
 //! Masternode type was introduced in this version
 static const int DMN_TYPE_PROTO_VERSION = 70783;

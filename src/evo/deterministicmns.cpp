@@ -361,24 +361,19 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             return;
         }
 
-        /*
-        if (Contains(dmn->pdmnState->addr.ToString(), "1.2.3.4") || Contains(dmn->pdmnState->addr.ToString(),"141.27.35.1:40001"))
+        if (Contains(dmn->pdmnState->addr.ToString(), "1.2.3.4"))
         {
             return;
         }
 
-        if (!Contains(dmn->pdmnState->addr.ToString(), "40000") && !Contains(dmn->pdmnState->addr.ToString(), "40001") && !Contains(dmn->pdmnState->addr.ToString(), "10002"))
+        if (!Contains(dmn->pdmnState->addr.ToString(), "40000") && !Contains(dmn->pdmnState->addr.ToString(), "40001"))
         {
             return;
         }
-        */
-
        
         /*
         if (onlyEvoNodes)
         {
-         
-
             // Reserved for Temple Quorums
             if (false) {
                 if (dmn->nType != MnType::Temple)
