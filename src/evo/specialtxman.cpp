@@ -28,10 +28,19 @@ static bool CheckSpecialTxInner(const CTransaction& tx, const CBlockIndex* pinde
 
     const auto& consensusParams = Params().GetConsensus();
     if (!DeploymentActiveAfter(pindexPrev, consensusParams, Consensus::DEPLOYMENT_DIP0003)) {
-        // BBP - bad tx at height 133056,
+        // BBP - bad tx at height 133056, 133161
         if (pindexPrev->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
             return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-tx-type");
         }
+    }
+
+    if (Params().NetworkIDString() == CBaseChainParams::MAIN
+       &&
+        (  (pindexPrev->nHeight >= 133000 && pindexPrev->nHeight <= 143000)
+        || (pindexPrev->nHeight >= 231000 && pindexPrev->nHeight <= 253000)
+        ))
+    {
+        return true;
     }
 
     try {
@@ -70,10 +79,10 @@ static bool CheckSpecialTxInner(const CTransaction& tx, const CBlockIndex* pinde
         }
     } catch (const std::exception& e) {
         LogPrintf("%s -- failed: %s\n", __func__, e.what());
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "failed-check-special-tx");
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "failed-check-special-tx-0");
     }
 
-    return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-tx-type-check");
+    return state.Invalid(TxValidationResult::TX_BAD_SPECIAL, "bad-tx-type-check-0");
 }
 
 bool CheckSpecialTx(const CTransaction& tx, const CBlockIndex* pindexPrev, const CCoinsViewCache& view, bool check_sigs, TxValidationState& state)

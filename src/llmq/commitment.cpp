@@ -207,8 +207,10 @@ bool CheckLLMQCommitment(const CTransaction& tx, gsl::not_null<const CBlockIndex
     }
 
     if (qcTx.nHeight != uint32_t(pindexPrev->nHeight + 1)) {
-        LogPrintfFinalCommitment("h[%d] invalid qcTx.nHeight[%d]\n", pindexPrev->nHeight, qcTx.nHeight);
-        return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-qc-height");
+        if (pindexPrev->nHeight > consensus.BABYLON_FALLING_HEIGHT) {
+            LogPrintfFinalCommitment("h[%d] invalid qcTx.nHeight[%d]\n", pindexPrev->nHeight, qcTx.nHeight);
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-qc-height-1");
+        }
     }
 
     const CBlockIndex* pQuorumBaseBlockIndex = WITH_LOCK(cs_main, return g_chainman.m_blockman.LookupBlockIndex(qcTx.commitment.quorumHash));

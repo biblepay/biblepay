@@ -176,7 +176,9 @@ bool CQuorumBlockProcessor::ProcessBlock(const CBlock& block, gsl::not_null<cons
         const auto numCommitmentsInNewBlock = qcs.count(params.type);
 
         if (numCommitmentsRequired < numCommitmentsInNewBlock) {
-            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-not-allowed");
+            if (pindex->nHeight > Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
+                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-not-allowed-0");
+            }
         }
 
         if (numCommitmentsRequired > numCommitmentsInNewBlock) {
@@ -238,15 +240,17 @@ bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockH
         quorumHash = qc.quorumHash;
     }
 
-    if (quorumHash.IsNull()) {
-        LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s height=%d, type=%d, quorumIndex=%d, quorumHash=%s, signers=%s, validMembers=%d, quorumPublicKey=%s quorumHash is null.\n", __func__,
-                 nHeight, ToUnderlying(qc.llmqType), qc.quorumIndex, quorumHash.ToString(), qc.CountSigners(), qc.CountValidMembers(), qc.quorumPublicKey.ToString());
-        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-block");
-    }
-    if (quorumHash != qc.quorumHash) {
-        LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s height=%d, type=%d, quorumIndex=%d, quorumHash=%s, qc.quorumHash=%s signers=%s, validMembers=%d, quorumPublicKey=%s non equal quorumHash.\n", __func__,
-                 nHeight, ToUnderlying(qc.llmqType), qc.quorumIndex, quorumHash.ToString(), qc.quorumHash.ToString(), qc.CountSigners(), qc.CountValidMembers(), qc.quorumPublicKey.ToString());
-        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-block");
+    if (nHeight > consensus.BABYLON_FALLING_HEIGHT) {
+        if (quorumHash.IsNull()) {
+            LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s height=%d, type=%d, quorumIndex=%d, quorumHash=%s, signers=%s, validMembers=%d, quorumPublicKey=%s quorumHash is null.\n", __func__,
+                     nHeight, ToUnderlying(qc.llmqType), qc.quorumIndex, quorumHash.ToString(), qc.CountSigners(), qc.CountValidMembers(), qc.quorumPublicKey.ToString());
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-block-0");
+        }
+        if (quorumHash != qc.quorumHash) {
+            LogPrint(BCLog::LLMQ, "CQuorumBlockProcessor::%s height=%d, type=%d, quorumIndex=%d, quorumHash=%s, qc.quorumHash=%s signers=%s, validMembers=%d, quorumPublicKey=%s non equal quorumHash.\n", __func__,
+                     nHeight, ToUnderlying(qc.llmqType), qc.quorumIndex, quorumHash.ToString(), qc.quorumHash.ToString(), qc.CountSigners(), qc.CountValidMembers(), qc.quorumPublicKey.ToString());
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-block-1");
+        }
     }
 
     if (qc.IsNull()) {
@@ -269,7 +273,13 @@ bool CQuorumBlockProcessor::ProcessCommitment(int nHeight, const uint256& blockH
 
     if (!IsMiningPhase(llmq_params, nHeight)) {
         // should not happen as it's already handled in ProcessBlock
-        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-height");
+        if (nHeight > consensus.BABYLON_FALLING_HEIGHT) {
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-qc-height-0");
+        }
+        else
+        {
+            return true;
+        }
     }
 
     const auto* pQuorumBaseBlockIndex = m_chainstate.m_blockman.LookupBlockIndex(qc.quorumHash);

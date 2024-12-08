@@ -161,7 +161,10 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = CBaseChainParams::MAIN;
-        consensus.BABYLON_FALLING_HEIGHT = 524302;
+        // Old BABYLON_FALLING_HEIGHT = 524302
+
+        consensus.BABYLON_FALLING_HEIGHT = 550130;
+
         consensus.BABYLON_FALLING_TIME = 1723923362; // 8-17-2024 @ 14:38 CST
 
         consensus.BARLEY_HARVEST_HEIGHT  = 320000;

@@ -251,7 +251,13 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
 
     auto retVal = CachedGetQcHashesQcIndexedHashes(pindexPrev, quorum_block_processor);
     if (!retVal) {
-        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "commitment-not-found");
+
+        // BBP
+        if (pindexPrev->nHeight < Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
+            return true;
+        }
+
+        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "commitment-not-found-0");
     }
     // The returned quorums are in reversed order, so the most recent one is at index 0
     auto [qcHashes, qcIndexedHashes] = retVal.value();
