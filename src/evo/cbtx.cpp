@@ -253,9 +253,12 @@ bool CalcCbTxMerkleRootQuorums(const CBlock& block, const CBlockIndex* pindexPre
     if (!retVal) {
 
         // BBP
+        /*
         if (pindexPrev->nHeight < Params().GetConsensus().BABYLON_FALLING_HEIGHT) {
             return true;
         }
+        */
+
 
         return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "commitment-not-found-0");
     }

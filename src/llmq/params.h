@@ -406,20 +406,20 @@ static constexpr std::array<LLMQParams, 14> available_llmqs = {
         .type = LLMQType::LLMQ_400_60,
         .name = "llmq_400_60",
         .useRotation = false,
-        .size = 14,
+        .size = 7,
         .minSize = 3,
         .threshold = 3,
 
-        .dkgInterval = 205 * 1, // one DKG every 24 hours
+        .dkgInterval = 24 * 12, // one DKG every 24 hours
         .dkgPhaseBlocks = 4,
         .dkgMiningWindowStart = 20, // dkgPhaseBlocks * 5 = after finalization
         .dkgMiningWindowEnd = 28,
-        .dkgBadVotesThreshold = 500,
+        .dkgBadVotesThreshold = 300,
 
         .signingActiveQuorumCount = 2, // two days worth of LLMQs
 
-        .keepOldConnections = 14,
-        .keepOldKeys = 14,
+        .keepOldConnections = 5,
+        .keepOldKeys = 8,
         .recoveryMembers = 3,
     },
 
