@@ -361,6 +361,7 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             return;
         }
 
+        /*
         if (Contains(dmn->pdmnState->addr.ToString(), "1.2.3.4"))
         {
             return;
@@ -370,6 +371,8 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
         {
             return;
         }
+        */
+
        
         /*
         if (onlyEvoNodes)
