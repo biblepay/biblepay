@@ -368,8 +368,8 @@ public:
      * @param modifier
      * @return
      */
-    [[nodiscard]] std::vector<CDeterministicMNCPtr> CalculateQuorum(size_t maxSize, const uint256& modifier, const bool onlyEvoNodes = false) const;
-    [[nodiscard]] std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CalculateScores(const uint256& modifier, const bool onlyEvoNodes) const;
+    [[nodiscard]] std::vector<CDeterministicMNCPtr> CalculateQuorum(size_t maxSize, const uint256& modifier, const bool onlyEvoNodes, int nHeight) const;
+    [[nodiscard]] std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CalculateScores(const uint256& modifier, const bool onlyEvoNodes, int nHeight) const;
 
     /**
      * Calculates the maximum penalty which is allowed at the height of this MN list. It is dynamic and might change

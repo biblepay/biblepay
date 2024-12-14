@@ -316,9 +316,9 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::GetProjectedMNPayees(gsl
     return result;
 }
 
-std::vector<CDeterministicMNCPtr> CDeterministicMNList::CalculateQuorum(size_t maxSize, const uint256& modifier, const bool onlyEvoNodes) const
+std::vector<CDeterministicMNCPtr> CDeterministicMNList::CalculateQuorum(size_t maxSize, const uint256& modifier, const bool onlyEvoNodes, int nHeight) const
 {
-    auto scores = CalculateScores(modifier, onlyEvoNodes);
+    auto scores = CalculateScores(modifier, onlyEvoNodes, nHeight);
 
     // sort is descending order
     std::sort(scores.rbegin(), scores.rend(), [](const std::pair<arith_uint256, CDeterministicMNCPtr>& a, const std::pair<arith_uint256, CDeterministicMNCPtr>& b) {
@@ -338,12 +338,14 @@ std::vector<CDeterministicMNCPtr> CDeterministicMNList::CalculateQuorum(size_t m
     return result;
 }
 
-std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList::CalculateScores(const uint256& modifier, const bool onlyEvoNodes) const
+std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList::CalculateScores(const uint256& modifier, const bool onlyEvoNodes, int nHeight) const
 {
 
     // This area is very suspicious, as it returns an empty set.
     // BBP - 07/09/2024
-    LogPrintf("CalculateScores %f", 11002);
+    std::string sStandardPort = (Params().NetworkIDString() == CBaseChainParams::MAIN) ? "40000" : "40001";
+    LogPrintf("CalculateScores %s", sStandardPort);
+    
 
     std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> scores;
     scores.reserve(GetAllMNsCount());
@@ -356,34 +358,28 @@ std::vector<std::pair<arith_uint256, CDeterministicMNCPtr>> CDeterministicMNList
             return;
         }
 
+        // BIBLEPAY - 12-11-2024 If we passed the mandatory height for Hamans Hanging, we move to the extra-reliable quorums
+        // Which do not contain the investor nodes (1.2.3.4) and do not contain nodes with non standard ports.
+        // This is because through testing, persistent quorum connections are only reliable on the standard port 40000.
+
         // BIBLEPAY - If its not a Temple...
         if (dmn->GetCollateralAmount() != SANCTUARY_COLLATERAL_TEMPLE * COIN) {
             return;
         }
 
-        /*
-        if (Contains(dmn->pdmnState->addr.ToString(), "1.2.3.4"))
+        if (nHeight > Params().GetConsensus().HAMANS_HANGING_HEIGHT)
         {
-            return;
-        }
+            if (Contains(dmn->pdmnState->addr.ToString(), "1.2.3.4"))
+            {
+                return;
+            }
 
-        if (!Contains(dmn->pdmnState->addr.ToString(), "40000") && !Contains(dmn->pdmnState->addr.ToString(), "40001"))
-        {
-            return;
-        }
-        */
-
-       
-        /*
-        if (onlyEvoNodes)
-        {
-            // Reserved for Temple Quorums
-            if (false) {
-                if (dmn->nType != MnType::Temple)
-                    return;
+            if (!Contains(dmn->pdmnState->addr.ToString(), sStandardPort))
+            {
+                return;
             }
         }
-        */
+       
 
         // calculate sha256(sha256(proTxHash, confirmedHash), modifier) per MN
         // Please note that this is not a double-sha256 but a single-sha256

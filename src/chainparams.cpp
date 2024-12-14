@@ -165,9 +165,9 @@ public:
         consensus.BABYLON_FALLING_HEIGHT = 524302;
 
         consensus.BABYLON_FALLING_TIME = 1723923362; // 8-17-2024 @ 14:38 CST
-
+        consensus.HAMANS_HANGING_HEIGHT = 555000;
         consensus.BARLEY_HARVEST_HEIGHT  = 320000;
-	    consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
+        consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
         consensus.EXODUS_HEIGHT = 346500;
         consensus.REDSEA_HEIGHT = 428000;
 
@@ -373,12 +373,11 @@ public:
     CTestNetParams() { 
         strNetworkID = CBaseChainParams::TESTNET; 
         consensus.BARLEY_HARVEST_HEIGHT = 199010;
-		consensus.BARLEY_HARVEST_HEIGHT2 = 199010;
+        consensus.BARLEY_HARVEST_HEIGHT2 = 199010;
         consensus.REDSEA_PARTING = 199010;
         consensus.BABYLON_FALLING_HEIGHT = 205465;
-
+        consensus.HAMANS_HANGING_HEIGHT = 205465;
         consensus.BABYLON_FALLING_TIME = 1715396772; // May 10th 2024
-
         consensus.EXODUS_HEIGHT = 183000;
         consensus.REDSEA_HEIGHT = 183000;
         consensus.LATTER_RAIN_HEIGHT = 192200;
@@ -570,7 +569,8 @@ public:
         consensus.nGovernanceFilterElements = 500;
         consensus.nMasternodeMinimumConfirmations = 1;
         consensus.BABYLON_FALLING_HEIGHT = 1;
-        
+        consensus.HAMANS_HANGING_HEIGHT = 1;
+
         consensus.BIP34Height = 1; // BIP34 activated immediately on devnet
         consensus.BIP65Height = 1; // BIP65 activated immediately on devnet
         consensus.BIP66Height = 1; // BIP66 activated immediately on devnet

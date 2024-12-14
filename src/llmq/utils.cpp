@@ -200,7 +200,7 @@ std::vector<CDeterministicMNCPtr> ComputeQuorumMembers(Consensus::LLMQType llmqT
     auto allMns = deterministicMNManager->GetListForBlock(pWorkBlockIndex);
     LogPrintf("Quorums::Size(ComputeQuorumMembers)%f", allMns.GetAllMNsCount());
 
-    return allMns.CalculateQuorum(llmq_params_opt->size, modifier, EvoOnly);
+    return allMns.CalculateQuorum(llmq_params_opt->size, modifier, EvoOnly, pQuorumBaseBlockIndex->nHeight);
 }
 
 std::vector<std::vector<CDeterministicMNCPtr>> ComputeQuorumMembersByQuarterRotation(const Consensus::LLMQParams& llmqParams, const CBlockIndex* pCycleQuorumBaseBlockIndex)
@@ -401,8 +401,8 @@ std::vector<std::vector<CDeterministicMNCPtr>> BuildNewQuorumQuarterMembers(cons
         }
     });
 
-    auto sortedMnsUsedAtHM = MnsUsedAtH.CalculateQuorum(MnsUsedAtH.GetAllMNsCount(), modifier);
-    auto sortedMnsNotUsedAtH = MnsNotUsedAtH.CalculateQuorum(MnsNotUsedAtH.GetAllMNsCount(), modifier);
+    auto sortedMnsUsedAtHM = MnsUsedAtH.CalculateQuorum(MnsUsedAtH.GetAllMNsCount(), modifier, false, pCycleQuorumBaseBlockIndex->nHeight);
+    auto sortedMnsNotUsedAtH = MnsNotUsedAtH.CalculateQuorum(MnsNotUsedAtH.GetAllMNsCount(), modifier, false, pCycleQuorumBaseBlockIndex->nHeight);
     auto sortedCombinedMnsList = std::move(sortedMnsNotUsedAtH);
     for (auto& m : sortedMnsUsedAtHM) {
         sortedCombinedMnsList.push_back(std::move(m));
@@ -481,7 +481,7 @@ void BuildQuorumSnapshot(const Consensus::LLMQParams& llmqParams, const CDetermi
 
     quorumSnapshot.activeQuorumMembers.resize(allMns.GetAllMNsCount());
     const auto modifier = GetHashModifier(llmqParams, pCycleQuorumBaseBlockIndex);
-    auto sortedAllMns = allMns.CalculateQuorum(allMns.GetAllMNsCount(), modifier);
+    auto sortedAllMns = allMns.CalculateQuorum(allMns.GetAllMNsCount(), modifier, false, pCycleQuorumBaseBlockIndex->nHeight);
 
     LogPrint(BCLog::LLMQ, "BuildQuorumSnapshot h[%d] numMns[%d]\n", pCycleQuorumBaseBlockIndex->nHeight, allMns.GetAllMNsCount());
 
@@ -520,10 +520,10 @@ std::vector<std::vector<CDeterministicMNCPtr>> GetQuorumQuarterMembersBySnapshot
         const auto modifier = GetHashModifier(llmqParams, pCycleQuorumBaseBlockIndex);
         const auto [MnsUsedAtH, MnsNotUsedAtH] = GetMNUsageBySnapshot(llmqParams, pCycleQuorumBaseBlockIndex, snapshot, nHeight);
         // the list begins with all the unused MNs
-        auto sortedMnsNotUsedAtH = MnsNotUsedAtH.CalculateQuorum(MnsNotUsedAtH.GetAllMNsCount(), modifier);
+        auto sortedMnsNotUsedAtH = MnsNotUsedAtH.CalculateQuorum(MnsNotUsedAtH.GetAllMNsCount(), modifier, false, nHeight);
         sortedCombinedMns = std::move(sortedMnsNotUsedAtH);
         // Now add the already used MNs to the end of the list
-        auto sortedMnsUsedAtH = MnsUsedAtH.CalculateQuorum(MnsUsedAtH.GetAllMNsCount(), modifier);
+        auto sortedMnsUsedAtH = MnsUsedAtH.CalculateQuorum(MnsUsedAtH.GetAllMNsCount(), modifier, false, nHeight);
         std::move(sortedMnsUsedAtH.begin(), sortedMnsUsedAtH.end(), std::back_inserter(sortedCombinedMns));
     }
 
@@ -617,7 +617,7 @@ std::pair<CDeterministicMNList, CDeterministicMNList> GetMNUsageBySnapshot(const
     const auto modifier = GetHashModifier(llmqParams, pCycleQuorumBaseBlockIndex);
 
     auto allMns = deterministicMNManager->GetListForBlock(pWorkBlockIndex);
-    auto sortedAllMns = allMns.CalculateQuorum(allMns.GetAllMNsCount(), modifier);
+    auto sortedAllMns = allMns.CalculateQuorum(allMns.GetAllMNsCount(), modifier, false, nHeight);
 
     size_t i{0};
     for (const auto& dmn : sortedAllMns) {

@@ -86,8 +86,9 @@ struct Params {
     int REDSEA_HEIGHT;
     int REDSEA_PARTING;
     int BABYLON_FALLING_HEIGHT;
-
     int BABYLON_FALLING_TIME;
+    int HAMANS_HANGING_HEIGHT;
+
     int LATTER_RAIN_HEIGHT;
     int EXODUS_HEIGHT;
     int RANDOMX_HEIGHT;
