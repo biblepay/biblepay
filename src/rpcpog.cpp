@@ -2378,6 +2378,34 @@ int DeserializeSidechainFromFile()
     return nHeight;
 }
 
+bool ProcessSidechainTx(std::string sRawData, int64_t nBlockTime, int nHeight, std::string TXID)
+{
+    std::string sSC = ExtractXML(sRawData, "<sc>", "</sc>");
+    if (!sSC.empty()) {
+        Sidechain s;
+        s.ObjectType = ExtractXML(sSC, "<objtype>", "</objtype>");
+        s.URL = ExtractXML(sSC, "<url>", "</url>");
+        s.Time = nBlockTime;
+        s.Height = nHeight;
+        //s.TXID = block.vtx[n]->GetHash().GetHex();
+        s.TXID = TXID;
+        mapSidechain[s.Time] = s;
+        LogPrintf("Processing Sidechain TXID %s [%s] URL [%s] sz %f ", s.TXID, sSC, s.URL, (double)mapSidechain.size());
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool InsertSidechainTx(const CTransaction& tx, int64_t nTime, int nHeight)
+{
+    std::string sTxMsg;
+    for (unsigned int i = 0; i < tx.vout.size(); i++) {
+        sTxMsg += tx.vout[i].sTxOutMessage;
+    }
+    return ProcessSidechainTx(sTxMsg, nTime, nHeight, tx.GetHash().GetHex());
+}
+
 
 void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
 {
@@ -2427,18 +2455,7 @@ void MemorizeSidechain(bool fDuringConnectBlock, bool fColdBoot)
 				{
                     sTxMsg += block.vtx[n]->vout[i].sTxOutMessage;
                 }
-				std::string sSC = ExtractXML(sTxMsg, "<sc>", "</sc>");
-				if (!sSC.empty())
-				{
-					Sidechain s;
-					s.ObjectType = ExtractXML(sSC, "<objtype>", "</objtype>");
-					s.URL = ExtractXML(sSC, "<url>", "</url>");
-					s.Time = block.GetBlockTime();
-					s.Height = pindex->nHeight;
-                    s.TXID = block.vtx[n]->GetHash().GetHex();
-					mapSidechain[s.Time] = s;
-					LogPrintf("Processing Sidechain TXID %s [%s] URL [%s] sz %f ", s.TXID, sSC, s.URL, (double)mapSidechain.size());
-				}
+                ProcessSidechainTx(sTxMsg, block.GetBlockTime(), pindex->nHeight, block.vtx[n]->GetHash().GetHex());
             }
         }
 
@@ -3204,7 +3221,8 @@ NFT GetNFTFromTransaction(const CTransaction& tx)
 {
     NFT n;
     std::string sTxMsg;
-    for (unsigned int i = 0; i < tx.vout.size(); i++) {
+    for (unsigned int i = 0; i < tx.vout.size(); i++)
+    {
          sTxMsg += tx.vout[i].sTxOutMessage;
     }
     
@@ -3300,6 +3318,9 @@ bool CheckMemPoolTransactionBiblepay(const CTransaction& tx, const CBlockIndex* 
                 }
              }
          }
+
+         // Since the height is 0, this will be a memory only adjustment for the API node.
+         bool fProcessed = InsertSidechainTx(tx, GetAdjustedTime(), 0);
     }
     return true;
 }
