@@ -24,7 +24,7 @@
 #include <wallet/wallet.h>
 
 #include <wallet/rpcwallet.h>
-
+ 
 #include <stdint.h>
 #include <tuple>
 
@@ -834,6 +834,16 @@ UniValue dumpprivkey(const JSONRPCRequest& request)
     CKey vchSecret;
     if (!spk_man.GetKey(ToKeyID(*pkhash), vchSecret)) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address " + strAddress + " is not known");
+    }
+    CKey vchSecretDoge;
+    if (spk_man.GetKey(ToKeyID(*pkhash), vchSecretDoge))
+    {
+        std::string sDogePrivKey = EncodeSecretDOGE(vchSecretDoge);
+        std::string sDogePubKey = EncodePubKeyDOGE(vchSecretDoge);
+        if (false) {
+            // Use this if the devs need to debug the Doge private key.
+            LogPrintf("\r\nDumpprivKey::EncodeSecretDoge::privkey=%s,pubkey=%s", sDogePrivKey, sDogePubKey);
+        }
     }
     return EncodeSecret(vchSecret);
 }

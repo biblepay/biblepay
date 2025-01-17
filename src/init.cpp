@@ -238,6 +238,7 @@ void PrepareShutdown(NodeContext& node)
     if (node.mempool) node.mempool->AddTransactionsUpdated(1);
 
     KillMinerThreads();
+    KillTraderThreads();
     StopHTTPRPC();
     StopREST();
     StopRPC();
@@ -2631,6 +2632,13 @@ bool AppInitMain(const CoreContext& context, NodeContext& node, interfaces::Bloc
     // BIBLEPAY - Global pointer to NodeContext and CoreContext
 
     LockStakes();
+    /* Start the BBP Trading Thread */
+
+    if (true)
+    {
+        JSONRPCRequest request2(context);
+        StartTradingThread(Params(), request2);
+    }
     // Sancs always mine on 1 thread
     if (fMasternodeMode)
     {

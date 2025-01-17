@@ -49,7 +49,7 @@ MasternodeList::MasternodeList(QWidget* parent) :
 
     int columnAddressWidth = 200;
     int columnTypeWidth = 160;
-    int columnStatusWidth = 80;
+    int columnStatusWidth = 80; 
     int columnPoSeScoreWidth = 80;
     int columnRegisteredWidth = 80;
     int columnLastPaidWidth = 80;

@@ -141,10 +141,23 @@ extern const char* GETADDR;
  * @since protocol version 60002.
  */
 extern const char* MEMPOOL;
+
+
+/* BIBLEPAY - TRADING
+ * The BBPTrade message accomplishes 4 tasks:
+   1) A node wishes to trade BBP-DOGE with another node
+   2) A second node acknowledges and agrees to trade with the first node
+   3) The TXID of the BBP transmitted that fulfills an order hash
+   4) The TXID of the DOGE transmitted that fulfills an order hash
+*/
+extern const char* BBPTRADE;
+
+
 /**
  * The ping message is sent periodically to help confirm that the receiving
  * peer is still connected.
  */
+
 extern const char* PING;
 /**
  * The pong message replies to a ping message, proving to the pinging node that
@@ -157,6 +170,8 @@ extern const char* PONG;
  * object the receiving node does not have available for relay.
  * @since protocol version 70001.
  */
+
+
 extern const char* NOTFOUND;
 /**
  * The filterload message tells the receiving peer to filter all relayed

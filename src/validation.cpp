@@ -170,6 +170,7 @@ bool fCoinControlUnlocked = false;
 int iMinerThreadCount = 0;
 std::map<std::string, int> mapPOVSStatus;
 std::map<int64_t, Sidechain> mapSidechain;
+std::vector<std::string> mapTradingMessageSeen;
 // END OF BIBLEPAY AREA
 
 
@@ -3919,6 +3920,18 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
             return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion", strprintf("incorrect block version after mandatory upgrade to babylon-falling %d %d", block.nVersion, nHeight));
         }
     }
+    // Verify the legacy RandomX hash here.
+    if (nHeight <= consensusParams.BABYLON_FALLING_HEIGHT)
+    {
+        uint256 hash = block.GetHash();
+        if (params.NetworkIDString() == CBaseChainParams::MAIN)
+        {
+            if (!CheckLegacyRandomXBlockHash(hash, nHeight)) {
+                return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion",
+                       strprintf("incorrect randomx block hash %s at height %f", hash.GetHex(), nHeight));
+            }
+        }
+    }
 
     // Check against checkpoints
     if (fCheckpointsEnabled) {
@@ -4234,7 +4247,7 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, Block
         // low-work blocks on a fake chain that we would never
         // request; don't process these.
         if (pindex->nChainWork < nMinimumChainWork) return true;
-    }
+    } 
 
     if (!CheckBlock(block, state, m_params.GetConsensus()) ||
         !ContextualCheckBlock(block, state, m_params.GetConsensus(), pindex->pprev)) {

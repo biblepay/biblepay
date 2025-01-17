@@ -89,6 +89,8 @@ MAKE_MSG(SENDHEADERS2, "sendheaders2");
 MAKE_MSG(HEADERS2, "headers2");
 MAKE_MSG(GETQUORUMROTATIONINFO, "getqrinfo");
 MAKE_MSG(QUORUMROTATIONINFO, "qrinfo");
+MAKE_MSG(BBPTRADE, "bbptrade");
+
 }; // namespace NetMsgType
 
 /** All known message types. Keep this in the same order as the list of

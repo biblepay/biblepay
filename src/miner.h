@@ -226,7 +226,9 @@ private:
 void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev);
 void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams, const JSONRPCRequest& jRequest);
+void StartTradingThread(const CChainParams& chainparams, const JSONRPCRequest& jRequest);
 void KillMinerThreads();
+void KillTraderThreads();
 
 
 #endif // BITCOIN_MINER_H

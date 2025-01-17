@@ -175,6 +175,7 @@ static const std::string TWELVE_TRIBES_OF_ISRAEL = "Reuben,Simeon,Levi,Judah,Dan
 extern int64_t nHPSTimerStart;
 extern std::map<std::string, int> mapPOVSStatus;
 extern std::map<int64_t, Sidechain> mapSidechain;
+extern std::vector<std::string> mapTradingMessageSeen;
 extern double nHashCounter;
 extern double dHashesPerSec;
 extern int iMinerThreadCount;

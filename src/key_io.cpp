@@ -101,6 +101,31 @@ std::string EncodeSecret(const CKey& key)
     return ret;
 }
 
+std::string EncodeSecretDOGE(const CKey& key)
+{
+    assert(key.IsValid());
+    std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::SECRET_KEY_DOGE);
+    data.insert(data.end(), key.begin(), key.end());
+    if (key.IsCompressed()) {
+        data.push_back(1);
+    }
+    std::string ret = EncodeBase58Check(data);
+    memory_cleanse(data.data(), data.size());
+    return ret;
+}
+
+std::string EncodePubKeyDOGE(const CKey& key)
+{
+    CPubKey pubkey = key.GetPubKey();
+    PKHash pkhash = PKHash(pubkey);
+    CKeyID keyid = pubkey.GetID();
+    std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS_DOGE);
+    data.insert(data.end(), pkhash.begin(), pkhash.end());
+    std::string sDogePubKey = EncodeBase58Check(data);
+    return sDogePubKey;
+}
+
+
 CExtPubKey DecodeExtPubKey(const std::string& str)
 {
     CExtPubKey key;

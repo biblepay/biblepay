@@ -14,6 +14,7 @@
 /** What block version to use for new blocks (pre versionbits) */
 static const int32_t VERSIONBITS_LAST_OLD_BLOCK_VERSION = 4;
 /** What bits to set in version for versionbits blocks */
+// RANDREWS::BBP::Use the VersionBits Top Bits mask to increment the mandatory block version (if a hard fork is needed).
 static const int32_t VERSIONBITS_TOP_BITS = 0x60000000UL;
 /** What bitmask determines whether versionbits is in use */
 static const int32_t VERSIONBITS_TOP_MASK = 0xE0000000UL;

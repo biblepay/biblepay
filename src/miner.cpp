@@ -21,7 +21,7 @@
 #include <policy/policy.h>
 #include <pow.h>
 #include <primitives/transaction.h>
-#include <timedata.h>
+#include <timedata.h> 
 #include <util/moneystr.h>
 #include <util/system.h>
 #include <shutdown.h>
@@ -319,6 +319,9 @@ bool BlockAssembler::TestPackage(uint64_t packageSize, unsigned int packageSigOp
 // - safe TXs in regard to ChainLocks
 bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& package) const
 {
+    // BIBLEPAY
+    // CHECK BLOCK FOR UNCONFIRMED ATOMIC TRANSACTIONS -- NOT YET IN USE
+    
     for (CTxMemPool::txiter it : package) {
         if (!IsFinalTx(it->GetTx(), nHeight, nLockTimeCutoff))
             return false;
@@ -335,6 +338,16 @@ bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& packa
 
 void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
 {
+    CTransaction ctx = iter->GetTx();
+    /*
+    * In the future, if we want to selectively reject atomic transactions from a block, we can expand on this.  IE 'Unconfirmed' Wrapped DOGE.
+    AtomicTrade a = GetAtomicTradeFromTransaction(ctx);
+    if (a.IsValid())
+    {
+        LogPrintf("\nAddToBlock::AtomicTrade %s", a.id);
+    }
+    */
+
     pblocktemplate->block.vtx.emplace_back(iter->GetSharedTx());
     pblocktemplate->vTxFees.push_back(iter->GetFee());
     pblocktemplate->vTxSigOps.push_back(iter->GetSigOpCount());
@@ -572,7 +585,8 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
         std::vector<CTxMemPool::txiter> sortedEntries;
         SortForBlock(ancestors, sortedEntries);
 
-        for (size_t i=0; i<sortedEntries.size(); ++i) {
+        for (size_t i=0; i<sortedEntries.size(); ++i)
+        {
             AddToBlock(sortedEntries[i]);
             // Erase from the modified set, if present
             mapModifiedTx.erase(sortedEntries[i]);
@@ -884,6 +898,7 @@ recover:
 }
 
 static std::vector<std::thread> minerThreads;
+static std::vector<std::thread> traderThreads;
 
 void KillMinerThreads()
 {
@@ -894,6 +909,18 @@ void KillMinerThreads()
     minerThreads.clear();
     fThreadInterrupt = false;
 }
+
+void KillTraderThreads()
+{
+    fThreadInterrupt = true;
+    for (auto& thread : traderThreads) {
+        thread.join();
+    }
+    traderThreads.clear();
+    fThreadInterrupt = false;
+}
+
+
 
 void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams, const JSONRPCRequest& jRequest)
 {
@@ -917,5 +944,179 @@ void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams
     nHPSTimerStart = GetTimeMillis();
     nHashCounter = 0;
     LogPrintf(" ** Started %f BibleMiner threads. ** \r\n", (double)nThreads);
+}
+
+static bool IsAtomicTradeMatched(std::string sID)
+{
+    std::map<std::string, AtomicTrade> mapAT = GetAtomicTrades();
+
+    if (sID == "") {
+        return false;
+    }
+    for (auto& it : mapAT) {
+        AtomicTrade a = it.second;
+        if (a.MatchedTo == sID && a.id != sID && a.Status=="open") return true;
+    }
+    return false;
+}
+
+
+static bool CreateAtomicTrade(const JSONRPCRequest& jRequest, std::string sAction, std::string symbolBuy, std::string symbolSell, int Qty, double Price)
+{
+    AtomicTrade a;
+    a.Action = sAction;
+    a.SymbolBuy = symbolBuy;
+    a.SymbolSell = symbolSell;
+    a.Quantity = Qty;
+    a.Price = Price;
+    a.Status = "open";
+
+    if (a.Price <= 0)
+    {
+        std::string sErr = "The price of doge per BBP must be greater than zero.";
+        LogPrintf("\nCreateAtomicTrade %s", sErr);
+        return false;
+    }
+    a.id = DoubleToString(GetAdjustedTime(), 0);
+    a.Signer = DefaultRecAddress(jRequest, "Trading-Public-Key");
+    a.AltAddress = GetDogePubKey(a.Signer, jRequest);
+    a.Time = GetAdjustedTime();
+    std::string sError;
+    TradingLog("Create Atomic Trade for leftover quantity " + DoubleToString(Qty, 0));
+
+    std::string sTXID = TransmitSidechainTx(jRequest, a, sError);
+    return true;
+}
+
+
+/*
+static void ScanForAdjustmentTrades(const JSONRPCRequest& jRequest)
+{
+    std::map<std::string, AtomicTrade> mapAT = GetAtomicTrades();
+    std::string sTPK = DefaultRecAddress(jRequest, "Trading-Public-Key");
+ 
+    for (auto& it : mapAT)
+    {
+        // If its MINE and Im the buyer and I find a Seller that is selling LESS QTY than Im buying at the same or cheaper price?
+        // Then we edit our transaction and re-push the leftover amount as a second one.
+        AtomicTrade buyer = it.second;
+        if (buyer.Status == "open" && buyer.Signer == sTPK && buyer.Action == "buy" && buyer.MatchedTo == "" && !IsAtomicTradeMatched(buyer.id))
+        {
+            for (auto& it2 : mapAT)
+            {
+                AtomicTrade seller = it2.second;
+                if (seller.Status == "open" && seller.Action == "sell" && seller.MatchedTo == "" && !IsAtomicTradeMatched(seller.id))
+                {
+                    if (seller.Quantity < buyer.Quantity && seller.Price <= buyer.Price)
+                    {
+                        // we can adjust this one
+                        int nLeftoverQuantity = buyer.Quantity - seller.Quantity;
+                        if (nLeftoverQuantity > 99)
+                        {
+                            // We were the buyer of BBP, and seller of DOGE.
+                            // Add the leftover trade ***HERE ***
+                            buyer.FilledQuantity = nLeftoverQuantity;
+                            bool f14 =  CreateAtomicTrade(jRequest, "buy", "bbp", "doge", nLeftoverQuantity, buyer.Price);
+                        }
+                        // BBP ATOMIC TRADE - PLACE EDIT
+                        if (seller.Price < buyer.Price)
+                        {
+                            buyer.Price = seller.Price;
+                        }
+                        buyer.Quantity = seller.Quantity;
+                        buyer.MatchedTo = seller.id;
+                        TradingLog("BBPTrader::Adjusting BUY TX::" + buyer.id + " to qty " + DoubleToString(buyer.Quantity, 0) + " and price " + DoubleToString(buyer.Price, 6) + " matched to " + buyer.MatchedTo);
+                        std::string sError;
+                        std::string sTXID = TransmitSidechainTx(jRequest, buyer, sError);
+                        MinerSleep(1000);
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+    for (auto& it : mapAT)
+    {
+        AtomicTrade seller = it.second;
+        if (seller.Status == "open" && seller.Signer == sTPK && seller.Action == "sell" && seller.MatchedTo == "" && !IsAtomicTradeMatched(seller.id))
+        {
+            for (auto& it2 : mapAT) {
+                AtomicTrade buyer = it2.second;
+                if (buyer.Status == "open" && buyer.Action == "buy" && buyer.MatchedTo == "" && !IsAtomicTradeMatched(buyer.id))
+                {
+                    if (seller.Quantity > buyer.Quantity && seller.Price <= buyer.Price)
+                    {
+                        // we can adjust this one
+                        int nLeftoverQuantity = seller.Quantity - buyer.Quantity;
+                        if (nLeftoverQuantity > 99) {
+                            seller.FilledQuantity = nLeftoverQuantity;
+                            bool f14 = CreateAtomicTrade(jRequest, "sell", "doge", "bbp", nLeftoverQuantity, seller.Price);
+                        }
+                        // BBP ATOMIC TRADE - PLACE EDIT
+                        if (buyer.Price > seller.Price)
+                        {
+                            seller.Price = buyer.Price;
+                        }
+                        seller.Quantity = buyer.Quantity;
+                        seller.MatchedTo = buyer.id;
+                        TradingLog("BBPTrader::Adjusting SELL TX::" + buyer.id + " to qty "
+                            + DoubleToString(buyer.Quantity, 0) + " and price " + DoubleToString(buyer.Price, 6) + " matched to " + buyer.MatchedTo);
+                        std::string sError;
+                        std::string sTXID = TransmitSidechainTx(jRequest, seller, sError);
+                        MinerSleep(1000);
+                    }
+                }
+            }
+        }
+    }
+}
+*/
+
+
+static void BiblePayTrader(const CChainParams& chainparams, const JSONRPCRequest& jRequest)
+{
+    int iFailures = -1;
+
+recover:
+
+    const NodeContext& node = EnsureAnyNodeContext(jRequest.context);
+    const CTxMemPool& mempool = EnsureMemPool(node);
+    auto& mn_sync = *node.mn_sync;
+    LogPrintf("BiblePayTrader -- started %f \n", (double)GetAdjustedTime());
+
+    CScript cbScript = GetScriptForMining(jRequest);
+
+    try
+    {
+        CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
+        CChainState& active_chainstate = g_chainman.ActiveChainstate();
+
+        while (true)
+        {
+            MinerSleep(6000);
+            if (fThreadInterrupt || ShutdownRequested())
+            {
+                return;
+            }
+        }
+    }
+    catch (const std::exception& e)
+    {
+        LogPrintf("BiblePayTrader_ERROR[0] -- %s", e.what());
+    }
+    catch (...)
+    {
+        LogPrintf("BiblePayTrader_ERROR[UNKNOWN] -- %f", (double)GetAdjustedTime());
+    }
+}
+
+
+void StartTradingThread(const CChainParams& chainparams, const JSONRPCRequest& jRequest)
+{
+    CreateWalletIfNotExists(jRequest);
+    traderThreads.emplace_back(std::thread(BiblePayTrader, chainparams, jRequest));
 }
 

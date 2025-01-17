@@ -288,10 +288,13 @@ public:
 
         // BBP addresses start with 'B'
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 25);  // &h19
+        base58Prefixes[PUBKEY_ADDRESS_DOGE] = std::vector<unsigned char>(1, 30);
         // BBP script addresses start with '7'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 16);  // &h10
         // BBP private keys start with '7' or 'X'
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1, 182); // &hb6
+        base58Prefixes[SECRET_KEY_DOGE] = std::vector<unsigned char>(1, 158); 
+
         // BBP BIP32 pubkeys start with 'xpub' (Bitcoin defaults)
 		base58Prefixes[EXT_PUBLIC_KEY] = {0x04,0x88,0xB2,0x1E};
 	    // BBP BIP32 prvkeys start with 'xprv' (Bitcoin defaults)

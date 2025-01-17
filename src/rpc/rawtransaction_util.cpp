@@ -98,7 +98,9 @@ CMutableTransaction ConstructTransaction(const UniValue& inputs_in, const UniVal
             rawTx.vout.push_back(out);
         } else {
             CTxDestination destination = DecodeDestination(name_);
-            if (!IsValidDestination(destination)) {
+
+            if (!IsValidDestination(destination) && false)
+            {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid BiblePay address: ") + name_);
             }
 

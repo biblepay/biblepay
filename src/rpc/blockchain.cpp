@@ -14,6 +14,7 @@
 #include <chainparams.h>
 #include <coins.h>
 #include <core_io.h>
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <consensus/params.h>
 #include <consensus/validation.h>
 #include <deploymentinfo.h>
@@ -3129,7 +3130,8 @@ UniValue exec(const JSONRPCRequest& request)
 
     UniValue results(UniValue::VOBJ);
     results.pushKV("Command", sItem);
-    if (sItem == "subsidy") {
+    if (sItem == "subsidy")
+    {
         // Used by the Pools
         if (request.params.size() != 2)
             throw std::runtime_error("You must specify height.");
@@ -3153,13 +3155,6 @@ UniValue exec(const JSONRPCRequest& request)
             }
         } else {
             results.pushKV("error", "block not found");
-        }
-    } else if (sItem == "getvideolist") {
-        BBPResult b = UnchainedGet("getvideolist");
-        if (b.ErrorCode.empty()) {
-            results.pushKV("Error", b.ErrorCode);
-        } else {
-            results.pushKV("VideoList", b.Response);
         }
     } else if (sItem == "makeunchainedurl") {
         // Creates an unchained URL for the user
@@ -3247,7 +3242,9 @@ UniValue exec(const JSONRPCRequest& request)
                 results.pushKV("Recommended Next DGW adjustment", nGrandAdjustment);
             }
         } 
-    } else if (sItem == "revivesanc" || sItem == "startsanc") {
+    }
+    else if (sItem == "revivesanc" || sItem == "startsanc")
+    {
         // Sanctuary Revival v1.2
         // The purpose of this command is to make it easy to Revive a POSE-banned deterministic sanctuary.  (In contrast to knowing how to create and send the protx update_service command).
         std::string sExtraHelp = "NOTE:  If you do not have a deterministic.conf file, you can still revive your sanctuary this way: protx update_service proreg_txID sanctuaryIP:Port sanctuary_blsPrivateKey\n\n NOTE: You can right click on the sanctuary in the Sanctuaries Tab in QT and obtain the proreg_txID, and, you can write the IP down from the list.  You still need to find your sanctuaryBLSPrivKey.\n";
@@ -3265,11 +3262,134 @@ UniValue exec(const JSONRPCRequest& request)
         {
             results.push_back(uProReg);
         }
-    } else if (sItem == "testipc") {
+    }
+    else if (sItem == "testipc")
+    {
         std::string sData = "Now is the time to come...";
         WriteIPC(sData);
         std::string sData2 = ReceiveIPC();
         results.pushKV("ipc2", sData2);
+    }
+    else if (sItem == "canceltrade")
+    {
+        if (request.params.size() < 2)
+        {
+            throw std::runtime_error("You must specify: exec canceltrade order_id "
+                                     "\r\n  Ex: exec canceltrade 123");
+        }
+        std::string sOrderID = request.params[1].get_str();
+        AtomicTrade a;
+        a.id = sOrderID;
+        a = TransmitAtomicTrade(request, a, "CancelAtomicTransaction");
+        results.pushKV("Tx", a.ToString());
+        results.pushKV("block_explorer", a.BlockExplorerURL);
+        results.pushKV("Error", a.Error);
+    }
+    else if (sItem == "shadump")
+    {
+        OneTimeShaDump();
+        results.pushKV("SHA", 1);
+    }
+    else if (sItem == "placetrade")
+    {
+        if (request.params.size() < 4) {
+            throw std::runtime_error("You must specify: exec placetrade action quantity price "
+                "\r\n  Ex: placetrade buy 500 .00001 (This will create an offer to buy 500 BBP for a price of .00001 doge per bbp.)");
+        }
+
+        // BBP ATOMIC TRADE - PLACE TRADE
+        AtomicTrade a = GetAtomicTradePrimaryKey(request);
+        LogPrintf("\r\nPlaceTrade template %s ", a.id);
+
+        a.Action = request.params[1].get_str();
+        boost::to_lower(a.Action);
+        if (a.Action != "buy" && a.Action != "sell")
+        {
+            throw std::runtime_error("Action must be BUY or SELL.");
+        }
+        if (a.Action == "buy")
+        {
+            a.SymbolBuy = "bbp";
+            a.SymbolSell = "doge";
+        }
+        else if (a.Action == "sell")
+        {
+            a.SymbolSell="bbp";
+            a.SymbolBuy = "doge";
+        }
+
+        a.Quantity = StringToDouble(request.params[2].get_str(), 2);
+        if (a.Quantity <= 0)
+        {
+            throw std::runtime_error("The Quantity must be greater than zero.");
+        }
+        a.Price = StringToDouble(request.params[3].get_str(), 8); // Price for each BBP in DOGE
+        if (a.Price <= 0) {
+            throw std::runtime_error("The price of doge per BBP must be greater than zero.");
+        }
+        boost::to_lower(a.SymbolBuy);
+        boost::to_lower(a.SymbolSell);
+        
+        std::string SymbolCombined = a.SymbolBuy + "/" + a.SymbolSell;
+        if (SymbolCombined != "bbp/doge" && SymbolCombined != "doge/bbp")
+        {
+            throw std::runtime_error("Sorry, in wallet trading only supports pairs of BBP/DOGE and DOGE/BBP");
+        }
+
+        a.Status = "open";
+        a = TransmitAtomicTrade(request, a, "TransmitAtomicTransaction");
+        results.pushKV("id", a.id);
+        results.pushKV("Tx", a.ToString());
+        results.pushKV("block_explorer", a.BlockExplorerURL);
+
+        results.pushKV("Error", a.Error);
+    }
+    else if (sItem == "listorderbook")
+    {
+        if (request.params.size() < 2)
+        {
+            throw std::runtime_error("You must specify listorderbook BUY/SELL. IE:  listorderbook BUY");
+        }
+        std::string sAction = request.params[1].get_str();
+        boost::to_lower(sAction);
+        if (sAction != "buy" && sAction != "sell") {
+            throw std::runtime_error("You must specify listorderbook BUY/SELL. IE:  listorderbook BUY");
+        }
+        std::vector<std::string> l = GetOrderBook(sAction, request);
+        int iRow = 0;
+        for (std::string sRow : l)
+        {
+            iRow++;
+            results.pushKV(DoubleToStringWithLeadingZeroes(iRow, 0, 3), sRow);
+        }
+    }
+    else if (sItem == "getdogebalance")
+    {
+        std::string sTradingPublicKey = DefaultRecAddress(request, "Trading-Public-Key");
+        std::string sDogePub = GetDogePubKey(sTradingPublicKey, request);
+        double nBal = GetDogeBalance(sDogePub);
+        std::string sBX = "https://live.blockcypher.com/doge/address/" + sDogePub + "/";
+        results.pushKV("address", sDogePub);
+        results.pushKV("block_explorer", sBX);
+        results.pushKV("balance", nBal);
+    }
+    else if (sItem == "senddoge")
+    {
+        if (request.params.size() < 3) {
+            throw std::runtime_error("You must specify the to_doge_address and amount.  Ex:  senddoge toaddress 1");
+        }
+        std::string sToAddress = request.params[1].get_str();
+        double nAmt = StringToDouble(request.params[2].get_str(), 4);
+        results.pushKV("to_address", sToAddress);
+        results.pushKV("amount", nAmt);
+        std::string sError;
+        std::string TXID;
+        std::string sTradingPublicKey = DefaultRecAddress(request, "Trading-Public-Key");
+        std::string sDogePrivKey = GetDogePrivateKey(sTradingPublicKey, request);
+        bool fSent = SendDOGEToAddress(sDogePrivKey, sToAddress, nAmt, sError, TXID);
+        results.pushKV("TXID", TXID);
+        results.pushKV("Error", sError);
+
     }
     else if (sItem == "persistsc")
     {
@@ -3343,7 +3463,6 @@ UniValue exec(const JSONRPCRequest& request)
     }
     else if (sItem == "listnfts")
     {
-
         // list all nfts
         std::map<std::string, NFT> l = GetNFTs();
         for (auto ii : l)
@@ -3361,7 +3480,6 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sValue = GetSidechainValue(sObjType, sKey, nTS);
         results.pushKV("value", sValue);
     }
-
     else if (sItem == "testnft0")
     {
         // Basic NFT unit test.

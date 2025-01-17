@@ -20,7 +20,7 @@
 #include <masternode/node.h>
 #include <masternode/sync.h>
 #include <netfulfilledman.h>
-#include <netmessagemaker.h>
+#include <netmessagemaker.h> 
 #include <protocol.h>
 #include <shutdown.h>
 #include <spork.h>
@@ -1149,7 +1149,7 @@ void CGovernanceManager::CheckPostponedObjects(CConnman& connman)
             bool fValid = (nTimestamp <= nNow + MAX_TIME_FUTURE_DEVIATION) && (nTimestamp >= nNow - 2 * nSuperblockCycleSeconds);
             bool fReady = (nTimestamp <= nNow + MAX_TIME_FUTURE_DEVIATION - RELIABLE_PROPAGATION_TIME);
 
-            if (fValid) {
+            if (fValid) { 
                 if (fReady) {
                     LogPrint(BCLog::GOBJECT, "CGovernanceManager::CheckPostponedObjects -- additional relay: hash = %s\n", govobj.GetHash().ToString());
                     govobj.Relay(connman);

@@ -37,6 +37,8 @@ struct CNodeStateStats {
     std::vector<int> vHeightInFlight;
 };
 
+struct BBPTradingMessage;
+
 class PeerManager : public CValidationInterface, public NetEventsInterface
 {
 public:

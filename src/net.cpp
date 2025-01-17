@@ -2915,6 +2915,21 @@ void CConnman::OpenMasternodeConnection(const CAddress &addrConnect, MasternodeP
     OpenNetworkConnection(addrConnect, false, nullptr, nullptr, ConnectionType::OUTBOUND_FULL_RELAY, MasternodeConn::IsConnection, probe);
 }
 
+
+/*
+void CConnman::RelayInv(CInv& inv, const int minProtoVersion)
+{
+    LOCK(cs_vNodes);
+    for (const auto& pnode : vNodes) {
+        if (pnode->nVersion < minProtoVersion || !pnode->CanRelay())
+            continue;
+        pnode->PushInventory(inv);
+    }
+}
+*/
+
+
+
 void CConnman::ThreadMessageHandler()
 {
     int64_t nLastSendMessagesTimeMasternodes = 0;
