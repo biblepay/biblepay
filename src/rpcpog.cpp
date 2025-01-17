@@ -924,7 +924,8 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
 
         //  Variables used to read the response from the server
         int size;
-        clock_t begin = clock();
+        double nClockStart = GetAdjustedTime();
+
         char buf[16384];
         memset(buf, 0, sizeof(buf));
 
@@ -948,7 +949,8 @@ std::string Uplink(bool bPost, std::string sPayload, std::string sBaseURL, std::
                 LogPrintf("\r\n BioReadFinished maxsize %f datasize %f ", dMaxSize, iRead);
 
             clock_t end = clock();
-            double elapsed_secs = double(end - begin) / (CLOCKS_PER_SEC + .01);
+            double elapsed_secs = GetAdjustedTime() - nClockStart;
+
             if (elapsed_secs > iTimeoutSecs) break;
             if (TermPeekFound(sData, iBOE)) break;
 
@@ -997,7 +999,7 @@ std::string AtomicCommunication(std::string Action, std::map<std::string, std::s
 {
     std::string sBaseDomain = "https://api.biblepay.org";
     std::string sPage = "api/AtomicTrading/" + Action;
-    std::string sResponse = Uplink(true, "", sBaseDomain, sPage, SSL_PORT, 15, 1, mapRequestHeaders);
+    std::string sResponse = Uplink(true, "", sBaseDomain, sPage, SSL_PORT, 10, 1, mapRequestHeaders);
     return sResponse;
 }
 

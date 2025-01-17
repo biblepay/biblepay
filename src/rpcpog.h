@@ -155,7 +155,8 @@ struct AtomicTrade
 
      void PopulateBX()
      {
-             if (Status == "canceled" && ReturnTXID != "") {
+             if (Status == "canceled" && ReturnTXID != "")
+             {
                  if (Action == "buy") {
                      BlockExplorerURL = "https://live.blockcypher.com/doge/tx/" + ReturnTXID + "/";
                  } else if (Action == "sell") {
@@ -163,7 +164,8 @@ struct AtomicTrade
                  }
              }
 
-             if (Status == "open" && ReturnTXID != "") {
+             if (Status == "open" && CollateralTXID != "")
+             {
                  if (Action == "buy") {
                      BlockExplorerURL = "https://live.blockcypher.com/doge/tx/" + CollateralTXID + "/";
                  } else if (Action == "sell") {

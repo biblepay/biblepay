@@ -3362,6 +3362,12 @@ UniValue exec(const JSONRPCRequest& request)
             iRow++;
             results.pushKV(DoubleToStringWithLeadingZeroes(iRow, 0, 3), sRow);
         }
+    } else if (sItem == "hamans-hanging")
+    {
+        std::map<std::string, std::string> mapRequestHeaders;
+        mapRequestHeaders["Address"] = "";
+        std::string sResponse = AtomicCommunication("Test0", mapRequestHeaders);
+        results.pushKV("hang", sResponse);
     }
     else if (sItem == "getdogebalance")
     {
