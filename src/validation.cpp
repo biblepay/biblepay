@@ -3936,7 +3936,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
     }
     if (nHeight >= consensusParams.GREAT_AWAKENING_HEIGHT)
     {
-        int GREAT_AWAKENING_BLOCK_VERSION = 1700000000;
+        int GREAT_AWAKENING_BLOCK_VERSION = 1600000000; 
         if (block.nVersion <= GREAT_AWAKENING_BLOCK_VERSION)
         {
             return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion",
