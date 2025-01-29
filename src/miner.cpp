@@ -152,8 +152,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // Limit size to between 1K and MaxBlockSize()-1K for sanity:
     nBlockMaxSize = std::max<unsigned int>(1000, std::min<unsigned int>(MaxBlockSize(fDIP0001Active_context) - 1000, nBlockMaxSize));
     nBlockMaxSigOps = MaxBlockSigOps(fDIP0001Active_context);
-
     pblock->nVersion = g_versionbitscache.ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+
+    // LogPrintf("\nCreateNewBlock - Block Version %f", pblock->nVersion);
+
     // Non-mainnet only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (Params().NetworkIDString() != CBaseChainParams::MAIN)
@@ -1096,10 +1098,19 @@ recover:
 
         while (true)
         {
-            MinerSleep(6000);
+            MinerSleep(5000);
             if (fThreadInterrupt || ShutdownRequested())
             {
                 return;
+            }
+            std::string sAssetName = "TRADING-ASSET-DOGE";
+            std::string sAssetExistingAddress = IsInAddressBook(jRequest, sAssetName);
+            if (sAssetExistingAddress.empty())
+            {
+                std::string sPrivKey;
+                std::string sPub = SearchForAsset(jRequest, "DGZZ", sAssetName, sPrivKey, 100000);
+            } else {
+                MinerSleep(60000 * 5);
             }
         }
     }

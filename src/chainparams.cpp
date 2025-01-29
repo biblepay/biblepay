@@ -161,16 +161,15 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = CBaseChainParams::MAIN;
+        consensus.GREAT_AWAKENING_HEIGHT = 562026; // 1-29-2025
 
         consensus.BABYLON_FALLING_HEIGHT = 524302;
-
         consensus.BABYLON_FALLING_TIME = 1723923362; // 8-17-2024 @ 14:38 CST
         consensus.HAMANS_HANGING_HEIGHT = 555000;
         consensus.BARLEY_HARVEST_HEIGHT  = 320000;
         consensus.BARLEY_HARVEST_HEIGHT2 = 320000;
         consensus.EXODUS_HEIGHT = 346500;
         consensus.REDSEA_HEIGHT = 428000;
-
 
         consensus.LATTER_RAIN_HEIGHT = 449485;
         consensus.REDSEA_PARTING = 457510;
@@ -375,6 +374,9 @@ class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() { 
         strNetworkID = CBaseChainParams::TESTNET; 
+
+        consensus.GREAT_AWAKENING_HEIGHT = 210000;
+
         consensus.BARLEY_HARVEST_HEIGHT = 199010;
         consensus.BARLEY_HARVEST_HEIGHT2 = 199010;
         consensus.REDSEA_PARTING = 199010;
@@ -385,7 +387,6 @@ public:
         consensus.REDSEA_HEIGHT = 183000;
         consensus.LATTER_RAIN_HEIGHT = 192200;
 
-        
         consensus.nSubsidyHalvingInterval =  365 * 205;
         consensus.BIP16Height = 0;
         consensus.nMasternodePaymentsStartBlock = 2001; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
@@ -573,6 +574,7 @@ public:
         consensus.nMasternodeMinimumConfirmations = 1;
         consensus.BABYLON_FALLING_HEIGHT = 1;
         consensus.HAMANS_HANGING_HEIGHT = 1;
+        consensus.GREAT_AWAKENING_HEIGHT = 1;
 
         consensus.BIP34Height = 1; // BIP34 activated immediately on devnet
         consensus.BIP65Height = 1; // BIP65 activated immediately on devnet

@@ -127,7 +127,7 @@ struct AtomicTrade
      std::string TXID;       // TXID of completed trade.
      std::string Error; 
      int Version;
-     int Quantity;
+     double Quantity;
      double Price;
      std::string Status;     // Open, Closed, Transferring
      std::string MatchedTo;  // Matching ID
@@ -136,6 +136,9 @@ struct AtomicTrade
      int Height;
      std::string CollateralBBPAddress;
      std::string CollateralDOGEAddress;
+     std::string CollateralALTAddress;
+     std::string CollateralAssetAddress;
+
      std::string CollateralTXID;
      std::string ReturnTXID;
      std::string BlockExplorerURL;
@@ -192,6 +195,9 @@ struct AtomicTrade
            obj.pushKV("Signature", Signature);
            obj.pushKV("CollateralBBPAddress", CollateralBBPAddress);
            obj.pushKV("CollateralDOGEAddress", CollateralDOGEAddress);
+           obj.pushKV("CollateralALTAddress", CollateralALTAddress);
+           obj.pushKV("CollateralAssetAddress", CollateralAssetAddress);
+
            obj.pushKV("CollateralTXID", CollateralTXID);
            obj.pushKV("ReturnTXID", ReturnTXID);
            PopulateBX();
@@ -223,7 +229,7 @@ struct AtomicTrade
            a.SymbolSell = GetUniString(obj, "SymbolSell");
            a.Action = GetUniString(obj, "Action");
            a.id = GetUniString(obj, "id");
-           a.Quantity = GetUniInt(obj, "Quantity");
+           a.Quantity = GetUniReal(obj, "Quantity");
            a.Price = GetUniReal(obj, "Price");
            a.Status = GetUniString(obj, "Status");
            a.CollateralTXID = GetUniString(obj, "CollateralTXID");
@@ -231,6 +237,9 @@ struct AtomicTrade
 
            a.CollateralBBPAddress = GetUniString(obj, "CollateralBBPAddress");
            a.CollateralDOGEAddress = GetUniString(obj, "CollateralDOGEAddress");
+           a.CollateralALTAddress = GetUniString(obj, "CollateralALTAddress");
+           a.CollateralAssetAddress = GetUniString(obj, "CollateralAssetAddress");
+
            a.Signer = GetUniString(obj, "Signer");
            a.Message = GetUniString(obj, "Message");
            a.Signature = GetUniString(obj, "Signature");
@@ -490,7 +499,7 @@ double GetDogeBalance(std::string sDogePubKey);
 bool SendDOGEToAddress(std::string sDogePrivKey, std::string sToAddress, double nAmount, std::string& sError, std::string& sTXID);
 void TradingLog(std::string sData);
 std::vector<std::string> GetOrderBook(std::string sAction, JSONRPCRequest r);
-std::map<std::string, AtomicTrade> GetOrderBookData();
+std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh);
 std::string TransmitSidechainTx(JSONRPCRequest r, AtomicTrade a, std::string& sError);
 std::string DoubleToStringWithLeadingZeroes(double n, int nPlaces, int nTotalPlaces);
 void OneTimeShaDump();
@@ -500,10 +509,25 @@ bool BBPTradingMessageSeen(std::string s);
 void SetBBPTradingMessageSeen(std::string s);
 AtomicTrade GetAtomicTradeFromTransaction(const CTransaction& tx);
 std::string AtomicCommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders);
-AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod);
+AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod, std::string sAddressBookName);
 std::string YesNo(bool f);
 AtomicTrade GetAtomicTradePrimaryKey(JSONRPCRequest r);
 std::string GetTradingBBPPrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
+std::string CreateBankrollDenominations(JSONRPCRequest r, double nQuantity, CAmount denominationAmount, std::string& sError);
+std::string GenerateAssetAddress(JSONRPCRequest r);
+std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::string sAddressLabel, std::string& sPrivKey, int nMaxIterations);
+std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus);
+std::string GetDisplayAgeInDays(int nRefTime);
+std::string GetColoredAssetShortCode(std::string sTicker);
+bool IsColoredCoin0(std::string sDestination);
+double GetAssetBalance(JSONRPCRequest r, std::string sLongCode);
+std::string GetFlags(AtomicTrade a, std::string sMyAddress, std::map<std::string, AtomicTrade> mapAT);
+std::string GetDefaultReceiveAddress(std::string sName);
+std::string IsInAddressBook(JSONRPCRequest r, std::string sNamedEntry);
+bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& view);
+bool RPCSendAsset(JSONRPCRequest r, std::string& sError, std::string& sTXID, std::string sAddress, CAmount nValue, std::string sLongAssetCode);
+CAmount GetWalletBalanceForSpecificAddress(std::string sAddress);
+double AmountToDouble(const CAmount& amount);
 
 /** Used to store a reference to the global node */
 class CGlobalNode

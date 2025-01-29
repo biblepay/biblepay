@@ -1139,7 +1139,7 @@ BOOST_FIXTURE_TEST_CASE(select_coins_grouped_by_addresses, ListCoinsTestingSetup
         std::vector<CompactTallyItem> vecTally = wallet->SelectCoinsGroupedByAddresses(/*fSkipDenominated=*/false,
                 /*fAnonymizable=*/false,
                 /*fSkipUnconfirmed=*/false,
-                /*nMaxOupointsPerAddress=*/100);
+                /*nMaxOupointsPerAddress=*/100, true);
         BOOST_CHECK_EQUAL(vecTally.size(), 1);
         BOOST_CHECK_EQUAL(vecTally.at(0).nAmount, 500 * COIN);
         BOOST_CHECK_EQUAL(vecTally.at(0).vecInputCoins.size(), 1);

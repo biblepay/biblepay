@@ -12,6 +12,8 @@
 #include <qt/optionsmodel.h>
 #include <qt/qrdialog.h>
 #include <qt/transactiondescdialog.h>
+#include <qt/internetviewdialog.h>
+
 #include <qt/transactionfilterproxy.h>
 #include <qt/transactionrecord.h>
 #include <qt/transactiontablemodel.h>
@@ -560,6 +562,13 @@ void TransactionView::showDetails()
         TransactionDescDialog* dlg = new TransactionDescDialog(selection.at(0), this);
         dlg->setAttribute(Qt::WA_DeleteOnClose);
         dlg->show();
+        // proof of concept BBP
+        /*
+        InternetViewDialog* ilg = new InternetViewDialog(selection.at(0), this);
+        ilg->setAttribute(Qt::WA_DeleteOnClose);
+        ilg->show();
+        */
+        // end of proof-of-concept BBP
     }
 }
 

@@ -22,6 +22,8 @@
 
 #include <consensus/validation.h>
 #include <core_io.h>
+#include <ctype.h> /* For SECP256K1 */
+
 #include <fstream>
 #include <init.h>
 #include <key_io.h>
@@ -48,14 +50,21 @@
 #include <univalue.h>
 #include <sstream>
 #include <wallet/scriptpubkeyman.h>
-
+#include <wallet/coincontrol.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/md5.h>
 #include <openssl/ssl.h>
+
+#include <openssl/ripemd.h>
+#include <openssl/sha.h>
+#include <secp256k1.h>
+#include <stdio.h>
+
 #include <wallet/coincontrol.h>
 #include <wallet/rpcwallet.h>
+
 #include <wallet/wallet.h>
 #include <wallet/walletdb.h>
 #include <wallet/walletutil.h>
@@ -382,6 +391,33 @@ bool IsMyAddress(JSONRPCRequest r,std::string sAddress)
         return fMine;
 }
 
+std::string IsInAddressBook(JSONRPCRequest r, std::string sNamedEntry)
+{
+        CWallet* pwallet = GetInternalWallet(r);
+
+        if (!EnsureWalletIsAvailable(pwallet, false)) {
+            LogPrintf("\nDefaultRecAddress::ERROR %f No pwallet", 03142021);
+            return "";
+        }
+        boost::to_upper(sNamedEntry);
+
+        for (const std::pair<const CTxDestination, CAddressBookData>& item : pwallet->m_address_book)
+        {
+            CTxDestination txd1 = item.first;
+            std::string sAddr = EncodeDestination(txd1);
+            std::string strName = item.second.GetLabel();
+            bool fMine = IsMyAddress(r, sAddr);
+            if (fMine)
+            {
+                boost::to_upper(strName);
+                if (strName == sNamedEntry) {
+                     return sAddr;
+                }
+            }
+        }
+        return "";
+}
+
 std::string DefaultRecAddress(JSONRPCRequest r,std::string sNamedEntry)
 {
     CWallet* pwallet = GetInternalWallet(r);
@@ -393,26 +429,17 @@ std::string DefaultRecAddress(JSONRPCRequest r,std::string sNamedEntry)
 	}
 
     boost::to_upper(sNamedEntry);
-    std::string sDefaultRecAddress;
-        
-    for (const std::pair<const CTxDestination, CAddressBookData>& item : pwallet->m_address_book)
+    std::string sDefRcvAddress = IsInAddressBook(r, sNamedEntry);
+    if (!sDefRcvAddress.empty())
     {
-        CTxDestination txd1 = item.first;
-        std::string sAddr = EncodeDestination(txd1);
-        std::string strName = item.second.GetLabel();
-        bool fMine = IsMyAddress(r,sAddr);
-        if (fMine) {
-            boost::to_upper(strName);
-            if (strName == sNamedEntry) {
-                return sAddr;
-            }
-        }
+        return sDefRcvAddress;
     }
-
+ 
 	// Not in the book
     std::string sError;
-    if (sNamedEntry == "")
-		sNamedEntry = "NA";
+    if (sNamedEntry == "") {
+        sNamedEntry = "NA";
+    }
   
     CPubKey pubkey;
 
@@ -429,10 +456,9 @@ std::string DefaultRecAddress(JSONRPCRequest r,std::string sNamedEntry)
 
     pwallet->SetAddressBook(dTo, sNamedEntry, "receive");
 
-    sDefaultRecAddress = EncodeDestination(PKHash(vchAddress));
-    LogPrintf("\r\nDefaultRecAddress for %s=%s, Error=%s", sNamedEntry, sDefaultRecAddress, sError);
+    sDefRcvAddress = EncodeDestination(PKHash(vchAddress));
    
-    return sDefaultRecAddress;
+    return sDefRcvAddress;
 }
 
 
@@ -1137,7 +1163,7 @@ std::vector<Portfolio> GetDailySuperblock(int nHeight)
 	uint256 sha1 = GetSHA256Hash("<data>" + sData + "</data>");
 	uint256 sha2 = uint256S("0x" + sHash);
 	*/
-	// Mission critical todo: Before testing is over; test with 100 participants (stress test the data size)
+	// Before testing is over; test with 100 participants (stress test the data size)
 	return vPortfolio;
 }
 
@@ -1820,7 +1846,7 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	int nNextSuperblock = 0;
 	GetGovSuperblockHeights(nNextSuperblock, nLastSuperblock);
 
-    // MISSION CRITICAL TODO HERE - CRASHING BECAUSE GETGLOBALNODECONTEXT RETURNS NULL.
+    // CRASHING BECAUSE GETGLOBALNODECONTEXT RETURNS NULL.
 
 	int nSancCount = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNsCount();
 
@@ -2754,6 +2780,9 @@ std::string GetDogePrivateKey(std::string sBBPPubKey, JSONRPCRequest r)
 
 std::string GetTradingBBPPrivateKey(std::string sBBPPubKey, JSONRPCRequest r)
 {
+    if (sBBPPubKey == "") {
+        return "";
+    }
     // Returns the BBP WIF PrivKey for the BBP trading private key.
     CKey c = GetDogeSecretKey(r, sBBPPubKey);
     std::string sPrivKey = EncodeSecret(c);
@@ -3456,17 +3485,28 @@ bool SendDOGEToAddress(std::string sDogePrivKey, std::string sToAddress, double 
     return true;
 }
 
-std::map<std::string, AtomicTrade> GetOrderBookData()
+
+static std::map<std::string, AtomicTrade> mgmapAT;
+static int mgLastMapAT = 0;
+std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh)
 {
-    std::map<std::string, AtomicTrade> mapAT;
-    
+    int nElapsed = GetAdjustedTime() - mgLastMapAT;
+    if (nElapsed < 60 && !fForceRefresh)
+    {
+         return mgmapAT;
+    }
+    mgLastMapAT = GetAdjustedTime();
+
     std::map<std::string, std::string> mapRequestHeaders;
-    std::string sResponse = AtomicCommunication("GetOrderBook", mapRequestHeaders);
+    LogPrintf("\nGetOrderBookData %f", GetAdjustedTime());
+
+    std::string sResponse = AtomicCommunication("GetOrderBookV2", mapRequestHeaders);
     
     std::string sData = ExtractXML(sResponse, "<TRADES>", "</TRADES>");
     std::vector<std::string> sTrades;
     sTrades = Split(sData, "<ATOMICTRANSACTION>");
- 
+    mgmapAT.clear();
+
     for (int i = 0; i < sTrades.size(); i++)
     {
         std::string sRow = sTrades[i];
@@ -3474,18 +3514,33 @@ std::map<std::string, AtomicTrade> GetOrderBookData()
         {
              AtomicTrade a;
              a = a.FromJson(sRow);
-             mapAT[a.id] = a;
+             mgmapAT[a.id] = a;
         }
     }
-    return mapAT;
+
+    return mgmapAT;
 }
 
 
-AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod)
+AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod, std::string sAssetBookName)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
     std::string sObjType = "AtomicTrade";
+    
+    std::string sColoredAssetAddress = IsInAddressBook(r, sAssetBookName);
     a.Signer = DefaultRecAddress(r, "Trading-Public-Key");
+
+    if (a.Signer == "") {
+        a.Error = "Sorry, your TRADING-PUBLIC-KEY address is not available.";
+        TradingLog(a.Error);
+        return a;
+    }
+    if (sAssetBookName != "" && sColoredAssetAddress == "") {
+        a.Error = "Sorry, this signing address is not available.";
+        TradingLog(a.Error);
+        return a;
+    }
+
     a.Message = "authorize-" + DoubleToString(GetAdjustedTime(), 0);
     std::string sSignError;
     a.Signature = SignMessageEvo(r, a.Signer, a.Message, sSignError);
@@ -3495,23 +3550,30 @@ AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMe
          TradingLog("Placing Atomic Trade::Sign Error (You must use a good key).");
          return a;
     }
+    LogPrintf("\nTransmitAtomic ColoredAssetAddress %s", sColoredAssetAddress);
+
     std::string sBBPPrivKey =  GetTradingBBPPrivateKey(a.Signer, r);
     std::string sDogePrivKey = GetDogePrivateKey(a.Signer, r);
+    std::string sAssetPrivKey = GetTradingBBPPrivateKey(sColoredAssetAddress, r);
     std::string sPass = sBBPPrivKey.substr(0, 8);
     std::map<std::string, std::string> mapRequestHeaders;
     mapRequestHeaders["EncryptedBBPKey"] = EncryptBlockCypherString(sBBPPrivKey, sPass);
     mapRequestHeaders["EncryptedDogeKey"] = EncryptBlockCypherString(sDogePrivKey, sPass);
+    mapRequestHeaders["EncryptedAssetKey"] = EncryptBlockCypherString(sAssetPrivKey, sPass);
+
     mapRequestHeaders["Password"] = sPass;
     mapRequestHeaders["AtomicTrade"] = EncryptBlockCypherString(a.ToString(), sPass);
-
     std::string sResponse = AtomicCommunication(sMethod, mapRequestHeaders);
     std::string sData = ExtractXML(sResponse, "<ATOMIC>", "</ATOMIC>");
     TradingLog("PLACING ATOMIC TRADE::" + a.ToString());
     a = a.FromJson(sData);
-    if (a.Error == "" && a.Action == "buy" && sMethod=="TransmitAtomicTransaction")
+    std::string sError;
+    if (a.Error == "" && sMethod.substr(0,14)=="TransmitAtomic" && a.id.length() > 4)
     {
         // When buying with DOGE, we need to make a wallet tx so they can refer to the txid.
-        std::string sError;
+        a.TXID = TransmitSidechainTx(r, a, sError);
+    } else if (a.Error == "" && sMethod == "CancelAtomicTransactionV2" && a.id.length() > 4)
+    {
         a.TXID = TransmitSidechainTx(r, a, sError);
     }
     return a;
@@ -3587,7 +3649,7 @@ bool compare_sort_order_book_desc(std::pair<std::string, AtomicTrade>& a, std::p
 
 std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus)
 {
-    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData();
+    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData(false);
     std::vector<std::pair<std::string, AtomicTrade>> a;
     for (auto& it : mapAT)
     {
@@ -3621,8 +3683,6 @@ std::string GetFlags(AtomicTrade a, std::string sMyAddress, std::map<std::string
     bool fMine = (sMyAddress == a.Signer);
     std::string sFlags;
     std::string sMine = fMine ? "M" : "T";
-    std::string sMatchedTo = IsAlreadyMatched(mapAT, a);
-    std::string sMatched = sMatchedTo.length() > 0 ? "M" : "O";
     sFlags = sMine;
     return sFlags;
 }
@@ -3638,7 +3698,7 @@ std::vector<std::string> GetOrderBook(std::string sAction, JSONRPCRequest r)
 {
     std::vector<std::string> lRows;
     std::vector<std::pair<std::string, AtomicTrade>> orderBook = GetSortedOrderBook(sAction, "open");
-    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData();
+    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData(false);
 
     // For each Open order, where ACTION matches, get and sort by price
     std::string sMyAddress = DefaultRecAddress(r, "Trading-Public-Key");
@@ -3657,7 +3717,7 @@ std::vector<std::string> GetOrderBook(std::string sAction, JSONRPCRequest r)
          std::string sMatchedTo = IsAlreadyMatched(mapAT, a);
 
          std::string sRow = 
-                  DoubleToString(a.Price, 8)
+                   DoubleToString(a.Price, 8)
                  + "        " +
                    DoubleToStringWithLeadingZeroes(a.Quantity, 0, 8)
                  + "        "
@@ -3830,4 +3890,643 @@ void SetBBPTradingMessageSeen(std::string s)
     if (mapTradingMessageSeen.size() > 1000000) {
          mapTradingMessageSeen.clear();
     }
+}
+
+std::string GenerateAssetAddress(JSONRPCRequest r)
+{
+    CWallet* pwallet = GetInternalWallet(r);
+
+    CTxDestination dest;
+    std::string error;
+    for (int i = 0; i < 65536; i++)
+    {
+         if (!pwallet->GetNewChangeDestination(dest, error)) {
+             throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, error);
+         }
+         std::string sAddress = EncodeDestination(dest);
+         bool f = (sAddress.substr(sAddress.length()-3,3) == "1ZZ");
+         if (f)
+         {
+             LogPrintf("\r\nNumOfGenerateAssetAddress %f", i);
+             return sAddress;
+         }
+    }
+    return "N/A";
+ }
+
+std::string CreateBankrollDenominations(JSONRPCRequest r, double nQuantity, CAmount denominationAmount, std::string& sError)
+{
+    // First mark the denominations with the 1milliBBP TitheMarker
+    denominationAmount += ((.001) * COIN);
+    CAmount nBankrollMask = .001 * COIN;
+    CWallet* pwallet = GetInternalWallet(r);
+
+    if (!EnsureWalletIsAvailable(pwallet, false))
+         return "WALLET_NA";
+
+	
+    CAmount nTotal = denominationAmount * nQuantity;
+
+    std::string sCPK = DefaultRecAddress(r, "CHRISTIAN-PUBLIC-KEYPAIR");
+    CScript scriptPubKey = GetScriptForDestination(DecodeDestination(sCPK));
+
+    CAmount nFeeRequired;
+    std::vector<CRecipient> vecSend;
+    int nChangePosRet = -1;
+    for (int i = 0; i < nQuantity; i++) {
+         bool fSubtractFeeFromAmount = false;
+         CRecipient recipient = {scriptPubKey, denominationAmount, false};
+
+         vecSend.push_back(recipient);
+    }
+
+    bool fUseInstantSend = false;
+    double minCoinAge = 0;
+    std::string sOptData;
+    CCoinControl coinControl;
+
+    CTransactionRef tx;
+    bilingual_str strFailReason;
+
+    if (!pwallet->CreateTransaction(vecSend, tx, nFeeRequired, nChangePosRet, strFailReason, coinControl, true, 0))
+    {
+         return "UNABLE_TO_CREATE_TX";
+    }
+    pwallet->CommitTransaction(tx, {}, {});
+
+    std::string sTXID = tx->GetHash().GetHex();
+
+    return sTXID;
+}
+
+
+
+// BEGINNING OF ASSET WIF MR
+typedef unsigned char assetbyte;
+/* See https://en.wikipedia.org/wiki/Positional_notation#Base_conversion */
+char* base58(assetbyte* s, int s_size, char* out, int out_size)
+{
+    static const char* base_chars = "123456789"
+                                    "ABCDEFGHJKLMNPQRSTUVWXYZ"
+                                    "abcdefghijkmnopqrstuvwxyz";
+
+    assetbyte s_cp[s_size];
+    memcpy(s_cp, s, s_size);
+
+    int c, i, n;
+
+    out[n = out_size] = 0;
+    while (n--) {
+         for (c = i = 0; i < s_size; i++) {
+             c = c * 256 + s_cp[i];
+             s_cp[i] = c / 58;
+             c %= 58;
+         }
+         out[n] = base_chars[c];
+    }
+
+    return out;
+}
+
+
+std::string create_wif(const unsigned char* privatekey)
+{
+    unsigned char newKey[65];
+    unsigned char SHAkey[65];
+    unsigned char SHAkey2[65];
+    unsigned char checksum[11];
+    unsigned char combinedKey[75];
+
+    size_t combinedKeySize = 37;
+    size_t wifSize = 51;
+    char wif[51];
+
+    /* Add 0x80 byte in front */
+    newKey[0] = 182;//128 bitcoin
+
+    for (int i = 0; i < 32; i++) {
+         newKey[i + 1] = privatekey[i];
+    }
+
+    /* Perform SHA-256 hash on the extended key */
+    SHA256(newKey, 33, SHAkey);
+
+    /* Perform SHA-256 hash again on the result */
+    SHA256(SHAkey, 32, SHAkey2);
+
+    /* Checksum is first 4 bytes of 2nd SHA*/
+    for (int i = 0; i < 4; i++) {
+         checksum[i] = SHAkey2[i];
+    }
+
+    /* Append checksum to end of 2nd SHA */
+    for (int i = 0; i < 33; i++) {
+         combinedKey[i] = newKey[i];
+    }
+    for (int i = 0; i < 4; i++) {
+         combinedKey[33 + i] = checksum[i];
+    }
+
+    /* Encode with base-58 */
+    base58(combinedKey, combinedKeySize, wif, wifSize);
+    puts(wif);
+
+    std::string sPrivKey(wif);
+    return sPrivKey;
+}
+
+int is_hex(const char* s)
+{
+    int i;
+    for (i = 0; i < 64; i++)
+         if (!isxdigit(s[i]))
+             return 0;
+    return 1;
+}
+
+void str_to_byte(const char* src, assetbyte* dst, int n)
+{
+    while (n--)
+         sscanf(src + n * 2, "%2hhx", dst + n);
+}
+
+void pubkey_to_P2PKH(const unsigned char* pubkey64, char* out)
+{
+    assetbyte s[65];
+    assetbyte rmd[5 + RIPEMD160_DIGEST_LENGTH];
+
+    int j;
+    for (j = 0; j < 65; j++) {
+         s[j] = pubkey64[j];
+    }
+
+    // Biblepay Base58 Check Prefix
+    rmd[0] = 25; 
+    RIPEMD160(SHA256(s, 65, 0), SHA256_DIGEST_LENGTH, rmd + 1);
+
+    memcpy(rmd + 21, SHA256(SHA256(rmd, 21, 0), SHA256_DIGEST_LENGTH, 0), 4);
+    base58(rmd, 25, out, 34);
+
+    /* Count the number of extra 1s at the beginning of the address */
+    int k;
+    for (k = 1; out[k] == '1'; k++)
+    {
+         ;
+    }
+
+    /* Count the number of extra leading 0x00 bytes */
+    int n;
+    for (n = 1; rmd[n] == 0x00; n++)
+    {
+         ;
+    }
+
+    /* Remove k-n leading 1's from the address */
+    memmove(out, out + (k - n), 34 - (k - n));
+    out[34 - (k - n)] = '\0';
+}
+
+
+static secp256k1_context* xctx = NULL;
+
+/* Create private & public address pair */
+int gen_keypair(unsigned char* seckey, char* pubaddress, secp256k1_context* xctx)
+{
+    secp256k1_pubkey pubkey;
+    unsigned char public_key64[65];
+    size_t pk_len = 65;
+    /* Load private key (seckey) from random bytes */
+    FILE* frand = fopen("/dev/urandom", "r");
+    size_t myval = fread(seckey, 32, 1, frand);
+    fclose(frand);
+    if (frand == NULL)
+    {
+         printf("Failed to read /dev/urandom\n");
+         return 0;
+    }
+
+    /* Apparently there is a 2^-128 chance of a secret key being invalid.  https://en.bitcoin.it/wiki/Private_key */
+    /* Verify secret key is valid */
+    if (!secp256k1_ec_seckey_verify(xctx, seckey)) {
+         printf("Invalid secret key\n");
+    }
+
+    /* Create Public Key */
+    if (!secp256k1_ec_pubkey_create(xctx, &pubkey, seckey))
+    {
+         printf("Failed to create public key\n");
+         return 0;
+    }
+
+    /* Serialize Public Key */
+    secp256k1_ec_pubkey_serialize(xctx, public_key64, &pk_len, &pubkey, SECP256K1_EC_UNCOMPRESSED);
+    pubkey_to_P2PKH(public_key64, pubaddress);
+    return 1;
+}
+
+bool EndsWith(std::string sData, std::string sWhat)
+{
+    boost::to_upper(sData);
+    boost::to_upper(sWhat);
+
+    if (sWhat.length() > sData.length()) {
+         return false;
+    }
+    std::string sEnd = sData.substr(sData.length() - sWhat.length(), sWhat.length());
+    bool f = (sEnd == sWhat);
+    return f;
+}
+
+std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::string sAddressLabel, std::string& sPrivKey, int nMaxIterations)
+{
+    std::string sAddress = IsInAddressBook(r, sAddressLabel);
+    if (!sAddress.empty())
+    {
+         return sAddress;
+    }
+
+    unsigned char seckey[32];
+    char pubaddress[34];
+    char myseckey[32];
+    sPrivKey = "";
+
+    xctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN |
+                                   SECP256K1_CONTEXT_VERIFY);
+
+    for (int i = 0; i < nMaxIterations; i++)
+    {
+        if (!gen_keypair(seckey, pubaddress, xctx))
+        {
+             return "NA";
+        }
+        std::string sMyAddress(pubaddress);
+        // Assets end with "NN" "ZZ"
+        if (EndsWith(sMyAddress, sAssetSuffix))
+        {
+             sPrivKey = create_wif(seckey);
+             secp256k1_context_destroy(xctx);
+             bool fRescan = false;
+             CWallet* pwallet = GetInternalWallet(r);
+             std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+             LOCK(pwallet->cs_wallet);
+             EnsureWalletIsUnlocked(pwallet);
+             EnsureLegacyScriptPubKeyMan(*wallet, true);
+             WalletBatch batch(pwallet->GetDatabase());
+             WalletRescanReserver reserver(*pwallet);
+             if (fRescan && !reserver.reserve()) {
+                    throw JSONRPCError(RPC_WALLET_ERROR, "Wallet is currently rescanning. Abort existing rescan or wait.");
+             }
+             CKey key = DecodeSecret(sPrivKey);
+             if (!key.IsValid()) {
+                    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
+             }
+             CPubKey pubkey = key.GetPubKey();
+             CHECK_NONFATAL(key.VerifyPubKey(pubkey));
+             PKHash vchAddress = PKHash(pubkey);
+             {
+                   pwallet->MarkDirty();
+                   if (!pwallet->FindAddressBookEntry(vchAddress))
+                   {
+                        pwallet->SetAddressBook(vchAddress, sAddressLabel, "receive");
+                   }
+                   if (!pwallet->ImportPrivKeys({{ToKeyID(vchAddress), key}}, 1)) {
+                                           throw JSONRPCError(RPC_WALLET_ERROR, "Error adding key to wallet");
+                   }
+             }
+             if (fRescan)
+             {
+                // **RescanWallet(*pwallet, reserver);**
+             }
+
+             return sMyAddress;
+        }
+    }
+
+    /* Destroy context to free memory */
+    secp256k1_context_destroy(xctx);
+    return "";
+}
+// END OF ASSET WIF MR
+
+
+std::string GetColoredAssetShortCode(std::string sTicker)
+{
+    boost::to_upper(sTicker);
+    if (sTicker == "DOGE") {
+        return "DGZZ";
+    } else {
+        return "";
+    }
+}
+
+bool IsColoredCoin0(std::string sDestination)
+{
+    boost::to_upper(sDestination);
+    bool fColored = EndsWith(sDestination, "ZZ");
+    return fColored;
+}
+
+
+double GetAssetBalance(JSONRPCRequest r, std::string sLongCode)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+    CWallet* const pwallet = wallet.get();
+    std::string sShortCode = GetColoredAssetShortCode(sLongCode);
+    CAmount nBalance0 = pwallet->GetAssetBalance(sShortCode);
+    double nBalance = AmountToDouble(nBalance0);
+    return nBalance;
+}
+
+std::string GetDefaultReceiveAddress(std::string sName)
+{
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    std::string sOut = DefaultRecAddress(r0, sName);
+    return sOut;
+}
+
+std::vector<std::string> GetColoredVinAddresses(const CTransaction& tx, const CCoinsViewCache& view, bool fColoredSearch)
+{
+    std::vector<std::string> vAssetAddresses;
+
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    for (unsigned int k = 0; k < tx.vin.size(); k++)
+    {
+        const Coin& coin = view.AccessCoin(tx.vin[k].prevout);
+        const CTxOut& txOutPrevOut = coin.out;
+        std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
+
+        if (sFromAddress == consensusParams.FoundationAddress) {
+            // Allow foundation to mint an asset.  Allows us to onboard a new asset.
+            continue;
+        }
+        bool fIsColored = IsColoredCoin0(sFromAddress);
+        if ((fColoredSearch && fIsColored) || (!fColoredSearch && !fIsColored))
+        {
+             if (std::find(vAssetAddresses.begin(), vAssetAddresses.end(), sFromAddress) == vAssetAddresses.end())
+             {
+                   LogPrintf("\nGetColoredVin %f %s", fColoredSearch, sFromAddress);
+                   vAssetAddresses.push_back(sFromAddress);
+             }
+        }
+    }
+    return vAssetAddresses;
+}
+
+std::vector<std::string> GetColoredVoutAddresses(const CTransaction& tx, bool fColoredSearch)
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
+    
+    std::vector<std::string> vAssetAddresses;
+    for (unsigned int k = 0; k < tx.vout.size(); k++)
+    {
+        const CTxOut txOut = tx.vout[k];
+        std::string sAddress = PubKeyToAddress(txOut.scriptPubKey);
+        // Allow coins to be burned
+        if (sAddress == consensusParams.BurnAddress)
+        {
+             continue;
+        }
+
+        bool fIsColored = IsColoredCoin0(sAddress);
+        if ((fColoredSearch && fIsColored ) || (!fColoredSearch && !fIsColored))
+        {
+             if (std::find(vAssetAddresses.begin(), vAssetAddresses.end(), sAddress) == vAssetAddresses.end())
+             {
+                   LogPrintf("\nGetColoredVout %f %s", fColoredSearch, sAddress);
+
+                   vAssetAddresses.push_back(sAddress);
+             }
+        }
+    }
+    return vAssetAddresses;
+}
+
+bool IsAssetLength(std::vector<std::string> v, int nLen)
+{
+    for (int i = 0; i < v.size(); i++)
+    {
+        int nSz = v[i].length();
+        if (nSz != nLen) return false;
+    }
+    return true;
+}
+
+bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& view)
+{
+    // first detect if there is a spent coin that is colored in either vin or vout.
+    std::vector<std::string> vAssetAddressesVINColored = GetColoredVinAddresses(tx, view, true);
+    std::vector<std::string> vAssetAddressesVOUTColored = GetColoredVoutAddresses(tx, true);
+    std::vector<std::string> vAssetAddressesVINNotColored = GetColoredVinAddresses(tx, view, false);
+    std::vector<std::string> vAssetAddressesVOUTNotColored = GetColoredVoutAddresses(tx, false);
+
+    if ((vAssetAddressesVINColored.size() + vAssetAddressesVOUTColored.size()) == 0)
+    {
+        LogPrintf("\nValidateAssetTransaction::Colored=0 %f",0);
+        // If its a normal transaction with no assets moving from or to anyone:
+        return true;
+    }
+    // All addresses should be 34.
+    bool fPass = true;
+    if (IsAssetLength(vAssetAddressesVINColored, 34)) fPass = false;
+    if (IsAssetLength(vAssetAddressesVOUTColored, 34)) fPass = false;
+    if (IsAssetLength(vAssetAddressesVINNotColored, 34)) fPass = false;
+    if (IsAssetLength(vAssetAddressesVOUTNotColored, 34)) fPass = false;
+    if (!fPass)
+    {
+        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTransaction::Failed AssetLength != %f", 34);
+        return false;
+    }
+    // EXCEPTIONS FOR OUTGATE.  If the vOUTNonColored is the BURN address, we can allow this tx into the memory pool.
+   
+    // EXCEPTIONS FOR INGATE.  If the VIN is from the Foundation.  Allow Foundation to fund a new MMZZ.
+
+    // We cant spend more than 1 colored VIN Address at a time.
+    if (vAssetAddressesVINColored.size() > 1 || vAssetAddressesVINNotColored.size() > 0)
+    {
+        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTx::Tx Rejected; ColoredVinCount %f, Uncolored VIN Count %f ",
+                  vAssetAddressesVINColored.size(), vAssetAddressesVINNotColored.size());
+        return false;
+    }
+
+    // Remove the sender address from the VOUT for more checks.
+    if (vAssetAddressesVINColored.size() > 0) {
+        vAssetAddressesVOUTColored.erase(std::remove(vAssetAddressesVOUTColored.begin(), vAssetAddressesVOUTColored.end(), vAssetAddressesVINColored[0]), vAssetAddressesVOUTColored.end());
+    }
+
+    // We cant spend to more than 1 colored VOUT Address at a time and cant spend to a non-colored asset either.
+    if (vAssetAddressesVOUTColored.size() > 1 || vAssetAddressesVOUTNotColored.size() > 0)
+    {
+        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTx::Tx Rejected; ColoredVOUTCount %f, Uncolored VOUT Count %f ",
+                  vAssetAddressesVOUTColored.size(), vAssetAddressesVOUTNotColored.size());
+        return false;
+    }
+
+    // Rule 1 - If this is an ingate transaction (from a sanc to a user):
+    if (vAssetAddressesVINColored.size() > 0 && vAssetAddressesVOUTColored.size() > 0)
+    {
+        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTx From Asset Code %s To Asset Code %s", vAssetAddressesVINColored[0], vAssetAddressesVOUTColored[0]);
+
+        if (EndsWith(vAssetAddressesVINColored[0], "MMZZ") && EndsWith(vAssetAddressesVOUTColored[0], "ZZ") && vAssetAddressesVOUTColored.size() == 1)
+        {
+            return true;
+        }
+    
+        // Rule 2 - A colored asset must be going from and to the same asset type...
+        std::string sSendingAssetType = vAssetAddressesVINColored[0].substr(vAssetAddressesVINColored[0].length() - 4, 4);
+        if (!(EndsWith(vAssetAddressesVINColored[0], sSendingAssetType) && EndsWith(vAssetAddressesVOUTColored[0], sSendingAssetType)))
+        {
+            LogPrintf("AcceptToMemoryPool::ValidateAssetTx::Asset Type Mismatch::Tx Rejected; SendingAsset %s, ReceivingAsset %s",
+                  vAssetAddressesVINColored[0], vAssetAddressesVOUTColored[0]);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+CAmount GetWalletBalanceForSpecificAddress(std::string sAddress)
+{
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r0);
+    CWallet* const pwallet = wallet.get();
+    std::vector<COutput> vecOutputs;
+    pwallet->AvailableCoins(vecOutputs, true, nullptr, 1, MAX_MONEY, MAX_MONEY, 0, true);
+    CAmount nTotalMatched = 0;
+    for (const auto& out : vecOutputs)
+    {
+        std::string sSourceAddress = PubKeyToAddress(out.tx->tx->vout[out.i].scriptPubKey);
+        if (sAddress == sSourceAddress) {
+            nTotalMatched += out.tx->tx->vout[out.i].nValue;
+        }
+    }
+    return nTotalMatched;
+}
+
+bool RPCSendAsset(JSONRPCRequest r, std::string& sError, std::string& sTXID, std::string sAddress, CAmount nValue, std::string sLongAssetCode)
+{
+    std::string sShortAssetCode = GetColoredAssetShortCode(sLongAssetCode);
+    if (sShortAssetCode == "") {
+        sError = "Invalid short asset code.";
+        return false;
+    }
+    CWallet* pwallet = GetInternalWallet(r);
+
+    if (!EnsureWalletIsAvailable(pwallet, false)) {
+        sError = "Wallet is not available.";
+        return false;
+    }
+
+    bool fDestTypeMatch = EndsWith(sAddress, sShortAssetCode);
+    if (!fDestTypeMatch)
+    {
+        sError = "Destination asset type must match primary asset type.";
+        return false;
+    }
+    bool fDestColored = IsColoredCoin0(sAddress);
+    if (!fDestColored)
+    {
+        sError = "Destination must be a colored asset.";
+        return false;
+    }
+
+    boost::to_upper(sLongAssetCode);
+    std::string sAssetInAddressBook = "TRADING-ASSET-" + sLongAssetCode;
+    std::string sAssetAddress = IsInAddressBook(r, sAssetInAddressBook);
+    if (sAssetAddress == "")
+    {
+        sError = "Sorry, the asset has not been mined yet.";
+        return false;
+    }
+
+    CScript scriptPubKey = GetScriptForDestination(DecodeDestination(sAddress));
+
+    CAmount nFeeRequired;
+    bilingual_str strFailReason;
+    std::vector<CRecipient> vecSend;
+    int nChangePosRet = 1;
+
+    CRecipient recipient = {scriptPubKey, nValue, false};
+    vecSend.push_back(recipient);
+    // END OF BIBLEPAY
+
+    int nMinConfirms = 0;
+    int nChangePos = 1;
+    CTransactionRef tx;
+
+
+    CCoinControl coinControl;
+    coinControl.fRequireAllInputs = false;
+    std::vector<COutput> vecOutputs;
+
+    pwallet->AvailableCoins(vecOutputs, true, nullptr, 1, MAX_MONEY, MAX_MONEY, 0, true);
+    CAmount nTotalMatched = 0;
+    for (const auto& out : vecOutputs)
+    {
+        std::string sSourceAddress = PubKeyToAddress(out.tx->tx->vout[out.i].scriptPubKey);
+        bool fColoredSource = IsColoredCoin0(sSourceAddress);
+        if (false) LogPrintf("\nSourceAddress %s colored %f assetaddress %s", sSourceAddress, fColoredSource, sAssetAddress);
+
+        if (sSourceAddress == sAssetAddress && !fColoredSource)
+        {
+            sError = "The address was found in the address book, but is not a colored asset.";
+            return false;
+        }
+        if (EndsWith(sSourceAddress, sShortAssetCode) && sSourceAddress != sAddress)
+        {
+            coinControl.Select(COutPoint(out.tx->tx->GetHash(), out.i));
+            nTotalMatched += out.tx->tx->vout[out.i].nValue;
+            CTxDestination changeDest;
+            if (!ExtractDestination(out.tx->tx->vout[out.i].scriptPubKey, changeDest))
+            {
+                   sError = "Unable to decode asset scriptPubKey.";
+                   return false;
+            }
+            else
+            {
+                coinControl.destChange = changeDest;
+            }
+            if (nTotalMatched > nValue) {
+                   break;
+            }
+        }
+    }
+
+    if (!coinControl.HasSelected()) {
+        sError = "Sorry, no ASSET coins were selected to spend.";
+        return false;
+    }
+
+    if (!pwallet->CreateTransaction(vecSend, tx, nFeeRequired, nChangePos, strFailReason, coinControl, true, 0, true))
+    {
+        // Todo : Convert bilingual string(strError) and append to the error
+        sError = "Unable to Create Transaction [" + strFailReason.original + "] (Amount selected = " + DoubleToString(AmountToDouble(nTotalMatched), 2) + ")";
+
+        return false;
+    }
+
+    pwallet->CommitTransaction(tx, {}, {});
+    int nVoutPosition = 0;
+
+    for (unsigned int i = 0; i < tx->vout.size(); i++) {
+        if (tx->vout[i].nValue == nValue) {
+            nVoutPosition = i;
+        }
+    }
+
+    sTXID = tx->GetHash().GetHex();
+    return true;
+}
+
+double GetAssetBalanceNoWallet(std::string sShortCode)
+{
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r0);
+    CWallet* const pwallet = wallet.get();
+    CAmount nBalance0 = pwallet->GetAssetBalance(sShortCode);
+    double nBalance = AmountToDouble(nBalance0);
+    return nBalance;
 }

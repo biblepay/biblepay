@@ -743,6 +743,14 @@ void BitcoinGUI::createToolBars()
         tabGroup->addButton(extensionAction);
         connect(extensionAction, SIGNAL(clicked()), this, SLOT(showExtensions()));
 
+        exchangeButton = new QToolButton(this);
+        exchangeButton->setText(tr("&Exchange"));
+        exchangeButton->setStatusTip(tr("Exchange"));
+        tabGroup->addButton(exchangeButton);
+        connect(exchangeButton, &QToolButton::clicked, this, &BitcoinGUI::gotoExchangePage);
+        exchangeButton->setEnabled(true);
+
+
 
         prayerRequestAction = new QToolButton(this);
         prayerRequestAction->setText(tr("&Prayer Req."));
@@ -1239,7 +1247,7 @@ void BitcoinGUI::showUnchained()
 
 void BitcoinGUI::showPrayerRequests()
 {
-    std::string sURL = "https://unchained.biblepay.org";
+    std::string sURL = "https://unchained.biblepay.org/prayer/prayerlist";
     QDesktopServices::openUrl(QUrl(GUIUtil::TOQS(sURL)));
 }
 
@@ -1278,6 +1286,13 @@ void BitcoinGUI::gotoMasternodePage()
         masternodeButton->setChecked(true);
         if (walletFrame) walletFrame->gotoMasternodePage();
     }
+}
+
+void BitcoinGUI::gotoExchangePage()
+{
+    QSettings settings;
+    exchangeButton->setChecked(true);
+    if (walletFrame) walletFrame->gotoExchangePage();
 }
 
 void BitcoinGUI::gotoReceiveCoinsPage()

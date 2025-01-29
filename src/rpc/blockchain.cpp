@@ -3270,28 +3270,151 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sData2 = ReceiveIPC();
         results.pushKV("ipc2", sData2);
     }
-    else if (sItem == "canceltrade")
+    else if (sItem == "createassetaddress")
     {
-        if (request.params.size() < 2)
+        if (request.params.size() != 2)
+            throw std::runtime_error("You must specify type: IE 'exec createasset longcode'.");
+        std::string sLongCode = request.params[1].get_str();
+        std::string sShortCode = GetColoredAssetShortCode(sLongCode);
+        if (sShortCode.empty())
         {
-            throw std::runtime_error("You must specify: exec canceltrade order_id "
-                                     "\r\n  Ex: exec canceltrade 123");
+            throw std::runtime_error("Asset does not exist.");
         }
-        std::string sOrderID = request.params[1].get_str();
+        std::string sPrivKey;
+        std::string sPub = SearchForAsset(request, "DGZZ", "TRADING-ASSET-DOGE", sPrivKey, 2000000);
+        results.pushKV("Asset", sPub);
+        results.pushKV("Priv", sPrivKey);
+    }
+    else if (sItem == "bankroll")
+    {
+        if (request.params.size() != 3)
+            throw std::runtime_error("You must specify type: IE 'exec bankroll quantity denomination'.  IE exec bankroll 10 100 (creates ten 100 BBP bills).");
+        double nQty = StringToDouble(request.params[1].get_str(), 0);
+        CAmount denomination = StringToDouble(request.params[2].get_str(), 4) * COIN;
+        std::string sError;
+        std::string sTxId = CreateBankrollDenominations(request, nQty, denomination, sError);
+        results.pushKV("Error", sError);
+        results.pushKV("TXID", sTxId);
+    }
+    else if (sItem == "getassetbalance")
+    {
+        if (request.params.size() != 2)
+            throw std::runtime_error("You must specify type: IE 'exec getassetbalance assettype'.  IE exec getassetbalance DOGE.");
+        std::string sLongCode = request.params[1].get_str();
+        std::string sShortCode = GetColoredAssetShortCode(sLongCode);
+        double nBalance = GetAssetBalance(request, sLongCode);
+        LogPrintf("\nAssetBalance %f", nBalance);
+
+        results.pushKV("Asset_Code", sShortCode);
+        results.pushKV("Balance", DoubleToString(nBalance, 4));
+    }
+    else if (sItem == "wrap")
+    {
+
+        if (request.params.size() < 3)
+        {
+            throw std::runtime_error("You must specify: exec wrap asset_long_name quantity "
+                                     "\r\n  Ex: exec wrap doge 1.  You will lose 1 DOGE and gain 1 wrapped DOGE.");
+        }
+        std::string sAssetLongName = request.params[1].get_str();
+        boost::to_upper(sAssetLongName);
+        std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
+        if (sAssetShortCode.empty())
+        {
+            throw std::runtime_error("Asset code not found.");
+        }
+        if (sAssetShortCode != "DGZZ")
+        {
+            throw std::runtime_error("At this time, only DOGE is supported.");
+        }
+
+        std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
+
+        std::string sAltAddress = IsInAddressBook(request, sAssetBookName);
+        if (sAltAddress.empty()) {
+            throw std::runtime_error("Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.");
+        }
         AtomicTrade a;
-        a.id = sOrderID;
-        a = TransmitAtomicTrade(request, a, "CancelAtomicTransaction");
+        a.Action = "ingate";
+        a.Time = GetAdjustedTime();
+        a.Quantity = StringToDouble(request.params[2].get_str(), 4);
+        if (a.Quantity <= 0)
+        {
+            throw std::runtime_error("The Quantity must be greater than zero.");
+        }
+        a.SymbolBuy = "bbp";
+        a.SymbolSell = sAssetLongName;
+        boost::to_lower(a.SymbolSell);
+        a.Price = 1;
+        a.Version = 1;
+        a.Status = "ingate";
+        a = TransmitAtomicTrade(request, a, "TransmitIngateTransactionV2", sAssetBookName);
+        results.pushKV("id", a.id);
         results.pushKV("Tx", a.ToString());
-        results.pushKV("block_explorer", a.BlockExplorerURL);
         results.pushKV("Error", a.Error);
     }
-    else if (sItem == "shadump")
+    else if (sItem == "unwrap") {
+        if (request.params.size() < 3) {
+            throw std::runtime_error("You must specify: exec unwrap asset_long_name quantity "
+                                     "\r\n  Ex: exec unwrap doge 1.  You will lose 1 DOGE wrapped coin and gain 1 real DOGE.");
+        }
+        std::string sAssetLongName = request.params[1].get_str();
+        boost::to_upper(sAssetLongName);
+        std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
+        if (sAssetShortCode.empty()) {
+            throw std::runtime_error("Asset code not found.");
+        }
+        if (sAssetShortCode != "DGZZ") {
+            throw std::runtime_error("At this time, only DOGE is supported.");
+        }
+
+        std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
+
+        std::string sAltAddress = IsInAddressBook(request, sAssetBookName);
+        if (sAltAddress.empty())
+        {
+            throw std::runtime_error("Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.");
+        }
+        AtomicTrade a;
+        a.Action = "outgate";
+        a.Status = "outgate";
+        a.Time = GetAdjustedTime();
+        a.Quantity = StringToDouble(request.params[2].get_str(), 4);
+        if (a.Quantity <= 0) {
+            throw std::runtime_error("The Quantity must be greater than zero.");
+        }
+        a.SymbolBuy = "bbp";
+        a.SymbolSell = sAssetLongName;
+        boost::to_lower(a.SymbolSell);
+        a.Price = 1;
+        a.Version = 1;
+        a = TransmitAtomicTrade(request, a, "TransmitOutgateTransactionV2", sAssetBookName);
+        results.pushKV("id", a.id);
+        results.pushKV("Tx", a.ToString());
+        results.pushKV("Error", a.Error);
+    }
+    else if (sItem == "sendasset")
     {
-        OneTimeShaDump();
-        results.pushKV("SHA", 1);
+        if (request.params.size() < 3)
+        {
+            throw std::runtime_error("You must specify: exec sendasset assettype destaddress amount"
+                                     "\r\n IE: exec sendasset DOGE destination_bbp_address 1");
+        }
+
+        std::string sLongAssetCode = request.params[1].get_str();
+        std::string sDest = request.params[2].get_str();
+        double nAmt = StringToDouble(request.params[3].get_str(), 4);
+        CAmount nTotal = nAmt * COIN;
+        std::string sError;
+        std::string sTXID;
+
+        bool fSent = RPCSendAsset(request, sError, sTXID, sDest, nTotal, sLongAssetCode);
+        results.pushKV("Error", sError);
+        results.pushKV("TXID", sTXID);
     }
     else if (sItem == "placetrade")
     {
+        /*
         if (request.params.size() < 4) {
             throw std::runtime_error("You must specify: exec placetrade action quantity price "
                 "\r\n  Ex: placetrade buy 500 .00001 (This will create an offer to buy 500 BBP for a price of .00001 doge per bbp.)");
@@ -3343,9 +3466,11 @@ UniValue exec(const JSONRPCRequest& request)
         results.pushKV("block_explorer", a.BlockExplorerURL);
 
         results.pushKV("Error", a.Error);
+        */
     }
     else if (sItem == "listorderbook")
     {
+        /*
         if (request.params.size() < 2)
         {
             throw std::runtime_error("You must specify listorderbook BUY/SELL. IE:  listorderbook BUY");
@@ -3362,6 +3487,7 @@ UniValue exec(const JSONRPCRequest& request)
             iRow++;
             results.pushKV(DoubleToStringWithLeadingZeroes(iRow, 0, 3), sRow);
         }
+        */
     } else if (sItem == "hamans-hanging")
     {
         std::map<std::string, std::string> mapRequestHeaders;
@@ -3550,7 +3676,7 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sSancName = request.params[1].get_str();
         std::string sIP = request.params[2].get_str();
 
-        if (sSancName == "" || sIP == "") {
+        if (sSancName.empty() || sIP.empty()) {
             throw std::runtime_error("You must specify sanc name");
         }
 
@@ -3568,8 +3694,8 @@ UniValue exec(const JSONRPCRequest& request)
             throw std::runtime_error("You must have at least 4.5MM available to fund a new sanctuary.  Also, please ensure your wallet is unlocked. ");
         }
         
-        std::string sError = "";
-        std::string sTXID = "";
+        std::string sError;
+        std::string sTXID;
         int nVoutPosition = 0;
         CAmount nAmount = SANCTUARY_COLLATERAL * COIN;
         std::string sMySancAddress = DefaultRecAddress(request,sSancName + "-sanc"); // Keeps this name from clashing with "-v" (voting address)

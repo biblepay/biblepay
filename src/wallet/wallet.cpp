@@ -16,6 +16,8 @@
 #include <fs.h>
 #include <interfaces/chain.h>
 #include <interfaces/wallet.h>
+#include "rpcpog.h"
+
 #include <key.h>
 #include <key_io.h>
 #include <policy/fees.h>
@@ -23,6 +25,11 @@
 #include <policy/settings.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
+#include "rpcpog.h"
+#include <boost/algorithm/string.hpp>           // for trim()
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
+#include <boost/algorithm/string/replace.hpp>
+
 #include <script/descriptor.h>
 #include <script/script.h>
 #include <script/sign.h>
@@ -2517,6 +2524,36 @@ CAmount CWallet::GetAnonymizableBalance(bool fSkipDenominated, bool fSkipUnconfi
     return nTotal;
 }
 
+bool StringEndsWith(std::string sData, std::string sWhat)
+{
+    boost::to_upper(sData);
+    boost::to_upper(sWhat);
+
+    if (sWhat.length() > sData.length()) {
+        return false;
+    }
+    std::string sEnd = sData.substr(sData.length() - sWhat.length(), sWhat.length());
+    bool f = (sEnd == sWhat);
+    return f;
+}
+
+CAmount CWallet::GetAssetBalance(std::string sAssetCode) const
+{
+    std::vector<CompactTallyItem> vecTally = SelectCoinsGroupedByAddresses(false, false, false, 2500, false);
+    if (vecTally.empty()) return 0;
+    CAmount nTotal = 0;
+    for (const auto& item : vecTally)
+    {
+        std::string sDest = EncodeDestination(item.txdest);
+        if (sAssetCode == "" || StringEndsWith(sDest, sAssetCode))
+        {
+            nTotal += item.nAmount;
+            if (false) LogPrintf("\nCOIN %f", item.nAmount);
+        }
+    }
+    return nTotal;
+}
+
 // Note: calculated including unconfirmed,
 // that's ok as long as we use it for informational purposes only
 float CWallet::GetAverageAnonymizedRounds() const
@@ -2578,7 +2615,25 @@ CAmount CWallet::GetAvailableBalance(const CCoinControl* coinControl) const
     return balance;
 }
 
-void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const CCoinControl* coinControl, const CAmount& nMinimumAmount, const CAmount& nMaximumAmount, const CAmount &nMinimumSumAmount, const uint64_t nMaximumCount) const
+bool IsColoredCoin1(std::string sDestination)
+{
+    boost::to_upper(sDestination);
+    bool fColored = StringEndsWith(sDestination, "ZZ");
+    return fColored;
+}
+
+std::string PubKeyToAddress2(const CScript& scriptPubKey)
+{
+    CTxDestination address1;
+    if (!ExtractDestination(scriptPubKey, address1)) {
+        return "";
+    }
+    std::string sOut = EncodeDestination(address1);
+    return sOut;
+}
+
+void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const CCoinControl* coinControl, const CAmount& nMinimumAmount,
+    const CAmount& nMaximumAmount, const CAmount &nMinimumSumAmount, const uint64_t nMaximumCount, const bool fIncludeColored) const
 {
     AssertLockHeld(cs_wallet);
 
@@ -2588,7 +2643,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
     CAmount nTotal = 0;
 
     // BIBLEPAY
-    int nMaxBBPCount = 256;
+    int nMaxBBPCount = 500;
 
     // Either the WALLET_FLAG_AVOID_REUSE flag is not set (in which case we always allow), or we default to avoiding, and only in the case where
     // a coin control object is provided, and has the avoid address reuse flag set to false, do we allow already used addresses
@@ -2664,6 +2719,13 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
             if (!allow_used_addresses && IsSpentKey(wtxid, i)) {
                 continue;
             }
+
+            // BBP - Skip Colored Coins
+            std::string sAddress = PubKeyToAddress2(pcoin->tx->vout[i].scriptPubKey);
+            bool fColored = IsColoredCoin1(sAddress);
+            if (!fIncludeColored && fColored) continue;
+            // END BBP
+
 
             std::unique_ptr<SigningProvider> provider = GetSolvingProvider(pcoin->tx->vout[i].scriptPubKey);
 
@@ -3285,7 +3347,7 @@ static uint32_t GetLocktimeForNewTransaction(interfaces::Chain& chain, const uin
     return locktime;
 }
 
-std::vector<CompactTallyItem> CWallet::SelectCoinsGroupedByAddresses(bool fSkipDenominated, bool fAnonymizable, bool fSkipUnconfirmed, int nMaxOupointsPerAddress) const
+std::vector<CompactTallyItem> CWallet::SelectCoinsGroupedByAddresses(bool fSkipDenominated, bool fAnonymizable, bool fSkipUnconfirmed, int nMaxOupointsPerAddress, bool fSkipColored) const
 {
     LOCK(cs_wallet);
 
@@ -3333,6 +3395,12 @@ std::vector<CompactTallyItem> CWallet::SelectCoinsGroupedByAddresses(bool fSkipD
             if (nMaxOupointsPerAddress != -1 && itTallyItem != mapTally.end() && int64_t(itTallyItem->second.vecInputCoins.size()) >= nMaxOupointsPerAddress) continue;
 
             if(IsSpent(outpoint.hash, i) || IsLockedCoin(outpoint.hash, i)) continue;
+
+            // BBP - Skip Colored Coins
+            std::string sDest0 = EncodeDestination(txdest);
+            bool fColored = IsColoredCoin1(sDest0);
+            if (fSkipColored && fColored) continue;
+            // END BBP
 
             if(fSkipDenominated && CoinJoin::IsDenominatedAmount(wtx.tx->vout[i].nValue)) continue;
 
@@ -3466,7 +3534,9 @@ bool CWallet::GetBudgetSystemCollateralTX(CTransactionRef& tx, uint256 hash, CAm
     return true;
 }
 
-bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CAmount& nFeeRet, int& nChangePosInOut, bilingual_str& error, const CCoinControl& coin_control, bool sign, int nExtraPayloadSize)
+bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CAmount& nFeeRet,
+    int& nChangePosInOut, bilingual_str& error, const CCoinControl& coin_control, bool sign,
+    int nExtraPayloadSize, bool fIncludeColored)
 {
     CAmount nValue = 0;
     ReserveDestination reservedest(this);
@@ -3501,7 +3571,8 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransac
         {
             CAmount nAmountAvailable{0};
             std::vector<COutput> vAvailableCoins;
-            AvailableCoins(vAvailableCoins, true, &coin_control, 1, MAX_MONEY, MAX_MONEY, 0);
+            AvailableCoins(vAvailableCoins, true, &coin_control, 1, MAX_MONEY, MAX_MONEY, 0, fIncludeColored);
+
             CoinSelectionParams coin_selection_params; // Parameters for coin selection, init with dummy
             coin_selection_params.use_bnb = false; // never use BnB
 

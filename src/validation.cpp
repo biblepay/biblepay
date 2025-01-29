@@ -671,15 +671,6 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     assert(std::addressof(::ChainstateActive()) == std::addressof(m_active_chainstate));
 
-    /* BIBLEPAY NFT */
-
-    bool fOK = CheckMemPoolTransactionBiblepay(tx, m_active_chainstate.m_chain.Tip());
-    if (!fOK) {
-        return error("%s: CheckMemPoolTxBiblePay: %s, %s", __func__, hash.ToString(), state.ToString());
-    }
-    
-    /* END OF BIBLEPAY */
-
 
     if (!ContextualCheckTransaction(tx, state, chainparams.GetConsensus(), m_active_chainstate.m_chain.Tip()))
         return error("%s: ContextualCheckTransaction: %s, %s", __func__, hash.ToString(), state.ToString());
@@ -748,6 +739,29 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     assert(std::addressof(::ChainstateActive().CoinsTip()) == std::addressof(m_active_chainstate.CoinsTip()));
     const CCoinsViewCache& coins_cache = m_active_chainstate.CoinsTip();
+
+
+
+
+    /* BIBLEPAY NFT */
+
+    bool fOK = CheckMemPoolTransactionBiblepay(tx, m_active_chainstate.m_chain.Tip());
+    if (!fOK) {
+        return error("%s: CheckMemPoolTxBiblePay: %s, %s", __func__, hash.ToString(), state.ToString());
+    }
+
+    fOK = ValidateAssetTransaction(tx, coins_cache);
+    if (!fOK) {
+        return error("%s: ValidateAssetTransactionBiblePay: %s, %s", __func__, hash.ToString(), state.ToString());
+    }
+
+    /* END OF BIBLEPAY */
+
+
+
+
+
+
     // do all inputs exist?
     for (const CTxIn& txin : tx.vin) {
         if (!coins_cache.HaveCoinInCache(txin.prevout)) {
@@ -3920,6 +3934,16 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
             return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion", strprintf("incorrect block version after mandatory upgrade to babylon-falling %d %d", block.nVersion, nHeight));
         }
     }
+    if (nHeight >= consensusParams.GREAT_AWAKENING_HEIGHT)
+    {
+        int GREAT_AWAKENING_BLOCK_VERSION = 1700000000;
+        if (block.nVersion <= GREAT_AWAKENING_BLOCK_VERSION)
+        {
+            return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion",
+                strprintf("incorrect block version after mandatory upgrade to great-awakening %d %d", block.nVersion, nHeight));
+        }
+    }
+    
     // Verify the legacy RandomX hash here.
     if (nHeight <= consensusParams.BABYLON_FALLING_HEIGHT)
     {

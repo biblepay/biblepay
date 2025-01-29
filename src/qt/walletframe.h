@@ -15,6 +15,7 @@ class SendCoinsRecipient;
 class WalletModel;
 class WalletView;
 class MasternodeList;
+class Exchange;
 class GovernanceList;
 
 QT_BEGIN_NAMESPACE
@@ -61,6 +62,7 @@ private:
     QGroupBox* no_wallet_group;
     MasternodeList* masternodeListPage;
     GovernanceList* governanceListPage;
+    Exchange* exchangePage;
 
     bool bOutOfSync;
 
@@ -79,6 +81,8 @@ public Q_SLOTS:
     void gotoHistoryPage();
     /** Switch to masternode page */
     void gotoMasternodePage();
+    /** Switch to exchange page */
+    void gotoExchangePage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
