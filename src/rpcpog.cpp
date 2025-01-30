@@ -19,6 +19,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
 #include <evo/deterministicmns.h>
+#include "random.h"
 
 #include <consensus/validation.h>
 #include <core_io.h>
@@ -4095,23 +4096,17 @@ int gen_keypair(unsigned char* seckey, char* pubaddress, secp256k1_context* xctx
     secp256k1_pubkey pubkey;
     unsigned char public_key64[65];
     size_t pk_len = 65;
-    /* Load private key (seckey) from random bytes */
-    FILE* frand = fopen("/dev/urandom", "r");
-    size_t myval = fread(seckey, 32, 1, frand);
-    fclose(frand);
-    if (frand == NULL)
-    {
-         printf("Failed to read /dev/urandom\n");
-         return 0;
-    }
+
+    GetOSRand(seckey);
 
     /* Apparently there is a 2^-128 chance of a secret key being invalid.  https://en.bitcoin.it/wiki/Private_key */
-    /* Verify secret key is valid */
-    if (!secp256k1_ec_seckey_verify(xctx, seckey)) {
+    if (!secp256k1_ec_seckey_verify(xctx, seckey))
+    {
          printf("Invalid secret key\n");
     }
 
     /* Create Public Key */
+
     if (!secp256k1_ec_pubkey_create(xctx, &pubkey, seckey))
     {
          printf("Failed to create public key\n");
@@ -4147,7 +4142,6 @@ std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::stri
 
     unsigned char seckey[32];
     char pubaddress[34];
-    char myseckey[32];
     sPrivKey = "";
 
     xctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN |
@@ -4164,39 +4158,84 @@ std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::stri
         if (EndsWith(sMyAddress, sAssetSuffix))
         {
              sPrivKey = create_wif(seckey);
-             secp256k1_context_destroy(xctx);
+             LogPrintf("\nSEARCHFORASSET FOUND PUBKEY %S PRIVKEY %s \n", sMyAddress, sPrivKey);
+
              bool fRescan = false;
              CWallet* pwallet = GetInternalWallet(r);
-             std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
-             LOCK(pwallet->cs_wallet);
-             EnsureWalletIsUnlocked(pwallet);
-             EnsureLegacyScriptPubKeyMan(*wallet, true);
-             WalletBatch batch(pwallet->GetDatabase());
-             WalletRescanReserver reserver(*pwallet);
-             if (fRescan && !reserver.reserve()) {
-                    throw JSONRPCError(RPC_WALLET_ERROR, "Wallet is currently rescanning. Abort existing rescan or wait.");
+             //std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
+             LogPrintf("\nSearchForAsset %f", 10002);
+
+             if (!EnsureWalletIsAvailable(pwallet, false))
+             {
+                LogPrintf("\nSEARCHFORASSET::WALLET NOT AVAILABLE %f", 0);
+                return "WALLET NOT AVAILABLE";
              }
-             CKey key = DecodeSecret(sPrivKey);
-             if (!key.IsValid()) {
-                    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
+             LogPrintf("\nSearchForAsset %f", 10003);
+
+             //LOCK(pwallet->cs_wallet);
+             CKey key;
+             try
+             {
+                LogPrintf("\nSearchForAsset %f", 10004);
+
+                EnsureWalletIsUnlocked(pwallet);
+                LogPrintf("\nSearchForAsset %f", 10005);
+
+                //EnsureLegacyScriptPubKeyMan(*wallet, true);
+                WalletBatch batch(pwallet->GetDatabase());
+                LogPrintf("\nSearchForAsset %f", 10006);
+
+                WalletRescanReserver reserver(*pwallet);
+                LogPrintf("\nSearchForAsset %f", 10007);
+
+                key = DecodeSecret(sPrivKey);
+                LogPrintf("\nSearchForAsset %f", 10008);
+
+                if (!key.IsValid())
+                {
+                     return "INVALID PRIVATE KEY ENCODING";
+                }
              }
+             catch (...)
+             {
+                return "GENERAL WALLET ERROR";
+             }
+             LogPrintf("\nSearchForAsset %f", 10009);
+
              CPubKey pubkey = key.GetPubKey();
+             LogPrintf("\nSearchForAsset %f", 10010);
+
              CHECK_NONFATAL(key.VerifyPubKey(pubkey));
+             LogPrintf("\nSearchForAsset %f", 10011);
+
              PKHash vchAddress = PKHash(pubkey);
              {
                    pwallet->MarkDirty();
+                LogPrintf("\nSearchForAsset %f", 10012);
+
                    if (!pwallet->FindAddressBookEntry(vchAddress))
                    {
+                     LogPrintf("\nSearchForAsset %f", 10013);
+
                         pwallet->SetAddressBook(vchAddress, sAddressLabel, "receive");
                    }
-                   if (!pwallet->ImportPrivKeys({{ToKeyID(vchAddress), key}}, 1)) {
-                                           throw JSONRPCError(RPC_WALLET_ERROR, "Error adding key to wallet");
+                   LogPrintf("\nSearchForAsset %f", 10014);
+
+                   if (!pwallet->ImportPrivKeys({{ToKeyID(vchAddress), key}}, 1))
+                   {
+                       return "ERROR ADDING KEY TO WALLET";
                    }
              }
+
              if (fRescan)
              {
                 // **RescanWallet(*pwallet, reserver);**
              }
+
+             LogPrintf("\nSearchForAsset %f",10015);
+
+             secp256k1_context_destroy(xctx);
+             LogPrintf("\nSearchForAsset %f", 10016);
 
              return sMyAddress;
         }
@@ -4329,10 +4368,10 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
     }
     // All addresses should be 34.
     bool fPass = true;
-    if (IsAssetLength(vAssetAddressesVINColored, 34)) fPass = false;
-    if (IsAssetLength(vAssetAddressesVOUTColored, 34)) fPass = false;
-    if (IsAssetLength(vAssetAddressesVINNotColored, 34)) fPass = false;
-    if (IsAssetLength(vAssetAddressesVOUTNotColored, 34)) fPass = false;
+    if (!IsAssetLength(vAssetAddressesVINColored, 34)) fPass = false;
+    if (!IsAssetLength(vAssetAddressesVOUTColored, 34)) fPass = false;
+    if (!IsAssetLength(vAssetAddressesVINNotColored, 34)) fPass = false;
+    if (!IsAssetLength(vAssetAddressesVOUTNotColored, 34)) fPass = false;
     if (!fPass)
     {
         LogPrintf("\nAcceptToMemoryPool::ValidateAssetTransaction::Failed AssetLength != %f", 34);

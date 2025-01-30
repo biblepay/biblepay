@@ -3270,18 +3270,32 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sData2 = ReceiveIPC();
         results.pushKV("ipc2", sData2);
     }
+    else if (sItem == "testasset")
+    {
+        std::string sPrivKey;
+        std::string sPub = SearchForAsset(request, "DGZZ", "TRADING-ASSET-DOGE", sPrivKey, 2000000);
+        //results.pushKV("longcode", sLongCode);
+        //results.pushKV("shortcode", sShortCode);
+        results.pushKV("Asset", sPub);
+        results.pushKV("Priv", sPrivKey);
+    }
     else if (sItem == "createassetaddress")
     {
         if (request.params.size() != 2)
             throw std::runtime_error("You must specify type: IE 'exec createasset longcode'.");
         std::string sLongCode = request.params[1].get_str();
         std::string sShortCode = GetColoredAssetShortCode(sLongCode);
+        boost::to_upper(sLongCode);
         if (sShortCode.empty())
         {
             throw std::runtime_error("Asset does not exist.");
         }
         std::string sPrivKey;
-        std::string sPub = SearchForAsset(request, "DGZZ", "TRADING-ASSET-DOGE", sPrivKey, 2000000);
+        std::string sAddressEntry = "TRADING-ASSET-" + sLongCode;
+        
+        std::string sPub = SearchForAsset(request, sShortCode, sAddressEntry, sPrivKey, 2000000);
+        results.pushKV("longcode", sLongCode);
+        results.pushKV("shortcode", sShortCode);
         results.pushKV("Asset", sPub);
         results.pushKV("Priv", sPrivKey);
     }

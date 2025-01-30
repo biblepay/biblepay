@@ -263,7 +263,7 @@ void Exchange::cancelClicked()
 }
 
 
-
+static int nWalletStartTime = 0;
 void Exchange::PerformUpdateTables()
 {
     
@@ -271,6 +271,14 @@ void Exchange::PerformUpdateTables()
     {
         return;
     }
+    if (nWalletStartTime == 0) nWalletStartTime = GetAdjustedTime();
+    int nStartElapsed = GetAdjustedTime() - nWalletStartTime;
+    if (nStartElapsed < (60 * 2))
+    {
+        // Prevent race condition on cold boot; allow wallet to warm up first.
+        return;
+    }
+
 
     int nElapsed = GetAdjustedTime() - nLastClick;
     bool bRefresh = false;
@@ -278,10 +286,13 @@ void Exchange::PerformUpdateTables()
         bRefresh = true;
 
     if (!bRefresh) return;
-    if (nLastClick == 0) nLastClick = GetAdjustedTime();
+    if (nLastClick == 0)
+    {
+        nLastClick = GetAdjustedTime();
+    }
 
     LOCK(cs_tbl);
-
+    
     ui->tableBuy->setSortingEnabled(false);
     ui->tableSell->setSortingEnabled(false);
 

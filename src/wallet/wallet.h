@@ -75,14 +75,14 @@ std::unique_ptr<WalletDatabase> MakeWalletDatabase(const std::string& name, cons
 //! -paytxfee default
 constexpr CAmount DEFAULT_PAY_TX_FEE = 0;
 //! -fallbackfee default
-static const CAmount DEFAULT_FALLBACK_FEE = 777;
+static const CAmount DEFAULT_FALLBACK_FEE = 7777;
 //! -discardfee default
-static const CAmount DEFAULT_DISCARD_FEE = 777;
+static const CAmount DEFAULT_DISCARD_FEE = 7777;
 //! -mintxfee default *** NOTE - this should match the validation.h relay fee
 //! 
-static const CAmount DEFAULT_TRANSACTION_MINFEE = 777;
+static const CAmount DEFAULT_TRANSACTION_MINFEE = 7777;
 //! minimum recommended increment for BIP 125 replacement txs
-static const CAmount WALLET_INCREMENTAL_RELAY_FEE = 777;
+static const CAmount WALLET_INCREMENTAL_RELAY_FEE = 1777;
 //! Default for -spendzeroconfchange
 static const bool DEFAULT_SPEND_ZEROCONF_CHANGE = true;
 //! Default for -walletrejectlongchains

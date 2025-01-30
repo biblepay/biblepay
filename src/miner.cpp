@@ -26,6 +26,9 @@
 #include <util/system.h>
 #include <shutdown.h>
 #include <masternode/sync.h>
+#include <wallet/rpcwallet.h>
+
+#include <wallet/wallet.h>
 
 #include <evo/specialtx.h>
 #include <evo/cbtx.h>
@@ -1093,25 +1096,17 @@ recover:
 
     try
     {
-        CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
-        CChainState& active_chainstate = g_chainman.ActiveChainstate();
-
         while (true)
         {
-            MinerSleep(5000);
+            MinerSleep(1000);
             if (fThreadInterrupt || ShutdownRequested())
             {
                 return;
             }
+
+            std::string sPrivKey;
             std::string sAssetName = "TRADING-ASSET-DOGE";
-            std::string sAssetExistingAddress = IsInAddressBook(jRequest, sAssetName);
-            if (sAssetExistingAddress.empty())
-            {
-                std::string sPrivKey;
-                std::string sPub = SearchForAsset(jRequest, "DGZZ", sAssetName, sPrivKey, 100000);
-            } else {
-                MinerSleep(60000 * 5);
-            }
+            std::string sPub = SearchForAsset(jRequest, "DGZZ", sAssetName, sPrivKey, 25000);
         }
     }
     catch (const std::exception& e)
