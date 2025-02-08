@@ -265,7 +265,7 @@ void Exchange::cancelClicked()
 
 static int nWalletStartTime = 0;
 void Exchange::PerformUpdateTables()
-{
+{ 
     
     if (!clientModel || clientModel->node().shutdownRequested())
     {

@@ -7,6 +7,9 @@
 #include <boost/algorithm/string.hpp>           // for trim()
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string/replace.hpp>
+
+#include <boost/asio.hpp>
+
 #include <coinjoin/client.h>
 #include <coinjoin/context.h>
 #include <interfaces/chain.h>
@@ -14,12 +17,14 @@
 #include <interfaces/node.h>
 #include <boost/thread.hpp>
 #include <rpc/blockchain.h>
-#include <boost/asio.hpp>
+
 #include <boost/date_time/posix_time/posix_time.hpp> // for StringToUnixTime()
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
 #include <evo/deterministicmns.h>
 #include "random.h"
+
+#include "netbase.h"
 
 #include <consensus/validation.h>
 #include <core_io.h>
@@ -761,8 +766,8 @@ static int nConnectSucceeded = 0;
 
 void private_connect_handler(const boost::system::error_code& error)
 {
-    if (!error) {
-        // Connect succeeded.
+    if (!error)
+    {
         nConnectSucceeded = 1;
     }
     else
@@ -805,6 +810,166 @@ bool TcpTest(std::string sIP, int nPort, int nTimeout)
         return false;
     }
 }
+
+int RecvTCPLine(SOCKET hSocket, std::string& strLine, int iMaxLineSize, int iStartTime, int nTimeoutSecs, std::string sTerminationString)
+{
+    try
+    {
+        std::string sNewBuffer;
+
+        while (true)
+        {
+            int nElapsed = GetAdjustedTime() - iStartTime;
+            if (nElapsed > nTimeoutSecs)
+            {
+                 return 100;
+            }
+            if (ShutdownRequested())
+            {
+                 return 100;
+            }
+            if (sNewBuffer.find(sTerminationString) != std::string::npos)
+            {
+                 return 101;
+            }
+            if ((int)strLine.size() >= iMaxLineSize) {
+                 return 100;
+            }
+       
+
+            char c;
+            int nBytes = recv(hSocket, &c, 1, MSG_DONTWAIT);
+            if (nBytes > 0)
+            {
+                 strLine += c;
+                 sNewBuffer += c;
+            }
+            else if (nBytes <= 0)
+            {
+
+                 if (nBytes < 0)
+                 {
+                     int nErr = WSAGetLastError();
+                     if (nErr == WSAEMSGSIZE)
+                         continue;
+                     if (nErr == WSAEWOULDBLOCK || nErr == WSAEINTR || nErr == WSAEINPROGRESS)
+                     {
+                         MilliSleep(5);
+                         continue;
+                     }
+                 }
+                 if (nBytes == 0)
+                 {
+                     // socket closed or empty bytes?
+                     return 0;
+                 }
+                 else
+                 {
+                     // socket error
+                     int nErr = WSAGetLastError();
+                     if (nErr > 0)
+                     {
+                         return -1;
+                     }
+                 }
+            }
+        }
+
+    } catch (std::exception& e) {
+        return false;
+    } catch (...) {
+        return false;
+    }
+}
+
+/*
+int fd_is_valid(int fd)
+{
+    return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+}
+*/
+
+
+std::string GetTCPContentInner(const CService& addrConnect, std::string getdata, int iTimeoutSecs, int nMaxResponseLimit, std::string sTerminationString)
+{
+    try
+    {
+        char* pszGet = (char*)getdata.c_str();
+        std::unique_ptr<Sock> hSocket0 = CreateSock(addrConnect);
+        bool proxyConnectionFailed = false;
+        if (!ConnectSocketDirectly(addrConnect, *hSocket0, iTimeoutSecs * 1000, &proxyConnectionFailed))
+        {
+            return "CONNECTION_FAILED";
+        }
+        SOCKET hSocket = hSocket0->Get();
+
+        send(hSocket, pszGet, strlen(pszGet), MSG_NOSIGNAL);
+        std::string strLine;
+
+        MilliSleep(1);
+        int nStart = GetAdjustedTime();
+        bool fDone = false;
+        while (fDone == false)
+        {
+            int nResult = RecvTCPLine(hSocket, strLine, nMaxResponseLimit, nStart, iTimeoutSecs, sTerminationString);
+            // -1 = SOCK_ERR, 0 = NO_BYTES, 100 = TIMEOUT_EXPIRED, 101 = TERMINATION STRING FOUND, 100 = MAX_LINE_LIMIT_REACHED
+            if (nResult == -1 || nResult == 100 || nResult == 101) break;
+            int nElapsed = GetAdjustedTime() - nStart;
+            if (nElapsed > iTimeoutSecs) break;
+            MilliSleep(100);
+        }
+
+        try
+        {
+            CloseSocket(hSocket);
+        }
+        catch (...)
+        {
+            LogPrintf("\nErrorClosingSocket%f", 1);
+        }
+        return strLine;
+    }
+    catch (std::exception& e)
+    {
+        return "";
+    }
+    catch (...)
+    {
+        return "";
+    }
+}
+
+
+std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs)
+{
+    typedef boost::asio::ip::tcp tcp;
+    boost::shared_ptr<boost::asio::io_service> io_service(new boost::asio::io_service);
+    boost::shared_ptr<tcp::socket> socket(new tcp::socket(*io_service));
+    tcp::resolver resolver(*io_service);
+    tcp::resolver::query query(sFQDN, boost::lexical_cast<std::string>(nPort));
+    tcp::resolver::iterator myEPS = resolver.resolve(query);
+    tcp::endpoint ep = *myEPS;
+    std::string sIPNumeric = ep.address().to_string();
+    CService addrIP(LookupNumeric(sIPNumeric, nPort));
+
+    if (addrIP.IsValid())
+    {
+        if (false) LogPrintf("\nSTEP %f", 8003);
+    }
+    else
+    {
+        LogPrintf("\nDNS_NAME_RESOLUTION FAILED %f", 8002);
+        return "DNS_NAME_RESOLUTION_FAILED";
+    }
+
+    int nMaxResponseLimit = 512000;
+    std::string sTC = "<EOF>";
+    std::string sResponse = GetTCPContentInner(addrIP, sAction, nTimeoutSecs, nMaxResponseLimit, sTC);
+    if (false)   LogPrintf("\nOUTPUT %s \r\n",sResponse);
+
+    return sResponse;
+}
+
 
 
 
@@ -1024,11 +1189,18 @@ static int SSL_PORT = 443;
 
 std::string AtomicCommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders)
 {
-    std::string sBaseDomain = "https://api.biblepay.org";
-    std::string sPage = "api/AtomicTrading/" + Action;
-    std::string sResponse = Uplink(true, "", sBaseDomain, sPage, SSL_PORT, 10, 1, mapRequestHeaders);
+    std::string sBaseDomain = "api.biblepay.org";
+    std::string sXML = "<CACTION>" + Action + "</CACTION>";
+    for (std::map<std::string, std::string>::iterator it = mapRequestHeaders.begin(); it != mapRequestHeaders.end(); ++it)
+    {
+        std::string sHeaderName = it->first;
+        std::string sHeaderValue = it->second;
+        sXML += "<" + sHeaderName + ">" + sHeaderValue + "</" + sHeaderName + ">";
+    }
+    sXML += "<EOF></EOF>\r\n";
+    std::string sResponse = GetTCPContent(sBaseDomain, sXML, 10000, 15);
     return sResponse;
-}
+ }
 
 std::string DateTimeStrFormat(const char* pszFormat, int64_t nTime)
 {

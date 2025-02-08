@@ -51,6 +51,7 @@ TransactionError BroadcastTransaction(NodeContext& node, const CTransactionRef t
         // IsSpent does not mean the coin is spent, it means the output does not exist.
         // So if the output does exist, then this transaction exists in the chain.
         if (!existingCoin.IsSpent()) return TransactionError::ALREADY_IN_CHAIN;
+
     }
     if (!node.mempool->exists(hashTx)) {
         // Transaction is not already in the mempool.

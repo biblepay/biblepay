@@ -528,6 +528,12 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
 bool RPCSendAsset(JSONRPCRequest r, std::string& sError, std::string& sTXID, std::string sAddress, CAmount nValue, std::string sLongAssetCode);
 CAmount GetWalletBalanceForSpecificAddress(std::string sAddress);
 double AmountToDouble(const CAmount& amount);
+std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs);
+
+
+
+
+
 
 /** Used to store a reference to the global node */
 class CGlobalNode

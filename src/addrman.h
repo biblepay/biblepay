@@ -14,7 +14,7 @@
 #include <protocol.h>
 #include <random.h>
 #include <streams.h>
-#include <sync.h>
+#include <sync.h> 
 #include <timedata.h>
 #include <tinyformat.h>
 #include <util/system.h>
