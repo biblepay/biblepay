@@ -4601,7 +4601,7 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
     double dFudge = .02; // Greater than Tx Fee but miniscule.
     CAmount nFudge = dFudge * COIN;
 
-    CAmount nTotalSpentIngateColored = GetTotalSentColored(vAssetAddressesVOUTColored, "MMZZ", false, "");
+    CAmount nTotalSpentIngateColored = GetTotalSentColored(vAssetAddressesVINColored, "MMZZ", false, "");
     CAmount nTotalRecColoredIngate = GetTotalSentColored(vAssetAddressesVOUTColored, "*", false, "");
 
     std::string sSenderAddress = GetSenderAddress(vAssetAddressesVINColored);
