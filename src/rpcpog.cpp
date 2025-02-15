@@ -4468,6 +4468,8 @@ std::map<std::string, CAmount> GetColoredVinAddresses(const CTransaction& tx, co
         const Coin& coin = view.AccessCoin(tx.vin[k].prevout);
         const CTxOut& txOutPrevOut = coin.out;
         std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
+        LogPrintf("\nGET_COLORED_VIN i %f, Address %s, ColSearch %f", k, sFromAddress, fColoredSearch);
+
         if (sFromAddress.length() > 0)
         {
              bool fFoundation = (sFromAddress == consensusParams.FoundationAddress);
