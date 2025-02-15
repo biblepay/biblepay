@@ -4516,23 +4516,46 @@ bool IsAssetLength(std::map<std::string, CAmount> vAssetAddressesVOUTColored, in
     return true;
 }
 
-CAmount GetTotalSentColored(std::map<std::string, CAmount> vAssetAddressesVOUTColored, std::string sSendingAssetType, bool fBurned)
+
+std::string GetSenderAddress(std::map<std::string, CAmount> v)
+{
+    for (std::map<std::string, CAmount>::iterator itOut = v.begin(); itOut != v.end(); itOut++)
+    {
+        std::string sAddress = itOut->first;
+        return sAddress;
+    }
+    return "";
+}
+
+CAmount GetTotalSentColored(std::map<std::string, CAmount> vAssetAddressesVOUTColored, std::string sSendingAssetType, bool fBurned, std::string sToAddressOnly)
 {
     CAmount nTotal = 0;
     const Consensus::Params& consensusParams = Params().GetConsensus();
-
     for (std::map<std::string, CAmount>::iterator itOut = vAssetAddressesVOUTColored.begin(); itOut != vAssetAddressesVOUTColored.end(); itOut++)
     {
         std::string sRecAddress = itOut->first;
         bool fRecBurnAddress = (sRecAddress == consensusParams.BurnAddress);
         CAmount nRec = itOut->second;
-        if (fBurned && fRecBurnAddress)
+        bool fIsColored = IsColoredCoin0(sRecAddress);
+        if (sToAddressOnly != "")
         {
-             nTotal += nRec;
+            // just to this address
+            if (sRecAddress == sToAddressOnly) nTotal += nRec;
+        }
+        else if (sSendingAssetType == "*")
+        {
+            // All colored assets
+            if (fIsColored) nTotal += nRec;
+        }
+        else if (fBurned)
+        {
+            // burned only
+            if (fRecBurnAddress) nTotal += nRec;
         }
         else if (EndsWith(sRecAddress, sSendingAssetType))
         {
-             nTotal += nRec;
+            //colored asset ending with type
+            nTotal += nRec;
         }
     }
     return nTotal;
@@ -4556,7 +4579,6 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
     
     if ((vAssetAddressesVINColored.size() + vAssetAddressesVOUTColored.size()) == 0)
     {
-        // LogPrintf("\nValidateAssetTransaction::Colored=0 %f",0);
         // If its a normal transaction with no assets moving from or to anyone:
         return true;
     }
@@ -4576,27 +4598,52 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
 
 
     // INGATE
-    for (std::map<std::string, CAmount>::iterator it = vAssetAddressesVINColored.begin(); it != vAssetAddressesVINColored.end(); it++)
+    double dFudge = .01; // Greater than Tx Fee but miniscule.
+    CAmount nFudge = dFudge * COIN;
+
+    CAmount nTotalSpentIngateColored = GetTotalSentColored(vAssetAddressesVOUTColored, "MMZZ", false, "");
+    CAmount nTotalRecColoredIngate = GetTotalSentColored(vAssetAddressesVOUTColored, "*", false, "");
+    if (nTotalSpentIngateColored > 0)
     {
-        std::string sSenderAddress = it->first;
-        CAmount nSent = it->second;
-        std::string sSendingAssetType = sSenderAddress.substr(sSenderAddress.length() - 4, 4);
-        if (sSendingAssetType == "MMZZ")
+        bool fIngateOK = (nTotalRecColoredIngate > (nTotalSpentIngateColored - nFudge) && nTotalRecColoredIngate < (nTotalSpentIngateColored + nFudge));
+        if (fIngateOK)
         {
-           if (vAssetAddressesVOUTColored.size() == 1)
-           {
-                LogPrintf("\nValidateAssetTx::%s TYPE=%s", sSenderAddress, sSendingAssetType);
-                return true;
-           }
+             return true;
+        }
+        else
+        {
+             LogPrintf("\nValidateAssetTx::IngateError:: nTotalRec %f nTotalSpent %f ", nTotalRecColoredIngate, nTotalSpentIngateColored);
+             return false;
+        }
+    }
+
+    //OUTGATE
+    CAmount nTotalSentBurned = GetTotalSentColored(vAssetAddressesVOUTColored, "*", true, "");
+    CAmount nTotalSpentOutgateAnyColored = GetTotalSentColored(vAssetAddressesVINColored, "ZZ", false, "");
+     
+    if (nTotalSentBurned > 0)
+    {
+        // burn amt + change amount must equal colored asset sent amount
+        std::string sSenderAddress = GetSenderAddress(vAssetAddressesVINColored);
+        CAmount nTotalSpentToSender = GetTotalSentColored(vAssetAddressesVOUTColored, "", false, sSenderAddress);
+        CAmount nTotalSpentFinal = nTotalSpentOutgateAnyColored - nTotalSpentToSender;  //Accounting for change returned to sender
+        LogPrintf("\nValidateAssetTx::OUTGATE::BURN::Sending address %s Total Spent Outate COLORED %f, Total Spent to Sender %f ",
+            sSenderAddress, AmountToDouble(nTotalSpentOutgateAnyColored), AmountToDouble(nTotalSpentToSender));
+        bool fOutgateOK = (nTotalSentBurned > (nTotalSpentFinal - nFudge) && nTotalSentBurned < (nTotalSpentFinal + nFudge));
+        if (fOutgateOK)
+        {
+          return true;
+        }
+        else
+        {
+             LogPrintf("\nValidateAssetTx::OutgateError:: nTotalSentBurned %f nTotalSpentFinal %f ", nTotalSentBurned, nTotalSpentFinal);
+             return false;
         }
     }
 
 
     // Total to colored type matches from colored type
-    double dFudge = .01;  // Greater than Tx Fee but miniscule.
-    CAmount nFudge = dFudge * COIN;
     CAmount nTotalColoredSpent = 0;
-    
     for (std::map<std::string, CAmount>::iterator it = vAssetAddressesVINColored.begin(); it != vAssetAddressesVINColored.end(); it++)
     {
         bool fFound = false;
@@ -4606,26 +4653,21 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
         std::string sSendingAssetType = sSenderAddress.substr(sSenderAddress.length() - 4, 4);
         bool fFoundation = (sSenderAddress == consensusParams.FoundationAddress);
 
-        CAmount nTotalSentColored = GetTotalSentColored(vAssetAddressesVOUTColored, sSendingAssetType, false);
-        CAmount nTotalSentBurned = GetTotalSentColored(vAssetAddressesVOUTColored, "*", true);
+        CAmount nTotalSentColored = GetTotalSentColored(vAssetAddressesVOUTColored, sSendingAssetType, false, "");
         if (fFoundation) continue;
         // Must be exact, so that colored coin ledger maintains its integrity:
         if (nTotalSentColored > (nSpent - nFudge) && nTotalSentColored < (nSpent + nFudge))
         {
              continue;
         }
-        if (nTotalSentBurned > (nSpent - nFudge) && nTotalSentColored == 0)
-        {
-            // It was all burned.
-            continue;
-        }
+      
         // not found
         LogPrintf("\nAcceptToMemoryPool(ValidateAssetTransaction)::Failed to match colored coin with a recipient, Sender=%s, AmountSpent = %f",
             sSenderAddress, AmountToDouble(nSpent));
     
         return false;
     }
-    CAmount nTotalColoredReceived = GetTotalSentColored(vAssetAddressesVOUTColored, "ZZ", false);
+    CAmount nTotalColoredReceived = GetTotalSentColored(vAssetAddressesVOUTColored, "ZZ", false, "");
     if (nTotalColoredReceived > 0 && nTotalColoredSpent < (nTotalColoredReceived - nFudge))
     {
         LogPrintf("\nAcceptToMemoryPool::ValidateAssetTransaction Failed::Colored Spent %f, Colored Received %f",
