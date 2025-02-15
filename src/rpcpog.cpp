@@ -4505,13 +4505,16 @@ std::map<std::string, CAmount> GetColoredVoutAddresses(const CTransaction& tx, b
 
 
 
-bool IsAssetLength(std::map<std::string, CAmount> vAssetAddressesVOUTColored, int nLen)
+bool IsAssetLength(std::map<std::string, CAmount> v, int nLen)
 {
-    for (std::map<std::string, CAmount>::iterator itOut = vAssetAddressesVOUTColored.begin(); itOut != vAssetAddressesVOUTColored.end(); itOut++)
+    for (std::map<std::string, CAmount>::iterator itOut = v.begin(); itOut != v.end(); itOut++)
     {
         std::string sAddress = itOut->first;
         int nSz = sAddress.length();
-        if (nSz != nLen) return false;
+        if (nSz > 0 && nSz != nLen) {
+             LogPrintf("\nValidateMemPool_IsAssetLength %s %f", sAddress, nSz);
+             return false;
+        }
     }
     return true;
 }
