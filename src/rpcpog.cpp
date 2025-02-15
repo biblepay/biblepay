@@ -4468,15 +4468,24 @@ std::map<std::string, CAmount> GetColoredVinAddresses(const CTransaction& tx, co
         const Coin& coin = view.AccessCoin(tx.vin[k].prevout);
         const CTxOut& txOutPrevOut = coin.out;
         std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
-
-        bool fFoundation = (sFromAddress == consensusParams.FoundationAddress);
-        bool fIsColored = IsColoredCoin0(sFromAddress) || fFoundation;
-
-        if ((fColoredSearch && fIsColored) || (!fColoredSearch && !fIsColored))
+        if (sFromAddress.length() > 0)
         {
-             if (!mapVIN.count(sFromAddress)) mapVIN[sFromAddress] = 0;
-             LogPrintf("\nGetColoredVin %f %s", fColoredSearch, sFromAddress);
-             mapVIN[sFromAddress] += txOutPrevOut.nValue;
+             bool fFoundation = (sFromAddress == consensusParams.FoundationAddress);
+             bool fIsColored = IsColoredCoin0(sFromAddress) || fFoundation;
+
+             if (fIsColored)
+             {
+                   LogPrintf("\nVIN COLORED FOUND %s", sFromAddress);
+             }
+             if ((fColoredSearch && fIsColored) || (!fColoredSearch && !fIsColored))
+             {
+                   if (mapVIN.count(sFromAddress) == 0)
+                   {
+                       mapVIN[sFromAddress] = 0;
+                   }
+                   LogPrintf("\nGetColoredVin %f %s", fColoredSearch, sFromAddress);
+                   mapVIN[sFromAddress] += txOutPrevOut.nValue;
+             }
         }
     }
     return mapVIN;
@@ -4609,7 +4618,9 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
 
     std::string sSenderAddress = GetSenderAddress(vAssetAddressesVINColored);
     CAmount nTotalSpentToSender = GetTotalSentColored(vAssetAddressesVOUTColored, "", false, sSenderAddress);
-    
+    LogPrintf("\nValidateAssetTx::Ingate - TotalSpentIngateColored %s  SENDER %s ", AmountToDouble(nTotalSpentIngateColored), sSenderAddress);
+
+
     if (nTotalSpentIngateColored > 0)
     {
         CAmount nTotalSpentIngateFinal = nTotalSpentIngateColored - nTotalSpentToSender; // Accounting for change returned to sender
