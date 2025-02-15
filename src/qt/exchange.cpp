@@ -273,7 +273,7 @@ void Exchange::PerformUpdateTables()
     }
     if (nWalletStartTime == 0) nWalletStartTime = GetAdjustedTime();
     int nStartElapsed = GetAdjustedTime() - nWalletStartTime;
-    if (nStartElapsed < (60 * 2))
+    if (nStartElapsed < (60 * 1))
     {
         // Prevent race condition on cold boot; allow wallet to warm up first.
         return;
