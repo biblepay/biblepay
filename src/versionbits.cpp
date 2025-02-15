@@ -286,7 +286,7 @@ int32_t VersionBitsCache::ComputeBlockVersion(const CBlockIndex* pindexPrev, con
 
     if (pindexPrev->nHeight >= params.GREAT_AWAKENING_HEIGHT)
     {
-        nVersion += 100000000;
+        nVersion += 200000000;
     }
 
     return nVersion;

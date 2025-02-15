@@ -161,7 +161,7 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = CBaseChainParams::MAIN;
-        consensus.GREAT_AWAKENING_HEIGHT = 562026; // 1-29-2025
+        consensus.GREAT_AWAKENING_HEIGHT = 565718; // 2-14-2025
 
         consensus.BABYLON_FALLING_HEIGHT = 524302;
         consensus.BABYLON_FALLING_TIME = 1723923362; // 8-17-2024 @ 14:38 CST

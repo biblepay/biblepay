@@ -157,7 +157,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     nBlockMaxSigOps = MaxBlockSigOps(fDIP0001Active_context);
     pblock->nVersion = g_versionbitscache.ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
 
-    // LogPrintf("\nCreateNewBlock - Block Version %f", pblock->nVersion);
+    LogPrintf("\nCreateNewBlock - Block Version %f", pblock->nVersion);
+
 
     // Non-mainnet only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios

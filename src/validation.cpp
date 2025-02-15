@@ -3934,10 +3934,10 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
             return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion", strprintf("incorrect block version after mandatory upgrade to babylon-falling %d %d", block.nVersion, nHeight));
         }
     }
-    if (nHeight >= consensusParams.GREAT_AWAKENING_HEIGHT)
+    if (nHeight > consensusParams.GREAT_AWAKENING_HEIGHT)
     {
-        int GREAT_AWAKENING_BLOCK_VERSION = 1600000000; 
-        if (block.nVersion <= GREAT_AWAKENING_BLOCK_VERSION)
+        int GREAT_AWAKENING_BLOCK_VERSION = 1700000000; 
+        if (block.nVersion < GREAT_AWAKENING_BLOCK_VERSION)
         {
             return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-blockversion",
                 strprintf("incorrect block version after mandatory upgrade to great-awakening %d %d", block.nVersion, nHeight));

@@ -11,49 +11,49 @@
  */
 
 
-static const int PROTOCOL_VERSION = 70784;
+static const int PROTOCOL_VERSION = 70785;
 
 //! initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 210;
 
 //! disconnect from peers older than this proto version
-static const int MIN_PEER_PROTO_VERSION = 70782;
+static const int MIN_PEER_PROTO_VERSION = 70785;
 
 //! minimum proto version of masternode to accept in DKGs
-static const int MIN_MASTERNODE_PROTO_VERSION = 70783;
+static const int MIN_MASTERNODE_PROTO_VERSION = 70785;
 
 //! protocol version is included in MNAUTH starting with this version
-static const int MNAUTH_NODE_VER_VERSION = 70783;
+static const int MNAUTH_NODE_VER_VERSION = 70785;
 
 //! introduction of QGETDATA/QDATA messages
-static const int LLMQ_DATA_MESSAGES_VERSION = 70783;
+static const int LLMQ_DATA_MESSAGES_VERSION = 70785;
 
 //! introduction of instant send deterministic lock (ISDLOCK)
-static const int ISDLOCK_PROTO_VERSION = 70783;
+static const int ISDLOCK_PROTO_VERSION = 70785;
 
 //! GOVSCRIPT was activated in this version
-static const int GOVSCRIPT_PROTO_VERSION = 70783;
+static const int GOVSCRIPT_PROTO_VERSION = 70785;
 
 //! ADDRV2 was introduced in this version
-static const int ADDRV2_PROTO_VERSION = 70783;
+static const int ADDRV2_PROTO_VERSION = 70785;
 
 //! BLS scheme was introduced in this version
-static const int BLS_SCHEME_PROTO_VERSION = 70783;
+static const int BLS_SCHEME_PROTO_VERSION = 70785;
 
 //! Masternode type was introduced in this version
-static const int DMN_TYPE_PROTO_VERSION = 70783;
+static const int DMN_TYPE_PROTO_VERSION = 70785;
 
 //! Versioned Simplified Masternode List Entries were introduced in this version
-static const int SMNLE_VERSIONED_PROTO_VERSION = 70783;
+static const int SMNLE_VERSIONED_PROTO_VERSION = 70785;
 
 //! Versioned Simplified Masternode List Entries were introduced in this version
-static const int MNLISTDIFF_VERSION_ORDER = 70783;
+static const int MNLISTDIFF_VERSION_ORDER = 70785;
 
 //! Masternode type was introduced in this version
-static const int MNLISTDIFF_CHAINLOCKS_PROTO_VERSION = 70783;
+static const int MNLISTDIFF_CHAINLOCKS_PROTO_VERSION = 70785;
 
 //! Legacy ISLOCK messages and a corresponding INV were dropped in this version
-static const int NO_LEGACY_ISLOCK_PROTO_VERSION = 70783;
+static const int NO_LEGACY_ISLOCK_PROTO_VERSION = 70785;
 
 // Make sure that none of the values above collide with `ADDRV2_FORMAT`.
 

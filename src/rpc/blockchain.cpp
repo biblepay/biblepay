@@ -3315,11 +3315,13 @@ UniValue exec(const JSONRPCRequest& request)
         if (request.params.size() != 2)
             throw std::runtime_error("You must specify type: IE 'exec getassetbalance assettype'.  IE exec getassetbalance DOGE.");
         std::string sLongCode = request.params[1].get_str();
+        boost::to_upper(sLongCode);
         std::string sShortCode = GetColoredAssetShortCode(sLongCode);
         double nBalance = GetAssetBalance(request, sLongCode);
-        LogPrintf("\nAssetBalance %f", nBalance);
-
+        std::string sAssetInAddressBook = "TRADING-ASSET-" + sLongCode;
+        std::string sAssetAddress = IsInAddressBook(request, sAssetInAddressBook);
         results.pushKV("Asset_Code", sShortCode);
+        results.pushKV("Address", sAssetAddress);
         results.pushKV("Balance", DoubleToString(nBalance, 4));
     }
     else if (sItem == "wrap")

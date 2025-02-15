@@ -4423,9 +4423,12 @@ std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::stri
 std::string GetColoredAssetShortCode(std::string sTicker)
 {
     boost::to_upper(sTicker);
-    if (sTicker == "DOGE") {
+    if (sTicker == "DOGE")
+    {
         return "DGZZ";
-    } else {
+    }
+    else
+    {
         return "";
     }
 }
@@ -4456,10 +4459,9 @@ std::string GetDefaultReceiveAddress(std::string sName)
     return sOut;
 }
 
-std::vector<std::string> GetColoredVinAddresses(const CTransaction& tx, const CCoinsViewCache& view, bool fColoredSearch)
+std::map<std::string, CAmount> GetColoredVinAddresses(const CTransaction& tx, const CCoinsViewCache& view, bool fColoredSearch)
 {
-    std::vector<std::string> vAssetAddresses;
-
+    std::map<std::string, CAmount> mapVIN;
     const Consensus::Params& consensusParams = Params().GetConsensus();
     for (unsigned int k = 0; k < tx.vin.size(); k++)
     {
@@ -4467,78 +4469,99 @@ std::vector<std::string> GetColoredVinAddresses(const CTransaction& tx, const CC
         const CTxOut& txOutPrevOut = coin.out;
         std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
 
-        if (sFromAddress == consensusParams.FoundationAddress) {
-            // Allow foundation to mint an asset.  Allows us to onboard a new asset.
-            continue;
-        }
-        bool fIsColored = IsColoredCoin0(sFromAddress);
+        bool fFoundation = (sFromAddress == consensusParams.FoundationAddress);
+        bool fIsColored = IsColoredCoin0(sFromAddress) || fFoundation;
+
         if ((fColoredSearch && fIsColored) || (!fColoredSearch && !fIsColored))
         {
-             if (std::find(vAssetAddresses.begin(), vAssetAddresses.end(), sFromAddress) == vAssetAddresses.end())
-             {
-                   LogPrintf("\nGetColoredVin %f %s", fColoredSearch, sFromAddress);
-                   vAssetAddresses.push_back(sFromAddress);
-             }
+             if (!mapVIN.count(sFromAddress)) mapVIN[sFromAddress] = 0;
+             LogPrintf("\nGetColoredVin %f %s", fColoredSearch, sFromAddress);
+             mapVIN[sFromAddress] += txOutPrevOut.nValue;
         }
     }
-    return vAssetAddresses;
+    return mapVIN;
 }
 
-std::vector<std::string> GetColoredVoutAddresses(const CTransaction& tx, bool fColoredSearch)
+std::map<std::string, CAmount> GetColoredVoutAddresses(const CTransaction& tx, bool fColoredSearch)
 {
     const Consensus::Params& consensusParams = Params().GetConsensus();
-
-    
-    std::vector<std::string> vAssetAddresses;
+    std::map<std::string, CAmount> mapVOUT;
     for (unsigned int k = 0; k < tx.vout.size(); k++)
     {
         const CTxOut txOut = tx.vout[k];
         std::string sAddress = PubKeyToAddress(txOut.scriptPubKey);
         // Allow coins to be burned
-        if (sAddress == consensusParams.BurnAddress)
+        bool fBurnAddress = (sAddress == consensusParams.BurnAddress);
+        bool fIsColored = IsColoredCoin0(sAddress) || fBurnAddress;
+        if ((fColoredSearch && fIsColored) || (!fColoredSearch && !fIsColored))
         {
-             continue;
-        }
-
-        bool fIsColored = IsColoredCoin0(sAddress);
-        if ((fColoredSearch && fIsColored ) || (!fColoredSearch && !fIsColored))
-        {
-             if (std::find(vAssetAddresses.begin(), vAssetAddresses.end(), sAddress) == vAssetAddresses.end())
-             {
-                   LogPrintf("\nGetColoredVout %f %s", fColoredSearch, sAddress);
-
-                   vAssetAddresses.push_back(sAddress);
-             }
+             if (!mapVOUT.count(sAddress)) mapVOUT[sAddress] = 0;
+             LogPrintf("\nGetColoredVout %f %s", fColoredSearch, sAddress);
+             mapVOUT[sAddress] += txOut.nValue;
         }
     }
-    return vAssetAddresses;
+    return mapVOUT;
 }
 
-bool IsAssetLength(std::vector<std::string> v, int nLen)
+
+
+bool IsAssetLength(std::map<std::string, CAmount> vAssetAddressesVOUTColored, int nLen)
 {
-    for (int i = 0; i < v.size(); i++)
+    for (std::map<std::string, CAmount>::iterator itOut = vAssetAddressesVOUTColored.begin(); itOut != vAssetAddressesVOUTColored.end(); itOut++)
     {
-        int nSz = v[i].length();
+        std::string sAddress = itOut->first;
+        int nSz = sAddress.length();
         if (nSz != nLen) return false;
     }
     return true;
 }
 
+CAmount GetTotalSentColored(std::map<std::string, CAmount> vAssetAddressesVOUTColored, std::string sSendingAssetType, bool fBurned)
+{
+    CAmount nTotal = 0;
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
+    for (std::map<std::string, CAmount>::iterator itOut = vAssetAddressesVOUTColored.begin(); itOut != vAssetAddressesVOUTColored.end(); itOut++)
+    {
+        std::string sRecAddress = itOut->first;
+        bool fRecBurnAddress = (sRecAddress == consensusParams.BurnAddress);
+        CAmount nRec = itOut->second;
+        if (fBurned && fRecBurnAddress)
+        {
+             nTotal += nRec;
+        }
+        else if (EndsWith(sRecAddress, sSendingAssetType))
+        {
+             nTotal += nRec;
+        }
+    }
+    return nTotal;
+}
+
 bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& view)
 {
-    // first detect if there is a spent coin that is colored in either vin or vout.
-    std::vector<std::string> vAssetAddressesVINColored = GetColoredVinAddresses(tx, view, true);
-    std::vector<std::string> vAssetAddressesVOUTColored = GetColoredVoutAddresses(tx, true);
-    std::vector<std::string> vAssetAddressesVINNotColored = GetColoredVinAddresses(tx, view, false);
-    std::vector<std::string> vAssetAddressesVOUTNotColored = GetColoredVoutAddresses(tx, false);
+    const Consensus::Params& consensusParams = Params().GetConsensus();
 
+    // first detect if there is a spent coin that is colored in either vin or vout.
+    std::map<std::string, CAmount> vAssetAddressesVINColored = GetColoredVinAddresses(tx, view, true);
+    std::map<std::string, CAmount> vAssetAddressesVOUTColored = GetColoredVoutAddresses(tx, true);
+    std::map<std::string, CAmount> vAssetAddressesVINNotColored = GetColoredVinAddresses(tx, view, false);
+    std::map<std::string, CAmount> vAssetAddressesVOUTNotColored = GetColoredVoutAddresses(tx, false);
+
+    // EXCEPTIONS FOR INGATE.  If the VIN is from the Foundation.  Allow Foundation to mint a new MMZZ.
+    if (vAssetAddressesVINColored.count(consensusParams.FoundationAddress))
+    {
+        return true;
+    }
+    
     if ((vAssetAddressesVINColored.size() + vAssetAddressesVOUTColored.size()) == 0)
     {
-        LogPrintf("\nValidateAssetTransaction::Colored=0 %f",0);
+        // LogPrintf("\nValidateAssetTransaction::Colored=0 %f",0);
         // If its a normal transaction with no assets moving from or to anyone:
         return true;
     }
-    // All addresses should be 34.
+
+    // At this point we are dealing with colored coins, so all addresses should be 34.
     bool fPass = true;
     if (!IsAssetLength(vAssetAddressesVINColored, 34)) fPass = false;
     if (!IsAssetLength(vAssetAddressesVOUTColored, 34)) fPass = false;
@@ -4550,50 +4573,66 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
         return false;
     }
     // EXCEPTIONS FOR OUTGATE.  If the vOUTNonColored is the BURN address, we can allow this tx into the memory pool.
-   
-    // EXCEPTIONS FOR INGATE.  If the VIN is from the Foundation.  Allow Foundation to fund a new MMZZ.
 
-    // We cant spend more than 1 colored VIN Address at a time.
-    if (vAssetAddressesVINColored.size() > 1 || vAssetAddressesVINNotColored.size() > 0)
+
+    // INGATE
+    for (std::map<std::string, CAmount>::iterator it = vAssetAddressesVINColored.begin(); it != vAssetAddressesVINColored.end(); it++)
     {
-        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTx::Tx Rejected; ColoredVinCount %f, Uncolored VIN Count %f ",
-                  vAssetAddressesVINColored.size(), vAssetAddressesVINNotColored.size());
-        return false;
-    }
-
-    // Remove the sender address from the VOUT for more checks.
-    if (vAssetAddressesVINColored.size() > 0) {
-        vAssetAddressesVOUTColored.erase(std::remove(vAssetAddressesVOUTColored.begin(), vAssetAddressesVOUTColored.end(), vAssetAddressesVINColored[0]), vAssetAddressesVOUTColored.end());
-    }
-
-    // We cant spend to more than 1 colored VOUT Address at a time and cant spend to a non-colored asset either.
-    if (vAssetAddressesVOUTColored.size() > 1 || vAssetAddressesVOUTNotColored.size() > 0)
-    {
-        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTx::Tx Rejected; ColoredVOUTCount %f, Uncolored VOUT Count %f ",
-                  vAssetAddressesVOUTColored.size(), vAssetAddressesVOUTNotColored.size());
-        return false;
-    }
-
-    // Rule 1 - If this is an ingate transaction (from a sanc to a user):
-    if (vAssetAddressesVINColored.size() > 0 && vAssetAddressesVOUTColored.size() > 0)
-    {
-        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTx From Asset Code %s To Asset Code %s", vAssetAddressesVINColored[0], vAssetAddressesVOUTColored[0]);
-
-        if (EndsWith(vAssetAddressesVINColored[0], "MMZZ") && EndsWith(vAssetAddressesVOUTColored[0], "ZZ") && vAssetAddressesVOUTColored.size() == 1)
+        std::string sSenderAddress = it->first;
+        CAmount nSent = it->second;
+        std::string sSendingAssetType = sSenderAddress.substr(sSenderAddress.length() - 4, 4);
+        if (sSendingAssetType == "MMZZ")
         {
-            return true;
+           if (vAssetAddressesVOUTColored.size() == 1)
+           {
+                LogPrintf("\nValidateAssetTx::%s TYPE=%s", sSenderAddress, sSendingAssetType);
+                return true;
+           }
         }
+    }
+
+
+    // Total to colored type matches from colored type
+    double dFudge = .01;  // Greater than Tx Fee but miniscule.
+    CAmount nFudge = dFudge * COIN;
+    CAmount nTotalColoredSpent = 0;
     
-        // Rule 2 - A colored asset must be going from and to the same asset type...
-        std::string sSendingAssetType = vAssetAddressesVINColored[0].substr(vAssetAddressesVINColored[0].length() - 4, 4);
-        if (!(EndsWith(vAssetAddressesVINColored[0], sSendingAssetType) && EndsWith(vAssetAddressesVOUTColored[0], sSendingAssetType)))
-        {
-            LogPrintf("AcceptToMemoryPool::ValidateAssetTx::Asset Type Mismatch::Tx Rejected; SendingAsset %s, ReceivingAsset %s",
-                  vAssetAddressesVINColored[0], vAssetAddressesVOUTColored[0]);
-            return false;
-        }
-    }
+    for (std::map<std::string, CAmount>::iterator it = vAssetAddressesVINColored.begin(); it != vAssetAddressesVINColored.end(); it++)
+    {
+        bool fFound = false;
+        std::string sSenderAddress = it->first;
+        CAmount nSpent = it->second;
+        nTotalColoredSpent += nSpent;
+        std::string sSendingAssetType = sSenderAddress.substr(sSenderAddress.length() - 4, 4);
+        bool fFoundation = (sSenderAddress == consensusParams.FoundationAddress);
 
+        CAmount nTotalSentColored = GetTotalSentColored(vAssetAddressesVOUTColored, sSendingAssetType, false);
+        CAmount nTotalSentBurned = GetTotalSentColored(vAssetAddressesVOUTColored, "*", true);
+        if (fFoundation) continue;
+        // Must be exact, so that colored coin ledger maintains its integrity:
+        if (nTotalSentColored > (nSpent - nFudge) && nTotalSentColored < (nSpent + nFudge))
+        {
+             continue;
+        }
+        if (nTotalSentBurned > (nSpent - nFudge) && nTotalSentColored == 0)
+        {
+            // It was all burned.
+            continue;
+        }
+        // not found
+        LogPrintf("\nAcceptToMemoryPool(ValidateAssetTransaction)::Failed to match colored coin with a recipient, Sender=%s, AmountSpent = %f",
+            sSenderAddress, AmountToDouble(nSpent));
+    
+        return false;
+    }
+    CAmount nTotalColoredReceived = GetTotalSentColored(vAssetAddressesVOUTColored, "ZZ", false);
+    if (nTotalColoredReceived > 0 && nTotalColoredSpent < (nTotalColoredReceived - nFudge))
+    {
+        LogPrintf("\nAcceptToMemoryPool::ValidateAssetTransaction Failed::Colored Spent %f, Colored Received %f",
+            AmountToDouble(nTotalColoredSpent), AmountToDouble(nTotalColoredReceived));
+        return false;
+    }
+    LogPrintf("\nAcceptToMemoryPool::ValidateAssetTransaction OK %f", 1);
     return true;
 }
 
