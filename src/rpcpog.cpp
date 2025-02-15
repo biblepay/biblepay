@@ -4603,16 +4603,24 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
 
     CAmount nTotalSpentIngateColored = GetTotalSentColored(vAssetAddressesVOUTColored, "MMZZ", false, "");
     CAmount nTotalRecColoredIngate = GetTotalSentColored(vAssetAddressesVOUTColored, "*", false, "");
+
+    std::string sSenderAddress = GetSenderAddress(vAssetAddressesVINColored);
+    CAmount nTotalSpentToSender = GetTotalSentColored(vAssetAddressesVOUTColored, "", false, sSenderAddress);
+    
     if (nTotalSpentIngateColored > 0)
     {
-        bool fIngateOK = (nTotalRecColoredIngate > (nTotalSpentIngateColored - nFudge) && nTotalRecColoredIngate < (nTotalSpentIngateColored + nFudge));
+        CAmount nTotalSpentIngateFinal = nTotalSpentIngateColored - nTotalSpentToSender; // Accounting for change returned to sender
+        CAmount nTotalRecColoredIngateFinal = nTotalRecColoredIngate - nTotalSpentToSender; 
+        bool fIngateOK = (nTotalRecColoredIngateFinal > (nTotalSpentIngateFinal - nFudge) && nTotalRecColoredIngateFinal < (nTotalSpentIngateFinal + nFudge));
         if (fIngateOK)
         {
              return true;
         }
         else
         {
-             LogPrintf("\nValidateAssetTx::IngateError:: nTotalRec %f nTotalSpent %f ", nTotalRecColoredIngate, nTotalSpentIngateColored);
+             LogPrintf("\nValidateAssetTx::IngateError:: nTotalRec %f nTotalSpent %f    nTotalRecColoredIngateFinal %f   TotalSpentIngateFinal %f",
+                 AmountToDouble(nTotalRecColoredIngate),
+                       AmountToDouble(nTotalSpentIngateColored), AmountToDouble(nTotalRecColoredIngateFinal), AmountToDouble(nTotalSpentIngateFinal));
              return false;
         }
     }
@@ -4624,8 +4632,6 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
     if (nTotalSentBurned > 0)
     {
         // burn amt + change amount must equal colored asset sent amount
-        std::string sSenderAddress = GetSenderAddress(vAssetAddressesVINColored);
-        CAmount nTotalSpentToSender = GetTotalSentColored(vAssetAddressesVOUTColored, "", false, sSenderAddress);
         CAmount nTotalSpentFinal = nTotalSpentOutgateAnyColored - nTotalSpentToSender;  //Accounting for change returned to sender
         LogPrintf("\nValidateAssetTx::OUTGATE::BURN::Sending address %s Total Spent Outate COLORED %f, Total Spent to Sender %f ",
             sSenderAddress, AmountToDouble(nTotalSpentOutgateAnyColored), AmountToDouble(nTotalSpentToSender));
