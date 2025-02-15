@@ -4459,34 +4459,74 @@ std::string GetDefaultReceiveAddress(std::string sName)
     return sOut;
 }
 
+
+BBPResult GetAddressFromTransaction(std::string sTXID, int nVOUT)
+{
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+        
+    BBPResult b;
+    b.nAmount = 0;
+    b.Address = "";
+
+    const NodeContext& node = EnsureAnyNodeContext(r0.context);
+    ChainstateManager& chainman = EnsureChainman(node);
+    bool in_active_chain = true;
+    uint256 hash = uint256S("0x" + sTXID);
+    CBlockIndex* blockindex = nullptr;
+    uint256 hash_block;
+    const CTransactionRef tx = GetTransaction(blockindex, node.mempool.get(), hash, Params().GetConsensus(), hash_block);
+    if (!tx)
+    {
+        b.ErrorCode = "NOT_FOUND";
+        return b;
+    }
+    
+    for (unsigned int k = 0; k < tx->vout.size(); k++)
+    {
+        const CTxOut txOut = tx->vout[k];
+        std::string sAddress = PubKeyToAddress(txOut.scriptPubKey);
+        // LogPrintf("\nGetAddressFromTx %s %f", sAddress, AmountToDouble(nAmt));
+        if (nVOUT == k && sAddress.length() > 1)
+        {
+            b.nAmount = txOut.nValue;
+            b.Address = sAddress;
+            return b;
+        }
+    }
+    return b;
+}
+
 std::map<std::string, CAmount> GetColoredVinAddresses(const CTransaction& tx, const CCoinsViewCache& view, bool fColoredSearch)
 {
     std::map<std::string, CAmount> mapVIN;
     const Consensus::Params& consensusParams = Params().GetConsensus();
     for (unsigned int k = 0; k < tx.vin.size(); k++)
     {
-        const Coin& coin = view.AccessCoin(tx.vin[k].prevout);
-        const CTxOut& txOutPrevOut = coin.out;
-        std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
-        LogPrintf("\nGET_COLORED_VIN i %f, Address %s, ColSearch %f", k, sFromAddress, fColoredSearch);
+        BBPResult b = GetAddressFromTransaction(tx.vin[k].prevout.hash.GetHex(), tx.vin[k].prevout.n);
+        //         in.pushKV("txid", txin.prevout.hash.GetHex());
+        //        in.pushKV("vout", (int64_t)txin.prevout.n);
+      //      const CTxOut& txOutPrevOut = coin.out;
+        //    std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
+        LogPrintf("\nGET_COLORED_VIN i %f, Address %s, ColSearch %f", k, b.Address, fColoredSearch);
 
-        if (sFromAddress.length() > 0)
+        if (b.Address.length() > 0)
         {
-             bool fFoundation = (sFromAddress == consensusParams.FoundationAddress);
-             bool fIsColored = IsColoredCoin0(sFromAddress) || fFoundation;
+             //bool fFoundation = (b.Address == consensusParams.FoundationAddress);
+            bool fIsColored = IsColoredCoin0(b.Address);
 
              if (fIsColored)
              {
-                   LogPrintf("\nVIN COLORED FOUND %s", sFromAddress);
+                   LogPrintf("\nVIN COLORED FOUND %s", b.Address);
              }
              if ((fColoredSearch && fIsColored) || (!fColoredSearch && !fIsColored))
              {
-                   if (mapVIN.count(sFromAddress) == 0)
+                   if (mapVIN.count(b.Address) == 0)
                    {
-                       mapVIN[sFromAddress] = 0;
+                       mapVIN[b.Address] = 0;
                    }
-                   LogPrintf("\nGetColoredVin %f %s", fColoredSearch, sFromAddress);
-                   mapVIN[sFromAddress] += txOutPrevOut.nValue;
+                   LogPrintf("\nGetColoredVin %f %s", fColoredSearch, b.Address);
+                   mapVIN[b.Address] += b.nAmount;
              }
         }
     }

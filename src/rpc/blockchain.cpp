@@ -3310,6 +3310,12 @@ UniValue exec(const JSONRPCRequest& request)
         results.pushKV("Error", sError);
         results.pushKV("TXID", sTxId);
     }
+    else if (sItem == "testgetrawtransaction")
+    {
+        std::string sTX = request.params[1].get_str();
+        BBPResult b = GetAddressFromTransaction(sTX, 0);
+        results.pushKV("Addr", b.Address);
+    }
     else if (sItem == "getassetbalance")
     {
         if (request.params.size() != 2)

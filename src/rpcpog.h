@@ -46,11 +46,13 @@ struct BBPResult
 {
 	std::string Response;
 	bool fError = false;
+    
 	CAmount nFee = 0;
 	int nSize = 0;
 	std::string TXID;
 	std::string ErrorCode;
 	std::string PublicKey;
+    std::string Address;
 	int64_t nTime = 0;
 	CAmount nAmount = 0;
 };
@@ -529,9 +531,7 @@ bool RPCSendAsset(JSONRPCRequest r, std::string& sError, std::string& sTXID, std
 CAmount GetWalletBalanceForSpecificAddress(std::string sAddress);
 double AmountToDouble(const CAmount& amount);
 std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs);
-
-
-
+BBPResult GetAddressFromTransaction(std::string sTXID, int nVOUT);
 
 
 
