@@ -4598,7 +4598,7 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
 
 
     // INGATE
-    double dFudge = .01; // Greater than Tx Fee but miniscule.
+    double dFudge = .02; // Greater than Tx Fee but miniscule.
     CAmount nFudge = dFudge * COIN;
 
     CAmount nTotalSpentIngateColored = GetTotalSentColored(vAssetAddressesVOUTColored, "MMZZ", false, "");
@@ -4618,7 +4618,7 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
     }
 
     //OUTGATE
-    CAmount nTotalSentBurned = GetTotalSentColored(vAssetAddressesVOUTColored, "*", true, "");
+    CAmount nTotalSentBurned = GetTotalSentColored(vAssetAddressesVOUTColored, "--", true, "");
     CAmount nTotalSpentOutgateAnyColored = GetTotalSentColored(vAssetAddressesVINColored, "ZZ", false, "");
      
     if (nTotalSentBurned > 0)
@@ -4636,7 +4636,8 @@ bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& vie
         }
         else
         {
-             LogPrintf("\nValidateAssetTx::OutgateError:: nTotalSentBurned %f nTotalSpentFinal %f ", nTotalSentBurned, nTotalSpentFinal);
+             LogPrintf("\nValidateAssetTx::OutgateError:: nTotalSentBurned %f nTotalSpentFinal %f ", AmountToDouble(nTotalSentBurned),
+                 AmountToDouble(nTotalSpentFinal));
              return false;
         }
     }
