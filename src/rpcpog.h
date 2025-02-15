@@ -46,8 +46,7 @@ struct BBPResult
 {
 	std::string Response;
 	bool fError = false;
-    
-	CAmount nFee = 0;
+    CAmount nFee = 0;
 	int nSize = 0;
 	std::string TXID;
 	std::string ErrorCode;
