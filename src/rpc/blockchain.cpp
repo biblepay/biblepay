@@ -3274,8 +3274,6 @@ UniValue exec(const JSONRPCRequest& request)
     {
         std::string sPrivKey;
         std::string sPub = SearchForAsset(request, "DGZZ", "TRADING-ASSET-DOGE", sPrivKey, 2000000);
-        //results.pushKV("longcode", sLongCode);
-        //results.pushKV("shortcode", sShortCode);
         results.pushKV("Asset", sPub);
         results.pushKV("Priv", sPrivKey);
     }
@@ -3323,8 +3321,23 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sLongCode = request.params[1].get_str();
         boost::to_upper(sLongCode);
         std::string sShortCode = GetColoredAssetShortCode(sLongCode);
-        double nBalance = GetAssetBalance(request, sLongCode);
         std::string sAssetInAddressBook = "TRADING-ASSET-" + sLongCode;
+        double nBalance = 0;
+
+        if (sLongCode == "TRADING")
+        {
+            sAssetInAddressBook = "TRADING-PUBLIC-KEY";
+            std::string sAA = IsInAddressBook(request, sAssetInAddressBook);
+            if (sAA != "")
+            {
+                nBalance = GetAssetBalance(request, sAA);
+            }
+        }
+        else
+        {
+            nBalance = GetAssetBalance(request, sShortCode);
+        }
+        
         std::string sAssetAddress = IsInAddressBook(request, sAssetInAddressBook);
         results.pushKV("Asset_Code", sShortCode);
         results.pushKV("Address", sAssetAddress);

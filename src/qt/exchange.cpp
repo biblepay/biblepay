@@ -17,7 +17,6 @@
 #include <rpc/blockchain.h>
 
 #include <univalue.h>
-
 #include <QMessageBox>
 #include <QTableWidgetItem>
 #include <QtGui/QClipboard>
@@ -73,6 +72,11 @@ Exchange::Exchange(QWidget* parent) :
     ui->lblSellBanner->setText("Sells");
     ui->lblBuyBanner->setText("Buys");
 
+
+    ui->lblBBPDOGEPrice->setText("...");
+    ui->lblDOGEUSD->setText("...");
+    ui->lblBBPUSD->setText("...");
+
     ui->lblRoomNameRight->setText("BBP/DOGE Trading Room");
 
 
@@ -84,7 +88,12 @@ Exchange::Exchange(QWidget* parent) :
 
 }
 
+
+static int nWalletStartTime = 0;
+static int nRedrawing = 0;
 static int nLastClick = 0;
+static int nCurrentSelectedRowBuy = 0;
+static int nCurrentSelectedRowSell = 0;
 
 void Exchange::mouseMoveEvent(QMouseEvent* event)
 {
@@ -179,9 +188,7 @@ void Exchange::buyClicked()
     {
         QMessageBox::information(nullptr, "Error", "Unable to create atomic tx.");
     }
-    // 1-28-2025
-
-
+    
     GetOrderBookData(true);
     nLastClick = 0;
 }
@@ -262,8 +269,6 @@ void Exchange::cancelClicked()
     nLastClick = 0;
 }
 
-
-static int nWalletStartTime = 0;
 void Exchange::PerformUpdateTables()
 { 
     
@@ -273,7 +278,7 @@ void Exchange::PerformUpdateTables()
     }
     if (nWalletStartTime == 0) nWalletStartTime = GetAdjustedTime();
     int nStartElapsed = GetAdjustedTime() - nWalletStartTime;
-    if (nStartElapsed < (60 * 1))
+    if (nStartElapsed < (15))
     {
         // Prevent race condition on cold boot; allow wallet to warm up first.
         return;
@@ -292,17 +297,17 @@ void Exchange::PerformUpdateTables()
     }
 
     LOCK(cs_tbl);
-    
+    int nLastSelRowBuy = nCurrentSelectedRowBuy;
+    int nLastSelRowSell = nCurrentSelectedRowSell;
+    nRedrawing = 1;
+
     ui->tableBuy->setSortingEnabled(false);
     ui->tableSell->setSortingEnabled(false);
-
     ui->tableBuy->clearContents();
     ui->tableSell->clearContents();
 
     ui->tableBuy->setRowCount(0);
     ui->tableSell->setRowCount(0);
-    
-    //ROW,COL
     //Price,Qty,Total
 
     std::vector<std::pair<std::string, AtomicTrade>> orderBookBuy = GetSortedOrderBook("buy", "open");
@@ -318,44 +323,69 @@ void Exchange::PerformUpdateTables()
         double nRowAmount = a.Quantity * a.Price;
         nTotalDOGE += nRowAmount;
         std::string sFlags = GetFlags(a, sMyAddress, mapAT);
-            ui->tableBuy->insertRow(iRow);
-            ui->tableBuy->setItem(iRow, 0, new QTableWidgetItem(GUIUtil::TOQS(DoubleToString(a.Price,8))));
-            ui->tableBuy->setItem(iRow, 1, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(a.Quantity, 0, 8))));
-            ui->tableBuy->setItem(iRow, 2, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(nRowAmount, 4, 12))));
-            ui->tableBuy->setItem(iRow, 3, new QTableWidgetItem(GUIUtil::TOQS(a.id)));
-            ui->tableBuy->setItem(iRow, 4, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(StringToDouble(GetDisplayAgeInDays(a.Time), 0), 0, 3))));
-            ui->tableBuy->setItem(iRow, 5, new QTableWidgetItem(GUIUtil::TOQS(sFlags)));
-            iRow++;
+        ui->tableBuy->insertRow(iRow);
+        ui->tableBuy->setItem(iRow, 0, new QTableWidgetItem(GUIUtil::TOQS(DoubleToString(a.Price,8))));
+        ui->tableBuy->setItem(iRow, 1, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(a.Quantity, 0, 8))));
+        ui->tableBuy->setItem(iRow, 2, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(nRowAmount, 4, 12))));
+        ui->tableBuy->setItem(iRow, 3, new QTableWidgetItem(GUIUtil::TOQS(a.id)));
+        ui->tableBuy->setItem(iRow, 4, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(StringToDouble(GetDisplayAgeInDays(a.Time), 0), 0, 3))));
+        ui->tableBuy->setItem(iRow, 5, new QTableWidgetItem(GUIUtil::TOQS(sFlags)));
+        iRow++;
     }
 
     iRow = 0;
-    for (auto ii : orderBookSell) {
+    for (auto ii : orderBookSell)
+    {
         AtomicTrade a = ii.second;
         double nRowAmount = a.Quantity * a.Price;
         nTotalDOGE += nRowAmount;
         std::string sFlags = GetFlags(a, sMyAddress, mapAT);
-
-            ui->tableSell->insertRow(iRow);
-            ui->tableSell->setItem(iRow, 0, new QTableWidgetItem(GUIUtil::TOQS(DoubleToString(a.Price, 8))));
-            ui->tableSell->setItem(iRow, 1, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(a.Quantity, 0, 8))));
-            ui->tableSell->setItem(iRow, 2, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(nRowAmount, 4, 12))));
-            ui->tableSell->setItem(iRow, 3, new QTableWidgetItem(GUIUtil::TOQS(a.id)));
-            ui->tableSell->setItem(iRow, 4, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(StringToDouble(GetDisplayAgeInDays(a.Time), 0), 0, 3))));
-            ui->tableSell->setItem(iRow, 5, new QTableWidgetItem(GUIUtil::TOQS(sFlags)));
-            iRow++;
+        ui->tableSell->insertRow(iRow);
+        ui->tableSell->setItem(iRow, 0, new QTableWidgetItem(GUIUtil::TOQS(DoubleToString(a.Price, 8))));
+        ui->tableSell->setItem(iRow, 1, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(a.Quantity, 0, 8))));
+        ui->tableSell->setItem(iRow, 2, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(nRowAmount, 4, 12))));
+        ui->tableSell->setItem(iRow, 3, new QTableWidgetItem(GUIUtil::TOQS(a.id)));
+        ui->tableSell->setItem(iRow, 4, new QTableWidgetItem(GUIUtil::TOQS(DoubleToStringWithLeadingZeroes(StringToDouble(GetDisplayAgeInDays(a.Time), 0), 0, 3))));
+        ui->tableSell->setItem(iRow, 5, new QTableWidgetItem(GUIUtil::TOQS(sFlags)));
+        iRow++;
     }
+    // Put the selected row back so the user does not see the "flash"
+    ui->tableBuy->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableSell->setSelectionBehavior(QAbstractItemView::SelectRows);
+    if (nLastSelRowBuy  >= 0)     nCurrentSelectedRowBuy = nLastSelRowBuy;
+    if (nLastSelRowSell >= 0)     nCurrentSelectedRowSell = nLastSelRowSell;
 
+    if (ui->tableBuy->rowCount() > nCurrentSelectedRowBuy && nCurrentSelectedRowBuy >= 0)
+    {
+         ui->tableBuy->selectRow(nCurrentSelectedRowBuy);
+    }
+    if (ui->tableSell->rowCount() > nCurrentSelectedRowSell && nCurrentSelectedRowSell >= 0)
+    {
+         ui->tableSell->selectRow(nCurrentSelectedRowSell);
+    }
+    // Populate Price Feeds
+    ui->lblBBPDOGEPrice->setText(GUIUtil::TOQS(mapAT["BBPDOGE"].Message));
+
+    ui->lblDOGEUSD->setText(GUIUtil::TOQS(mapAT["DOGEUSD"].Message));
+    
+    ui->lblBBPUSD->setText(GUIUtil::TOQS(mapAT["BBPUSD"].Message));
+    
+    nRedrawing = 0;
 }
+
 
 void Exchange::EntireRowClickedBuy(const QModelIndex& qmodelindex)
 {
     LOCK(cs_tbl);
-    int nSelectedRow = qmodelindex.row();
-    if (nSelectedRow < 0 || nSelectedRow > ui->tableBuy->rowCount()-1) return;
-    ui->txtPrice->setText(ui->tableBuy->item(nSelectedRow, COLUMN_PRICE)->text());
-    ui->txtQuantity->setText(ui->tableBuy->item(nSelectedRow, COLUMN_QUANTITY)->text());
-    ui->txtID->setText(ui->tableBuy->item(nSelectedRow, COLUMN_ID)->text());
+    int nSelRow = qmodelindex.row();
+    if (nSelRow < 0 || nSelRow > ui->tableBuy->rowCount()-1) return;
+    if (nRedrawing == 1) return;
+
+    ui->txtPrice->setText(ui->tableBuy->item(nSelRow, COLUMN_PRICE)->text().trimmed());
+    ui->txtQuantity->setText(ui->tableBuy->item(nSelRow, COLUMN_QUANTITY)->text().trimmed());
+    ui->txtID->setText(ui->tableBuy->item(nSelRow, COLUMN_ID)->text().trimmed());
     nLastClick = GetAdjustedTime();
+    nCurrentSelectedRowBuy = nSelRow;
     return;
 }
 
@@ -365,10 +395,13 @@ void Exchange::EntireRowClickedSell(const QModelIndex& qmodelindex)
     LOCK(cs_tbl);
     nLastClick = GetAdjustedTime();
 
-    int nSelectedRow = qmodelindex.row();
-    if (nSelectedRow < 0 || nSelectedRow > ui->tableSell->rowCount()-1) return;
-    ui->txtPrice->setText(ui->tableSell->item(nSelectedRow, COLUMN_PRICE)->text());
-    ui->txtQuantity->setText(ui->tableSell->item(nSelectedRow, COLUMN_QUANTITY)->text());
-    ui->txtID->setText(ui->tableSell->item(nSelectedRow, COLUMN_ID)->text());
+    int nSelRow = qmodelindex.row();
+    if (nSelRow < 0 || nSelRow > ui->tableSell->rowCount()-1) return;
+    if (nRedrawing == 1) return;
+
+    ui->txtPrice->setText(ui->tableSell->item(nSelRow, COLUMN_PRICE)->text().trimmed());
+    ui->txtQuantity->setText(ui->tableSell->item(nSelRow, COLUMN_QUANTITY)->text().trimmed());
+    ui->txtID->setText(ui->tableSell->item(nSelRow, COLUMN_ID)->text().trimmed());
+    nCurrentSelectedRowSell = nSelRow;
     return;
 }

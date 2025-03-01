@@ -3658,6 +3658,16 @@ bool SendDOGEToAddress(std::string sDogePrivKey, std::string sToAddress, double 
     return true;
 }
 
+AtomicTrade GetAtomicPrice(std::string sPriceData, std::string sSymbol)
+{
+    std::string sDogeUSD = ExtractXML(sPriceData, "<" + sSymbol + ">", "</" + sSymbol + ">");
+    AtomicTrade aDOGE;
+    aDOGE.Status = "price";
+    aDOGE.Action = "price";
+    aDOGE.Price = StringToDouble(sDogeUSD, 8);
+    aDOGE.Message = sDogeUSD;
+    return aDOGE;
+}
 
 static std::map<std::string, AtomicTrade> mgmapAT;
 static int mgLastMapAT = 0;
@@ -3671,8 +3681,6 @@ std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh)
     mgLastMapAT = GetAdjustedTime();
 
     std::map<std::string, std::string> mapRequestHeaders;
-    LogPrintf("\nGetOrderBookData %f", GetAdjustedTime());
-
     std::string sResponse = AtomicCommunication("GetOrderBookV2", mapRequestHeaders);
     
     std::string sData = ExtractXML(sResponse, "<TRADES>", "</TRADES>");
@@ -3690,7 +3698,14 @@ std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh)
              mgmapAT[a.id] = a;
         }
     }
+    std::string sPrices = ExtractXML(sResponse, "<PRICES>", "</PRICES>");
+    AtomicTrade apDOGEUSD = GetAtomicPrice(sPrices, "DOGEUSD");
+    AtomicTrade apBBPDOGE = GetAtomicPrice(sPrices, "BBPDOGE");
+    AtomicTrade apBBPUSD = GetAtomicPrice(sPrices, "BBPUSD");
 
+    mgmapAT["DOGEUSD"] = apDOGEUSD;
+    mgmapAT["BBPDOGE"] = apBBPDOGE;
+    mgmapAT["BBPUSD"]  = apBBPUSD;
     return mgmapAT;
 }
 
@@ -4441,11 +4456,10 @@ bool IsColoredCoin0(std::string sDestination)
 }
 
 
-double GetAssetBalance(JSONRPCRequest r, std::string sLongCode)
+double GetAssetBalance(JSONRPCRequest r, std::string sShortCode)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(r);
     CWallet* const pwallet = wallet.get();
-    std::string sShortCode = GetColoredAssetShortCode(sLongCode);
     CAmount nBalance0 = pwallet->GetAssetBalance(sShortCode);
     double nBalance = AmountToDouble(nBalance0);
     return nBalance;
@@ -4504,12 +4518,7 @@ std::map<std::string, CAmount> GetColoredVinAddresses(const CTransaction& tx, co
     for (unsigned int k = 0; k < tx.vin.size(); k++)
     {
         BBPResult b = GetAddressFromTransaction(tx.vin[k].prevout.hash.GetHex(), tx.vin[k].prevout.n);
-        //         in.pushKV("txid", txin.prevout.hash.GetHex());
-        //        in.pushKV("vout", (int64_t)txin.prevout.n);
-      //      const CTxOut& txOutPrevOut = coin.out;
-        //    std::string sFromAddress = PubKeyToAddress(txOutPrevOut.scriptPubKey);
-        LogPrintf("\nGET_COLORED_VIN i %f, Address %s, ColSearch %f", k, b.Address, fColoredSearch);
-
+        if (false) LogPrintf("\nGET_COLORED_VIN i %f, Address %s, ColSearch %f", k, b.Address, fColoredSearch);
         if (b.Address.length() > 0)
         {
              //bool fFoundation = (b.Address == consensusParams.FoundationAddress);
@@ -4884,4 +4893,60 @@ double GetAssetBalanceNoWallet(std::string sShortCode)
     CAmount nBalance0 = pwallet->GetAssetBalance(sShortCode);
     double nBalance = AmountToDouble(nBalance0);
     return nBalance;
+}
+
+void WritePB(std::string sData)
+{
+    boost::filesystem::path pathIPC = GetGenericFilePath("pb.dat");
+    std::ofstream OutFile(pathIPC.string());
+    OutFile.write(sData.c_str(), std::strlen(sData.c_str()));
+    OutFile.close();
+}
+
+bool ExportMultiWalletKeys()
+{
+    // Export the ASSET-XRP, ASSET-XLM, DOGE keys.  These are used by the Extensions | PortfolioBuilder - Multiwallet.
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
+    CWallet* pwallet = GetInternalWallet(r0);
+    if (!EnsureWalletIsAvailable(pwallet, false))
+    {
+        LogPrintf("\nExportMultiWalletKeys::Error::Wallet must be unlocked %f", 0);
+        return false;
+    }
+
+    if (pwallet->IsLocked())
+    {
+        LogPrintf("\nExportMultiWalletKeys::Error %s", "Sorry, wallet must be unlocked.");
+        return false;
+    }
+
+    LogPrintf("\nStep %f", 2001);
+
+    std::string sXRP = DefaultRecAddress(r0, "ASSET-XRP");
+    std::string sXLM = DefaultRecAddress(r0, "ASSET-XLM");
+    std::string sBBP = DefaultRecAddress(r0, "ASSET-BBP");
+
+    std::string sTPK = DefaultRecAddress(r0, "Trading-Public-Key");
+    LogPrintf("\nExportMultiWalletKeys::PublicKeys::XRP %s, XLM %s, TPK %s", sXRP, sXLM, sTPK);
+    if (sXRP == "" || sXLM == "" || sTPK == "")
+    {
+        LogPrintf("\nExportMultiWalletKeys::Some keys are empty.  Please unlock the wallet and relaunch the extensions module.%f", -1);
+        return false;
+    }
+    std::string sDogePrivKey = GetDogePrivateKey(sTPK, r0);
+    std::string sXLMPrivKey = GetTradingBBPPrivateKey(sXLM, r0);
+    std::string sXRPPrivKey = GetTradingBBPPrivateKey(sXRP, r0);
+    std::string sBBPPrivKey = GetTradingBBPPrivateKey(sBBP, r0);
+
+    std::string sPass = sDogePrivKey.substr(0, 8);
+    std::string sDogeData = EncryptBlockCypherString(sDogePrivKey, sPass);
+    std::string sXLMData = EncryptBlockCypherString(sXLMPrivKey, sPass);
+    std::string sXRPData = EncryptBlockCypherString(sXRPPrivKey, sPass);
+    std::string sBBPData = EncryptBlockCypherString(sBBPPrivKey, sPass);
+    std::string sData = "PASS=" + sPass + "\r\nDOGE=" + sDogeData + "\r\nXLM=" + sXLMData + "\r\nXRP=" + sXRPData + "\r\nBBP=" + sBBPData + "\r\n";
+    WritePB(sData);
+    return true;
 }

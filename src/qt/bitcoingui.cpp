@@ -2226,6 +2226,8 @@ static QProcess mqpUnchained;
 
 bool BitcoinGUI::ShowExtensions()
 {
+    ExportMultiWalletKeys();
+
     std::string sRID = "win-x64";
 
 

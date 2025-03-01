@@ -2545,7 +2545,7 @@ CAmount CWallet::GetAssetBalance(std::string sAssetCode) const
     for (const auto& item : vecTally)
     {
         std::string sDest = EncodeDestination(item.txdest);
-        if (sAssetCode == "" || StringEndsWith(sDest, sAssetCode))
+        if (sAssetCode == "" || StringEndsWith(sDest, sAssetCode) || sDest == sAssetCode)
         {
             nTotal += item.nAmount;
             if (false) LogPrintf("\nCOIN %f", item.nAmount);

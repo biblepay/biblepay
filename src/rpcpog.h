@@ -521,7 +521,7 @@ std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string 
 std::string GetDisplayAgeInDays(int nRefTime);
 std::string GetColoredAssetShortCode(std::string sTicker);
 bool IsColoredCoin0(std::string sDestination);
-double GetAssetBalance(JSONRPCRequest r, std::string sLongCode);
+double GetAssetBalance(JSONRPCRequest r, std::string sShortCode);
 std::string GetFlags(AtomicTrade a, std::string sMyAddress, std::map<std::string, AtomicTrade> mapAT);
 std::string GetDefaultReceiveAddress(std::string sName);
 std::string IsInAddressBook(JSONRPCRequest r, std::string sNamedEntry);
@@ -531,7 +531,7 @@ CAmount GetWalletBalanceForSpecificAddress(std::string sAddress);
 double AmountToDouble(const CAmount& amount);
 std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs);
 BBPResult GetAddressFromTransaction(std::string sTXID, int nVOUT);
-
+bool ExportMultiWalletKeys();
 
 
 /** Used to store a reference to the global node */
