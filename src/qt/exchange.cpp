@@ -19,6 +19,7 @@
 #include <univalue.h>
 #include <QMessageBox>
 #include <QTableWidgetItem>
+#include <QInputDialog>
 #include <QtGui/QClipboard>
 #include "rpcpog.h"
 
@@ -57,6 +58,9 @@ Exchange::Exchange(QWidget* parent) :
     connect(ui->btnBuy, SIGNAL(clicked()), this, SLOT(buyClicked()));
     connect(ui->btnSell, SIGNAL(clicked()), this, SLOT(sellClicked()));
     connect(ui->btnCancel, SIGNAL(clicked()), this, SLOT(cancelClicked()));
+    connect(ui->btnGetBalance, SIGNAL(clicked()), this, SLOT(getBalanceClicked()));
+    connect(ui->btnWrap, SIGNAL(clicked()), this, SLOT(wrapClicked()));
+    connect(ui->btnUnwrap, SIGNAL(clicked()), this, SLOT(unwrapClicked()));
 
     connect(ui->tableBuy->selectionModel(), SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(EntireRowClickedBuy(const QModelIndex&)));
     connect(ui->tableSell->selectionModel(), SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(EntireRowClickedSell(const QModelIndex&)));
@@ -160,19 +164,22 @@ void Exchange::buyClicked()
         return;  
     }
     std::string sDogeColoredPubKey = IsInAddressBook(r0, sAssetBookName);
-    if (sDogeColoredPubKey == "") {
+    if (sDogeColoredPubKey == "")
+    {
         a.Error = "Sorry, the doge asset address has not been mined yet.";
         QMessageBox::information(nullptr, "Error", GUIUtil::TOQS(a.Error));
         return;  
     }
-    CAmount nWallBal = GetWalletBalanceForSpecificAddress(sDogeColoredPubKey);
-    double nColoredBalance = AmountToDouble(nWallBal);
-    double nTotal = a.Price * a.Quantity;
-    LogPrintf("\nBuyClick AssetBal %f  TotalBuy %f", nColoredBalance, nTotal);
+    //CAmount nWallBal = GetWalletBalanceForSpecificAddress(sDogeColoredPubKey);
+    //double nColoredBalance = AmountToDouble(nWallBal);
+    double nColoredDogeBalance = GetAssetBalanceNoWallet("DGZZ");
 
-    if (nTotal > nColoredBalance)
+    double nTotal = a.Price * a.Quantity;
+    LogPrintf("\nBuyClick AssetBal %f  TotalBuy %f", nColoredDogeBalance, nTotal);
+
+    if (nTotal > nColoredDogeBalance)
     {
-        a.Error = "Sorry, your asset balance is " + DoubleToString(nColoredBalance, 4) + " which is less than the buy amount of "
+        a.Error = "Sorry, your asset balance is " + DoubleToString(nColoredDogeBalance, 4) + " which is less than the buy amount of "
             + DoubleToString(nTotal, 4) + ".";
         QMessageBox::information(nullptr, "Error", GUIUtil::TOQS(a.Error));
         return;
@@ -223,7 +230,8 @@ void Exchange::sellClicked()
         QMessageBox::information(nullptr, "Error", GUIUtil::TOQS(a.Error));
         return;
     }
-    if (nBBPNonColoredBalance < a.Quantity) {
+    if (nBBPNonColoredBalance < a.Quantity)
+    {
         a.Error = "Sorry, your BBP Trading-public-key balance is " + DoubleToString(nBBPNonColoredBalance, 4) + " which is less than the sell quantity of "
             + DoubleToString(a.Quantity, 4) + ".";
         QMessageBox::information(nullptr, "Error", GUIUtil::TOQS(a.Error));
@@ -253,7 +261,8 @@ void Exchange::cancelClicked()
     const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
     JSONRPCRequest r0(cc);
     std::string sOrderID = ui->txtID->text().toStdString();
-    if (sOrderID.length() < 4) {
+    if (sOrderID.length() < 4)
+    {
         QMessageBox::information(nullptr, "Error", "You must enter the full OrderID.");
         return;
     }
@@ -261,7 +270,8 @@ void Exchange::cancelClicked()
     a.id = sOrderID;
     // todo - if they clicked from the Sell side, replace with the colored key.
     a = TransmitAtomicTrade(r0, a, "CancelAtomicTransactionV2", "");
-    if (a.Error.length() > 1) {
+    if (a.Error.length() > 1)
+    {
         QMessageBox::information(nullptr, "Error", GUIUtil::TOQS(a.Error));
         return;
     }
@@ -278,12 +288,11 @@ void Exchange::PerformUpdateTables()
     }
     if (nWalletStartTime == 0) nWalletStartTime = GetAdjustedTime();
     int nStartElapsed = GetAdjustedTime() - nWalletStartTime;
-    if (nStartElapsed < (15))
+    if (nStartElapsed < (5))
     {
         // Prevent race condition on cold boot; allow wallet to warm up first.
         return;
     }
-
 
     int nElapsed = GetAdjustedTime() - nLastClick;
     bool bRefresh = false;
@@ -369,10 +378,88 @@ void Exchange::PerformUpdateTables()
     ui->lblDOGEUSD->setText(GUIUtil::TOQS(mapAT["DOGEUSD"].Message));
     
     ui->lblBBPUSD->setText(GUIUtil::TOQS(mapAT["BBPUSD"].Message));
-    
+
+    // Populate Ease-of-Use Wallet Balances
+
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    std::string sTradingPublicKey = DefaultRecAddress(r0, "Trading-Public-Key");
+    std::string sAssetBookNameDOGE = "TRADING-ASSET-DOGE";
+    std::string sDogeColoredPubKey = IsInAddressBook(r0, sAssetBookNameDOGE);
+
+    CWallet* pwallet = GetInternalWallet(r0);
+    if (EnsureWalletIsAvailable(pwallet, false))
+    {
+         if (!pwallet->IsLocked())
+         {
+
+             ui->txtColoredDOGEAddress->setText(GUIUtil::TOQS(sDogeColoredPubKey));
+             std::string sNativeDogeAddress = GetDogePubKey(sTradingPublicKey, r0);
+             ui->txtNativeDogeAddress->setText(GUIUtil::TOQS(sNativeDogeAddress));
+             ui->txtBBPTradingAddress->setText(GUIUtil::TOQS(sTradingPublicKey));
+
+             double nColoredDogeBalance = GetAssetBalanceNoWallet("DGZZ");
+             ui->lblColoredDogeBalance->setText(GUIUtil::TOQS(DoubleToString(nColoredDogeBalance, 6)));
+
+             double nBBPBalance = GetAssetBalance(r0, sTradingPublicKey);
+             ui->lblBBPAssetBalance->setText(GUIUtil::TOQS(DoubleToString(nBBPBalance, 6)));
+             //LogPrintf("\nWalletBalance DOGE COLORED %f, BBP %f", nColoredBalance, nBBPBalance);
+         }
+    }
+
     nRedrawing = 0;
 }
 
+void Exchange::getBalanceClicked()
+{
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    std::string sTradingPublicKey = DefaultRecAddress(r0, "Trading-Public-Key");
+    std::string sNativeDogeAddress = GetDogePubKey(sTradingPublicKey, r0);
+    double nNativeDogeBalance = GetDogeBalance(sNativeDogeAddress);
+    ui->lblNativeDogeBalance->setText(GUIUtil::TOQS(DoubleToString(nNativeDogeBalance, 6)));
+}
+
+void Exchange::wrapClicked()
+{
+    QString sQty = QInputDialog::getText(nullptr, "Wrap Native Asset to Colored Asset", "How much would you like to wrap?");
+    double nQuantity = StringToDouble(sQty.toStdString(), 4);
+    if (nQuantity <= 0) {
+         return;
+    }
+    std::string sAssetLongName = "DOGE";
+    AtomicTrade a = WrapCoin(sAssetLongName, nQuantity);
+
+    if (a.Error.empty())
+    {
+         std::string sReport = "<html><br>ID: " + a.id + "<br>Tx:" + a.ToString() + "</html>";
+         QMessageBox::information(nullptr, "Successful Wrap", GUIUtil::TOQS(sReport));
+    }
+    else
+    {
+         QMessageBox::information(nullptr, "Error", GUIUtil::TOQS(a.Error));
+    }
+}
+
+void Exchange::unwrapClicked()
+{
+    QString sQty = QInputDialog::getText(nullptr, "Unwrap Colored Asset to Native Asset", "How much would you like to unwrap?");
+    double nQuantity = StringToDouble(sQty.toStdString(), 4);
+    if (nQuantity <= 0) {
+         return;
+    }
+    std::string sAssetLongName = "DOGE";
+    AtomicTrade a = UnwrapCoin(sAssetLongName, nQuantity);
+    if (a.Error.empty())
+    {
+         std::string sReport = "<html><br>ID: " + a.id + "<br>Tx:" + a.ToString() + "</html>";
+         QMessageBox::information(nullptr, "Successful Unwrap", GUIUtil::TOQS(sReport));
+    }
+    else
+    {
+         QMessageBox::information(nullptr, "Error", GUIUtil::TOQS(a.Error));
+    }
+}
 
 void Exchange::EntireRowClickedBuy(const QModelIndex& qmodelindex)
 {

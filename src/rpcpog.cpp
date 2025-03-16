@@ -9,7 +9,7 @@
 #include <boost/algorithm/string/replace.hpp>
 
 #include <boost/asio.hpp>
-
+ 
 #include <coinjoin/client.h>
 #include <coinjoin/context.h>
 #include <interfaces/chain.h>
@@ -4949,4 +4949,98 @@ bool ExportMultiWalletKeys()
     std::string sData = "PASS=" + sPass + "\r\nDOGE=" + sDogeData + "\r\nXLM=" + sXLMData + "\r\nXRP=" + sXRPData + "\r\nBBP=" + sBBPData + "\r\n";
     WritePB(sData);
     return true;
+}
+
+
+AtomicTrade WrapCoin(std::string sAssetLongName, double nQuantity)
+{
+    AtomicTrade a;
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    
+    boost::to_upper(sAssetLongName);
+    std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
+    if (sAssetShortCode.empty())
+    {
+        a.Error = "Asset code not found.";
+        return a;
+    }
+    if (sAssetShortCode != "DGZZ") {
+        a.Error = "At this time, only DOGE is supported.";
+        return a;
+    }
+
+    std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
+
+    std::string sAltAddress = IsInAddressBook(r0, sAssetBookName);
+    if (sAltAddress.empty())
+    {
+        a.Error = "Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.";
+        return a;
+    }
+
+    a.Action = "ingate";
+    a.Time = GetAdjustedTime();
+    a.Quantity = nQuantity;
+    if (a.Quantity <= 0)
+    {
+        a.Error = "The Quantity must be greater than zero.";
+        return a;
+    }
+    a.SymbolBuy = "bbp";
+    a.SymbolSell = sAssetLongName;
+    boost::to_lower(a.SymbolSell);
+    a.Price = 1;
+    a.Version = 1;
+    a.Status = "ingate";
+    a = TransmitAtomicTrade(r0, a, "TransmitIngateTransactionV2", sAssetBookName);
+    return a;
+}
+
+
+AtomicTrade UnwrapCoin(std::string sAssetLongName, double nAmount)
+{
+    AtomicTrade a;
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    
+    boost::to_upper(sAssetLongName);
+    std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
+    if (sAssetShortCode.empty())
+    {
+        a.Error = "Asset code not found.";
+        return a;
+    }
+    if (sAssetShortCode != "DGZZ")
+    {
+        a.Error = "At this time, only DOGE is supported.";
+        return a;
+    }
+
+    std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
+
+    std::string sAltAddress = IsInAddressBook(r0, sAssetBookName);
+    if (sAltAddress.empty())
+    {
+        a.Error = "Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.";
+        return a;
+    }
+
+    a.Action = "outgate";
+    a.Status = "outgate";
+    a.Time = GetAdjustedTime();
+    a.Quantity = nAmount;
+    
+    if (a.Quantity <= 0)
+    {
+        a.Error = "The Quantity must be greater than zero.";
+        return a;
+    }
+    a.SymbolBuy = "bbp";
+    a.SymbolSell = sAssetLongName;
+    boost::to_lower(a.SymbolSell);
+    a.Price = 1;
+    a.Version = 1;
+    a = TransmitAtomicTrade(r0, a, "TransmitOutgateTransactionV2", sAssetBookName);
+    return a;
 }

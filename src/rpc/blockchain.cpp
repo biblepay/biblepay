@@ -3351,79 +3351,26 @@ UniValue exec(const JSONRPCRequest& request)
             throw std::runtime_error("You must specify: exec wrap asset_long_name quantity "
                                      "\r\n  Ex: exec wrap doge 1.  You will lose 1 DOGE and gain 1 wrapped DOGE.");
         }
+
         std::string sAssetLongName = request.params[1].get_str();
-        boost::to_upper(sAssetLongName);
-        std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
-        if (sAssetShortCode.empty())
-        {
-            throw std::runtime_error("Asset code not found.");
-        }
-        if (sAssetShortCode != "DGZZ")
-        {
-            throw std::runtime_error("At this time, only DOGE is supported.");
-        }
+        double nQuantity = StringToDouble(request.params[2].get_str(), 4);
 
-        std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
+        AtomicTrade a = WrapCoin(sAssetLongName, nQuantity);
 
-        std::string sAltAddress = IsInAddressBook(request, sAssetBookName);
-        if (sAltAddress.empty()) {
-            throw std::runtime_error("Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.");
-        }
-        AtomicTrade a;
-        a.Action = "ingate";
-        a.Time = GetAdjustedTime();
-        a.Quantity = StringToDouble(request.params[2].get_str(), 4);
-        if (a.Quantity <= 0)
-        {
-            throw std::runtime_error("The Quantity must be greater than zero.");
-        }
-        a.SymbolBuy = "bbp";
-        a.SymbolSell = sAssetLongName;
-        boost::to_lower(a.SymbolSell);
-        a.Price = 1;
-        a.Version = 1;
-        a.Status = "ingate";
-        a = TransmitAtomicTrade(request, a, "TransmitIngateTransactionV2", sAssetBookName);
         results.pushKV("id", a.id);
         results.pushKV("Tx", a.ToString());
         results.pushKV("Error", a.Error);
     }
-    else if (sItem == "unwrap") {
-        if (request.params.size() < 3) {
+    else if (sItem == "unwrap")
+    {
+        if (request.params.size() < 3)
+        {
             throw std::runtime_error("You must specify: exec unwrap asset_long_name quantity "
                                      "\r\n  Ex: exec unwrap doge 1.  You will lose 1 DOGE wrapped coin and gain 1 real DOGE.");
         }
         std::string sAssetLongName = request.params[1].get_str();
-        boost::to_upper(sAssetLongName);
-        std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
-        if (sAssetShortCode.empty()) {
-            throw std::runtime_error("Asset code not found.");
-        }
-        if (sAssetShortCode != "DGZZ") {
-            throw std::runtime_error("At this time, only DOGE is supported.");
-        }
-
-        std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
-
-        std::string sAltAddress = IsInAddressBook(request, sAssetBookName);
-        if (sAltAddress.empty())
-        {
-            throw std::runtime_error("Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.");
-        }
-        AtomicTrade a;
-        a.Action = "outgate";
-        a.Status = "outgate";
-        a.Time = GetAdjustedTime();
-        a.Quantity = StringToDouble(request.params[2].get_str(), 4);
-        if (a.Quantity <= 0) {
-            throw std::runtime_error("The Quantity must be greater than zero.");
-        }
-        a.SymbolBuy = "bbp";
-        a.SymbolSell = sAssetLongName;
-        boost::to_lower(a.SymbolSell);
-        a.Price = 1;
-        a.Version = 1;
-        a = TransmitAtomicTrade(request, a, "TransmitOutgateTransactionV2", sAssetBookName);
+        double nQuantity = StringToDouble(request.params[2].get_str(), 4);
+        AtomicTrade a = UnwrapCoin(sAssetLongName, nQuantity);
         results.pushKV("id", a.id);
         results.pushKV("Tx", a.ToString());
         results.pushKV("Error", a.Error);

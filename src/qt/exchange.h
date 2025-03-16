@@ -68,6 +68,9 @@ Q_SIGNALS:
 private Q_SLOTS:
     void buyClicked();
     void sellClicked();
+    void wrapClicked();
+    void unwrapClicked();
+    void getBalanceClicked();
     void cancelClicked();
     void EntireRowClickedBuy(const QModelIndex& q);
     void EntireRowClickedSell(const QModelIndex& q);

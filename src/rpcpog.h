@@ -19,6 +19,12 @@
 #include <context.h>
 #include <shutdown.h>
 #include <evo/deterministicmns.h>
+#include <wallet/coincontrol.h>
+#include <wallet/rpcwallet.h>
+
+#include <wallet/wallet.h>
+#include <wallet/walletdb.h>
+#include <wallet/walletutil.h>
 
 
 class JSONRPCRequest;
@@ -511,7 +517,7 @@ void SetBBPTradingMessageSeen(std::string s);
 AtomicTrade GetAtomicTradeFromTransaction(const CTransaction& tx);
 std::string AtomicCommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders);
 AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod, std::string sAddressBookName);
-std::string YesNo(bool f);
+std::string YesNo(bool f); 
 AtomicTrade GetAtomicTradePrimaryKey(JSONRPCRequest r);
 std::string GetTradingBBPPrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
 std::string CreateBankrollDenominations(JSONRPCRequest r, double nQuantity, CAmount denominationAmount, std::string& sError);
@@ -532,6 +538,10 @@ double AmountToDouble(const CAmount& amount);
 std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs);
 BBPResult GetAddressFromTransaction(std::string sTXID, int nVOUT);
 bool ExportMultiWalletKeys();
+AtomicTrade WrapCoin(std::string sAssetLongName, double nQuantity);
+AtomicTrade UnwrapCoin(std::string sAssetLongName, double nAmount);
+CWallet* GetInternalWallet(JSONRPCRequest r);
+double GetAssetBalanceNoWallet(std::string sShortCode);
 
 
 /** Used to store a reference to the global node */
