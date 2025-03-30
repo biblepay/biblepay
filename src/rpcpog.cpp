@@ -17,6 +17,7 @@
 #include <interfaces/node.h>
 #include <boost/thread.hpp>
 #include <rpc/blockchain.h>
+#include <filesystem>
 
 #include <boost/date_time/posix_time/posix_time.hpp> // for StringToUnixTime()
 #include <boost/lexical_cast.hpp>
@@ -65,6 +66,14 @@
 
 #include <openssl/ripemd.h>
 #include <openssl/sha.h>
+
+
+
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
+
+
 #include <secp256k1.h>
 #include <stdio.h>
 
@@ -272,7 +281,6 @@ std::string ReverseHex(std::string const& src)
     return result;
 }
 
-
 CAmount GetWalletBalance(JSONRPCRequest r)
 {
     CWallet* pwallet = GetInternalWallet(r);
@@ -282,7 +290,6 @@ CAmount GetWalletBalance(JSONRPCRequest r)
     CAmount nBal = bal.m_mine_trusted;
     return nBal;
 }
-
 
 std::string GetPrivKey2(JSONRPCRequest r, std::string sPubKey, std::string& sError)
 {
@@ -1199,6 +1206,10 @@ std::string AtomicCommunication(std::string Action, std::map<std::string, std::s
     }
     sXML += "<EOF></EOF>\r\n";
     std::string sResponse = GetTCPContent(sBaseDomain, sXML, 10000, 15);
+    if (Action != "GetOrderBookV2" && false) {
+        LogPrintf("\nEXCHANGE::%s %s", Action, sResponse);
+    }
+
     return sResponse;
  }
 
@@ -3631,26 +3642,25 @@ int GetUniInt(UniValue o, std::string sMemberName)
     return iResult;
 }
 
-double GetDogeBalance(std::string sDogePubKey)
+double GetAltBalance(std::string sTicker, std::string sPubKey)
 {
     std::map<std::string, std::string> mapRequestHeaders;
-    mapRequestHeaders["Address"] = sDogePubKey;
-    std::string sResponse = AtomicCommunication("GetDOGEBalance", mapRequestHeaders);
+    mapRequestHeaders["Address"] = sPubKey;
+    mapRequestHeaders["Ticker"] = sTicker;
+    mapRequestHeaders["EncAddress"] = EncryptRSAData(sPubKey);
+    std::string sResponse = AtomicCommunication("GetALTBalance", mapRequestHeaders);
     std::string sBal = ExtractXML(sResponse, "<BALANCE>", "</BALANCE>");
-    TradingLog("GetDogeBalance::PubKey::" + sDogePubKey + ", Balance=" + sBal);
+    TradingLog("GetAltBalance::PubKey::" + sPubKey + ", Balance=" + sBal);
     double nBal = StringToDouble(sBal, 4);
     return nBal;
 }
-
 
 bool SendDOGEToAddress(std::string sDogePrivKey, std::string sToAddress, double nAmount, std::string& sError, std::string& sTXID)
 {
     std::map<std::string, std::string> mapRequestHeaders;
     mapRequestHeaders["ToAddress"] = sToAddress;
     mapRequestHeaders["Amount"] = DoubleToString(nAmount,4);
-    std::string sPass = sDogePrivKey.substr(0, 8);
-    mapRequestHeaders["EncryptedKey"] = EncryptBlockCypherString(sDogePrivKey, sPass);
-    mapRequestHeaders["Password"] = sPass;
+    mapRequestHeaders["EncryptedKey"] = EncryptRSAData(sDogePrivKey);
     LogPrintf("\nSendDOGEToAddress::%s, AMOUNT=%f", sToAddress, nAmount);
     std::string sResponse = AtomicCommunication("SendDOGE", mapRequestHeaders);
     sTXID = ExtractXML(sResponse, "<TXID>", "</TXID>");
@@ -3671,7 +3681,7 @@ AtomicTrade GetAtomicPrice(std::string sPriceData, std::string sSymbol)
 
 static std::map<std::string, AtomicTrade> mgmapAT;
 static int mgLastMapAT = 0;
-std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh)
+std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh, std::string sTicker)
 {
     int nElapsed = GetAdjustedTime() - mgLastMapAT;
     if (nElapsed < 60 && !fForceRefresh)
@@ -3681,6 +3691,7 @@ std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh)
     mgLastMapAT = GetAdjustedTime();
 
     std::map<std::string, std::string> mapRequestHeaders;
+    mapRequestHeaders["TICKER"] = sTicker;
     std::string sResponse = AtomicCommunication("GetOrderBookV2", mapRequestHeaders);
     
     std::string sData = ExtractXML(sResponse, "<TRADES>", "</TRADES>");
@@ -3699,13 +3710,10 @@ std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh)
         }
     }
     std::string sPrices = ExtractXML(sResponse, "<PRICES>", "</PRICES>");
-    AtomicTrade apDOGEUSD = GetAtomicPrice(sPrices, "DOGEUSD");
-    AtomicTrade apBBPDOGE = GetAtomicPrice(sPrices, "BBPDOGE");
-    AtomicTrade apBBPUSD = GetAtomicPrice(sPrices, "BBPUSD");
+    mgmapAT[sTicker + "USD"] = GetAtomicPrice(sPrices, sTicker + "USD");
+    mgmapAT["BBP" + sTicker] = GetAtomicPrice(sPrices, "BBP" + sTicker);
+    mgmapAT["BBPUSD"] = GetAtomicPrice(sPrices, "BBPUSD");
 
-    mgmapAT["DOGEUSD"] = apDOGEUSD;
-    mgmapAT["BBPDOGE"] = apBBPDOGE;
-    mgmapAT["BBPUSD"]  = apBBPUSD;
     return mgmapAT;
 }
 
@@ -3741,70 +3749,46 @@ AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMe
     LogPrintf("\nTransmitAtomic ColoredAssetAddress %s", sColoredAssetAddress);
 
     std::string sBBPPrivKey =  GetTradingBBPPrivateKey(a.Signer, r);
-    std::string sDogePrivKey = GetDogePrivateKey(a.Signer, r);
+    std::string sDogePrivKey = "";
+    if (a.SymbolSell == "xlm" || a.SymbolBuy == "xlm")
+    {
+         std::string sXLM = DefaultRecAddress(r, "ASSET-XLM");
+         //sDogePrivKey = GetDogePrivateKey(a.Signer, r);
+         sDogePrivKey = GetTradingBBPPrivateKey(sXLM, r);
+    }
+    else
+    {
+         sDogePrivKey = GetDogePrivateKey(a.Signer, r);
+    }
     std::string sAssetPrivKey = GetTradingBBPPrivateKey(sColoredAssetAddress, r);
-    std::string sPass = sBBPPrivKey.substr(0, 8);
     std::map<std::string, std::string> mapRequestHeaders;
-    mapRequestHeaders["EncryptedBBPKey"] = EncryptBlockCypherString(sBBPPrivKey, sPass);
-    mapRequestHeaders["EncryptedDogeKey"] = EncryptBlockCypherString(sDogePrivKey, sPass);
-    mapRequestHeaders["EncryptedAssetKey"] = EncryptBlockCypherString(sAssetPrivKey, sPass);
 
-    mapRequestHeaders["Password"] = sPass;
-    mapRequestHeaders["AtomicTrade"] = EncryptBlockCypherString(a.ToString(), sPass);
+    // This is the sole area where we use RSA; so far.
+
+    mapRequestHeaders["EncryptedBBPKey"] = EncryptRSAData(sBBPPrivKey);
+    mapRequestHeaders["EncryptedDogeKey"] = EncryptRSAData(sDogePrivKey);
+    mapRequestHeaders["EncryptedAssetKey"] = EncryptRSAData(sAssetPrivKey);
+    mapRequestHeaders["AtomicTrade"] = stringToHexString(a.ToString());
+
+    // End of RSA
+
     std::string sResponse = AtomicCommunication(sMethod, mapRequestHeaders);
     std::string sData = ExtractXML(sResponse, "<ATOMIC>", "</ATOMIC>");
     TradingLog("PLACING ATOMIC TRADE::" + a.ToString());
     a = a.FromJson(sData);
+
     std::string sError;
     if (a.Error == "" && sMethod.substr(0,14)=="TransmitAtomic" && a.id.length() > 4)
     {
         // When buying with DOGE, we need to make a wallet tx so they can refer to the txid.
         a.TXID = TransmitSidechainTx(r, a, sError);
-    } else if (a.Error == "" && sMethod == "CancelAtomicTransactionV2" && a.id.length() > 4)
+    }
+    else if (a.Error == "" && sMethod == "CancelAtomicTransactionV2" && a.id.length() > 4)
     {
         a.TXID = TransmitSidechainTx(r, a, sError);
     }
     return a;
 }
-
-
-AtomicTrade GetAtomicTradePrimaryKey(JSONRPCRequest r)
-{
-    AtomicTrade a;
-    a.New();
-    a.id = DoubleToString(GetAdjustedTime(), 0);
-    
-    const Consensus::Params& consensusParams = Params().GetConsensus();
-    std::string sObjType = "AtomicTrade";
-    a.Signer = DefaultRecAddress(r, "Trading-Public-Key");
-    a.AltAddress = GetDogePubKey(a.Signer, r);
-        
-    a.Message = "authorize-" + DoubleToString(GetAdjustedTime(), 0);
-    a.Time = GetAdjustedTime();
-    std::string sSignError;
-    a.Signature = SignMessageEvo(r, a.Signer, a.Message, sSignError);
-    if (!sSignError.empty()) {
-         a.Error = "Unable to sign";
-         TradingLog("Placing Atomic Trade::Sign Error (You must use a good key).");
-         return a;
-    }
-    std::map<std::string, std::string> mapRequestHeaders;
-    std::string sDogePrivKey = GetDogePrivateKey(a.Signer, r);
-    std::string sPass = sDogePrivKey.substr(0, 8);
-    mapRequestHeaders["Password"] = sPass;
-    mapRequestHeaders["EncryptedTrade"] = EncryptBlockCypherString(a.ToString(), sPass);
-
-    std::string sResponse = AtomicCommunication("GetPrimaryKey", mapRequestHeaders);
-    std::string sData = ExtractXML(sResponse, "<ATOMIC>", "</ATOMIC>");
-    
-    a = a.FromJson(sData);
-    TradingLog("TRANSMIT_ATOMIC_TRADE_PRIMARY_KEY_SELECTION " + a.ToString());
-    LogPrintf("\r\nCollateral BBP %s coll doge %s ", a.CollateralBBPAddress, a.CollateralDOGEAddress);
-
-    return a;
-}
-
-
 
 std::string EncryptBlockCypherString(const std::string& sData, const std::string& sPassword)
 {
@@ -3835,9 +3819,9 @@ bool compare_sort_order_book_desc(std::pair<std::string, AtomicTrade>& a, std::p
     return a.second.Price > b.second.Price;
 }
 
-std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus)
+std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus, std::string sTicker)
 {
-    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData(false);
+    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData(false, sTicker);
     std::vector<std::pair<std::string, AtomicTrade>> a;
     for (auto& it : mapAT)
     {
@@ -3882,11 +3866,13 @@ std::string GetDisplayAgeInDays(int nRefTime)
     std::string sDisplay = DoubleToString(nAge, 0);
     return sDisplay;
 }
-std::vector<std::string> GetOrderBook(std::string sAction, JSONRPCRequest r)
+
+/*
+std::vector<std::string> GetOrderBk(std::string sAction, JSONRPCRequest r)
 {
     std::vector<std::string> lRows;
-    std::vector<std::pair<std::string, AtomicTrade>> orderBook = GetSortedOrderBook(sAction, "open");
-    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData(false);
+    std::vector<std::pair<std::string, AtomicTrade>> orderBook = GetSOrderBook(sAction, "open");
+    std::map<std::string, AtomicTrade> mapAT = BookData(false);
 
     // For each Open order, where ACTION matches, get and sort by price
     std::string sMyAddress = DefaultRecAddress(r, "Trading-Public-Key");
@@ -3917,6 +3903,7 @@ std::vector<std::string> GetOrderBook(std::string sAction, JSONRPCRequest r)
     }
     return lRows;
 }
+*/
 
 std::string DecryptBlockCypherString(const std::string& sData, const std::string& sPassword)
 {
@@ -4903,28 +4890,33 @@ void WritePB(std::string sData)
     OutFile.close();
 }
 
-bool ExportMultiWalletKeys()
+bool IsWalletAvailable()
 {
-    // Export the ASSET-XRP, ASSET-XLM, DOGE keys.  These are used by the Extensions | PortfolioBuilder - Multiwallet.
+    const Consensus::Params& consensusParams = Params().GetConsensus();
     const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
     JSONRPCRequest r0(cc);
-    const Consensus::Params& consensusParams = Params().GetConsensus();
-
     CWallet* pwallet = GetInternalWallet(r0);
     if (!EnsureWalletIsAvailable(pwallet, false))
     {
-        LogPrintf("\nExportMultiWalletKeys::Error::Wallet must be unlocked %f", 0);
+        LogPrintf("\nIsWalletLocked::Error::Wallet must be unlocked %f", 0);
         return false;
     }
-
-    if (pwallet->IsLocked())
-    {
-        LogPrintf("\nExportMultiWalletKeys::Error %s", "Sorry, wallet must be unlocked.");
+    if (pwallet->IsLocked()) {
+        LogPrintf("\nIsWalletLocked::Error %s", "Sorry, wallet must be unlocked.");
         return false;
     }
+    return true;
+}
 
-    LogPrintf("\nStep %f", 2001);
-
+bool ExportMultiWalletKeys()
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0 (cc);
+    if (!IsWalletAvailable()) {
+        return false;
+    }
+    // Export the ASSET-XRP, ASSET-XLM, DOGE keys.  These are used by the Extensions | PortfolioBuilder - Multiwallet.
     std::string sXRP = DefaultRecAddress(r0, "ASSET-XRP");
     std::string sXLM = DefaultRecAddress(r0, "ASSET-XLM");
     std::string sBBP = DefaultRecAddress(r0, "ASSET-BBP");
@@ -4952,30 +4944,75 @@ bool ExportMultiWalletKeys()
 }
 
 
-AtomicTrade WrapCoin(std::string sAssetLongName, double nQuantity)
+std::string GetAltPubKey(std::string sTicker, std::string sAltPrivKey)
+{
+    std::map<std::string, std::string> mapRequestHeaders;
+    mapRequestHeaders["EncryptedKey"] = EncryptRSAData(sAltPrivKey);
+    mapRequestHeaders["Ticker"] = sTicker;
+    //LogPrintf("\nSendDOGEToAddress::%s, AMOUNT=%f", sToAddress, nAmount);
+    std::string sResponse = AtomicCommunication("GetAltPublicKey", mapRequestHeaders);
+    std::string sPubKey = ExtractXML(sResponse, "<PublicKey>", "</PublicKey>");
+    std::string sError = ExtractXML(sResponse, "<ERROR>", "</ERROR>");
+    return sPubKey;
+}
+
+std::string GetAltPublicKey(std::string sSymbol)
+{
+    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
+    JSONRPCRequest r0(cc);
+    bool f = IsWalletAvailable();
+    // DOGE, XRP, XLM, etc.
+    if (sSymbol == "DOGE")
+    {
+        std::string sTradingPublicKey = DefaultRecAddress(r0, "Trading-Public-Key");
+        std::string sNativeAltAddress = GetDogePubKey(sTradingPublicKey, r0);
+        return sNativeAltAddress;
+    }
+    else if (sSymbol == "XLM")
+    {
+        std::string sXLM = DefaultRecAddress(r0, "ASSET-XLM");
+        if (!f)
+        {
+            return "";
+        }
+        std::string sXLMPrivKey = GetTradingBBPPrivateKey(sXLM, r0);
+        std::string sAPK = GetAltPubKey(sSymbol, sXLMPrivKey);
+        return sAPK;
+    }
+    else if (sSymbol == "XRP")
+    {
+        std::string sXRP = DefaultRecAddress(r0, "ASSET-XRP");
+        if (!f)
+        {
+            return "";
+        }
+        std::string sXRPPrivKey = GetTradingBBPPrivateKey(sXRP, r0);
+        std::string sAPK = GetAltPubKey(sSymbol, sXRPPrivKey);
+        return sAPK;
+    }
+    else
+    {
+        return "";
+    }
+}
+
+
+AtomicTrade WrapCoin(AtomicSymbol oSymbol, double nQuantity)
 {
     AtomicTrade a;
     const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
     JSONRPCRequest r0(cc);
-    
-    boost::to_upper(sAssetLongName);
-    std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
-    if (sAssetShortCode.empty())
+    if (oSymbol.ShortCode.empty())
     {
         a.Error = "Asset code not found.";
         return a;
     }
-    if (sAssetShortCode != "DGZZ") {
-        a.Error = "At this time, only DOGE is supported.";
-        return a;
-    }
 
-    std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
-
-    std::string sAltAddress = IsInAddressBook(r0, sAssetBookName);
+    std::string sAltAddress = IsInAddressBook(r0, oSymbol.AddressBookEntry);
     if (sAltAddress.empty())
     {
-        a.Error = "Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.";
+        a.Error = "Your asset address for " + oSymbol.LongAssetName
+            + " has not been mined yet.  Please wait and try again later.";
         return a;
     }
 
@@ -4988,41 +5025,33 @@ AtomicTrade WrapCoin(std::string sAssetLongName, double nQuantity)
         return a;
     }
     a.SymbolBuy = "bbp";
-    a.SymbolSell = sAssetLongName;
+    a.SymbolSell = oSymbol.Symbol;
     boost::to_lower(a.SymbolSell);
     a.Price = 1;
     a.Version = 1;
     a.Status = "ingate";
-    a = TransmitAtomicTrade(r0, a, "TransmitIngateTransactionV2", sAssetBookName);
+    a = TransmitAtomicTrade(r0, a, "TransmitIngateTransactionV2", oSymbol.AddressBookEntry);
     return a;
 }
 
 
-AtomicTrade UnwrapCoin(std::string sAssetLongName, double nAmount)
+AtomicTrade UnwrapCoin(AtomicSymbol oSymbol, double nAmount)
 {
     AtomicTrade a;
     const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
     JSONRPCRequest r0(cc);
     
-    boost::to_upper(sAssetLongName);
-    std::string sAssetShortCode = GetColoredAssetShortCode(sAssetLongName);
-    if (sAssetShortCode.empty())
+    if (oSymbol.ShortCode.empty())
     {
         a.Error = "Asset code not found.";
         return a;
     }
-    if (sAssetShortCode != "DGZZ")
-    {
-        a.Error = "At this time, only DOGE is supported.";
-        return a;
-    }
 
-    std::string sAssetBookName = "TRADING-ASSET-" + sAssetLongName;
-
-    std::string sAltAddress = IsInAddressBook(r0, sAssetBookName);
+    std::string sAltAddress = IsInAddressBook(r0, oSymbol.AddressBookEntry);
     if (sAltAddress.empty())
     {
-        a.Error = "Your asset address for " + sAssetLongName + " has not been mined yet.  Please wait and try again later.";
+        a.Error = "Your asset address for " + oSymbol.Symbol
+            + " has not been mined yet.  Please wait and try again later.";
         return a;
     }
 
@@ -5037,10 +5066,250 @@ AtomicTrade UnwrapCoin(std::string sAssetLongName, double nAmount)
         return a;
     }
     a.SymbolBuy = "bbp";
-    a.SymbolSell = sAssetLongName;
+    a.SymbolSell = oSymbol.Symbol;
     boost::to_lower(a.SymbolSell);
     a.Price = 1;
     a.Version = 1;
-    a = TransmitAtomicTrade(r0, a, "TransmitOutgateTransactionV2", sAssetBookName);
+    a = TransmitAtomicTrade(r0, a, "TransmitOutgateTransactionV2", oSymbol.AddressBookEntry);
+    return a;
+}
+
+
+std::string WriteByteArrayToFile(std::string sFileName, std::vector<unsigned char> byteArray)
+{
+    boost::filesystem::path pathF(gArgs.GetArg("-zzz", sFileName));
+    if (!pathF.is_complete())
+        pathF = GetSANDirectory1() / pathF;
+    std::ofstream outputFile(pathF.string(), std::ios::binary);
+    if (!outputFile.is_open())
+    {
+        return "";
+    }
+    outputFile.write(reinterpret_cast<const char*>(byteArray.data()), byteArray.size());
+    outputFile.close();
+    return pathF.string();
+}
+
+std::string stringToHexString(const std::string& input)
+{
+    std::stringstream hexStream;
+    hexStream << std::hex << std::setfill('0');
+    for (char c : input) {
+        hexStream << std::setw(2) << static_cast<int>(static_cast<unsigned char>(c));
+    }
+    return hexStream.str();
+}
+
+std::vector<unsigned char> hexStringToByteArray(const std::string& hexString)
+{
+    std::vector<unsigned char> byteArray;
+
+    if (hexString.length() % 2 != 0) {
+        return byteArray;
+    }
+
+    for (size_t i = 0; i < hexString.length(); i += 2) {
+        std::string byteString = hexString.substr(i, 2);
+        // Convert to uppercase to handle both cases
+        std::transform(byteString.begin(), byteString.end(), byteString.begin(), ::toupper);
+
+        unsigned char byte = 0;
+        if (byteString[0] >= '0' && byteString[0] <= '9') {
+            byte = (byteString[0] - '0') << 4;
+        } else if (byteString[0] >= 'A' && byteString[0] <= 'F') {
+            byte = (byteString[0] - 'A' + 10) << 4;
+        } else
+        {
+            return byteArray;
+            //throw std::invalid_argument("Invalid hex character.");
+        }
+
+        if (byteString[1] >= '0' && byteString[1] <= '9') {
+            byte |= (byteString[1] - '0');
+        } else if (byteString[1] >= 'A' && byteString[1] <= 'F') {
+            byte |= (byteString[1] - 'A' + 10);
+        } else
+        {
+            return byteArray;
+            //throw std::invalid_argument("Invalid hex character.");
+        }
+        byteArray.push_back(byte);
+    }
+    return byteArray;
+}
+
+std::string ByteArrayToHexString(const std::vector<unsigned char>& buffer)
+{
+    std::stringstream hexStringStream;
+    hexStringStream << std::hex << std::setfill('0');
+    for (unsigned char byte : buffer) {
+        hexStringStream << std::setw(2) << static_cast<int>(byte);
+    }
+    return hexStringStream.str();
+}
+
+int GetFileSize(std::string sPath)
+{
+    try
+    {
+        int nSz = std::filesystem::file_size(sPath);
+        return nSz;
+    } catch (...) {
+        return 0;
+    }
+}
+
+std::string GetIconFileName(std::string sFileName)
+{
+    boost::filesystem::path pathF(gArgs.GetArg("-zzz", sFileName));
+    if (!pathF.is_complete())
+        pathF = GetSANDirectory1() / pathF;
+    return pathF.string();
+}
+
+std::string GetTradingRoomIcon(std::string sIcon)
+{
+    try
+    {
+        std::string sPath = GetIconFileName(sIcon);
+        int nSz = GetFileSize(sPath);
+        if (nSz > 1024)
+        {
+            return sPath;
+        }
+        std::map<std::string, std::string> mapRequestHeaders;
+        mapRequestHeaders["RQICON"] = sIcon;
+        std::string sResponse = AtomicCommunication("GETICONV2", mapRequestHeaders);
+        std::string sData = ExtractXML(sResponse, "<HEX>", "</HEX>");
+        std::vector<unsigned char> h = hexStringToByteArray(sData);
+        std::string sPath1 = WriteByteArrayToFile(sIcon, h);
+        return sPath1;
+    }
+    catch (...)
+    {
+        LogPrintf("\nGetTradingRoomIcon::FAIL %s", sIcon);
+        return "";
+    }
+}
+
+void handle_openssl_error(const std::string& message)
+{
+    ERR_print_errors_fp(stderr);
+    throw std::runtime_error(message);
+}
+
+// Function to generate RSA key pair
+RSA* generate_rsa_key_pair(int key_length)
+{
+    BIGNUM* bne = BN_new();
+    if (!bne) handle_openssl_error("BN_new failed");
+    if (!BN_set_word(bne, RSA_F4)) {
+        BN_free(bne);
+        handle_openssl_error("BN_set_word failed");
+    }
+
+    RSA* rsa = RSA_new();
+    if (!rsa) {
+        BN_free(bne);
+        handle_openssl_error("RSA_new failed");
+    }
+    if (!RSA_generate_key_ex(rsa, key_length, bne, NULL)) {
+        RSA_free(rsa);
+        BN_free(bne);
+        handle_openssl_error("RSA_generate_key_ex failed");
+    }
+
+    BN_free(bne);
+    return rsa;
+}
+
+// Function to encrypt data using RSA public key
+std::vector<unsigned char> rsa_encrypt(const std::vector<unsigned char>& data, RSA* rsa)
+{
+    int rsa_size = RSA_size(rsa);
+    std::vector<unsigned char> encrypted_data(rsa_size);
+
+    int result = RSA_public_encrypt(data.size(), data.data(), encrypted_data.data(), rsa, RSA_PKCS1_PADDING);
+    if (result == -1)
+    {
+        handle_openssl_error("RSA_public_encrypt failed");
+    }
+    encrypted_data.resize(result);
+    return encrypted_data;
+}
+
+// Function to decrypt data using RSA private key
+std::vector<unsigned char> rsa_decrypt(const std::vector<unsigned char>& encrypted_data, RSA* rsa)
+{
+    int rsa_size = RSA_size(rsa);
+    std::vector<unsigned char> decrypted_data(rsa_size);
+    int result = RSA_private_decrypt(encrypted_data.size(), encrypted_data.data(), decrypted_data.data(), rsa, RSA_PKCS1_PADDING);
+    if (result == -1) {
+        handle_openssl_error("RSA_private_decrypt failed");
+    }
+    decrypted_data.resize(result);
+    return decrypted_data;
+}
+
+RSA* createRSA(const char* key)
+{
+    RSA* rsa = nullptr;
+    BIO* keybio;
+    keybio = BIO_new_mem_buf((void*)key, -1); 
+    if (!keybio) {
+        throw std::runtime_error("Failed to create key BIO");
+    }
+    rsa = PEM_read_bio_RSA_PUBKEY(keybio, nullptr, nullptr, nullptr); 
+    if (!rsa) {
+        throw std::runtime_error("Failed to create RSA");
+    }
+    BIO_free(keybio); 
+    return rsa;
+}
+
+static std::string TEMPLE_PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\r\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvaCmZffrdlYI84T+l0yX\r\nulrptcU9VYWjvEjJCc5CfPKPChD5k8RygWIEPNUYDmotZNXIk21SWrIDJivQkKSE\r\nJSCSfpd06bdNBA87+lBPMR4mzA5e9Dzjxng8Byr3H5w5QePkMbfMWm/IJ1qLIOt8\r\nLyuHG5A64CmIkacloLdEVUMzBuYxqUfUOWt98lIKIngN7j3yiK23Yuv48Knlqy18\r\nn02AtpXxP85tAvqRRaskRacbOxkvLhrc9b66X87AHcQWlNS82WmJ0Z9RbLx9LLCE\r\nLBfbhj6CdcqXA2ylDbPEoIZcYwVxEJXfmtnV3LMDt5GXESfHD1IwLDPCTU3vK45G\r\nwwIDAQAB\r\n-----END PUBLIC KEY-----";
+std::string EncryptRSAData(std::string sText)
+{
+    RSA* rsa_keypair = createRSA(TEMPLE_PUBLIC_KEY.c_str());
+    std::vector<unsigned char> data(sText.begin(), sText.end());
+    std::vector<unsigned char> encrypted_data = rsa_encrypt(data, rsa_keypair);
+    std::string sEnc = ByteArrayToHexString(encrypted_data);
+    RSA_free(rsa_keypair);
+    return sEnc;
+ }
+
+bool DecryptRSAData(std::vector<unsigned char> encrypted_data)
+{
+    // Note: To decrypt RSA in Prod, your PEM key has to contain a private key.
+    RSA* rsa_keypair = createRSA(TEMPLE_PUBLIC_KEY.c_str());
+    std::vector<unsigned char> decrypted_data = rsa_decrypt(encrypted_data, rsa_keypair);
+    std::string sDec = std::string(decrypted_data.begin(), decrypted_data.end());
+    RSA_free(rsa_keypair);
+    return true;
+}
+
+AtomicSymbol GetAtomicSymbol(std::string sSymbol)
+{
+    AtomicSymbol a;
+    a.Found = false;
+    boost::to_upper(sSymbol);
+    if (sSymbol == "DOGE")
+    {
+        a.IconName = "doge512.png";
+        a.Symbol = "DOGE";
+        a.ShortCode = "DGZZ";
+        a.AddressBookEntry = "TRADING-ASSET-DOGE";
+        a.LongAssetName = "DOGECOIN";
+        a.BlockExplorerURL = "https://live.blockcypher.com/doge";
+    }
+    else if (sSymbol == "XLM")
+    {
+        a.IconName = "xlm512.png";
+        a.Symbol = "XLM";
+        a.ShortCode = "LMZZ";
+        a.AddressBookEntry = "TRADING-ASSET-XLM";
+        a.LongAssetName = "STELLAR";
+        a.BlockExplorerURL = "https://stellarchain.io";
+    }
     return a;
 }

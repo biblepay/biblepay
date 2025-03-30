@@ -798,8 +798,7 @@ void BitcoinGUI::createToolBars()
         }
 
         overviewButton->setChecked(true);
-        GUIUtil::updateFonts();
-
+        
 #ifdef ENABLE_WALLET
         m_wallet_selector = new QComboBox(this);
         m_wallet_selector->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -821,9 +820,10 @@ void BitcoinGUI::createToolBars()
         QLabel *logoLabel = new QLabel();
         logoLabel->setObjectName("lblToolbarLogo");
         logoLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-
         appToolBarLogoAction = toolbar->addWidget(logoLabel);
+        GUIUtil::updateFonts();
 
+        
         /** Create additional container for toolbar and walletFrame and make it the central widget.
             This is a workaround mostly for toolbar styling on Mac OS but should work fine for every other OSes too.
         */
@@ -844,6 +844,23 @@ void BitcoinGUI::createToolBars()
         toolbar->setOrientation(Qt::Vertical);
         addToolBar(Qt::LeftToolBarArea, toolbar);
 
+
+        /* BBP TOOLBAR LOGO */
+        QLabel* logo2 = new QLabel(this);
+        std::string sPath = GetTradingRoomIcon("bbp512.png");
+        if (!sPath.empty()) {
+            QPixmap logoPixmap(GUIUtil::TOQS(sPath));
+            logo2->setPixmap(logoPixmap);
+            logo2->setScaledContents(true);
+            logo2->setFixedSize(QSize(160, 150));
+        }
+        logo2->setStyleSheet("padding-left: 33px;padding-top:50px;");
+        toolbar->addWidget(logo2);
+        /* END OF TOOLBAR LOGO */
+
+
+        /* HORIZONTAL WALLET LAYOUT */
+
         QHBoxLayout* layout = new QHBoxLayout;
         layout->setContentsMargins(0, 0, 0, 0);
         layout->setSpacing(0);
@@ -856,6 +873,7 @@ void BitcoinGUI::createToolBars()
 
         QWidget* containerWidget = new QWidget();
         containerWidget->setLayout(layout);
+
         setCentralWidget(containerWidget);
         /* END OF BIBLEPAY */
        

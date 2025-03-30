@@ -694,16 +694,16 @@ QProgressDialog
 QPushButton
 ******************************************************/
 
-QPushButton { /* Global Button Style */
+QPushButton { /* Global Button Style - Maroon */
 background-color:#971B20;
 border:0;
 color:#FAFBFC;
 /* font-weight:bold; */
-padding-left:22px;
-padding-right:22px;
-padding-top:5px;
+padding-left:19px;
+padding-right:19px;
+padding-top:3px;
 font-size: 40%;
-padding-bottom:5px;
+padding-bottom:3px;
 }
 
 QPushButton:hover {

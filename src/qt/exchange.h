@@ -56,13 +56,14 @@ private:
     ClientModel* clientModel{nullptr};
     WalletModel* walletModel{nullptr};
 
-    // Protects tableWidgetMasternodesDIP3
+    // Protects tableWidget
     RecursiveMutex cs_tbl;
-
 
     void PerformUpdateTables();
     void updateTables();
-    
+    void PopulateRoomBanner();
+    void PopulateRoomIcon();
+
 Q_SIGNALS:
 
 private Q_SLOTS:
@@ -72,6 +73,9 @@ private Q_SLOTS:
     void unwrapClicked();
     void getBalanceClicked();
     void cancelClicked();
+
+    void cmbRoomChanged(int iIndex);
+
     void EntireRowClickedBuy(const QModelIndex& q);
     void EntireRowClickedSell(const QModelIndex& q);
     void mouseMoveEvent(QMouseEvent* event);

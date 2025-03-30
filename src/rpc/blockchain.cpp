@@ -3262,6 +3262,9 @@ UniValue exec(const JSONRPCRequest& request)
         {
             results.push_back(uProReg);
         }
+    } else if (sItem == "testrsa")
+    {
+        results.pushKV("1", 1);
     }
     else if (sItem == "testipc")
     {
@@ -3348,15 +3351,14 @@ UniValue exec(const JSONRPCRequest& request)
 
         if (request.params.size() < 3)
         {
-            throw std::runtime_error("You must specify: exec wrap asset_long_name quantity "
+            throw std::runtime_error("You must specify: exec wrap symbol quantity "
                                      "\r\n  Ex: exec wrap doge 1.  You will lose 1 DOGE and gain 1 wrapped DOGE.");
         }
 
-        std::string sAssetLongName = request.params[1].get_str();
+        std::string sSymbol = request.params[1].get_str();
         double nQuantity = StringToDouble(request.params[2].get_str(), 4);
-
-        AtomicTrade a = WrapCoin(sAssetLongName, nQuantity);
-
+        AtomicSymbol oSymbol = GetAtomicSymbol(sSymbol);
+        AtomicTrade a = WrapCoin(oSymbol, nQuantity);
         results.pushKV("id", a.id);
         results.pushKV("Tx", a.ToString());
         results.pushKV("Error", a.Error);
@@ -3365,12 +3367,13 @@ UniValue exec(const JSONRPCRequest& request)
     {
         if (request.params.size() < 3)
         {
-            throw std::runtime_error("You must specify: exec unwrap asset_long_name quantity "
+            throw std::runtime_error("You must specify: exec unwrap symbol quantity "
                                      "\r\n  Ex: exec unwrap doge 1.  You will lose 1 DOGE wrapped coin and gain 1 real DOGE.");
         }
-        std::string sAssetLongName = request.params[1].get_str();
+        std::string sSymbol = request.params[1].get_str();
         double nQuantity = StringToDouble(request.params[2].get_str(), 4);
-        AtomicTrade a = UnwrapCoin(sAssetLongName, nQuantity);
+        AtomicSymbol oSymbol = GetAtomicSymbol(sSymbol);
+        AtomicTrade a = UnwrapCoin(oSymbol, nQuantity);
         results.pushKV("id", a.id);
         results.pushKV("Tx", a.ToString());
         results.pushKV("Error", a.Error);
@@ -3394,94 +3397,23 @@ UniValue exec(const JSONRPCRequest& request)
         results.pushKV("Error", sError);
         results.pushKV("TXID", sTXID);
     }
-    else if (sItem == "placetrade")
+    else if (sItem == "hamans-hanging")
     {
-        /*
-        if (request.params.size() < 4) {
-            throw std::runtime_error("You must specify: exec placetrade action quantity price "
-                "\r\n  Ex: placetrade buy 500 .00001 (This will create an offer to buy 500 BBP for a price of .00001 doge per bbp.)");
-        }
+        std::string sPath = GetTradingRoomIcon("xlm512.png");
+        results.pushKV("xlm", sPath);
 
-        // BBP ATOMIC TRADE - PLACE TRADE
-        AtomicTrade a = GetAtomicTradePrimaryKey(request);
-        LogPrintf("\r\nPlaceTrade template %s ", a.id);
-
-        a.Action = request.params[1].get_str();
-        boost::to_lower(a.Action);
-        if (a.Action != "buy" && a.Action != "sell")
-        {
-            throw std::runtime_error("Action must be BUY or SELL.");
+        if (false) {
+            std::map<std::string, std::string> mapRequestHeaders;
+            mapRequestHeaders["Address"] = "";
+            std::string sResponse = AtomicCommunication("Test0", mapRequestHeaders);
+            results.pushKV("hang", sResponse);
         }
-        if (a.Action == "buy")
-        {
-            a.SymbolBuy = "bbp";
-            a.SymbolSell = "doge";
-        }
-        else if (a.Action == "sell")
-        {
-            a.SymbolSell="bbp";
-            a.SymbolBuy = "doge";
-        }
-
-        a.Quantity = StringToDouble(request.params[2].get_str(), 2);
-        if (a.Quantity <= 0)
-        {
-            throw std::runtime_error("The Quantity must be greater than zero.");
-        }
-        a.Price = StringToDouble(request.params[3].get_str(), 8); // Price for each BBP in DOGE
-        if (a.Price <= 0) {
-            throw std::runtime_error("The price of doge per BBP must be greater than zero.");
-        }
-        boost::to_lower(a.SymbolBuy);
-        boost::to_lower(a.SymbolSell);
-        
-        std::string SymbolCombined = a.SymbolBuy + "/" + a.SymbolSell;
-        if (SymbolCombined != "bbp/doge" && SymbolCombined != "doge/bbp")
-        {
-            throw std::runtime_error("Sorry, in wallet trading only supports pairs of BBP/DOGE and DOGE/BBP");
-        }
-
-        a.Status = "open";
-        a = TransmitAtomicTrade(request, a, "TransmitAtomicTransaction");
-        results.pushKV("id", a.id);
-        results.pushKV("Tx", a.ToString());
-        results.pushKV("block_explorer", a.BlockExplorerURL);
-
-        results.pushKV("Error", a.Error);
-        */
-    }
-    else if (sItem == "listorderbook")
-    {
-        /*
-        if (request.params.size() < 2)
-        {
-            throw std::runtime_error("You must specify listorderbook BUY/SELL. IE:  listorderbook BUY");
-        }
-        std::string sAction = request.params[1].get_str();
-        boost::to_lower(sAction);
-        if (sAction != "buy" && sAction != "sell") {
-            throw std::runtime_error("You must specify listorderbook BUY/SELL. IE:  listorderbook BUY");
-        }
-        std::vector<std::string> l = GetOrderBook(sAction, request);
-        int iRow = 0;
-        for (std::string sRow : l)
-        {
-            iRow++;
-            results.pushKV(DoubleToStringWithLeadingZeroes(iRow, 0, 3), sRow);
-        }
-        */
-    } else if (sItem == "hamans-hanging")
-    {
-        std::map<std::string, std::string> mapRequestHeaders;
-        mapRequestHeaders["Address"] = "";
-        std::string sResponse = AtomicCommunication("Test0", mapRequestHeaders);
-        results.pushKV("hang", sResponse);
     }
     else if (sItem == "getdogebalance")
     {
         std::string sTradingPublicKey = DefaultRecAddress(request, "Trading-Public-Key");
         std::string sDogePub = GetDogePubKey(sTradingPublicKey, request);
-        double nBal = GetDogeBalance(sDogePub);
+        double nBal = GetAltBalance("DOGE", sDogePub);
         std::string sBX = "https://live.blockcypher.com/doge/address/" + sDogePub + "/";
         results.pushKV("address", sDogePub);
         results.pushKV("block_explorer", sBX);

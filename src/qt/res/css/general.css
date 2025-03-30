@@ -79,7 +79,7 @@ QLineEdit {
     border: 1px solid red;
     border-color: red;
     border-radius: 8px;
-    padding: 0px 8px 0px 8px;
+    padding: 0px 5px 0px 5px;
 }
 
 QAbstractSpinBox,
@@ -506,12 +506,12 @@ QPushButton {
     border: 0;
     border-radius: 8px;
     color: red;
-    max-height: 26px;
-    min-height: 26px;
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-top: 4px;
-    padding-bottom: 4px;
+    max-height: 24px;
+    min-height: 19px;
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-top: 3px;
+    padding-bottom: 3px;
 }
 
 QPushButton:hover {

@@ -1105,9 +1105,15 @@ recover:
                 return;
             }
 
+            // DOGE
             std::string sPrivKey;
             std::string sAssetName = "TRADING-ASSET-DOGE";
             std::string sPub = SearchForAsset(jRequest, "DGZZ", sAssetName, sPrivKey, 25000);
+
+            // STELLAR
+            sAssetName = "TRADING-ASSET-XLM";
+            sPub = SearchForAsset(jRequest, "LMZZ", sAssetName, sPrivKey, 25000);
+
         }
     }
     catch (const std::exception& e)

@@ -121,6 +121,19 @@ struct BBPTradingMessage
 };
 
 
+
+struct AtomicSymbol
+{
+     std::string Symbol;
+     std::string ShortCode;
+     std::string AddressBookEntry;
+     std::string LongAssetName;
+     std::string BlockExplorerURL;
+     std::string IconName;
+     bool Found = false;
+};
+
+
 struct AtomicTrade
 {
      std::string SymbolBuy;  // BBP
@@ -502,11 +515,10 @@ std::string EncryptBlockCypherString(const std::string& sData, const std::string
 std::string DecryptBlockCypherString(const std::string& sData, const std::string& sPassword);
 std::string GetDogePrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
 std::string GetDogePubKey(std::string sBBPPubKey, JSONRPCRequest r);
-double GetDogeBalance(std::string sDogePubKey);
+double GetAltBalance(std::string sTicker, std::string sPubKey);
 bool SendDOGEToAddress(std::string sDogePrivKey, std::string sToAddress, double nAmount, std::string& sError, std::string& sTXID);
 void TradingLog(std::string sData);
-std::vector<std::string> GetOrderBook(std::string sAction, JSONRPCRequest r);
-std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh);
+std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh, std::string sTicker);
 std::string TransmitSidechainTx(JSONRPCRequest r, AtomicTrade a, std::string& sError);
 std::string DoubleToStringWithLeadingZeroes(double n, int nPlaces, int nTotalPlaces);
 void OneTimeShaDump();
@@ -518,12 +530,11 @@ AtomicTrade GetAtomicTradeFromTransaction(const CTransaction& tx);
 std::string AtomicCommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders);
 AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod, std::string sAddressBookName);
 std::string YesNo(bool f); 
-AtomicTrade GetAtomicTradePrimaryKey(JSONRPCRequest r);
 std::string GetTradingBBPPrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
 std::string CreateBankrollDenominations(JSONRPCRequest r, double nQuantity, CAmount denominationAmount, std::string& sError);
 std::string GenerateAssetAddress(JSONRPCRequest r);
 std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::string sAddressLabel, std::string& sPrivKey, int nMaxIterations);
-std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus);
+std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus, std::string sTicker);
 std::string GetDisplayAgeInDays(int nRefTime);
 std::string GetColoredAssetShortCode(std::string sTicker);
 bool IsColoredCoin0(std::string sDestination);
@@ -538,11 +549,15 @@ double AmountToDouble(const CAmount& amount);
 std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs);
 BBPResult GetAddressFromTransaction(std::string sTXID, int nVOUT);
 bool ExportMultiWalletKeys();
-AtomicTrade WrapCoin(std::string sAssetLongName, double nQuantity);
-AtomicTrade UnwrapCoin(std::string sAssetLongName, double nAmount);
+AtomicTrade WrapCoin(AtomicSymbol oSymbol, double nQuantity);
+AtomicTrade UnwrapCoin(AtomicSymbol oSymbol, double nAmount);
 CWallet* GetInternalWallet(JSONRPCRequest r);
 double GetAssetBalanceNoWallet(std::string sShortCode);
-
+std::string GetTradingRoomIcon(std::string sIcon);
+AtomicSymbol GetAtomicSymbol(std::string sSymbol);
+std::string GetAltPublicKey(std::string sSymbol);
+std::string EncryptRSAData(std::string sText);
+std::string stringToHexString(const std::string& input);
 
 /** Used to store a reference to the global node */
 class CGlobalNode
