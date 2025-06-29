@@ -182,6 +182,8 @@ extern int iMinerThreadCount;
 extern bool fCoinControlUnlocked;
 static const int DEFAULT_GENERATE_THREADS = 1;
 static const int DEFAULT_GENERATE = 1;
+extern std::string msAssetXLMPublicKey;
+
 // void KillBlockchainFiles();  Maybe we can retire this
 // END OF BIBLEPAY AREA
 

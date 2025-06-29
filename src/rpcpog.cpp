@@ -3750,6 +3750,8 @@ AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMe
 
     std::string sBBPPrivKey =  GetTradingBBPPrivateKey(a.Signer, r);
     std::string sDogePrivKey = "";
+    
+    /*
     if (a.SymbolSell == "xlm" || a.SymbolBuy == "xlm")
     {
          std::string sXLM = DefaultRecAddress(r, "ASSET-XLM");
@@ -3758,8 +3760,10 @@ AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMe
     }
     else
     {
-         sDogePrivKey = GetDogePrivateKey(a.Signer, r);
-    }
+    */
+
+    sDogePrivKey = GetDogePrivateKey(a.Signer, r);
+    
     std::string sAssetPrivKey = GetTradingBBPPrivateKey(sColoredAssetAddress, r);
     std::map<std::string, std::string> mapRequestHeaders;
 
@@ -4910,6 +4914,9 @@ bool IsWalletAvailable()
 
 bool ExportMultiWalletKeys()
 {
+    // These go to the multi wallet, which is on the local machine (not to the Temple, and not outside of the machine).
+    // The multi wallet is in the Portfolio Builder EXE.
+
     const Consensus::Params& consensusParams = Params().GetConsensus();
     const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
     JSONRPCRequest r0 (cc);
@@ -4921,6 +4928,7 @@ bool ExportMultiWalletKeys()
     std::string sXLM = DefaultRecAddress(r0, "ASSET-XLM");
     std::string sBBP = DefaultRecAddress(r0, "ASSET-BBP");
 
+
     std::string sTPK = DefaultRecAddress(r0, "Trading-Public-Key");
     LogPrintf("\nExportMultiWalletKeys::PublicKeys::XRP %s, XLM %s, TPK %s", sXRP, sXLM, sTPK);
     if (sXRP == "" || sXLM == "" || sTPK == "")
@@ -4928,6 +4936,11 @@ bool ExportMultiWalletKeys()
         LogPrintf("\nExportMultiWalletKeys::Some keys are empty.  Please unlock the wallet and relaunch the extensions module.%f", -1);
         return false;
     }
+    std::string sColAssetAddrDoge = IsInAddressBook(r0, "TRADING-ASSET-DOGE");
+    std::string sColAssetAddrXLM = IsInAddressBook(r0, "TRADING-ASSET-XLM");
+    std::string sAssetPrivKeyDoge = GetTradingBBPPrivateKey(sColAssetAddrDoge, r0);
+    std::string sAssetPrivKeyXLM = GetTradingBBPPrivateKey(sColAssetAddrXLM, r0);
+
     std::string sDogePrivKey = GetDogePrivateKey(sTPK, r0);
     std::string sXLMPrivKey = GetTradingBBPPrivateKey(sXLM, r0);
     std::string sXRPPrivKey = GetTradingBBPPrivateKey(sXRP, r0);
@@ -4938,7 +4951,12 @@ bool ExportMultiWalletKeys()
     std::string sXLMData = EncryptBlockCypherString(sXLMPrivKey, sPass);
     std::string sXRPData = EncryptBlockCypherString(sXRPPrivKey, sPass);
     std::string sBBPData = EncryptBlockCypherString(sBBPPrivKey, sPass);
-    std::string sData = "PASS=" + sPass + "\r\nDOGE=" + sDogeData + "\r\nXLM=" + sXLMData + "\r\nXRP=" + sXRPData + "\r\nBBP=" + sBBPData + "\r\n";
+    std::string sColoredDoge = EncryptBlockCypherString(sAssetPrivKeyDoge, sPass);
+    std::string sColoredXLM = EncryptBlockCypherString(sAssetPrivKeyXLM, sPass);
+
+    std::string sData = "PASS=" + sPass + "\r\nDOGE=" + sDogeData + "\r\nXLM="
+        + sXLMData + "\r\nXRP=" + sXRPData + "\r\nBBP=" + sBBPData + "\r\nCOLORED_DOGE="
+        + sColoredDoge + "\r\nCOLORED_XLM=" + sColoredXLM;
     WritePB(sData);
     return true;
 }
@@ -4970,14 +4988,7 @@ std::string GetAltPublicKey(std::string sSymbol)
     }
     else if (sSymbol == "XLM")
     {
-        std::string sXLM = DefaultRecAddress(r0, "ASSET-XLM");
-        if (!f)
-        {
-            return "";
-        }
-        std::string sXLMPrivKey = GetTradingBBPPrivateKey(sXLM, r0);
-        std::string sAPK = GetAltPubKey(sSymbol, sXLMPrivKey);
-        return sAPK;
+        return msAssetXLMPublicKey;
     }
     else if (sSymbol == "XRP")
     {

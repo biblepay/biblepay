@@ -1095,24 +1095,40 @@ recover:
 
     CScript cbScript = GetScriptForMining(jRequest);
 
+    int nInc = 0;
     try
     {
         while (true)
         {
             MinerSleep(1000);
+            nInc++;
             if (fThreadInterrupt || ShutdownRequested())
             {
                 return;
+            }
+
+            // Remove this section on next release (XLM is no longer supported)
+            if (false) {
+                if (nInc % 10 == 0 && msAssetXLMPublicKey.empty()) {
+                    bool f = IsWalletAvailable();
+                    if (f) {
+                        std::string sXLM = DefaultRecAddress(jRequest, "ASSET-XLM");
+                        if (!sXLM.empty()) {
+                            std::string sXLMPrivKey = GetTradingBBPPrivateKey(sXLM, jRequest);
+                            if (!sXLMPrivKey.empty()) {
+                                std::string sSymbol = "XLM";
+                                msAssetXLMPublicKey = GetAltPubKey(sSymbol, sXLMPrivKey);
+                                LogPrintf("\nBiblePayTrader::XLMPUBKEY %s", msAssetXLMPublicKey);
+                            }
+                        }
+                    }
+                }
             }
 
             // DOGE
             std::string sPrivKey;
             std::string sAssetName = "TRADING-ASSET-DOGE";
             std::string sPub = SearchForAsset(jRequest, "DGZZ", sAssetName, sPrivKey, 25000);
-
-            // STELLAR
-            sAssetName = "TRADING-ASSET-XLM";
-            sPub = SearchForAsset(jRequest, "LMZZ", sAssetName, sPrivKey, 25000);
 
         }
     }

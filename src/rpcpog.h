@@ -558,6 +558,10 @@ AtomicSymbol GetAtomicSymbol(std::string sSymbol);
 std::string GetAltPublicKey(std::string sSymbol);
 std::string EncryptRSAData(std::string sText);
 std::string stringToHexString(const std::string& input);
+bool IsWalletAvailable();
+std::string GetAltPubKey(std::string sTicker, std::string sAltPrivKey);
+
+
 
 /** Used to store a reference to the global node */
 class CGlobalNode

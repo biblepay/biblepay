@@ -3401,6 +3401,7 @@ UniValue exec(const JSONRPCRequest& request)
     {
         std::string sPath = GetTradingRoomIcon("xlm512.png");
         results.pushKV("xlm", sPath);
+        results.pushKV("xlmpubkey", msAssetXLMPublicKey);
 
         if (false) {
             std::map<std::string, std::string> mapRequestHeaders;

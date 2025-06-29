@@ -109,7 +109,6 @@ Exchange::Exchange(QWidget* parent) :
 
     ui->cmbRoom->clear();
     ui->cmbRoom->addItem("BBP/DOGE");
-    ui->cmbRoom->addItem("BBP/XLM");
 
     connect(ui->cmbRoom, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbRoomChanged(int)));
 

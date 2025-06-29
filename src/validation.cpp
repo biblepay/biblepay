@@ -171,6 +171,8 @@ int iMinerThreadCount = 0;
 std::map<std::string, int> mapPOVSStatus;
 std::map<int64_t, Sidechain> mapSidechain;
 std::vector<std::string> mapTradingMessageSeen;
+std::string msAssetXLMPublicKey = "";
+
 // END OF BIBLEPAY AREA
 
 
