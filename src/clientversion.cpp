@@ -14,7 +14,7 @@
  */
 const std::string CLIENT_NAME("BiblePay Core");
 
-#define CLIENT_VERSION_SUFFIX "Great-Awakening"
+#define CLIENT_VERSION_SUFFIX "Day-of-the-Lord"
 #define CLIENT_SPACER " "
 
 #ifdef HAVE_BUILD_INFO

@@ -1194,7 +1194,7 @@ static std::string msBaseDomain = "https://unchained.biblepay.org";
 
 static int SSL_PORT = 443;
 
-std::string AtomicCommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders)
+std::string APICommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders)
 {
     std::string sBaseDomain = "api.biblepay.org";
     std::string sXML = "<CACTION>" + Action + "</CACTION>";
@@ -1206,8 +1206,9 @@ std::string AtomicCommunication(std::string Action, std::map<std::string, std::s
     }
     sXML += "<EOF></EOF>\r\n";
     std::string sResponse = GetTCPContent(sBaseDomain, sXML, 10000, 15);
-    if (Action != "GetOrderBookV2" && false) {
-        LogPrintf("\nEXCHANGE::%s %s", Action, sResponse);
+    if (Action != "METHOD_HERE_VN_HERE" && false)
+    {
+        LogPrintf("\nAPI::%s %s", Action, sResponse);
     }
 
     return sResponse;
@@ -3342,49 +3343,6 @@ std::string Test1000()
     return s1;
 }
 
-std::map<std::string, AtomicTrade> GetAtomicTrades()
-{
-    std::map<std::string, AtomicTrade> mapAtomicTrades;
-    for (auto ii : mapSidechain) {
-         Sidechain s = mapSidechain[ii.first];
-         if (s.ObjectType == "AtomicTrade")
-         {
-             std::string sKey = ExtractXML(s.URL, "<key>", "</key>");
-             std::string sValue = ExtractXML(s.URL, "<value>", "</value>");
-             std::string sSig = ExtractXML(s.URL, "<sig>", "</sig>");
-             std::string sMsg = ExtractXML(s.URL, "<msg>", "</msg>");
-             std::string sSigner = ExtractXML(s.URL, "<signer>", "</signer>");
-             std::string sError;
-             bool fPassed = CheckStakeSignature(sSigner, sSig, sMsg, sError);
-             if (fPassed)
-             {
-                    AtomicTrade a;
-                    a = a.FromJson(sValue);
-                    mapAtomicTrades[a.id] = a;
-             } else
-             {
-                    LogPrintf("\r\nGetAtomicTrades StakeSig failed %s %s %s %s", sValue, sSig, sMsg, sSigner);
-             }
-         }
-    }
-    return mapAtomicTrades;
-}
-
-AtomicTrade GetAtomicTradeById(std::string sID)
-{
-    std::map<std::string, AtomicTrade> ats = GetAtomicTrades();
-    for (auto ii : ats) {
-         AtomicTrade a = ats[ii.first];
-         if (a.id == sID) {
-             return a;
-         }
-    }
-    AtomicTrade a;
-    return a;
-}
-
-
-
 std::map<std::string,NFT> GetNFTs()
 {
     std::map<std::string, NFT> mapNFTs;
@@ -3525,24 +3483,6 @@ NFT GetNFTFromTransaction(const CTransaction& tx)
     return n;
 }
 
-AtomicTrade GetAtomicTradeFromTransaction(const CTransaction& tx)
-{
-    AtomicTrade a;
-    std::string sSC = GetSideChainPayloadFromTransaction(tx);
-    if (!sSC.empty()) {
-         Sidechain s;
-         s.ObjectType = ExtractXML(sSC, "<objtype>", "</objtype>");
-         s.URL = ExtractXML(sSC, "<url>", "</url>");
-         if (s.ObjectType == "AtomicTrade")
-         {
-             std::string sValue = ExtractXML(s.URL, "<value>", "</value>");
-             a = a.FromJson(sValue);
-             return a;
-         }
-    }
-    return a;
-}
-
 
 CAmount CalculateTotalPaidToAddress(const CTransaction& tx, std::string sTargetAddress)
 {
@@ -3642,158 +3582,6 @@ int GetUniInt(UniValue o, std::string sMemberName)
     return iResult;
 }
 
-double GetAltBalance(std::string sTicker, std::string sPubKey)
-{
-    std::map<std::string, std::string> mapRequestHeaders;
-    mapRequestHeaders["Address"] = sPubKey;
-    mapRequestHeaders["Ticker"] = sTicker;
-    mapRequestHeaders["EncAddress"] = EncryptRSAData(sPubKey);
-    std::string sResponse = AtomicCommunication("GetALTBalance", mapRequestHeaders);
-    std::string sBal = ExtractXML(sResponse, "<BALANCE>", "</BALANCE>");
-    TradingLog("GetAltBalance::PubKey::" + sPubKey + ", Balance=" + sBal);
-    double nBal = StringToDouble(sBal, 4);
-    return nBal;
-}
-
-bool SendDOGEToAddress(std::string sDogePrivKey, std::string sToAddress, double nAmount, std::string& sError, std::string& sTXID)
-{
-    std::map<std::string, std::string> mapRequestHeaders;
-    mapRequestHeaders["ToAddress"] = sToAddress;
-    mapRequestHeaders["Amount"] = DoubleToString(nAmount,4);
-    mapRequestHeaders["EncryptedKey"] = EncryptRSAData(sDogePrivKey);
-    LogPrintf("\nSendDOGEToAddress::%s, AMOUNT=%f", sToAddress, nAmount);
-    std::string sResponse = AtomicCommunication("SendDOGE", mapRequestHeaders);
-    sTXID = ExtractXML(sResponse, "<TXID>", "</TXID>");
-    sError = ExtractXML(sResponse, "<ERROR>", "</ERROR>");
-    return true;
-}
-
-AtomicTrade GetAtomicPrice(std::string sPriceData, std::string sSymbol)
-{
-    std::string sDogeUSD = ExtractXML(sPriceData, "<" + sSymbol + ">", "</" + sSymbol + ">");
-    AtomicTrade aDOGE;
-    aDOGE.Status = "price";
-    aDOGE.Action = "price";
-    aDOGE.Price = StringToDouble(sDogeUSD, 8);
-    aDOGE.Message = sDogeUSD;
-    return aDOGE;
-}
-
-static std::map<std::string, AtomicTrade> mgmapAT;
-static int mgLastMapAT = 0;
-std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh, std::string sTicker)
-{
-    int nElapsed = GetAdjustedTime() - mgLastMapAT;
-    if (nElapsed < 60 && !fForceRefresh)
-    {
-         return mgmapAT;
-    }
-    mgLastMapAT = GetAdjustedTime();
-
-    std::map<std::string, std::string> mapRequestHeaders;
-    mapRequestHeaders["TICKER"] = sTicker;
-    std::string sResponse = AtomicCommunication("GetOrderBookV2", mapRequestHeaders);
-    
-    std::string sData = ExtractXML(sResponse, "<TRADES>", "</TRADES>");
-    std::vector<std::string> sTrades;
-    sTrades = Split(sData, "<ATOMICTRANSACTION>");
-    mgmapAT.clear();
-
-    for (int i = 0; i < sTrades.size(); i++)
-    {
-        std::string sRow = sTrades[i];
-        if (sRow.length() > 25)
-        {
-             AtomicTrade a;
-             a = a.FromJson(sRow);
-             mgmapAT[a.id] = a;
-        }
-    }
-    std::string sPrices = ExtractXML(sResponse, "<PRICES>", "</PRICES>");
-    mgmapAT[sTicker + "USD"] = GetAtomicPrice(sPrices, sTicker + "USD");
-    mgmapAT["BBP" + sTicker] = GetAtomicPrice(sPrices, "BBP" + sTicker);
-    mgmapAT["BBPUSD"] = GetAtomicPrice(sPrices, "BBPUSD");
-
-    return mgmapAT;
-}
-
-
-AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod, std::string sAssetBookName)
-{
-    const Consensus::Params& consensusParams = Params().GetConsensus();
-    std::string sObjType = "AtomicTrade";
-    
-    std::string sColoredAssetAddress = IsInAddressBook(r, sAssetBookName);
-    a.Signer = DefaultRecAddress(r, "Trading-Public-Key");
-
-    if (a.Signer == "") {
-        a.Error = "Sorry, your TRADING-PUBLIC-KEY address is not available.";
-        TradingLog(a.Error);
-        return a;
-    }
-    if (sAssetBookName != "" && sColoredAssetAddress == "") {
-        a.Error = "Sorry, this signing address is not available.";
-        TradingLog(a.Error);
-        return a;
-    }
-
-    a.Message = "authorize-" + DoubleToString(GetAdjustedTime(), 0);
-    std::string sSignError;
-    a.Signature = SignMessageEvo(r, a.Signer, a.Message, sSignError);
-    if (!sSignError.empty())
-    {
-         a.Error = sSignError;
-         TradingLog("Placing Atomic Trade::Sign Error (You must use a good key).");
-         return a;
-    }
-    LogPrintf("\nTransmitAtomic ColoredAssetAddress %s", sColoredAssetAddress);
-
-    std::string sBBPPrivKey =  GetTradingBBPPrivateKey(a.Signer, r);
-    std::string sDogePrivKey = "";
-    
-    /*
-    if (a.SymbolSell == "xlm" || a.SymbolBuy == "xlm")
-    {
-         std::string sXLM = DefaultRecAddress(r, "ASSET-XLM");
-         //sDogePrivKey = GetDogePrivateKey(a.Signer, r);
-         sDogePrivKey = GetTradingBBPPrivateKey(sXLM, r);
-    }
-    else
-    {
-    */
-
-    sDogePrivKey = GetDogePrivateKey(a.Signer, r);
-    
-    std::string sAssetPrivKey = GetTradingBBPPrivateKey(sColoredAssetAddress, r);
-    std::map<std::string, std::string> mapRequestHeaders;
-
-    // This is the sole area where we use RSA; so far.
-
-    mapRequestHeaders["EncryptedBBPKey"] = EncryptRSAData(sBBPPrivKey);
-    mapRequestHeaders["EncryptedDogeKey"] = EncryptRSAData(sDogePrivKey);
-    mapRequestHeaders["EncryptedAssetKey"] = EncryptRSAData(sAssetPrivKey);
-    mapRequestHeaders["AtomicTrade"] = stringToHexString(a.ToString());
-
-    // End of RSA
-
-    std::string sResponse = AtomicCommunication(sMethod, mapRequestHeaders);
-    std::string sData = ExtractXML(sResponse, "<ATOMIC>", "</ATOMIC>");
-    TradingLog("PLACING ATOMIC TRADE::" + a.ToString());
-    a = a.FromJson(sData);
-
-    std::string sError;
-    if (a.Error == "" && sMethod.substr(0,14)=="TransmitAtomic" && a.id.length() > 4)
-    {
-        // When buying with DOGE, we need to make a wallet tx so they can refer to the txid.
-        a.TXID = TransmitSidechainTx(r, a, sError);
-    }
-    else if (a.Error == "" && sMethod == "CancelAtomicTransactionV2" && a.id.length() > 4)
-    {
-        a.TXID = TransmitSidechainTx(r, a, sError);
-    }
-    return a;
-}
-
 std::string EncryptBlockCypherString(const std::string& sData, const std::string& sPassword)
 {
     int iPos = 0;
@@ -3818,96 +3606,6 @@ std::string EncryptBlockCypherString(const std::string& sData, const std::string
     return sHex;
 }
 
-bool compare_sort_order_book_desc(std::pair<std::string, AtomicTrade>& a, std::pair<std::string, AtomicTrade>& b)
-{
-    return a.second.Price > b.second.Price;
-}
-
-std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus, std::string sTicker)
-{
-    std::map<std::string, AtomicTrade> mapAT = GetOrderBookData(false, sTicker);
-    std::vector<std::pair<std::string, AtomicTrade>> a;
-    for (auto& it : mapAT)
-    {
-         if (it.second.Status == sStatus && it.second.Action == sAction) {
-             a.push_back(it);
-         }
-    }
-    sort(a.begin(), a.end(), compare_sort_order_book_desc);
-    return a;
-}
-
-
-std::string IsAlreadyMatched(std::map<std::string, AtomicTrade> mapAT, AtomicTrade b)
-{
-    if (b.MatchedTo != "") {
-         return b.MatchedTo;
-    }
-    for (auto ii : mapAT)
-    {
-         AtomicTrade a = ii.second;
-         if (a.Status == "open" && b.id != a.id && a.MatchedTo == b.id)
-         {
-             return a.id;
-         }
-    }
-    return "";
-}
-
-std::string GetFlags(AtomicTrade a, std::string sMyAddress, std::map<std::string, AtomicTrade> mapAT)
-{
-    bool fMine = (sMyAddress == a.Signer);
-    std::string sFlags;
-    std::string sMine = fMine ? "M" : "T";
-    sFlags = sMine;
-    return sFlags;
-}
-
-std::string GetDisplayAgeInDays(int nRefTime)
-{
-    double nAge = (GetAdjustedTime() - nRefTime) / 86400;
-    if (nAge > 999) nAge = 999;
-    std::string sDisplay = DoubleToString(nAge, 0);
-    return sDisplay;
-}
-
-/*
-std::vector<std::string> GetOrderBk(std::string sAction, JSONRPCRequest r)
-{
-    std::vector<std::string> lRows;
-    std::vector<std::pair<std::string, AtomicTrade>> orderBook = GetSOrderBook(sAction, "open");
-    std::map<std::string, AtomicTrade> mapAT = BookData(false);
-
-    // For each Open order, where ACTION matches, get and sort by price
-    std::string sMyAddress = DefaultRecAddress(r, "Trading-Public-Key");
-
-    lRows.push_back("Price (DOGE)       Qty (BBP)       Total (" + sAction + ")         ID                  Age      FLAGS");
-    lRows.push_back("=====================================================================================================");
-    double nTotalDOGE = 0;
-    boost::to_lower(sAction);
- 
-    for (auto ii : orderBook)
-    {
-         AtomicTrade a = ii.second;
-         double nRowAmount = a.Quantity * a.Price;
-         nTotalDOGE += nRowAmount;
-         std::string sFlags = GetFlags(a, sMyAddress, mapAT);
-         std::string sMatchedTo = IsAlreadyMatched(mapAT, a);
-
-         std::string sRow = 
-                   DoubleToString(a.Price, 8)
-                 + "        " +
-                   DoubleToStringWithLeadingZeroes(a.Quantity, 0, 8)
-                 + "        "
-                 + DoubleToStringWithLeadingZeroes(nRowAmount, 4, 12)
-                 + "        " + a.id
-                 + "        " + DoubleToStringWithLeadingZeroes(StringToDouble(GetDisplayAgeInDays(a.Time),0), 0, 3)
-                 + "        " + sFlags;
-         lRows.push_back(sRow);
-    }
-    return lRows;
-}
-*/
 
 std::string DecryptBlockCypherString(const std::string& sData, const std::string& sPassword)
 {
@@ -3947,38 +3645,6 @@ std::string YesNo(bool f)
 {
     std::string YN = (f) ? "Yes":"No";
     return YN;
-}
-
-std::string TransmitSidechainTx(JSONRPCRequest r, AtomicTrade a, std::string& sError)
-{
-    const Consensus::Params& consensusParams = Params().GetConsensus();
-    std::string sObjType = "AtomicTrade";
-    std::string sSignAddress = DefaultRecAddress(r, "Trading-Public-Key");
-    a.Signer = DefaultRecAddress(r, "Trading-Public-Key");
-    a.Message = "authorize-" + DoubleToString(GetAdjustedTime(), 0);
-    std::string sSignError;
-    a.Signature = SignMessageEvo(r, a.Signer, a.Message, sSignError);
-    if (!sSignError.empty())
-    {
-         sError = sSignError;
-         TradingLog("Placing Atomic Trade::Sign Error (You must use a good key).");
-         return "";
-    }
-    std::string sPayAddress = consensusParams.FoundationAddress;
-    std::string sTXID;
-    std::string sPayload = "<msg>" + a.Message + "</msg><signer>" + a.Signer + "</signer>"
-        + "<sig>" + a.Signature + "</sig><key>" + a.id
-        + "</key><value>" + a.ToString() + "</value>";
-    std::string sXML = "<sc><objtype>"
-        + sObjType + "</objtype><url>"
-        + sPayload + "</url></sc>";
-    int nOut = 0;
-    bool fSent = RPCSendMoney(r, sError, sSignAddress, 1 * COIN, sTXID, sXML, nOut);
-    bool fValid = a.IsValid();
-
-    std::string sNarr = "Placing Atomic trade::" + a.ToString() + ", TXID=" + sTXID + ", ERROR=" + sError + ", IsValid=" + YesNo(fValid);
-    TradingLog(sNarr);
-    return sTXID;
 }
 
 static std::vector<std::string> mgRandomXBlockHashes;
@@ -4927,9 +4593,8 @@ bool ExportMultiWalletKeys()
     std::string sXRP = DefaultRecAddress(r0, "ASSET-XRP");
     std::string sXLM = DefaultRecAddress(r0, "ASSET-XLM");
     std::string sBBP = DefaultRecAddress(r0, "ASSET-BBP");
-
-
     std::string sTPK = DefaultRecAddress(r0, "Trading-Public-Key");
+
     LogPrintf("\nExportMultiWalletKeys::PublicKeys::XRP %s, XLM %s, TPK %s", sXRP, sXLM, sTPK);
     if (sXRP == "" || sXLM == "" || sTPK == "")
     {
@@ -4945,34 +4610,26 @@ bool ExportMultiWalletKeys()
     std::string sXLMPrivKey = GetTradingBBPPrivateKey(sXLM, r0);
     std::string sXRPPrivKey = GetTradingBBPPrivateKey(sXRP, r0);
     std::string sBBPPrivKey = GetTradingBBPPrivateKey(sBBP, r0);
+    std::string sBBPPrivTradingKey = GetTradingBBPPrivateKey(sTPK, r0);
 
     std::string sPass = sDogePrivKey.substr(0, 8);
     std::string sDogeData = EncryptBlockCypherString(sDogePrivKey, sPass);
     std::string sXLMData = EncryptBlockCypherString(sXLMPrivKey, sPass);
     std::string sXRPData = EncryptBlockCypherString(sXRPPrivKey, sPass);
     std::string sBBPData = EncryptBlockCypherString(sBBPPrivKey, sPass);
+    std::string sTPKData = EncryptBlockCypherString(sBBPPrivTradingKey, sPass);
+
     std::string sColoredDoge = EncryptBlockCypherString(sAssetPrivKeyDoge, sPass);
     std::string sColoredXLM = EncryptBlockCypherString(sAssetPrivKeyXLM, sPass);
 
     std::string sData = "PASS=" + sPass + "\r\nDOGE=" + sDogeData + "\r\nXLM="
         + sXLMData + "\r\nXRP=" + sXRPData + "\r\nBBP=" + sBBPData + "\r\nCOLORED_DOGE="
-        + sColoredDoge + "\r\nCOLORED_XLM=" + sColoredXLM;
+        + sColoredDoge + "\r\nCOLORED_XLM=" + sColoredXLM + "\r\nBBP_TRADING=" + sTPKData;
+
     WritePB(sData);
     return true;
 }
 
-
-std::string GetAltPubKey(std::string sTicker, std::string sAltPrivKey)
-{
-    std::map<std::string, std::string> mapRequestHeaders;
-    mapRequestHeaders["EncryptedKey"] = EncryptRSAData(sAltPrivKey);
-    mapRequestHeaders["Ticker"] = sTicker;
-    //LogPrintf("\nSendDOGEToAddress::%s, AMOUNT=%f", sToAddress, nAmount);
-    std::string sResponse = AtomicCommunication("GetAltPublicKey", mapRequestHeaders);
-    std::string sPubKey = ExtractXML(sResponse, "<PublicKey>", "</PublicKey>");
-    std::string sError = ExtractXML(sResponse, "<ERROR>", "</ERROR>");
-    return sPubKey;
-}
 
 std::string GetAltPublicKey(std::string sSymbol)
 {
@@ -4990,101 +4647,11 @@ std::string GetAltPublicKey(std::string sSymbol)
     {
         return msAssetXLMPublicKey;
     }
-    else if (sSymbol == "XRP")
-    {
-        std::string sXRP = DefaultRecAddress(r0, "ASSET-XRP");
-        if (!f)
-        {
-            return "";
-        }
-        std::string sXRPPrivKey = GetTradingBBPPrivateKey(sXRP, r0);
-        std::string sAPK = GetAltPubKey(sSymbol, sXRPPrivKey);
-        return sAPK;
-    }
     else
     {
         return "";
     }
 }
-
-
-AtomicTrade WrapCoin(AtomicSymbol oSymbol, double nQuantity)
-{
-    AtomicTrade a;
-    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
-    JSONRPCRequest r0(cc);
-    if (oSymbol.ShortCode.empty())
-    {
-        a.Error = "Asset code not found.";
-        return a;
-    }
-
-    std::string sAltAddress = IsInAddressBook(r0, oSymbol.AddressBookEntry);
-    if (sAltAddress.empty())
-    {
-        a.Error = "Your asset address for " + oSymbol.LongAssetName
-            + " has not been mined yet.  Please wait and try again later.";
-        return a;
-    }
-
-    a.Action = "ingate";
-    a.Time = GetAdjustedTime();
-    a.Quantity = nQuantity;
-    if (a.Quantity <= 0)
-    {
-        a.Error = "The Quantity must be greater than zero.";
-        return a;
-    }
-    a.SymbolBuy = "bbp";
-    a.SymbolSell = oSymbol.Symbol;
-    boost::to_lower(a.SymbolSell);
-    a.Price = 1;
-    a.Version = 1;
-    a.Status = "ingate";
-    a = TransmitAtomicTrade(r0, a, "TransmitIngateTransactionV2", oSymbol.AddressBookEntry);
-    return a;
-}
-
-
-AtomicTrade UnwrapCoin(AtomicSymbol oSymbol, double nAmount)
-{
-    AtomicTrade a;
-    const CoreContext& cc = CGlobalNode::GetGlobalCoreContext();
-    JSONRPCRequest r0(cc);
-    
-    if (oSymbol.ShortCode.empty())
-    {
-        a.Error = "Asset code not found.";
-        return a;
-    }
-
-    std::string sAltAddress = IsInAddressBook(r0, oSymbol.AddressBookEntry);
-    if (sAltAddress.empty())
-    {
-        a.Error = "Your asset address for " + oSymbol.Symbol
-            + " has not been mined yet.  Please wait and try again later.";
-        return a;
-    }
-
-    a.Action = "outgate";
-    a.Status = "outgate";
-    a.Time = GetAdjustedTime();
-    a.Quantity = nAmount;
-    
-    if (a.Quantity <= 0)
-    {
-        a.Error = "The Quantity must be greater than zero.";
-        return a;
-    }
-    a.SymbolBuy = "bbp";
-    a.SymbolSell = oSymbol.Symbol;
-    boost::to_lower(a.SymbolSell);
-    a.Price = 1;
-    a.Version = 1;
-    a = TransmitAtomicTrade(r0, a, "TransmitOutgateTransactionV2", oSymbol.AddressBookEntry);
-    return a;
-}
-
 
 std::string WriteByteArrayToFile(std::string sFileName, std::vector<unsigned char> byteArray)
 {
@@ -5176,31 +4743,6 @@ std::string GetIconFileName(std::string sFileName)
     if (!pathF.is_complete())
         pathF = GetSANDirectory1() / pathF;
     return pathF.string();
-}
-
-std::string GetTradingRoomIcon(std::string sIcon)
-{
-    try
-    {
-        std::string sPath = GetIconFileName(sIcon);
-        int nSz = GetFileSize(sPath);
-        if (nSz > 1024)
-        {
-            return sPath;
-        }
-        std::map<std::string, std::string> mapRequestHeaders;
-        mapRequestHeaders["RQICON"] = sIcon;
-        std::string sResponse = AtomicCommunication("GETICONV2", mapRequestHeaders);
-        std::string sData = ExtractXML(sResponse, "<HEX>", "</HEX>");
-        std::vector<unsigned char> h = hexStringToByteArray(sData);
-        std::string sPath1 = WriteByteArrayToFile(sIcon, h);
-        return sPath1;
-    }
-    catch (...)
-    {
-        LogPrintf("\nGetTradingRoomIcon::FAIL %s", sIcon);
-        return "";
-    }
 }
 
 void handle_openssl_error(const std::string& message)

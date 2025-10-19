@@ -743,15 +743,6 @@ void BitcoinGUI::createToolBars()
         tabGroup->addButton(extensionAction);
         connect(extensionAction, SIGNAL(clicked()), this, SLOT(showExtensions()));
 
-        exchangeButton = new QToolButton(this);
-        exchangeButton->setText(tr("&Exchange"));
-        exchangeButton->setStatusTip(tr("Exchange"));
-        tabGroup->addButton(exchangeButton);
-        connect(exchangeButton, &QToolButton::clicked, this, &BitcoinGUI::gotoExchangePage);
-        exchangeButton->setEnabled(true);
-
-
-
         prayerRequestAction = new QToolButton(this);
         prayerRequestAction->setText(tr("&Prayer Req."));
         prayerRequestAction->setStatusTip(tr("View Prayers or Add a Prayer Request"));
@@ -847,20 +838,12 @@ void BitcoinGUI::createToolBars()
 
         /* BBP TOOLBAR LOGO */
         QLabel* logo2 = new QLabel(this);
-        std::string sPath = GetTradingRoomIcon("bbp512.png");
-        if (!sPath.empty()) {
-            QPixmap logoPixmap(GUIUtil::TOQS(sPath));
-            logo2->setPixmap(logoPixmap);
-            logo2->setScaledContents(true);
-            logo2->setFixedSize(QSize(160, 150));
-        }
+        logo2->setPixmap(GUIUtil::getIcon("biblepay", GUIUtil::ThemedColor::DEFAULT).pixmap(125,125));
         logo2->setStyleSheet("padding-left: 33px;padding-top:50px;");
         toolbar->addWidget(logo2);
         /* END OF TOOLBAR LOGO */
 
-
         /* HORIZONTAL WALLET LAYOUT */
-
         QHBoxLayout* layout = new QHBoxLayout;
         layout->setContentsMargins(0, 0, 0, 0);
         layout->setSpacing(0);
@@ -1306,12 +1289,6 @@ void BitcoinGUI::gotoMasternodePage()
     }
 }
 
-void BitcoinGUI::gotoExchangePage()
-{
-    QSettings settings;
-    exchangeButton->setChecked(true);
-    if (walletFrame) walletFrame->gotoExchangePage();
-}
 
 void BitcoinGUI::gotoReceiveCoinsPage()
 {

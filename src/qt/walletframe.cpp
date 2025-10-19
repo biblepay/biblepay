@@ -8,7 +8,6 @@
 #include <qt/createwalletdialog.h>
 #include <qt/governancelist.h>
 #include <qt/masternodelist.h>
-#include <qt/exchange.h>
 #include <qt/overviewpage.h>
 #include <qt/walletcontroller.h>
 #include <qt/walletmodel.h>
@@ -57,9 +56,6 @@ WalletFrame::WalletFrame(BitcoinGUI* _gui)
     masternodeListPage = new MasternodeList();
     walletStack->addWidget(masternodeListPage);
 
-    exchangePage = new Exchange();
-    walletStack->addWidget(exchangePage);
-
     governanceListPage = new GovernanceList();
     walletStack->addWidget(governanceListPage);
 }
@@ -74,7 +70,6 @@ void WalletFrame::setClientModel(ClientModel *_clientModel)
 
     masternodeListPage->setClientModel(_clientModel);
     governanceListPage->setClientModel(_clientModel);
-    exchangePage->setClientModel(_clientModel);
 
     for (auto i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i) {
         i.value()->setClientModel(_clientModel);
@@ -209,19 +204,6 @@ void WalletFrame::gotoMasternodePage()
 
     for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
         i.value()->gotoMasternodePage();
-}
-
-void WalletFrame::gotoExchangePage()
-{
-    QMap<WalletModel*, WalletView*>::const_iterator i;
-
-    if (mapWalletViews.empty()) {
-        walletStack->setCurrentWidget(exchangePage);
-        return;
-    }
-
-    for (i = mapWalletViews.constBegin(); i != mapWalletViews.constEnd(); ++i)
-        i.value()->gotoExchangePage();
 }
 
 void WalletFrame::gotoReceiveCoinsPage()

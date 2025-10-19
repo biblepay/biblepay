@@ -163,7 +163,7 @@ extern bool fCheckpointsEnabled;
 extern CFeeRate minRelayTxFee;
 /** If the tip is older than this (in seconds), the node is considered to be in initial block download. */
 extern int64_t nMaxTipAge;
-
+ 
 // BIBLEPAY AREA
 struct Sidechain;
 static const int BLOCKS_PER_DAY = 205;

@@ -100,8 +100,6 @@ WalletView::WalletView(QWidget* parent) :
         governanceListPage = new GovernanceList();
         addWidget(governanceListPage);
     }
-    exchangePage = new Exchange();
-    addWidget(exchangePage);
 
     connect(overviewPage, &OverviewPage::transactionClicked, this, &WalletView::transactionClicked);
     // Clicking on a transaction on the overview pre-selects the transaction on the transaction history page
@@ -153,7 +151,6 @@ void WalletView::setClientModel(ClientModel *_clientModel)
     if (settings.value("fShowMasternodesTab").toBool() && masternodeListPage != nullptr) {
         masternodeListPage->setClientModel(_clientModel);
     }
-    exchangePage->setClientModel(_clientModel);
 
     if (settings.value("fShowGovernanceTab").toBool() && governanceListPage != nullptr) {
         governanceListPage->setClientModel(_clientModel);
@@ -172,7 +169,6 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
     if (settings.value("fShowMasternodesTab").toBool()) {
         masternodeListPage->setWalletModel(_walletModel);
     }
-    exchangePage->setWalletModel(_walletModel);
 
     receiveCoinsPage->setModel(_walletModel);
     sendCoinsPage->setModel(_walletModel);
@@ -257,12 +253,6 @@ void WalletView::gotoMasternodePage()
         setCurrentWidget(masternodeListPage);
     }
 }
-
-void WalletView::gotoExchangePage()
-{
-    setCurrentWidget(exchangePage);
-}
-
 
 void WalletView::gotoReceiveCoinsPage()
 {

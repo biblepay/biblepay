@@ -3326,7 +3326,6 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sShortCode = GetColoredAssetShortCode(sLongCode);
         std::string sAssetInAddressBook = "TRADING-ASSET-" + sLongCode;
         double nBalance = 0;
-
         if (sLongCode == "TRADING")
         {
             sAssetInAddressBook = "TRADING-PUBLIC-KEY";
@@ -3345,38 +3344,6 @@ UniValue exec(const JSONRPCRequest& request)
         results.pushKV("Asset_Code", sShortCode);
         results.pushKV("Address", sAssetAddress);
         results.pushKV("Balance", DoubleToString(nBalance, 4));
-    }
-    else if (sItem == "wrap")
-    {
-
-        if (request.params.size() < 3)
-        {
-            throw std::runtime_error("You must specify: exec wrap symbol quantity "
-                                     "\r\n  Ex: exec wrap doge 1.  You will lose 1 DOGE and gain 1 wrapped DOGE.");
-        }
-
-        std::string sSymbol = request.params[1].get_str();
-        double nQuantity = StringToDouble(request.params[2].get_str(), 4);
-        AtomicSymbol oSymbol = GetAtomicSymbol(sSymbol);
-        AtomicTrade a = WrapCoin(oSymbol, nQuantity);
-        results.pushKV("id", a.id);
-        results.pushKV("Tx", a.ToString());
-        results.pushKV("Error", a.Error);
-    }
-    else if (sItem == "unwrap")
-    {
-        if (request.params.size() < 3)
-        {
-            throw std::runtime_error("You must specify: exec unwrap symbol quantity "
-                                     "\r\n  Ex: exec unwrap doge 1.  You will lose 1 DOGE wrapped coin and gain 1 real DOGE.");
-        }
-        std::string sSymbol = request.params[1].get_str();
-        double nQuantity = StringToDouble(request.params[2].get_str(), 4);
-        AtomicSymbol oSymbol = GetAtomicSymbol(sSymbol);
-        AtomicTrade a = UnwrapCoin(oSymbol, nQuantity);
-        results.pushKV("id", a.id);
-        results.pushKV("Tx", a.ToString());
-        results.pushKV("Error", a.Error);
     }
     else if (sItem == "sendasset")
     {
@@ -3397,28 +3364,14 @@ UniValue exec(const JSONRPCRequest& request)
         results.pushKV("Error", sError);
         results.pushKV("TXID", sTXID);
     }
-    else if (sItem == "hamans-hanging")
-    {
-        std::string sPath = GetTradingRoomIcon("xlm512.png");
-        results.pushKV("xlm", sPath);
-        results.pushKV("xlmpubkey", msAssetXLMPublicKey);
-
-        if (false) {
-            std::map<std::string, std::string> mapRequestHeaders;
-            mapRequestHeaders["Address"] = "";
-            std::string sResponse = AtomicCommunication("Test0", mapRequestHeaders);
-            results.pushKV("hang", sResponse);
-        }
-    }
     else if (sItem == "getdogebalance")
     {
         std::string sTradingPublicKey = DefaultRecAddress(request, "Trading-Public-Key");
         std::string sDogePub = GetDogePubKey(sTradingPublicKey, request);
-        double nBal = GetAltBalance("DOGE", sDogePub);
         std::string sBX = "https://live.blockcypher.com/doge/address/" + sDogePub + "/";
         results.pushKV("address", sDogePub);
         results.pushKV("block_explorer", sBX);
-        results.pushKV("balance", nBal);
+        results.pushKV("Warning", "This command is deprecated.  You can either use the BX url, or Portfolio Builder.");
     }
     else if (sItem == "senddoge")
     {
@@ -3433,10 +3386,7 @@ UniValue exec(const JSONRPCRequest& request)
         std::string TXID;
         std::string sTradingPublicKey = DefaultRecAddress(request, "Trading-Public-Key");
         std::string sDogePrivKey = GetDogePrivateKey(sTradingPublicKey, request);
-        bool fSent = SendDOGEToAddress(sDogePrivKey, sToAddress, nAmt, sError, TXID);
-        results.pushKV("TXID", TXID);
-        results.pushKV("Error", sError);
-
+        results.pushKV("Error", "This command is deprecated.  Please use Extensions | Portfolio Builder.");
     }
     else if (sItem == "persistsc")
     {

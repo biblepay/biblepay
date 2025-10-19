@@ -117,10 +117,7 @@ struct BBPTradingMessage
              bool fPassed = CheckStakeSignature(Signer, Signature, Message, sSigError);
              return fPassed;
         }
-
 };
-
-
 
 struct AtomicSymbol
 {
@@ -131,171 +128,6 @@ struct AtomicSymbol
      std::string BlockExplorerURL;
      std::string IconName;
      bool Found = false;
-};
-
-
-struct AtomicTrade
-{
-     std::string SymbolBuy;  // BBP
-     std::string SymbolSell; // DOGE
-     std::string Action;     // BUY,SELL
-     std::string id;         // Trade GUID
-     std::string Signer;     // BBP Address of person placing trade
-     std::string Message;
-     std::string Signature;
-     std::string AltAddress; // Address of ALT coin (pubkey)
-     std::string TXID;       // TXID of completed trade.
-     std::string Error; 
-     int Version;
-     double Quantity;
-     double Price;
-     std::string Status;     // Open, Closed, Transferring
-     std::string MatchedTo;  // Matching ID
-     int FilledQuantity;
-     int Time;
-     int Height;
-     std::string CollateralBBPAddress;
-     std::string CollateralDOGEAddress;
-     std::string CollateralALTAddress;
-     std::string CollateralAssetAddress;
-
-     std::string CollateralTXID;
-     std::string ReturnTXID;
-     std::string BlockExplorerURL;
-
-     void New()
-     {
-             Version = 1;
-             Quantity = 0;
-             Price = 0;
-             Status = "NA";
-             MatchedTo = "";
-             FilledQuantity = 0;
-             Time = GetAdjustedTime();
-             Height = 0;
-             BlockExplorerURL = "";
-     }
-
-     void PopulateBX()
-     {
-             if (Status == "canceled" && ReturnTXID != "")
-             {
-                 if (Action == "buy") {
-                     BlockExplorerURL = "https://live.blockcypher.com/doge/tx/" + ReturnTXID + "/";
-                 } else if (Action == "sell") {
-                     BlockExplorerURL = "https://chainz.cryptoid.info/bbp/tx.dws?" + ReturnTXID + "/";
-                 }
-             }
-
-             if (Status == "open" && CollateralTXID != "")
-             {
-                 if (Action == "buy") {
-                     BlockExplorerURL = "https://live.blockcypher.com/doge/tx/" + CollateralTXID + "/";
-                 } else if (Action == "sell") {
-                     BlockExplorerURL = "https://chainz.cryptoid.info/bbp/tx.dws?" + CollateralTXID + "/";
-                 } else {
-                     BlockExplorerURL = "NA";
-                 }
-             }
-     }
-     void ToJson(UniValue& obj)
-     {
-           obj.clear();
-           obj.setObject();
-           obj.pushKV("SymbolBuy", SymbolBuy);
-           obj.pushKV("SymbolSell", SymbolSell);
-           obj.pushKV("Action", Action);
-           obj.pushKV("id", id);
-           obj.pushKV("Version", Version);
-           obj.pushKV("Quantity", Quantity);
-           obj.pushKV("Price", Price);
-           obj.pushKV("Status", Status);
-
-           obj.pushKV("Signer", Signer);
-           obj.pushKV("Signature", Signature);
-           obj.pushKV("CollateralBBPAddress", CollateralBBPAddress);
-           obj.pushKV("CollateralDOGEAddress", CollateralDOGEAddress);
-           obj.pushKV("CollateralALTAddress", CollateralALTAddress);
-           obj.pushKV("CollateralAssetAddress", CollateralAssetAddress);
-
-           obj.pushKV("CollateralTXID", CollateralTXID);
-           obj.pushKV("ReturnTXID", ReturnTXID);
-           PopulateBX();
-           obj.pushKV("BlockExplorerURL", BlockExplorerURL);
-
-           obj.pushKV("Message", Message);
-
-           obj.pushKV("AltAddress", AltAddress);
-           obj.pushKV("TXID", TXID);
-           obj.pushKV("MatchedTo", MatchedTo);
-           obj.pushKV("FilledQuantity", FilledQuantity);
-           obj.pushKV("Time", Time);
-           obj.pushKV("Height", Height);
-           obj.pushKV("Error", Error);
-
-     }
-     AtomicTrade FromJson(std::string sJson)
-     {
-           AtomicTrade a;
-           a.New();
-           UniValue obj;
-           obj.clear();
-           obj.setObject();
-           if (!obj.read(sJson)) {
-               a.id = "0";
-               return a;
-           }
-           a.SymbolBuy = GetUniString(obj, "SymbolBuy");
-           a.SymbolSell = GetUniString(obj, "SymbolSell");
-           a.Action = GetUniString(obj, "Action");
-           a.id = GetUniString(obj, "id");
-           a.Quantity = GetUniReal(obj, "Quantity");
-           a.Price = GetUniReal(obj, "Price");
-           a.Status = GetUniString(obj, "Status");
-           a.CollateralTXID = GetUniString(obj, "CollateralTXID");
-           a.ReturnTXID = GetUniString(obj, "ReturnTXID");
-
-           a.CollateralBBPAddress = GetUniString(obj, "CollateralBBPAddress");
-           a.CollateralDOGEAddress = GetUniString(obj, "CollateralDOGEAddress");
-           a.CollateralALTAddress = GetUniString(obj, "CollateralALTAddress");
-           a.CollateralAssetAddress = GetUniString(obj, "CollateralAssetAddress");
-
-           a.Signer = GetUniString(obj, "Signer");
-           a.Message = GetUniString(obj, "Message");
-           a.Signature = GetUniString(obj, "Signature");
-
-           a.AltAddress = GetUniString(obj, "AltAddress");
-           a.TXID = GetUniString(obj, "TXID");
-           a.Version = GetUniInt(obj, "Version");
-           a.MatchedTo = GetUniString(obj, "MatchedTo");
-           a.FilledQuantity = GetUniInt(obj, "FilledQuantity");
-           a.Time = GetUniInt(obj, "Time");
-           a.Height = GetUniInt(obj, "Height");
-           a.Error = GetUniString(obj, "Error");
-           a.BlockExplorerURL = GetUniString(obj, "BlockExplorerURL");
-           boost::to_lower(a.Action);
-           boost::trim(a.Action);
-           boost::to_lower(a.Status);
-           boost::to_lower(a.SymbolBuy);
-           boost::to_lower(a.SymbolSell);
-           return a;
-     }
-     bool IsValid()
-     {
-           if (id.length() < 2) return false;
-           if (Signer.length() < 2 || Signature.length() < 2) return false;
-           
-           std::string sSigError;
-           bool fPassed = CheckStakeSignature(Signer, Signature, Message, sSigError);
-           return fPassed;
-     }
-     std::string ToString()
-     {
-           UniValue obj;
-           ToJson(obj);
-           std::string strJSON = obj.write() + "\n";
-           return strJSON;
-     }
 };
 
 
@@ -506,8 +338,6 @@ std::string GetSanctuaryTypeName(CDeterministicMN dmnPayee);
 std::string Test1000();
 void CreateWalletIfNotExists(JSONRPCRequest r);
 std::map<std::string, NFT> GetNFTs();
-std::map<std::string, AtomicTrade> GetAtomicTrades();
-AtomicTrade GetAtomicTradeById(std::string sID);
 bool AuthorizeNFT(NFT n, std::string& sError);
 bool CheckMemPoolTransactionBiblepay(const CTransaction& tx, const CBlockIndex* pindexPrev);
 CAmount GetSanctuaryCollateralAmount();
@@ -515,31 +345,22 @@ std::string EncryptBlockCypherString(const std::string& sData, const std::string
 std::string DecryptBlockCypherString(const std::string& sData, const std::string& sPassword);
 std::string GetDogePrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
 std::string GetDogePubKey(std::string sBBPPubKey, JSONRPCRequest r);
-double GetAltBalance(std::string sTicker, std::string sPubKey);
-bool SendDOGEToAddress(std::string sDogePrivKey, std::string sToAddress, double nAmount, std::string& sError, std::string& sTXID);
 void TradingLog(std::string sData);
-std::map<std::string, AtomicTrade> GetOrderBookData(bool fForceRefresh, std::string sTicker);
-std::string TransmitSidechainTx(JSONRPCRequest r, AtomicTrade a, std::string& sError);
 std::string DoubleToStringWithLeadingZeroes(double n, int nPlaces, int nTotalPlaces);
 void OneTimeShaDump();
 bool CheckLegacyRandomXBlockHash(uint256 hash, int height);
 bool ProcessTradingMessage(BBPTradingMessage bbptm);
 bool BBPTradingMessageSeen(std::string s);
 void SetBBPTradingMessageSeen(std::string s);
-AtomicTrade GetAtomicTradeFromTransaction(const CTransaction& tx);
-std::string AtomicCommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders);
-AtomicTrade TransmitAtomicTrade(JSONRPCRequest r, AtomicTrade a, std::string sMethod, std::string sAddressBookName);
+std::string APICommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders);
 std::string YesNo(bool f); 
 std::string GetTradingBBPPrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
 std::string CreateBankrollDenominations(JSONRPCRequest r, double nQuantity, CAmount denominationAmount, std::string& sError);
 std::string GenerateAssetAddress(JSONRPCRequest r);
 std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::string sAddressLabel, std::string& sPrivKey, int nMaxIterations);
-std::vector<std::pair<std::string, AtomicTrade>> GetSortedOrderBook(std::string sAction, std::string sStatus, std::string sTicker);
-std::string GetDisplayAgeInDays(int nRefTime);
 std::string GetColoredAssetShortCode(std::string sTicker);
 bool IsColoredCoin0(std::string sDestination);
 double GetAssetBalance(JSONRPCRequest r, std::string sShortCode);
-std::string GetFlags(AtomicTrade a, std::string sMyAddress, std::map<std::string, AtomicTrade> mapAT);
 std::string GetDefaultReceiveAddress(std::string sName);
 std::string IsInAddressBook(JSONRPCRequest r, std::string sNamedEntry);
 bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& view);
@@ -549,19 +370,13 @@ double AmountToDouble(const CAmount& amount);
 std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs);
 BBPResult GetAddressFromTransaction(std::string sTXID, int nVOUT);
 bool ExportMultiWalletKeys();
-AtomicTrade WrapCoin(AtomicSymbol oSymbol, double nQuantity);
-AtomicTrade UnwrapCoin(AtomicSymbol oSymbol, double nAmount);
 CWallet* GetInternalWallet(JSONRPCRequest r);
 double GetAssetBalanceNoWallet(std::string sShortCode);
-std::string GetTradingRoomIcon(std::string sIcon);
 AtomicSymbol GetAtomicSymbol(std::string sSymbol);
 std::string GetAltPublicKey(std::string sSymbol);
 std::string EncryptRSAData(std::string sText);
 std::string stringToHexString(const std::string& input);
 bool IsWalletAvailable();
-std::string GetAltPubKey(std::string sTicker, std::string sAltPrivKey);
-
-
 
 /** Used to store a reference to the global node */
 class CGlobalNode
