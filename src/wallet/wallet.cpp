@@ -2615,13 +2615,6 @@ CAmount CWallet::GetAvailableBalance(const CCoinControl* coinControl) const
     return balance;
 }
 
-bool IsColoredCoin1(std::string sDestination)
-{
-    boost::to_upper(sDestination);
-    bool fColored = StringEndsWith(sDestination, "ZZ");
-    return fColored;
-}
-
 std::string PubKeyToAddress2(const CScript& scriptPubKey)
 {
     CTxDestination address1;
@@ -2720,11 +2713,13 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
                 continue;
             }
 
+            /*
             // BBP - Skip Colored Coins
             std::string sAddress = PubKeyToAddress2(pcoin->tx->vout[i].scriptPubKey);
             bool fColored = IsColoredCoin1(sAddress);
             if (!fIncludeColored && fColored) continue;
             // END BBP
+            */
 
 
             std::unique_ptr<SigningProvider> provider = GetSolvingProvider(pcoin->tx->vout[i].scriptPubKey);
@@ -3347,7 +3342,8 @@ static uint32_t GetLocktimeForNewTransaction(interfaces::Chain& chain, const uin
     return locktime;
 }
 
-std::vector<CompactTallyItem> CWallet::SelectCoinsGroupedByAddresses(bool fSkipDenominated, bool fAnonymizable, bool fSkipUnconfirmed, int nMaxOupointsPerAddress, bool fSkipColored) const
+std::vector<CompactTallyItem> CWallet::SelectCoinsGroupedByAddresses(bool fSkipDenominated, bool fAnonymizable, bool fSkipUnconfirmed,
+    int nMaxOupointsPerAddress, bool fSkipColored) const
 {
     LOCK(cs_wallet);
 
@@ -3396,11 +3392,13 @@ std::vector<CompactTallyItem> CWallet::SelectCoinsGroupedByAddresses(bool fSkipD
 
             if(IsSpent(outpoint.hash, i) || IsLockedCoin(outpoint.hash, i)) continue;
 
+            /*
             // BBP - Skip Colored Coins
             std::string sDest0 = EncodeDestination(txdest);
             bool fColored = IsColoredCoin1(sDest0);
             if (fSkipColored && fColored) continue;
             // END BBP
+            */
 
             if(fSkipDenominated && CoinJoin::IsDenominatedAmount(wtx.tx->vout[i].nValue)) continue;
 

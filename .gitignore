@@ -171,3 +171,12 @@ test/lint/.cppcheck/*
 
 # flake8 cache location
 .cache/*
+contrib/Explorer/BBPExplorer/.vs/BBPExplorer/FileContentIndex/09016494-df31-42c5-adaf-c74783328dc2.vsidx
+*.vsidx
+contrib/Explorer/BBPExplorer/.vs/BBPExplorer/v17/.futdcache.v2
+contrib/Explorer/BBPExplorer/.vs/BBPExplorer/v17/.suo
+contrib/Explorer/BBPExplorer/.vs/BBPExplorer/v17/Browse.VC.db
+/contrib/Explorer/BBPExplorer/.vs/BBPExplorer/v17
+*.v2
+*.bin
+/contrib/Explorer/BBPExplorer/obj

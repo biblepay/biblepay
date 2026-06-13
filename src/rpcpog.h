@@ -84,53 +84,6 @@ struct Sidechain
 	}
 };
 
-struct BBPTradingMessage
-{
-        std::string id;
-        std::string Signer; // BBP Address of Buyer or Seller
-        std::string AltAddress; // DOGE Address of Buyer or Seller
-        std::string Message;
-        std::string Signature;
-        int Version;
-        std::string Action;
-        std::string Serialize()
-        {
-                std::string sSer = "<id>" + id + "</id><altaddress>" + AltAddress + "</altaddress><signer>" + Signer + "</signer><message>" + Message + "</message><signature>"
-                    + Signature + "</signature><version>" + DoubleToString(Version, 0) + "</version>" + "<action>" + Action + "</action>";
-                return sSer;
-        }
-        void Deserialize(std::string sData)
-        {
-                id = ExtractXML(sData, "<id>", "</id>");
-                Signer = ExtractXML(sData, "<signer>", "</signer>");
-                Message = ExtractXML(sData, "<message>", "</message>");
-                AltAddress = ExtractXML(sData, "<altaddress>", "</altaddress>");
-                Signature = ExtractXML(sData, "<signature>", "</signature>");
-                Version = (int)StringToDouble(ExtractXML(sData, "<version>", "</version>"), 0);
-                Action = ExtractXML(sData, "<action>", "</action>");
-        }
-        bool IsValid()
-        {
-             if (id.length() < 2) return false;
-             if (Signer.length() < 2 || Signature.length() < 2) return false;
-             std::string sSigError;
-             bool fPassed = CheckStakeSignature(Signer, Signature, Message, sSigError);
-             return fPassed;
-        }
-};
-
-struct AtomicSymbol
-{
-     std::string Symbol;
-     std::string ShortCode;
-     std::string AddressBookEntry;
-     std::string LongAssetName;
-     std::string BlockExplorerURL;
-     std::string IconName;
-     bool Found = false;
-};
-
-
 struct NFT {
         std::string Category; // ORPHAN,GENERAL,CHRISTIAN
         std::string Name;
@@ -345,34 +298,24 @@ std::string EncryptBlockCypherString(const std::string& sData, const std::string
 std::string DecryptBlockCypherString(const std::string& sData, const std::string& sPassword);
 std::string GetDogePrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
 std::string GetDogePubKey(std::string sBBPPubKey, JSONRPCRequest r);
-void TradingLog(std::string sData);
 std::string DoubleToStringWithLeadingZeroes(double n, int nPlaces, int nTotalPlaces);
 void OneTimeShaDump();
 bool CheckLegacyRandomXBlockHash(uint256 hash, int height);
-bool ProcessTradingMessage(BBPTradingMessage bbptm);
-bool BBPTradingMessageSeen(std::string s);
-void SetBBPTradingMessageSeen(std::string s);
 std::string APICommunication(std::string Action, std::map<std::string, std::string> mapRequestHeaders);
 std::string YesNo(bool f); 
 std::string GetTradingBBPPrivateKey(std::string sBBPPubKey, JSONRPCRequest r);
 std::string CreateBankrollDenominations(JSONRPCRequest r, double nQuantity, CAmount denominationAmount, std::string& sError);
 std::string GenerateAssetAddress(JSONRPCRequest r);
 std::string SearchForAsset(JSONRPCRequest r, std::string sAssetSuffix, std::string sAddressLabel, std::string& sPrivKey, int nMaxIterations);
-std::string GetColoredAssetShortCode(std::string sTicker);
-bool IsColoredCoin0(std::string sDestination);
 double GetAssetBalance(JSONRPCRequest r, std::string sShortCode);
 std::string GetDefaultReceiveAddress(std::string sName);
 std::string IsInAddressBook(JSONRPCRequest r, std::string sNamedEntry);
-bool ValidateAssetTransaction(const CTransaction& tx, const CCoinsViewCache& view);
-bool RPCSendAsset(JSONRPCRequest r, std::string& sError, std::string& sTXID, std::string sAddress, CAmount nValue, std::string sLongAssetCode);
 CAmount GetWalletBalanceForSpecificAddress(std::string sAddress);
 double AmountToDouble(const CAmount& amount);
 std::string GetTCPContent(std::string sFQDN, std::string sAction, int nPort, int nTimeoutSecs);
 BBPResult GetAddressFromTransaction(std::string sTXID, int nVOUT);
-bool ExportMultiWalletKeys();
 CWallet* GetInternalWallet(JSONRPCRequest r);
 double GetAssetBalanceNoWallet(std::string sShortCode);
-AtomicSymbol GetAtomicSymbol(std::string sSymbol);
 std::string GetAltPublicKey(std::string sSymbol);
 std::string EncryptRSAData(std::string sText);
 std::string stringToHexString(const std::string& input);

@@ -918,7 +918,6 @@ void KillColoredCoinMiningThreads()
 }
 
 
-
 void GenerateCoins(bool fGenerate, int nThreads, const CChainParams& chainparams, const JSONRPCRequest& jRequest)
 {
     //nThreads = 1; // GetNumCores() - Reserved for a change to heat mining
@@ -968,12 +967,8 @@ recover:
             {
                 return;
             }
-
-            // DOGE
-            std::string sPrivKey;
-            std::string sAssetName = "TRADING-ASSET-DOGE";
-            std::string sPub = SearchForAsset(jRequest, "DGZZ", sAssetName, sPrivKey, 25000);
-
+            // Leaving in for a year in case its useful.
+            
         }
     }
     catch (const std::exception& e)

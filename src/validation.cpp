@@ -170,7 +170,6 @@ bool fCoinControlUnlocked = false;
 int iMinerThreadCount = 0;
 std::map<std::string, int> mapPOVSStatus;
 std::map<int64_t, Sidechain> mapSidechain;
-std::vector<std::string> mapTradingMessageSeen;
 std::string msAssetXLMPublicKey = "";
 
 // END OF BIBLEPAY AREA
@@ -752,15 +751,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         return error("%s: CheckMemPoolTxBiblePay: %s, %s", __func__, hash.ToString(), state.ToString());
     }
 
-    fOK = ValidateAssetTransaction(tx, coins_cache);
-    if (!fOK) {
-        return error("%s: ValidateAssetTransactionBiblePay: %s, %s", __func__, hash.ToString(), state.ToString());
-    }
-
     /* END OF BIBLEPAY */
-
-
-
 
 
 

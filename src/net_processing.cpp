@@ -517,9 +517,7 @@ private:
     void ProcessGetData(CNode& pfrom, Peer& peer, const std::atomic<bool>& interruptMsgProc) LOCKS_EXCLUDED(cs_main) EXCLUSIVE_LOCKS_REQUIRED(peer.m_getdata_requests_mutex);
 
     void ProcessBlock(CNode& pfrom, const std::shared_ptr<const CBlock>& pblock, bool fForceProcessing);
-    void RelayBBPTradingMessage(BBPTradingMessage b);
-
-
+    
     /** Relay map (txid -> CTransactionRef) */
     typedef std::map<uint256, CTransactionRef> MapRelay;
     MapRelay mapRelay GUARDED_BY(cs_main);
@@ -2857,23 +2855,6 @@ void PeerManagerImpl::ProcessPeerMsgRet(const PeerMsgRet& ret, CNode& pfrom)
     if (!ret) Misbehaving(pfrom.GetId(), ret.error().score, ret.error().message);
 }
 
-void PeerManagerImpl::RelayBBPTradingMessage(BBPTradingMessage b)
-{
-    const int greatest_common_version = std::min(PROTOCOL_VERSION, PROTOCOL_VERSION);
-    const CNetMsgMaker msg_maker(greatest_common_version);
-    m_connman.ForEachNode([this, &b, msg_maker](CNode* pnode)
-    {
-        std::string sTradingKey = pnode->GetId() + "-" + b.id;
-        bool fSeen = BBPTradingMessageSeen(sTradingKey);
-        if (!fSeen)
-        {
-            m_connman.PushMessage(pnode, msg_maker.Make(NetMsgType::BBPTRADE, b.Serialize()));
-            SetBBPTradingMessageSeen(sTradingKey);
-            LogPrintf("\nRelayBBPTrade Relaying %s Message %s Action %s", sTradingKey, b.Message, b.Action);
-        }
-    });
-}
-
 
 void PeerManagerImpl::ProcessMessage(
     CNode& pfrom,
@@ -4203,22 +4184,6 @@ void PeerManagerImpl::ProcessMessage(
         return;
     }
 
-    if (msg_type == NetMsgType::BBPTRADE)
-    {
-        size_t nAvail = vRecv.in_avail();
-        std::string sTradeData;
-        if (nAvail > 10)
-        {
-            vRecv >> sTradeData;
-            BBPTradingMessage btm;
-            btm.Deserialize(sTradeData);
-            LogPrintf("\r\nBBPTRADE::Action %s Signer %s", btm.Action, btm.Signer);
-            // RELAY
-            RelayBBPTradingMessage(btm);
-            ProcessTradingMessage(btm);
-        }
-    }
-
     if (msg_type == NetMsgType::PONG) {
         int64_t pingUsecEnd = nTimeReceived;
         uint64_t nonce = 0;
@@ -4830,31 +4795,6 @@ bool PeerManagerImpl::SendMessages(CNode* pto)
         pto->nPingNonceSent = nonce;
         m_connman.PushMessage(pto, msgMaker.Make(NetMsgType::PING, nonce));
     }
-
-    if (false)
-    {
-        // BBP - Create a trading message
-        BBPTradingMessage b;
-        b.id = DoubleToString(GetAdjustedTime(), 0);
-        if (GetAdjustedTime() % 30 == 0)
-        {
-            std::string sKey = b.id;
-            if (!BBPTradingMessageSeen(sKey))
-            {
-                SetBBPTradingMessageSeen(sKey);
-                b.Signer = "12345"; //        DefaultRecAddress(r, "Trading-Public-Key");
-                b.Message = "authorize-" + DoubleToString(GetAdjustedTime(), 0);
-                std::string sSignError;
-                b.Signature = "SIG";
-                b.Action = "ANNOUNCE";
-                m_connman.PushMessage(pto, msgMaker.Make(NetMsgType::BBPTRADE, b.Serialize()));
-                BBPTradingMessage btm;
-                btm.Deserialize(b.Serialize());
-                LogPrintf("\r\nANNOUNCE_BBPTRADE[0]::Action %s Signer %s", btm.Action, btm.Signer);
-            }
-        }
-    }
-
 
     {
         LOCK(cs_main);

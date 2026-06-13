@@ -143,16 +143,6 @@ extern const char* GETADDR;
 extern const char* MEMPOOL;
 
 
-/* BIBLEPAY - TRADING
- * The BBPTrade message accomplishes 4 tasks:
-   1) A node wishes to trade BBP-DOGE with another node
-   2) A second node acknowledges and agrees to trade with the first node
-   3) The TXID of the BBP transmitted that fulfills an order hash
-   4) The TXID of the DOGE transmitted that fulfills an order hash
-*/
-extern const char* BBPTRADE;
-
-
 /**
  * The ping message is sent periodically to help confirm that the receiving
  * peer is still connected.

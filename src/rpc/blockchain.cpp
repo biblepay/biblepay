@@ -3127,7 +3127,6 @@ UniValue exec(const JSONRPCRequest& request)
     CChainState& active_chainstate = chainman.ActiveChainstate();
     CChain& active_chain = active_chainstate.m_chain;
 
-
     UniValue results(UniValue::VOBJ);
     results.pushKV("Command", sItem);
     if (sItem == "subsidy")
@@ -3280,26 +3279,6 @@ UniValue exec(const JSONRPCRequest& request)
         results.pushKV("Asset", sPub);
         results.pushKV("Priv", sPrivKey);
     }
-    else if (sItem == "createassetaddress")
-    {
-        if (request.params.size() != 2)
-            throw std::runtime_error("You must specify type: IE 'exec createasset longcode'.");
-        std::string sLongCode = request.params[1].get_str();
-        std::string sShortCode = GetColoredAssetShortCode(sLongCode);
-        boost::to_upper(sLongCode);
-        if (sShortCode.empty())
-        {
-            throw std::runtime_error("Asset does not exist.");
-        }
-        std::string sPrivKey;
-        std::string sAddressEntry = "TRADING-ASSET-" + sLongCode;
-        
-        std::string sPub = SearchForAsset(request, sShortCode, sAddressEntry, sPrivKey, 2000000);
-        results.pushKV("longcode", sLongCode);
-        results.pushKV("shortcode", sShortCode);
-        results.pushKV("Asset", sPub);
-        results.pushKV("Priv", sPrivKey);
-    }
     else if (sItem == "bankroll")
     {
         if (request.params.size() != 3)
@@ -3316,77 +3295,6 @@ UniValue exec(const JSONRPCRequest& request)
         std::string sTX = request.params[1].get_str();
         BBPResult b = GetAddressFromTransaction(sTX, 0);
         results.pushKV("Addr", b.Address);
-    }
-    else if (sItem == "getassetbalance")
-    {
-        if (request.params.size() != 2)
-            throw std::runtime_error("You must specify type: IE 'exec getassetbalance assettype'.  IE exec getassetbalance DOGE.");
-        std::string sLongCode = request.params[1].get_str();
-        boost::to_upper(sLongCode);
-        std::string sShortCode = GetColoredAssetShortCode(sLongCode);
-        std::string sAssetInAddressBook = "TRADING-ASSET-" + sLongCode;
-        double nBalance = 0;
-        if (sLongCode == "TRADING")
-        {
-            sAssetInAddressBook = "TRADING-PUBLIC-KEY";
-            std::string sAA = IsInAddressBook(request, sAssetInAddressBook);
-            if (sAA != "")
-            {
-                nBalance = GetAssetBalance(request, sAA);
-            }
-        }
-        else
-        {
-            nBalance = GetAssetBalance(request, sShortCode);
-        }
-        
-        std::string sAssetAddress = IsInAddressBook(request, sAssetInAddressBook);
-        results.pushKV("Asset_Code", sShortCode);
-        results.pushKV("Address", sAssetAddress);
-        results.pushKV("Balance", DoubleToString(nBalance, 4));
-    }
-    else if (sItem == "sendasset")
-    {
-        if (request.params.size() < 3)
-        {
-            throw std::runtime_error("You must specify: exec sendasset assettype destaddress amount"
-                                     "\r\n IE: exec sendasset DOGE destination_bbp_address 1");
-        }
-
-        std::string sLongAssetCode = request.params[1].get_str();
-        std::string sDest = request.params[2].get_str();
-        double nAmt = StringToDouble(request.params[3].get_str(), 4);
-        CAmount nTotal = nAmt * COIN;
-        std::string sError;
-        std::string sTXID;
-
-        bool fSent = RPCSendAsset(request, sError, sTXID, sDest, nTotal, sLongAssetCode);
-        results.pushKV("Error", sError);
-        results.pushKV("TXID", sTXID);
-    }
-    else if (sItem == "getdogebalance")
-    {
-        std::string sTradingPublicKey = DefaultRecAddress(request, "Trading-Public-Key");
-        std::string sDogePub = GetDogePubKey(sTradingPublicKey, request);
-        std::string sBX = "https://live.blockcypher.com/doge/address/" + sDogePub + "/";
-        results.pushKV("address", sDogePub);
-        results.pushKV("block_explorer", sBX);
-        results.pushKV("Warning", "This command is deprecated.  You can either use the BX url, or Portfolio Builder.");
-    }
-    else if (sItem == "senddoge")
-    {
-        if (request.params.size() < 3) {
-            throw std::runtime_error("You must specify the to_doge_address and amount.  Ex:  senddoge toaddress 1");
-        }
-        std::string sToAddress = request.params[1].get_str();
-        double nAmt = StringToDouble(request.params[2].get_str(), 4);
-        results.pushKV("to_address", sToAddress);
-        results.pushKV("amount", nAmt);
-        std::string sError;
-        std::string TXID;
-        std::string sTradingPublicKey = DefaultRecAddress(request, "Trading-Public-Key");
-        std::string sDogePrivKey = GetDogePrivateKey(sTradingPublicKey, request);
-        results.pushKV("Error", "This command is deprecated.  Please use Extensions | Portfolio Builder.");
     }
     else if (sItem == "persistsc")
     {
@@ -3776,11 +3684,6 @@ UniValue exec(const JSONRPCRequest& request)
             AppendSanctuaryFile("deterministic.conf", sDSD);
         }
     }
-    else if (sItem == "1001")
-    {
-        std::string sTest = Test1000();
-        results.pushKV("1000",sTest);
-    }
     else if (sItem == "revivesanctuaries")
     {
         std::string sResult = ReviveSanctuariesJob(request);
@@ -3894,12 +3797,6 @@ UniValue exec(const JSONRPCRequest& request)
 
     return results;
 }
-
-
-
-
-
-
 
 
 

@@ -1,8 +1,8 @@
 AC_PREREQ([2.69])
 dnl Don't forget to push a corresponding tag when updating any of _CLIENT_VERSION_* numbers
 define(_CLIENT_VERSION_MAJOR, 0)
-define(_CLIENT_VERSION_MINOR, 24)
-define(_CLIENT_VERSION_BUILD, 8) 
+define(_CLIENT_VERSION_MINOR, 25)
+define(_CLIENT_VERSION_BUILD, 2) 
 define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2024)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
@@ -18,7 +18,7 @@ PKG_PROG_PKG_CONFIG
 if test "x$PKG_CONFIG" = x; then
   AC_MSG_ERROR([pkg-config not found])
 fi
-
+ 
 BITCOIN_DAEMON_NAME=biblepayd
 BITCOIN_GUI_NAME=biblepay-qt
 BITCOIN_CLI_NAME=biblepay-cli
