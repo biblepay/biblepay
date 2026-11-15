@@ -166,6 +166,20 @@ bool CGovernanceObject::ProcessVote(const CGovernanceVote& vote, CGovernanceExce
         nVoteTimeUpdate = nNow;
     }
 
+    // If its a TRIGGER it can only be voted on by a TEMPLE.  11-15-2026 - BiblePay
+    if (m_obj.type == GovernanceObject::TRIGGER)
+    {
+        CAmount nColl = dmn->GetCollateralAmount();
+        bool fTemple = (nColl >= (SANCTUARY_COLLATERAL_TEMPLE * COIN));
+        if (!fTemple)
+        {
+            LogPrint(BCLog::GOBJECT, "Rejecting vote from non-Temple. %s :: %s\n",
+                vote.GetHash().ToString(), vote.GetMasternodeOutpoint().ToStringShort());
+            exception = CGovernanceException("Rejecting trigger vote from non temple", GOVERNANCE_EXCEPTION_TEMPORARY_ERROR);
+            return false;
+        }
+    }
+
     bool onlyVotingKeyAllowed = m_obj.type == GovernanceObject::PROPOSAL && vote.GetSignal() == VOTE_SIGNAL_FUNDING;
 
     // Finally check that the vote is actually valid (done last because of cost of signature verification)
