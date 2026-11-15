@@ -1940,6 +1940,9 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 		sError = "Unable to vote for GSC Contract::Foreign addresses or amounts empty.";
 		return false;
 	}
+
+    // Get objects that MATCH the local nodes PAM hash first:
+    
 	// Sort by GSC gobject hash (creation time does not work as multiple nodes may be called during the same second to create a GSC)
 	std::vector<std::pair<int64_t, uint256>> vPropByGov = GetGSCSortedByGov(nHeight, uPamHash, false);
 	// Sort the vector by Gov hash to eliminate ties
@@ -1953,56 +1956,88 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	for (int i = 0; i < vPropByGov.size(); i++)
 	{    
 		CGovernanceObject* myGov = govman->FindGovernanceObject(vPropByGov[i].second);
-		sAction = (i==0) ? "yes" : "no";
+        sAction = "yes";
 		if (fOverBudget) 
 			sAction = "no";
 		iVotes = myGov->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
         bool fSkipVote = false;
 
-        if (sAction == "yes" && iVotes > nSancCount)
+        if (sAction == "yes" && iVotes > (nSancCount * .5))
         {
+            // Proposal already has enough votes.
             fSkipVote = true;
         }
 
-		LogPrintf("\nSmartContract-Server::VoteForGSCContractOrderedByHash::Voting %s for govHash %s, with pre-existing-votes %f (created %f) Overbudget %f ",
+		LogPrintf("\nSmartContract-Server::VoteForGSCContractOrderedByHash:[1]:Voting %s for govHash %s, with pre-existing-votes %f (created %f) Overbudget %f ",
 			sAction, myGov->GetHash().GetHex(), iVotes, myGov->GetCreationTime(), (double)fOverBudget);
-        if (!fSkipVote) {
+        if (!fSkipVote)
+        {
                 VoteForGobject(myGov->GetHash(), "funding", sAction, sError);
                 // Additionally, clear the delete flag, just in case another node saw this contract as a negative earlier in the cycle
                 VoteForGobject(myGov->GetHash(), "delete", "no", sError);
+                // We break out after ONE VOTE.
+                break;
         }
-		break;
+        
 	}
 	// Phase 2: Vote against contracts at this height that do not match our hash
-	int iVotedNo = 0;
-	if (uPamHash != uint256S("0x0"))
-	{
-		vPropByGov = GetGSCSortedByGov(nHeight, uPamHash, true);
-		for (int i = 0; i < vPropByGov.size(); i++)
-		{
-			CGovernanceObject* myGovForRemoval = govman->FindGovernanceObject(vPropByGov[i].second);
-			sAction = "no";
-            bool fSkipVote = false;
-            int iVotes = myGovForRemoval->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
-            
-            if (sAction == "no" && iVotes < (nSancCount * -1))
+    if (true)
+    {
+            int iVotedNo = 0;
+            if (uPamHash != uint256S("0x0"))
             {
-                  fSkipVote = true;
-            }
-            if (!fSkipVote)
-            {
-                LogPrintf("\nSmartContract-Server::VoteDownBadGCCContracts::Voting %s for govHash %s, with pre-existing-votes %f (created %f)",
-                                          sAction, myGovForRemoval->GetHash().GetHex(), iVotes, myGovForRemoval->GetCreationTime());
-                VoteForGobject(myGovForRemoval->GetHash(), "funding", sAction, sError);
-                iVotedNo++;
-                if (iVotedNo > 2)
-                        break;
-            }
-		}
-	}
+                // Get NON-MATCHING proposals.
+                vPropByGov = GetGSCSortedByGov(nHeight, uPamHash, true);
+               
+                for (int i = 0; i < vPropByGov.size(); i++)
+                {
+                    CGovernanceObject* myGovForRemoval = govman->FindGovernanceObject(vPropByGov[i].second);
+                    sAction = "no";
+                    bool fSkipVote = false;
+                    int iVotes = myGovForRemoval->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
 
+                    if (sAction == "no" && iVotes < (nSancCount * .1 * -1))
+                    {
+                        fSkipVote = true;
+                    }
+                    if (!fSkipVote)
+                    {
+                        LogPrintf("\nSmartContract-Server::VoteDownBadGCCContracts::Voting %s for govHash %s, with pre-existing-votes %f (created %f)",
+                                  sAction, myGovForRemoval->GetHash().GetHex(), iVotes, myGovForRemoval->GetCreationTime());
+                        VoteForGobject(myGovForRemoval->GetHash(), "funding", sAction, sError);
+                        iVotedNo++;
+                        // WE BREAK OUT AFTER ONE VOTE.
+                        break;
+                    }
+                }
+            }
+    }
 	return sError.empty() ? true : false;
 }
+
+bool CanSancVote(int nHeight, int iBlockIterator)
+{
+    // This staggers the sancs down to a 1:10 chance of creating a trigger, or voting.
+    // This way we dont have two creating triggers at the same time.
+    auto mnList = ::deterministicMNManager.get()->GetListAtChainTip();
+    if (fMasternodeMode) {
+        CDeterministicMNCPtr dmn{nullptr};
+        dmn = mnList.GetMNByCollateral(activeMasternodeInfo.outpoint);
+        if (dmn) {
+            std::string sOwnerAddress = EncodeDestination(PKHash(dmn->pdmnState->keyIDOwner));
+            std::string sSrc = sOwnerAddress + DoubleToString(nHeight, 0);
+            uint256 h = GetSHA256Hash(sSrc);
+            std::string sHash = h.GetHex();
+            uint256 myHash = uint256S("0x" + sHash);
+            uint64_t nCheapHash = ReadLE64(myHash.begin());
+            int nModulus = nCheapHash % iBlockIterator;
+            bool fYourTurn = (nModulus == 0);
+            return fYourTurn;
+        }
+    }
+    return false;
+}
+
 
 static uint256 LAST_CREATED_GSC_CONTRACT_HASH = uint256S("0x0");
 std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
@@ -2010,7 +2045,9 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
     CBlockIndex* pindexTip = WITH_LOCK(cs_main, return g_chainman.ActiveChain().Tip());
     auto govman = ::governance.get();
 
-	if (pindexTip->nHeight % 5 != 0 && !fForce)
+    bool fVotable = CanSancVote(pindexTip->nHeight, 10);
+
+	if (!fVotable && !fForce)
 		return "WAITING...";
 	if (!fMasternodeMode && !fForce)   
 		return "NOT_A_WATCHMAN_SANCTUARY";
@@ -2043,6 +2080,9 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 
 	if (nBlocksUntilEpoch < MIN_EPOCH_BLOCKS && !fForce)
 		return "WATCHMAN_TOO_EARLY_FOR_COMING";
+
+    
+	LogPrintf("\n Watchman::CurHeight %f :: NextSB: %f :: BlocksToNext SB:: %f :: MIN_EPOCH_BLOCKS::%f", pindexTip->nHeight, (double)nNextSuperblock, (double)nBlocksUntilEpoch, (double)MIN_EPOCH_BLOCKS);
 
 	int nStartTime = GetAdjustedTime() - (86400 * 32);
 
