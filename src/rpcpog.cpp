@@ -2073,8 +2073,6 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 	int nNextSuperblock = 0;
 	GetGovSuperblockHeights(nNextSuperblock, nLastSuperblock);
 
-    // CRASHING BECAUSE GETGLOBALNODECONTEXT RETURNS NULL.
-
 	int nSancCount = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNsCount();
 
 	std::string sReport;
@@ -2085,7 +2083,6 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 
 	if (nBlocksUntilEpoch < MIN_EPOCH_BLOCKS && !fForce)
 		return "WATCHMAN_TOO_EARLY_FOR_COMING";
-
     
 	LogPrintf("\n Watchman::CurHeight %f :: NextSB: %f :: BlocksToNext SB:: %f :: MIN_EPOCH_BLOCKS::%f", pindexTip->nHeight, (double)nNextSuperblock, (double)nBlocksUntilEpoch, (double)MIN_EPOCH_BLOCKS);
 
@@ -2140,6 +2137,13 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 			LogPrintf("\n Watchman::Adding Budget Proposal %s -- Running Total %f ", sReport, (double)nSpent/COIN);
 		}
     }
+	// Sort the in-budget proposals by proposal hash so every temple serializes the contract in the same order.
+	// (The vote-ordered list above decides WHICH proposals fit the budget, but vote counts can differ slightly
+	// between nodes, and the PAM hash is order-sensitive, so the final contract order must be deterministic.)
+	std::sort(vProposalsInBudget.begin(), vProposalsInBudget.end(),
+		[](const std::pair<double, uint256>& a, const std::pair<double, uint256>& b) {
+			return UintToArith256(a.second) < UintToArith256(b.second);
+		});
 	// Create the contract
 	std::string sAddresses;
 	std::string sPayments;
