@@ -1869,6 +1869,9 @@ bool VoteForGobject(uint256 govobj, std::string sVoteSignal, std::string sVoteOu
     else
     {
         nFailed++;
+        sError = exception.what();
+        if (sError.empty()) sError = "Vote rejected (no reason given).";
+        LogPrintf("\nVoteForGobject::Vote %s %s for %s failed: %s", sVoteSignal, sVoteOutcome, govobj.GetHex(), sError);
     }
 
     return (nSuccessful > 0) ? true : false;
@@ -1974,7 +1977,9 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
         {
                 VoteForGobject(myGov->GetHash(), "funding", sAction, sError);
                 // Additionally, clear the delete flag, just in case another node saw this contract as a negative earlier in the cycle
-                VoteForGobject(myGov->GetHash(), "delete", "no", sError);
+                // (use a separate error string so the funding vote's error is not overwritten)
+                std::string sDeleteError;
+                VoteForGobject(myGov->GetHash(), "delete", "no", sDeleteError);
                 // We break out after ONE VOTE.
                 break;
         }

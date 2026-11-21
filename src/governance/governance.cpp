@@ -1458,9 +1458,9 @@ void CGovernanceManager::UpdatedBlockTip(const CBlockIndex* pindex, CConnman& co
         return;
     }
 
-    const auto sb_opt = CreateSuperblockCandidate(pindex->nHeight);
-    const auto trigger_opt = CreateGovernanceTrigger(sb_opt, connman);
-    VoteGovernanceTriggers(trigger_opt, connman);
+    // BiblePay: Dash's automatic trigger creation/voting is disabled. Triggers are created and voted on by
+    // WatchmanOnTheWall (rpcpog.cpp). Leaving the Dash path enabled made every sanctuary vote NO-FUNDING on every
+    // future BiblePay trigger each block, which (combined with GOVERNANCE_UPDATE_MIN) blocked Watchman's YES votes.
 
     nCachedBlockHeight = pindex->nHeight;
     LogPrint(BCLog::GOBJECT, "CGovernanceManager::UpdatedBlockTip -- nCachedBlockHeight: %d\n", nCachedBlockHeight);
