@@ -1657,14 +1657,20 @@ int GetHeightByEpochTime(int64_t nEpoch)
     return -1;
 }
 
+// BiblePay: Weighted net-yes votes a governance object needs to be funded. Matches CGovernanceObject::UpdateSentinelVariables
+// (vote counts from GetAbsoluteYesCount are weighted by MnType voting_weight, so compare them against this, never the raw sanc count).
+int GetTriggerFundingThreshold()
+{
+    int nWeightedMnCount = (int)::deterministicMNManager.get()->GetListAtChainTip().GetValidWeightedMNsCount();
+    return std::max(Params().GetConsensus().nGovernanceMinQuorum, nWeightedMnCount / 10);
+}
+
 BBPProposal GetProposalByHash(uint256 govObj, int nLastSuperblock)
 {
-    int nSancCount = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNsCount();
-
     auto govman = ::governance.get();
 
-	int nMinPassing = nSancCount * .10;
-	if (nMinPassing < 1) nMinPassing = 1;
+	// Vote counts are weighted (MnType voting_weight), so use the weighted threshold, same as core/Qt governance list.
+	int nMinPassing = GetTriggerFundingThreshold();
 
     CGovernanceObject* myGov = govman->FindGovernanceObject(govObj);
 	UniValue obj = myGov->GetJSONObject();
@@ -1953,7 +1959,9 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 	std::string sAction;
 	int iVotes = 0;
 	// Step 1:  Vote for contracts that agree with the local chain
-    int nSancCount = ::deterministicMNManager.get()->GetListAtChainTip().GetValidMNsCount();
+    // Vote totals are weighted, so compare against the weighted funding threshold (not the raw sanc count).
+    // Keep voting yes until the trigger has 2x the funding threshold, so late "no" votes can't un-fund it.
+    int nFundingThreshold = GetTriggerFundingThreshold();
 
     
 	for (int i = 0; i < vPropByGov.size(); i++)
@@ -1965,7 +1973,7 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
 		iVotes = myGov->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
         bool fSkipVote = false;
 
-        if (sAction == "yes" && iVotes > (nSancCount * .5))
+        if (sAction == "yes" && iVotes >= (nFundingThreshold * 2))
         {
             // Proposal already has enough votes.
             fSkipVote = true;
@@ -2001,7 +2009,7 @@ bool VoteForGSCContract(int nHeight, std::string sMyContract, std::string& sErro
                     bool fSkipVote = false;
                     int iVotes = myGovForRemoval->GetAbsoluteYesCount(VOTE_SIGNAL_FUNDING);
 
-                    if (sAction == "no" && iVotes < (nSancCount * .1 * -1))
+                    if (sAction == "no" && iVotes < (nFundingThreshold * -1))
                     {
                         fSkipVote = true;
                     }
@@ -2198,17 +2206,17 @@ std::string WatchmanOnTheWall(bool fForce, std::string& sContract)
 		sContract += "<ACTION>CREATING_CONTRACT</ACTION>";
 		return "WATCHMAN_CREATING_CONTRACT";
 	}
-	else if (iTriggerVotes < (nSancCount / 2))
+	else if (iTriggerVotes < (GetTriggerFundingThreshold() * 2))
 	{
 		bool bResult = VoteForGSCContract(nNextSuperblock, sContract, sError);
 		LogPrintf("**WatchmanOnTheWall::VotingForWatchmanTrigger PAM Hash %s, Trigger Votes %f  (%s)", uPamHash.GetHex(), (double)iTriggerVotes, sError);
 		sContract += "<ACTION>VOTING</ACTION>";
 		return "WATCHMAN_VOTING";
 	}
-    if (iTriggerVotes >= (nSancCount / 2))
+    if (iTriggerVotes >= (GetTriggerFundingThreshold() * 2))
     {
-        LogPrintf("**WatchmanOnTheWall::DORMANT::Not voting for anything::Sanc Ct %f  Trigger Votes %f",
-                          nSancCount, (double)iTriggerVotes);
+        LogPrintf("**WatchmanOnTheWall::DORMANT::Not voting for anything::Sanc Ct %f  Trigger Votes %f  Funding Threshold %f",
+                          (double)nSancCount, (double)iTriggerVotes, (double)GetTriggerFundingThreshold());
     }
 
 	return "WATCHMAN_SUCCESS";
